@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "name": "root",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "turbo test",
+    "test:it": "turbo test:it",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "lint:autofix": "turbo lint:autofix",
+    "format:check": "turbo format:check",
+    "format:write": "turbo format:write"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts": "^20.1.0",
+    "turbo": "^1.13.3"
+  },
+  "packageManager": "pnpm@8.12.1"
+}
