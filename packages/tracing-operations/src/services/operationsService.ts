@@ -74,4 +74,4 @@ export function operationsServiceBuilder(dbService: DBService) {
   };
 }
 
-export type OperationService = ReturnType<typeof operationsServiceBuilder>;
+export type OperationsService = ReturnType<typeof operationsServiceBuilder>;
