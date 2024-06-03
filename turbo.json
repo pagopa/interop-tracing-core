@@ -4,22 +4,48 @@
     "start": {
       "persistent": true,
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build",
+        "generate-client"
+      ]
     },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist"]
+      "dependsOn": [
+        "generate-client",
+        "^build"
+      ],
+      "outputs": [
+        "dist"
+      ]
+    },
+    "generate-client": {
+      "dependsOn": [
+        "^generate-client"
+      ]
+    },
+    "clean-generated": {
+      "dependsOn": [
+        "^clean-generated"
+      ]
     },
     "test": {
-      "dependsOn": ["build", "^test"]
+      "dependsOn": [
+        "build",
+        "^test"
+      ]
     },
     "test:it": {
-      "dependsOn": ["build", "^test:it"]
+      "dependsOn": [
+        "build",
+        "^test:it"
+      ]
     },
     "lint": {},
     "lint:autofix": {},
     "format:check": {},
     "format:write": {}
   },
-  "globalDependencies": ["tsconfig.json"]
+  "globalDependencies": [
+    "tsconfig.json"
+  ]
 }
