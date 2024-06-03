@@ -12,7 +12,6 @@ import { logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
-  logger.info("dbService up", dbService);
   return {
     async getTenantByPurposeId(): Promise<string> {
       logger.info("Get tenant id by purpose");

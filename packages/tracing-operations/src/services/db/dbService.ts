@@ -2,7 +2,6 @@ import { genericInternalError } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 
 export function dbServiceBuilder(_db: DB) {
-  console.log("db init", _db);
   return {
     async getTenantByPurposeId() {
       try {
