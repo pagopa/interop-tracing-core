@@ -58,25 +58,25 @@ export type ApiSavePurposeErrorResponse = ZodiosResponseByPath<
   "post",
   "/tracings/:tracingId/versions/:version/savePurposeError"
 >;
-export type ApiSaveMissingTracingPayload = ZodiosBodyByPath<
+export type ApiMissingPayload = ZodiosBodyByPath<
   Api,
   "post",
-  "/tracings/state/saveMissingTracing"
+  "/tenants/:tenantId/missing"
 >;
-export type ApiSaveMissingTracingResponse = ZodiosResponseByPath<
+export type ApiMissingResponse = ZodiosResponseByPath<
   Api,
   "post",
-  "/tracings/state/saveMissingTracing"
+  "/tenants/:tenantId/missing"
 >;
-export type ApiDeletePurposeErrorPayload = ZodiosBodyByPath<
+export type ApiDeleteErrorsPayload = ZodiosBodyByPath<
   Api,
   "delete",
-  "/tracings/deletePurposesError"
+  "/tracings/:tracingId/versions/:version/errors"
 >;
-export type ApiDeletePurposeErrorResponse = ZodiosResponseByPath<
+export type ApiDeleteErrorsResponse = ZodiosResponseByPath<
   Api,
   "delete",
-  "/tracings/deletePurposesError"
+  "/tracings/:tracingId/versions/:version/errors"
 >;
 
 export type ApiGetTracingsPayload = ZodiosQueryParamsByPath<

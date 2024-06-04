@@ -2,7 +2,6 @@ import {
   ApiGetTracingsResponse,
   ApiRecoverTracingResponse,
   ApiReplaceTracingResponse,
-  ApiSaveMissingTracingResponse,
   ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
   ApiUpdateStateResponse,
@@ -45,16 +44,6 @@ export function operationsServiceBuilder(dbService: DBService) {
     async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
       logger.info(`Save purpose error`);
       await dbService.savePurposeError();
-      return Promise.resolve();
-    },
-    async deletePurposesError(): Promise<void> {
-      logger.info(`Delete purpose error`);
-      await dbService.deletePurposesError();
-      return Promise.resolve();
-    },
-
-    async saveMissingTracing(): Promise<ApiSaveMissingTracingResponse> {
-      logger.info(`Saving missing tracing`);
       return Promise.resolve();
     },
 

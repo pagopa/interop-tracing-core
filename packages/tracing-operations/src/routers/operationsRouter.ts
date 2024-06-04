@@ -11,6 +11,8 @@ import { makeApiProblem } from "../model/domain/errors.js";
 import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
+import { deleteServiceBuilder } from "../services/deleteService.js";
+import { tenantServiceBuilder } from "../services/tenantService.js";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -29,6 +31,8 @@ const operationsRouter = (
   const operationsService = operationsServiceBuilder(
     dbServiceBuilder(dbInstance),
   );
+  const deleteService = deleteServiceBuilder(dbServiceBuilder(dbInstance));
+  const tenantService = tenantServiceBuilder(dbServiceBuilder(dbInstance));
 
   operationsRouter.post("/tracings/submit", async (_req, res) => {
     try {
@@ -86,24 +90,21 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.post(
-    "/tracings/state/saveMissingTracing",
-    async (_req, res) => {
-      try {
-        await operationsService.saveMissingTracing();
-        return res.status(204).end();
-      } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, logger);
-        return res.status(errorRes.status).end();
-      }
-    },
-  );
+  operationsRouter.post("/tenants/:tenantId/missing", async (_req, res) => {
+    try {
+      await tenantService.saveMissingTracing();
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, () => 500, logger);
+      return res.status(errorRes.status).end();
+    }
+  });
 
   operationsRouter.delete(
-    "/tracings/deletePurposesError",
+    "/tracings/:tracingId/versions/:version/errors",
     async (_req, res) => {
       try {
-        await operationsService.deletePurposesError();
+        await deleteService.deleteErrors();
         return res.status(204).end();
       } catch (error) {
         const errorRes = makeApiProblem(error, () => 500, logger);
