@@ -20,11 +20,11 @@ export function dbServiceBuilder(_db: DB) {
       }
     },
 
-    async getTracingErrorDetails() {
+    async getTracingErrors() {
       try {
         return Promise.resolve();
       } catch (error) {
-        throw genericInternalError(`Error getTracingErrorDetails: ${error}`);
+        throw genericInternalError(`Error getTracingErrors: ${error}`);
       }
     },
 

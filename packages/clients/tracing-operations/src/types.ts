@@ -1,5 +1,6 @@
 import {
   ZodiosBodyByPath,
+  ZodiosPathParamsByPath,
   ZodiosQueryParamsByPath,
   ZodiosResponseByPath,
 } from "@zodios/core";
@@ -88,14 +89,23 @@ export type ApiGetTracingsResponse = ZodiosResponseByPath<
   "get",
   "/tracings"
 >;
-
-export type ApiGetTracingErrorDetailParams = ZodiosQueryParamsByPath<
+export type ApiGetTracingsQuery = ZodiosQueryParamsByPath<
   Api,
   "get",
-  "/tracings/:tracingId/errorDetails"
+  "/tracings"
 >;
-export type ApiGetTracingErrorDetailResponse = ZodiosResponseByPath<
+export type ApiGetTracingErrorsQuery = ZodiosQueryParamsByPath<
   Api,
   "get",
-  "/tracings/:tracingId/errorDetails"
+  "/tracings/:tracingId/errors"
+>;
+export type ApiGetTracingErrorsResponse = ZodiosResponseByPath<
+  Api,
+  "get",
+  "/tracings/:tracingId/errors"
+>;
+export type ApiGetTracingErrorsParams = ZodiosPathParamsByPath<
+  Api,
+  "get",
+  "/tracings/:tracingId/errors"
 >;

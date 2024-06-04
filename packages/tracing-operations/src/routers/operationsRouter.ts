@@ -115,25 +115,22 @@ const operationsRouter = (
   operationsRouter.get("/tracings", async (_req, res) => {
     try {
       await operationsService.getTracings();
-      return res.status(204).json({}).end();
+      return res.status(204).json({ results: [], totalCount: 0 }).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, () => 500, logger);
       return res.status(errorRes.status).end();
     }
   });
 
-  operationsRouter.get(
-    "/tracings/:tracingId/errorDetails",
-    async (_req, res) => {
-      try {
-        await operationsService.getTracingErrorDetails();
-        return res.status(204).json().end();
-      } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, logger);
-        return res.status(errorRes.status).end();
-      }
-    },
-  );
+  operationsRouter.get("/tracings/:tracingId/errors", async (_req, res) => {
+    try {
+      await operationsService.getTracingErrors();
+      return res.status(204).json({ errors: [], totalCount: 0 }).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, () => 500, logger);
+      return res.status(errorRes.status).end();
+    }
+  });
 
   return operationsRouter;
 };

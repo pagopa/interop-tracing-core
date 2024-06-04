@@ -7,6 +7,8 @@ export const DbConfig = z
     DB_USERNAME: z.string(),
     DB_PASSWORD: z.string(),
     DB_PORT: z.coerce.number().min(1001),
+    SCHEMA_NAME: z.string(),
+    DB_USE_SSL: z.coerce.boolean(),
   })
   .transform((c) => ({
     dbHost: c.DB_HOST,
@@ -14,6 +16,8 @@ export const DbConfig = z
     dbUsername: c.DB_USERNAME,
     dbPassword: c.DB_PASSWORD,
     dbPort: c.DB_PORT,
+    schemaName: c.SCHEMA_NAME,
+    tracingDbUseSSL: c.DB_USE_SSL,
   }));
 
 export type DbConfig = z.infer<typeof DbConfig>;

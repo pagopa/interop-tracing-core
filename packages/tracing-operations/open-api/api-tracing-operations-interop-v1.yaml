@@ -33,19 +33,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/{tracingId}/recover:
     post:
@@ -71,19 +71,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/{tracingId}/replace:
     post:
@@ -109,19 +109,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/{tracingId}/versions/{version}/state:
     post:
@@ -154,19 +154,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/{tracingId}/versions/{version}/savePurposeError:
     post:
@@ -199,13 +199,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings:
     get:
@@ -229,6 +229,14 @@ paths:
             format: int32
             minimum: 1
             maximum: 50
+        - in: query
+          name: states
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/TracingState"
+          style: form
+          explode: false
       responses:
         "200":
           description: Successful response
@@ -241,7 +249,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/deletePurposesError:
     delete:
@@ -257,7 +265,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
   /tracings/state/saveMissingTracing:
     post:
@@ -279,23 +287,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 
-  /tracings/{tracingId}/errorDetails:
+  /tracings/{tracingId}/errors:
     get:
-      summary: Get error detail by tracingId
+      summary: Get errors details by tracingId
       operationId: getTracingErrors
       tags:
         - Read
@@ -327,42 +335,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetErrorDetailResponse"
+                $ref: "#/components/schemas/GetErrorsResponse"
         "400":
           description: The provided input data is invalid
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem400"
+                $ref: "#/components/schemas/Problem"
         "404":
           description: The requested resource could not be found on the server
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem404"
+                $ref: "#/components/schemas/Problem"
         "500":
           description: A managed error has occurred during the request elaboration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Problem500"
+                $ref: "#/components/schemas/Problem"
 components:
   schemas:
     TracingStateUpdateRequest:
       type: object
       properties:
-        state: 
+        state:
           $ref: "#/components/schemas/TracingState"
       required:
         - state
     TracingState:
       type: string
       enum:
-      - PENDING
-      - COMPLETED
-      - MISSING
-      - ERROR
-      
+        - PENDING
+        - COMPLETED
+        - MISSING
+        - ERROR
+
     SubmitTracingRequest:
       type: object
       properties:
@@ -399,8 +407,11 @@ components:
           format: date
       required:
         - date
-    GetErrorDetailResponse:
+    GetErrorsResponse:
       type: object
+      required:
+        - errors
+        - totalCount
       properties:
         errors:
           type: array
@@ -414,13 +425,23 @@ components:
                 type: string
               message:
                 type: string
+        totalCount:
+          type: integer
+          format: int64
     GetTracingsByTenantId:
       type: object
+      required:
+        - results
+        - totalCount
       properties:
         results:
           type: array
           items:
             type: object
+            required:
+              - tracingId
+              - date
+              - state
             properties:
               tracingId:
                 type: string
@@ -433,6 +454,7 @@ components:
                 type: string
         totalCount:
           type: integer
+          format: int64
     SubmitTracingResponse:
       type: object
       properties:
@@ -468,7 +490,7 @@ components:
           format: uuid
         version:
           type: number
-    Problem500:
+    Problem:
       properties:
         type:
           description: URI reference of type definition
@@ -495,88 +517,6 @@ components:
         detail:
           description: A human readable explanation of the problem.
           example: Request took too long to complete.
-          maxLength: 4096
-          pattern: "^.{0,1024}$"
-          type: string
-        errors:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/ProblemError"
-      additionalProperties: false
-      required:
-        - type
-        - status
-        - title
-        - errors
-    Problem400:
-      properties:
-        type:
-          description: URI reference of type definition
-          type: string
-        status:
-          description: The HTTP status code generated by the origin server for this occurrence of the problem.
-          example: 400
-          exclusiveMaximum: true
-          format: int32
-          maximum: 600
-          minimum: 100
-          type: integer
-        title:
-          description: Bad Request
-          example: Bad Request
-          maxLength: 64
-          pattern: "^[ -~]{0,64}$"
-          type: string
-        correlationId:
-          description: Unique identifier of the request
-          example: "53af4f2d-0c87-41ef-a645-b726a821852b"
-          maxLength: 64
-          type: string
-        detail:
-          description: The request could not be understood by the server due to malformed syntax.
-          example: The request could not be understood by the server due to malformed syntax.
-          maxLength: 4096
-          pattern: "^.{0,1024}$"
-          type: string
-        errors:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/ProblemError"
-      additionalProperties: false
-      required:
-        - type
-        - status
-        - title
-        - errors
-    Problem404:
-      properties:
-        type:
-          description: URI reference of type definition
-          type: string
-        status:
-          description: The HTTP status code generated by the origin server for this occurrence of the problem.
-          example: 404
-          exclusiveMaximum: true
-          format: int32
-          maximum: 600
-          minimum: 100
-          type: integer
-        title:
-          description: Not Found
-          example: Not Found
-          maxLength: 64
-          pattern: "^[ -~]{0,64}$"
-          type: string
-        correlationId:
-          description: Unique identifier of the request
-          example: "53af4f2d-0c87-41ef-a645-b726a821852b"
-          maxLength: 64
-          type: string
-        detail:
-          description: The requested resource could not be found.
-          example: The requested resource could not be found.
           maxLength: 4096
           pattern: "^.{0,1024}$"
           type: string

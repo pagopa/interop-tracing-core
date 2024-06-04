@@ -6,7 +6,7 @@ import {
   ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
   ApiUpdateStateResponse,
-  ApiGetTracingErrorDetailResponse,
+  ApiGetTracingErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -61,14 +61,15 @@ export function operationsServiceBuilder(dbService: DBService) {
     async getTracings(): Promise<ApiGetTracingsResponse> {
       logger.info(`Get tracings`);
       await dbService.getTracings();
-      return Promise.resolve({ results: [] });
+      return Promise.resolve({ results: [], totalCount: 0 });
     },
 
-    async getTracingErrorDetails(): Promise<ApiGetTracingErrorDetailResponse> {
+    async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {
       logger.info(`Get error detail`);
-      await dbService.getTracingErrorDetails();
+      await dbService.getTracingErrors();
       return Promise.resolve({
         errors: [],
+        totalCount: 0,
       });
     },
   };
