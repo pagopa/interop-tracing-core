@@ -24,7 +24,7 @@ const operationsRouter = (
     port: config.dbPort,
     database: config.dbName,
     schema: config.schemaName,
-    useSSL: config.tracingDbUseSSL,
+    useSSL: config.dbUseSSL,
   });
 
   const operationsRouter = ctx.router(api.api);

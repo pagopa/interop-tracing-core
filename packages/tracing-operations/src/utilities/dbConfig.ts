@@ -17,7 +17,7 @@ export const DbConfig = z
     dbPassword: c.DB_PASSWORD,
     dbPort: c.DB_PORT,
     schemaName: c.SCHEMA_NAME,
-    tracingDbUseSSL: c.DB_USE_SSL,
+    dbUseSSL: c.DB_USE_SSL,
   }));
 
 export type DbConfig = z.infer<typeof DbConfig>;

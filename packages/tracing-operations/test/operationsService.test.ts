@@ -39,7 +39,7 @@ describe("Operations Service", () => {
       port: config.dbPort,
       database: config.dbName,
       schema: config.schemaName,
-      useSSL: config.tracingDbUseSSL,
+      useSSL: config.dbUseSSL,
     });
 
     operationsService = operationsServiceBuilder(dbServiceBuilder(dbInstance));
