@@ -5,17 +5,24 @@
       "persistent": true,
       "cache": false,
       "dependsOn": [
-        "^build",
-        "generate-client"
+        "generate-client",
+        "generate-model",
+        "^build"
       ]
     },
     "build": {
       "dependsOn": [
         "generate-client",
+        "generate-model",
         "^build"
       ],
       "outputs": [
         "dist"
+      ]
+    },
+    "generate-model": {
+      "dependsOn": [
+        "^generate-model"
       ]
     },
     "generate-client": {
