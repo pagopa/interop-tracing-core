@@ -65,7 +65,7 @@ export function dbServiceBuilder(_db: DB) {
         throw genericInternalError(`Error save purpose error: ${error}`);
       }
     },
-    async deleteErrors() {
+    async deletePurposeErrors() {
       try {
         return Promise.resolve();
       } catch (error) {

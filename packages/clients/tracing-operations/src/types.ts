@@ -51,12 +51,12 @@ export type ApiUpdateStateResponse = ZodiosResponseByPath<
 export type ApiSavePurposeErrorPayload = ZodiosBodyByPath<
   Api,
   "post",
-  "/tracings/:tracingId/versions/:version/savePurposeError"
+  "/tracings/:tracingId/versions/:version/errors"
 >;
 export type ApiSavePurposeErrorResponse = ZodiosResponseByPath<
   Api,
   "post",
-  "/tracings/:tracingId/versions/:version/savePurposeError"
+  "/tracings/:tracingId/versions/:version/errors"
 >;
 export type ApiMissingPayload = ZodiosBodyByPath<
   Api,

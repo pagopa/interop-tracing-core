@@ -5,6 +5,7 @@ import {
   ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
   ApiUpdateStateResponse,
+  ApiMissingResponse,
   ApiGetTracingErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { logger } from "pagopa-interop-tracing-commons";
@@ -44,6 +45,18 @@ export function operationsServiceBuilder(dbService: DBService) {
     async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
       logger.info(`Save purpose error`);
       await dbService.savePurposeError();
+      return Promise.resolve();
+    },
+
+    async deletePurposeErrors(): Promise<void> {
+      logger.info(`Delete purpose error`);
+      await dbService.deletePurposeErrors();
+      return Promise.resolve();
+    },
+
+    async saveMissingTracing(): Promise<ApiMissingResponse> {
+      logger.info(`Saving missing tracing`);
+      await dbService.saveMissingTracing();
       return Promise.resolve();
     },
 

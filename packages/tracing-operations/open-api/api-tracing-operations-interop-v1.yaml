@@ -168,7 +168,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
 
-  /tracings/{tracingId}/versions/{version}/savePurposeError:
+  /tracings/{tracingId}/versions/{version}/errors:
     post:
       summary: Save purpose error
       operationId: savePurposeError
@@ -200,6 +200,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    delete:
+      summary: Delete purposes error
+      operationId: deleteErrors
+      tags:
+        - Write
+      parameters:
+        - in: path
+          name: tracingId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: version
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
         "500":
           description: A managed error has occurred during the request elaboration
           content:
@@ -244,33 +269,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetTracingsByTenantId"
-        "500":
-          description: A managed error has occurred during the request elaboration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-
-  /tracings/{tracingId}/versions/{version}/errors:
-    delete:
-      summary: Delete purposes error
-      operationId: deleteErrors
-      tags:
-        - Write
-      parameters:
-        - in: path
-          name: tracingId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: version
-          required: true
-          schema:
-            type: string
-      responses:
-        "204":
-          description: No content
         "500":
           description: A managed error has occurred during the request elaboration
           content:
