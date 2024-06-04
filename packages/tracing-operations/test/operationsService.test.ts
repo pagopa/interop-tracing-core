@@ -48,7 +48,7 @@ describe("Operations Service", () => {
   describe("Tenants service", () => {
     describe("getTenantByPurposeId", () => {
       it("retrieve tenant by purposeId", async () => {
-        const result = await operationsService.getTenantByPurposeId();
+        const result = await operationsService.getTenantByPurposeId("");
 
         expect(result).toBe("");
       });

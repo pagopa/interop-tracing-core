@@ -1,12 +1,34 @@
-import { genericInternalError } from "pagopa-interop-tracing-models";
+import {
+  TracingState,
+  genericInternalError,
+  tracingState,
+} from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
+export interface Tenant {
+  id: string;
+  name: string;
+  origin: string;
+  externalId: string;
+  deleted: boolean;
+}
 
+export interface Tracing {
+  tenantId: string;
+  state: TracingState;
+  date: string;
+  version: number;
+  errors: boolean;
+}
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function dbServiceBuilder(_db: DB) {
+export function dbServiceBuilder(db: DB) {
   return {
-    async getTenantByPurposeId() {
+    async getTenantByPurposeId(purposeId: string): Promise<string> {
       try {
-        return Promise.resolve();
+        const resultQuery: { consumer_id: string } = await db.one(
+          "SELECT consumer_id FROM tracing.purposes WHERE id = $1",
+          [purposeId],
+        );
+        return resultQuery.consumer_id;
       } catch (error) {
         throw genericInternalError(`Error getTenantByPurposeId: ${error}`);
       }
@@ -28,9 +50,62 @@ export function dbServiceBuilder(_db: DB) {
       }
     },
 
-    async submitTracing() {
+    async submitTracing(
+      tracing: Tracing & { purpose_id: string },
+    ): Promise<{ tracingId: string; errors: boolean }> {
       try {
-        return Promise.resolve();
+        const checkExistingQuery = `
+          SELECT id,state FROM tracing.tracings
+          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'`;
+
+        const insertTracingQuery = `
+          INSERT INTO tracing.tracings (tenant_id, state, date, version)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id`;
+
+        const checkErrorsQuery = `
+          SELECT 1
+          FROM tracing.purposes_errors pe 
+          JOIN tracing.tracings tracing ON tracing.id = pe.tracing_id 
+          WHERE tracing.version = pe.version AND pe.purpose_id = $1`;
+
+        const checkValues = [tracing.tenantId, tracing.date];
+        const checkErrorsValues = [tracing.purpose_id];
+        const insertValues = [
+          tracing.tenantId,
+          tracing.state,
+          tracing.date,
+          tracing.version,
+        ];
+
+        const existingResult = await db.oneOrNone(
+          checkExistingQuery,
+          checkValues,
+        );
+        const errorsResult = await db.oneOrNone(
+          checkErrorsQuery,
+          checkErrorsValues,
+        );
+
+        if (existingResult && existingResult.state === tracingState.missing) {
+          const updateQuery = `
+          UPDATE tracing.tracings 
+          SET state = 'PENDING' 
+          WHERE id = $1 
+          RETURNING ID`;
+          const updateResult = await db.one(updateQuery, [existingResult.id]);
+          return { tracingId: updateResult.id, errors: !!errorsResult };
+        }
+
+        if (existingResult) {
+          throw genericInternalError(
+            "A tracing for this tenant and date already exists.",
+          );
+        }
+
+        const insertResult = await db.one(insertTracingQuery, insertValues);
+
+        return { tracingId: insertResult.id, errors: !!errorsResult };
       } catch (error) {
         throw genericInternalError(`Error createTracing: ${error}`);
       }

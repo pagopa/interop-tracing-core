@@ -11,6 +11,7 @@ import { makeApiProblem } from "../model/domain/errors.js";
 import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
+import { genericInternalError } from "pagopa-interop-tracing-models";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -30,10 +31,22 @@ const operationsRouter = (
     dbServiceBuilder(dbInstance),
   );
 
-  operationsRouter.post("/tracings/submit", async (_req, res) => {
+  operationsRouter.post("/tracings/submit", async (req, res) => {
     try {
-      await operationsService.submitTracing();
-      return res.status(200).json().end();
+      const authData = req.ctx.authData;
+      if (!authData.purpose_id) {
+        throw genericInternalError("purpose_id is missing");
+      }
+      console.log("purpose_id ", authData.purpose_id);
+      const tenant_id = await operationsService.getTenantByPurposeId(
+        authData.purpose_id,
+      );
+      const { tracingId, errors } = await operationsService.submitTracing({
+        ...req.body,
+        tenant_id,
+        purpose_id: authData.purpose_id,
+      });
+      return res.status(200).json({ tracingId, errors }).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, () => 500, logger);
       return res.status(errorRes.status).end();

@@ -10,18 +10,36 @@ import {
 } from "pagopa-interop-tracing-operations-client";
 import { logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
+import { tracingState } from "pagopa-interop-tracing-models";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
-    async getTenantByPurposeId(): Promise<string> {
-      logger.info("Get tenant id by purpose");
-      await dbService.getTenantByPurposeId();
-      return Promise.resolve("");
+    async getTenantByPurposeId(purposeId: string): Promise<string> {
+      logger.info("PURPOSE ID to be processed", purposeId);
+      const tenant = await dbService.getTenantByPurposeId(purposeId);
+      logger.info("Get tenant id by purpose", tenant);
+      return tenant;
     },
-    async submitTracing(): Promise<ApiSubmitTracingResponse> {
-      logger.info(`Submitting tracing`);
-      await dbService.submitTracing();
-      return Promise.resolve({});
+    async submitTracing({
+      tenant_id,
+      date,
+      purpose_id,
+    }: {
+      tenant_id: string;
+      date: string;
+      purpose_id: string;
+    }): Promise<ApiSubmitTracingResponse> {
+      logger.info(`Submitting tracing, tenant: ${tenant_id}, date: ${date}`);
+
+      const { tracingId, errors } = await dbService.submitTracing({
+        tenantId: tenant_id,
+        date,
+        version: 1,
+        state: tracingState.pending,
+        errors: false,
+        purpose_id: purpose_id,
+      });
+      return { tracingId, errors };
     },
 
     async recoverTracing(): Promise<ApiRecoverTracingResponse> {
