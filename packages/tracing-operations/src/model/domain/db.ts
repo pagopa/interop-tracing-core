@@ -19,13 +19,14 @@ const PurposeSchema = z.object({
 const PurposeErrorSchema = z.object({
   id: z.string().uuid(),
   tracing_id: z.string().uuid(),
-  version: z.string(),
+  version: z.number(),
   purpose_id: z.string().uuid(),
-  errorCode: z.string(),
+  error_code: z.string(),
   message: z.string(),
 });
 
 const TracingSchema = z.object({
+  id: z.string().uuid(),
   tenant_id: z.string().uuid(),
   state: TracingState,
   date: z.string(),
@@ -33,7 +34,6 @@ const TracingSchema = z.object({
   errors: z.boolean(),
 });
 
-// Export schemas if needed
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
