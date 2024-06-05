@@ -32,12 +32,8 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json("Missing bearer").end();
     }
-
     const jwtToken = authHeader.split(" ")[1];
-
-    console.log("jwtToken", jwtToken);
     const decodedToken = decodeJwtToken(jwtToken);
-    console.log("decodedToken", decodedToken);
     req.ctx.authData = { purpose_id: decodedToken?.purpose_id }; // Add purpose_id to context
     return next();
   } catch (error) {
@@ -58,17 +54,3 @@ const decodeJwtToken = (jwtToken: string): JwtPayload | null => {
     throw "jwtDecodingError(err)";
   }
 };
-
-export const readAuthDataFromJwtToken = (jwtToken: string): AuthData => {
-  const decoded = decodeJwtToken(jwtToken);
-  const token = AuthToken.safeParse(decoded);
-  if (token.success === false) {
-    throw "error";
-  } else {
-    return getAuthDataFromToken(token.data);
-  }
-};
-
-export const getAuthDataFromToken = (token: AuthToken): AuthData => ({
-  purpose_id: token.purpose_id,
-});
