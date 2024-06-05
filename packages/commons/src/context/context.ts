@@ -5,7 +5,6 @@ import {
   zodiosContext,
 } from "@zodios/express";
 import { z } from "zod";
-import { AuthData } from "../auth/authData.js";
 
 export type AppContext = z.infer<typeof ctx>;
 export type ZodiosContext = NonNullable<typeof zodiosCtx>;
@@ -13,7 +12,7 @@ export type ExpressContext = NonNullable<typeof zodiosCtx.context>;
 
 export const ctx = z.object({
   correlationId: z.string().uuid(),
-  authData: AuthData,
+  purpose_id: z.string().uuid(),
 });
 
 export const zodiosCtx = zodiosContext(z.object({ ctx }));
@@ -21,7 +20,7 @@ export const zodiosCtx = zodiosContext(z.object({ ctx }));
 const globalStore = new AsyncLocalStorage<AppContext>();
 const defaultAppContext: AppContext = {
   correlationId: "",
-  authData: { purpose_id: "" },
+  purpose_id: "",
 };
 
 export const getContext = (): AppContext => {
@@ -43,7 +42,7 @@ export const contextMiddleware: ZodiosRouterContextRequestHandler<
 > = (req, res, next) => {
   try {
     req.ctx = {
-      authData: { purpose_id: "" },
+      purpose_id: "",
       correlationId: "",
     };
     return next();
