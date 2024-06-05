@@ -115,6 +115,7 @@ const errorCodes = {
   missingHeader: "9994",
   unauthorizedError: "9993",
   jwtDecodingError: "9001",
+  existingTenant: "9002",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -161,6 +162,16 @@ export function validationFailed(errors: Error[]): ApiError<CommonErrorCodes> {
     detail: "Validation failed",
     errors: errors,
     code: "validationFailed",
+    title: "Bad Request",
+  });
+}
+export function existingTenantError(
+  errors: Error[],
+): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: "Tracing for this tenant already exist",
+    errors: errors,
+    code: "existingTenant",
     title: "Bad Request",
   });
 }

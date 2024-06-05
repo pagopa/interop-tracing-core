@@ -33,23 +33,26 @@ const operationsRouter = (
 
   operationsRouter.post("/tracings/submit", async (req, res) => {
     try {
-      const authData = req.ctx.authData;
-      if (!authData.purpose_id) {
+      const purpose_id = req.headers.purpose_id as string;
+      if (!purpose_id) {
         throw genericInternalError("purpose_id is missing");
       }
-      console.log("purpose_id ", authData.purpose_id);
-      const tenant_id = await operationsService.getTenantByPurposeId(
-        authData.purpose_id,
-      );
-      const { tracingId, errors } = await operationsService.submitTracing({
-        ...req.body,
-        tenant_id,
-        purpose_id: authData.purpose_id,
-      });
-      return res.status(200).json({ tracingId, errors }).end();
+      const tenant_id =
+        await operationsService.getTenantByPurposeId(purpose_id);
+      logger.info(`${req.method} ${req.url}`);
+      const { tracingId, errors, version, tenantId, date, state } =
+        await operationsService.submitTracing({
+          ...req.body,
+          tenant_id,
+          purpose_id,
+        });
+      return res
+        .status(200)
+        .json({ tracingId, errors, version, tenantId, date, state })
+        .end();
     } catch (error) {
       const errorRes = makeApiProblem(error, () => 500, logger);
-      return res.status(errorRes.status).end();
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 

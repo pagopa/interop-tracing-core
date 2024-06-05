@@ -15,9 +15,7 @@ import { tracingState } from "pagopa-interop-tracing-models";
 export function operationsServiceBuilder(dbService: DBService) {
   return {
     async getTenantByPurposeId(purposeId: string): Promise<string> {
-      logger.info("PURPOSE ID to be processed", purposeId);
       const tenant = await dbService.getTenantByPurposeId(purposeId);
-      logger.info("Get tenant id by purpose", tenant);
       return tenant;
     },
     async submitTracing({
@@ -31,15 +29,22 @@ export function operationsServiceBuilder(dbService: DBService) {
     }): Promise<ApiSubmitTracingResponse> {
       logger.info(`Submitting tracing, tenant: ${tenant_id}, date: ${date}`);
 
-      const { tracingId, errors } = await dbService.submitTracing({
-        tenantId: tenant_id,
+      const resultSubmit = await dbService.submitTracing({
+        tenant_id,
         date,
         version: 1,
         state: tracingState.pending,
         errors: false,
         purpose_id: purpose_id,
       });
-      return { tracingId, errors };
+      return {
+        tracingId: resultSubmit.tracing_id,
+        errors: resultSubmit.errors,
+        tenant_id: resultSubmit.tenant_id,
+        version: resultSubmit.version,
+        date: resultSubmit.date,
+        state: resultSubmit.state,
+      };
     },
 
     async recoverTracing(): Promise<ApiRecoverTracingResponse> {
