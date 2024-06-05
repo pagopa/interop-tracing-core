@@ -3,6 +3,7 @@ import { ZodiosRouter } from "@zodios/express";
 import {
   ExpressContext,
   ZodiosContext,
+  authenticationMiddleware,
   logger,
 } from "pagopa-interop-tracing-commons";
 import { Api } from "pagopa-interop-tracing-operations-client";
@@ -34,7 +35,7 @@ const tracingRouter =
     });
 
     router
-      .post("/tracings/submit", async (req, res) => {
+      .post("/tracings/submit", authenticationMiddleware, async (req, res) => {
         try {
           const result = await operationsService.submitTracing({
             date: req.body.date,

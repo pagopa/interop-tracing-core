@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { P, match } from "ts-pattern";
-import { z } from "zod";
+import { ZodError, z } from "zod";
 
 export const ProblemError = z.object({
   code: z.string(),
@@ -111,9 +111,29 @@ export function makeApiProblemBuilder<T extends string>(errors: {
 const errorCodes = {
   genericError: "9991",
   validationFailed: "9992",
+  invalidClaim: "9990",
+  missingHeader: "9994",
+  unauthorizedError: "9993",
+  jwtDecodingError: "9001",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
+
+export function parseErrorMessage(error: unknown): string {
+  if (error instanceof ZodError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return `${JSON.stringify(error)}`;
+}
 
 /* ===== Internal Error ===== */
 
@@ -142,5 +162,46 @@ export function validationFailed(errors: Error[]): ApiError<CommonErrorCodes> {
     errors: errors,
     code: "validationFailed",
     title: "Bad Request",
+  });
+}
+
+export function invalidClaim(error: unknown): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Claim not valid or missing: ${parseErrorMessage(error)}`,
+    code: "invalidClaim",
+    title: "Claim not valid or missing",
+  });
+}
+
+export function jwtDecodingError(error: unknown): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Unexpected error on JWT decoding: ${parseErrorMessage(error)}`,
+    code: "jwtDecodingError",
+    title: "JWT decoding error",
+  });
+}
+
+export const missingBearer: ApiError<CommonErrorCodes> = new ApiError({
+  detail: `Authorization Illegal header key.`,
+  code: "missingHeader",
+  title: "Bearer token has not been passed",
+});
+
+export function missingHeader(headerName?: string): ApiError<CommonErrorCodes> {
+  const title = "Header has not been passed";
+  return new ApiError({
+    detail: headerName
+      ? `Header ${headerName} not existing in this request`
+      : title,
+    code: "missingHeader",
+    title,
+  });
+}
+
+export function unauthorizedError(details: string): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: details,
+    code: "unauthorizedError",
+    title: "Unauthorized",
   });
 }

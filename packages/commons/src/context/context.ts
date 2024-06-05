@@ -5,7 +5,7 @@ import {
   zodiosContext,
 } from "@zodios/express";
 import { z } from "zod";
-import { AuthData } from "../auth/authenticationMiddleware.js";
+import { AuthData } from "../auth/authData.js";
 
 export type AppContext = z.infer<typeof ctx>;
 export type ZodiosContext = NonNullable<typeof zodiosCtx>;
