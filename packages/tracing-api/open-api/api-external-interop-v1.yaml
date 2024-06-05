@@ -343,6 +343,10 @@ components:
                 type: string
               message:
                 type: string
+              rowNumber:
+                type: integer
+                format: int32
+                minimum: 0
         totalCount:
           type: integer
           format: int64
