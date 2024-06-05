@@ -54,8 +54,8 @@ export function dbServiceBuilder(db: DB) {
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'`;
 
         const insertTracingQuery = `
-          INSERT INTO tracing.tracings (tenant_id, state, date, version)
-          VALUES ($1, $2, $3, $4)
+          INSERT INTO tracing.tracings (id, tenant_id, state, date, version)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING id, tenant_id, date, state, version`;
 
         const checkErrorsQuery = `
@@ -67,6 +67,7 @@ export function dbServiceBuilder(db: DB) {
         const checkValues = [tracing.tenant_id, tracing.date];
         const checkErrorsValues = [tracing.purpose_id];
         const insertValues = [
+          tracing.id,
           tracing.tenant_id,
           tracing.state,
           tracing.date,

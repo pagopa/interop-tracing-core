@@ -11,7 +11,7 @@ import {
 import { logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import { tracingState } from "pagopa-interop-tracing-models";
-
+import { v4 as uuidv4 } from "uuid";
 export function operationsServiceBuilder(dbService: DBService) {
   return {
     async getTenantByPurposeId(purposeId: string): Promise<string> {
@@ -30,6 +30,7 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(`Submitting tracing, tenant: ${tenant_id}, date: ${date}`);
 
       const resultSubmit = await dbService.submitTracing({
+        id: uuidv4(),
         tenant_id,
         date,
         version: 1,
