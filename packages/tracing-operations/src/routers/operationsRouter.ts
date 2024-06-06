@@ -33,18 +33,16 @@ const operationsRouter = (
 
   operationsRouter.post("/tracings/submit", async (req, res) => {
     try {
-      const authData = req.ctx.authData;
-      if (!authData.purpose_id) {
+      const { purpose_id } = req.ctx;
+      if (purpose_id) {
         throw genericInternalError("purpose_id is missing");
       }
-      console.log("purpose_id ", authData.purpose_id);
-      const tenant_id = await operationsService.getTenantByPurposeId(
-        authData.purpose_id,
-      );
+      const tenant_id =
+        await operationsService.getTenantByPurposeId(purpose_id);
       const { tracingId, errors } = await operationsService.submitTracing({
         ...req.body,
         tenant_id,
-        purpose_id: authData.purpose_id,
+        purpose_id,
       });
       return res.status(200).json({ tracingId, errors }).end();
     } catch (error) {
