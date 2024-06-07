@@ -51,7 +51,7 @@ export function dbServiceBuilder(db: DB) {
         logger.info("Start submitTracing queries ");
         const checkExistingQuery = `
           SELECT state FROM tracing.tracings
-          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'`;
+          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval ‘1 day’`;
 
         const insertTracingQuery = `
           INSERT INTO tracing.tracings (id, tenant_id, state, date, version)
@@ -87,7 +87,7 @@ export function dbServiceBuilder(db: DB) {
           logger.info("Found tracing_id with state MISSING");
           const updateQuery = `
           UPDATE tracing.tracings 
-          SET state = 'PENDING' 
+          SET state = ‘PENDING’ 
           WHERE id = $1 
           RETURNING id, tenant_id, date, state, version`;
           const { id, tenant_id, date, state, version } = await db.one(

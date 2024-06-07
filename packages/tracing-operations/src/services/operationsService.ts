@@ -12,6 +12,7 @@ import { logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import { tracingState } from "pagopa-interop-tracing-models";
 import { v4 as uuidv4 } from "uuid";
+
 export function operationsServiceBuilder(dbService: DBService) {
   return {
     async getTenantByPurposeId(purposeId: string): Promise<string> {

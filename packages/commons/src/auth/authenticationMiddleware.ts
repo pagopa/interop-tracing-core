@@ -12,9 +12,16 @@ import { logger } from "../logging/index.js";
 import { AuthData } from "./authData.js";
 import { readAuthDataFromJwtToken, verifyJwtToken } from "./jwt.js";
 import { Logger } from "winston";
-import { Headers } from "./headers.js";
+import { z } from "zod";
 
 const makeApiProblem = makeApiProblemBuilder({});
+
+export const Headers = z.object({
+  authorization: z.string().nullish(),
+  "x-correlation-id": z.string().nullish(),
+});
+
+export type Headers = z.infer<typeof Headers>;
 
 export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
   ExpressContext
