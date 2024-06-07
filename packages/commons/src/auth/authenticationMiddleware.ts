@@ -8,10 +8,9 @@ import {
 } from "pagopa-interop-tracing-models";
 import { P, match } from "ts-pattern";
 import { ExpressContext } from "../index.js";
-import { logger } from "../logging/index.js";
 import { AuthData } from "./authData.js";
 import { readAuthDataFromJwtToken, verifyJwtToken } from "./jwt.js";
-import { Logger } from "winston";
+import { Logger, logger } from "../logging/index.js";
 import { z } from "zod";
 
 const makeApiProblem = makeApiProblemBuilder({});
@@ -46,9 +45,14 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
       throw unauthorizedError("Invalid token");
     }
     const { purposeId }: AuthData = readAuthDataFromJwtToken(jwtToken);
-    req.ctx.purposeId = purposeId;
+    req.ctx.authData.purposeId = purposeId;
     next();
   };
+
+  const loggerInstance = logger({
+    serviceName: req.ctx.serviceName,
+    correlationId: req.ctx.correlationId,
+  });
 
   try {
     const headers = Headers.safeParse(req.headers);
@@ -60,18 +64,27 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
         {
           authorization: P.string,
         },
-        async (headers) => await addCtxAuthData(headers.authorization, logger),
+        async (headers) =>
+          await addCtxAuthData(headers.authorization, loggerInstance),
       )
       .with(
         {
           authorization: P.nullish,
         },
         () => {
-          logger.warn(
+          loggerInstance.warn(
             `No authentication has been provided for this call ${req.method} ${req.url}`,
           );
 
           throw missingBearer;
+        },
+      )
+      .with(
+        {
+          authorization: P.string,
+        },
+        () => {
+          throw missingHeader("x-correlation-id");
         },
       )
       .otherwise(() => {
@@ -86,7 +99,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
           .with("operationForbidden", () => 403)
           .with("missingHeader", () => 400)
           .otherwise(() => 500),
-      logger,
+      loggerInstance,
     );
     return res.status(problem.status).json(problem).end();
   }

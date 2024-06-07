@@ -4,14 +4,14 @@ import {
   ZodiosContext,
   ExpressContext,
   initDB,
-  logger,
+  genericLogger,
 } from "pagopa-interop-tracing-commons";
 import { api } from "pagopa-interop-tracing-operations-client";
 import { makeApiProblem } from "../model/domain/errors.js";
 import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
-import { genericInternalError } from "pagopa-interop-tracing-models";
+import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -27,40 +27,37 @@ const operationsRouter = (
   });
 
   const operationsRouter = ctx.router(api.api);
-  const operationsService = operationsServiceBuilder(
-    dbServiceBuilder(dbInstance),
-  );
+  const dbService = dbServiceBuilder(dbInstance);
+  const operationsService = operationsServiceBuilder(dbService);
+  const { purposeAuthorizerMiddleware } =
+    purposeAuthorizerMiddlewareBuilder(dbService);
 
-  operationsRouter.post("/tracings/submit", async (req, res) => {
-    try {
-      const purposeId = req.headers.purpose_id as string;
-      if (!purposeId) {
-        throw genericInternalError("purposeId is missing");
-      }
-      const tenant_id = await operationsService.getTenantByPurposeId(purposeId);
-      logger.info(`${req.method} ${req.url}`);
-      const { tracingId, errors, version, tenantId, date, state } =
-        await operationsService.submitTracing({
+  operationsRouter.post(
+    "/tracings/submit",
+    purposeAuthorizerMiddleware,
+    async (req, res) => {
+      try {
+        genericLogger.info(`${req.method} ${req.url}`);
+
+        const tracing = await operationsService.submitTracing({
           ...req.body,
-          tenant_id,
-          purpose_id: purposeId,
+          tenantId: req.ctx.operationsAuth.tenantId,
         });
-      return res
-        .status(200)
-        .json({ tracingId, errors, version, tenantId, date, state })
-        .end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+
+        return res.status(200).json(tracing).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, () => 500, genericLogger);
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
   operationsRouter.post("/tracings/:tracingId/recover", async (_req, res) => {
     try {
       await operationsService.recoverTracing();
       return res.status(200).json().end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
+      const errorRes = makeApiProblem(error, () => 500, genericLogger);
       return res.status(errorRes.status).end();
     }
   });
@@ -70,7 +67,7 @@ const operationsRouter = (
       await operationsService.replaceTracing();
       return res.status(200).json().end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
+      const errorRes = makeApiProblem(error, () => 500, genericLogger);
       return res.status(errorRes.status).end();
     }
   });
@@ -79,10 +76,10 @@ const operationsRouter = (
     "/tracings/:tracingId/versions/:version/state",
     async (_req, res) => {
       try {
-        await operationsService.updateState();
+        await operationsService.updateTracingState();
         return res.status(200).json().end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, logger);
+        const errorRes = makeApiProblem(error, () => 500, genericLogger);
         return res.status(errorRes.status).end();
       }
     },
@@ -95,7 +92,7 @@ const operationsRouter = (
         await operationsService.savePurposeError();
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, logger);
+        const errorRes = makeApiProblem(error, () => 500, genericLogger);
         return res.status(errorRes.status).end();
       }
     },
@@ -106,7 +103,7 @@ const operationsRouter = (
       await operationsService.saveMissingTracing();
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
+      const errorRes = makeApiProblem(error, () => 500, genericLogger);
       return res.status(errorRes.status).end();
     }
   });
@@ -118,7 +115,7 @@ const operationsRouter = (
         await operationsService.deletePurposeErrors();
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, logger);
+        const errorRes = makeApiProblem(error, () => 500, genericLogger);
         return res.status(errorRes.status).end();
       }
     },
@@ -129,7 +126,7 @@ const operationsRouter = (
       await operationsService.getTracings();
       return res.status(204).json({ results: [], totalCount: 0 }).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
+      const errorRes = makeApiProblem(error, () => 500, genericLogger);
       return res.status(errorRes.status).end();
     }
   });
@@ -139,7 +136,7 @@ const operationsRouter = (
       await operationsService.getTracingErrors();
       return res.status(204).json({ errors: [], totalCount: 0 }).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, logger);
+      const errorRes = makeApiProblem(error, () => 500, genericLogger);
       return res.status(errorRes.status).end();
     }
   });

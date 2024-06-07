@@ -109,13 +109,13 @@ export function makeApiProblemBuilder<T extends string>(errors: {
 }
 
 const errorCodes = {
-  genericError: "9991",
-  validationFailed: "9992",
-  invalidClaim: "9990",
-  missingHeader: "9994",
-  unauthorizedError: "9993",
-  jwtDecodingError: "9001",
-  existingTenant: "9002",
+  genericError: "9000",
+  badRequestError: "9001",
+  invalidClaim: "9002",
+  missingHeader: "9003",
+  unauthorizedError: "9004",
+  jwtDecodingError: "9005",
+  existingTenant: "9006",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -157,14 +157,18 @@ export function genericError(details: string): ApiError<CommonErrorCodes> {
   });
 }
 
-export function validationFailed(errors: Error[]): ApiError<CommonErrorCodes> {
+export function badRequestError(
+  detail: string,
+  errors?: Error[],
+): ApiError<CommonErrorCodes> {
   return new ApiError({
-    detail: "Validation failed",
-    errors: errors,
-    code: "validationFailed",
-    title: "Bad Request",
+    detail,
+    code: "badRequestError",
+    title: "Bad request",
+    errors,
   });
 }
+
 export function existingTenantError(
   errors: Error[],
 ): ApiError<CommonErrorCodes> {

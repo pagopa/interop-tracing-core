@@ -1,7 +1,7 @@
 import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 import { AuthData, AuthToken, getAuthDataFromToken } from "./authData.js";
-import { Logger } from "winston";
+import { Logger } from "../logging/index.js";
 import { JWTConfig } from "../index.js";
 import { invalidClaim, jwtDecodingError } from "pagopa-interop-tracing-models";
 

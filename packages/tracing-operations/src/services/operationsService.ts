@@ -4,95 +4,96 @@ import {
   ApiReplaceTracingResponse,
   ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
-  ApiUpdateStateResponse,
+  ApiUpdateTracingStateResponse,
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
-import { logger } from "pagopa-interop-tracing-commons";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
-import { tracingState } from "pagopa-interop-tracing-models";
-import { v4 as uuidv4 } from "uuid";
+import {
+  PurposeId,
+  generateId,
+  tracingState,
+} from "pagopa-interop-tracing-models";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
-    async getTenantByPurposeId(purposeId: string): Promise<string> {
-      const tenant = await dbService.getTenantByPurposeId(purposeId);
-      return tenant;
+    async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
+      return await dbService.getTenantByPurposeId(purposeId);
     },
     async submitTracing({
-      tenant_id,
+      tenantId,
       date,
-      purpose_id,
     }: {
-      tenant_id: string;
+      tenantId: string;
       date: string;
-      purpose_id: string;
     }): Promise<ApiSubmitTracingResponse> {
-      logger.info(`Submitting tracing, tenant: ${tenant_id}, date: ${date}`);
+      genericLogger.info(
+        `Submitting tracing with tenantId: ${tenantId}, date: ${date}`,
+      );
 
-      const resultSubmit = await dbService.submitTracing({
-        id: uuidv4(),
-        tenant_id,
+      const tracing = await dbService.submitTracing({
+        id: generateId(),
+        tenant_id: tenantId,
         date,
         version: 1,
         state: tracingState.pending,
         errors: false,
-        purpose_id: purpose_id,
       });
+
       return {
-        tracingId: resultSubmit.tracing_id,
-        errors: resultSubmit.errors,
-        tenant_id: resultSubmit.tenant_id,
-        version: resultSubmit.version,
-        date: resultSubmit.date,
-        state: resultSubmit.state,
+        tracingId: tracing.tracingId,
+        tenantId: tracing.tenantId,
+        version: tracing.version,
+        date: tracing.date,
+        state: tracing.state,
+        errors: tracing.errors,
       };
     },
-
     async recoverTracing(): Promise<ApiRecoverTracingResponse> {
-      logger.info(`Recover tracing`);
+      genericLogger.info(`Recover tracing`);
       await dbService.recoverTracing();
       return Promise.resolve({});
     },
 
     async replaceTracing(): Promise<ApiReplaceTracingResponse> {
-      logger.info(`Replacing tracing`);
+      genericLogger.info(`Replacing tracing`);
       await dbService.replaceTracing();
       return Promise.resolve({});
     },
 
-    async updateState(): Promise<ApiUpdateStateResponse> {
-      logger.info(`Updating state of tracing`);
-      await dbService.updateState();
+    async updateTracingState(): Promise<ApiUpdateTracingStateResponse> {
+      genericLogger.info(`Updating state of tracing`);
+      await dbService.updateTracingState();
       return Promise.resolve();
     },
 
     async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
-      logger.info(`Save purpose error`);
+      genericLogger.info(`Save purpose error`);
       await dbService.savePurposeError();
       return Promise.resolve();
     },
 
     async deletePurposeErrors(): Promise<void> {
-      logger.info(`Delete purpose error`);
+      genericLogger.info(`Delete purpose error`);
       await dbService.deletePurposeErrors();
       return Promise.resolve();
     },
 
     async saveMissingTracing(): Promise<ApiMissingResponse> {
-      logger.info(`Saving missing tracing`);
+      genericLogger.info(`Saving missing tracing`);
       await dbService.saveMissingTracing();
       return Promise.resolve();
     },
 
     async getTracings(): Promise<ApiGetTracingsResponse> {
-      logger.info(`Get tracings`);
+      genericLogger.info(`Get tracings`);
       await dbService.getTracings();
       return Promise.resolve({ results: [], totalCount: 0 });
     },
 
     async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {
-      logger.info(`Get error detail`);
+      genericLogger.info(`Get error detail`);
       await dbService.getTracingErrors();
       return Promise.resolve({
         errors: [],

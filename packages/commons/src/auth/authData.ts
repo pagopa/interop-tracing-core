@@ -9,6 +9,12 @@ export const AuthData = z.object({
   purposeId: z.string().uuid(),
 });
 export type AuthData = z.infer<typeof AuthData>;
+
+export const OperationsAuth = z.object({
+  tenantId: z.string().uuid(),
+});
+export type OperationsAuth = z.infer<typeof OperationsAuth>;
+
 export const defaultAuthData: AuthData = {
   purposeId: "",
 };

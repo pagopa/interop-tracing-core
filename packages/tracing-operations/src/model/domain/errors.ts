@@ -1,4 +1,8 @@
-import { ApiError, makeApiProblemBuilder } from "pagopa-interop-tracing-models";
+import {
+  ApiError,
+  CommonErrorCodes,
+  makeApiProblemBuilder,
+} from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
   tracingNotFound: "0001",
@@ -14,5 +18,13 @@ export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
     detail: `Tracing by ${tracingId} not found`,
     code: "tracingNotFound",
     title: "Tracing not found",
+  });
+}
+
+export function unauthorizedError(details: string): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: details,
+    code: "unauthorizedError",
+    title: "Unauthorized",
   });
 }

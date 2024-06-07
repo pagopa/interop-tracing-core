@@ -38,12 +38,17 @@ export type ApiReplaceTracingResponse = ZodiosResponseByPath<
   "post",
   "/tracings/:tracingId/replace"
 >;
-export type ApiUpdateStatePayload = ZodiosBodyByPath<
+export type ApiUpdateTracingStatePayload = ZodiosBodyByPath<
   Api,
   "post",
   "/tracings/:tracingId/versions/:version/state"
 >;
-export type ApiUpdateStateResponse = ZodiosResponseByPath<
+export type ApiUpdateTracingStateParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/versions/:version/state"
+>;
+export type ApiUpdateTracingStateResponse = ZodiosResponseByPath<
   Api,
   "post",
   "/tracings/:tracingId/versions/:version/state"

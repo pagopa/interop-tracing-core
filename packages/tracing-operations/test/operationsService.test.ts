@@ -8,6 +8,7 @@ import {
 } from "../src/services/operationsService.js";
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import { resolve } from "path";
+import { PurposeId, TenantId, generateId } from "pagopa-interop-tracing-models";
 
 describe("Operations Service", () => {
   let operationsService: OperationsService;
@@ -48,9 +49,16 @@ describe("Operations Service", () => {
   describe("Tenants service", () => {
     describe("getTenantByPurposeId", () => {
       it("retrieve tenant by purposeId", async () => {
-        const result = await operationsService.getTenantByPurposeId("");
+        const tenantIdId: TenantId = generateId();
+        const purposeId: PurposeId = generateId();
 
-        expect(result).toBe("");
+        vi.spyOn(operationsService, "getTenantByPurposeId").mockResolvedValue(
+          tenantIdId,
+        );
+
+        const result = await operationsService.getTenantByPurposeId(purposeId);
+
+        expect(result).toBe(tenantIdId);
       });
     });
   });

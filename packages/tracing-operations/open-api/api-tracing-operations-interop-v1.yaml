@@ -126,7 +126,7 @@ paths:
   /tracings/{tracingId}/versions/{version}/state:
     post:
       summary: Update tracing state by tracingId
-      operationId: updateState
+      operationId: updateTracingState
       tags:
         - Write
       parameters:
@@ -139,7 +139,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       requestBody:
         required: true
         content:
@@ -479,6 +479,11 @@ components:
           format: int64
     SubmitTracingResponse:
       type: object
+      required: 
+        - tracingId
+        - tenantId
+        - version
+        - errors
       properties:
         tracingId:
           type: string
@@ -486,6 +491,9 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
         errors:

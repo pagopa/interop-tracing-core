@@ -1,60 +1,27 @@
-import * as expressWinston from "express-winston";
-import * as winston from "winston";
-import { loggerConfig } from "../config/loggerConfig.js";
-import { getContext } from "../index.js";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import * as express from "express";
+import { AppContext } from "../context/context.js";
+import { LoggerMetadata, logger } from "./index.js";
 
-export type SessionMetaData = {
-  correlationId: string | undefined;
-};
+export function loggerMiddleware(serviceName: string): express.RequestHandler {
+  return (req, res, next): void => {
+    const context = (req as express.Request & { ctx?: AppContext }).ctx;
 
-const config = loggerConfig();
+    const loggerMetadata: LoggerMetadata = {
+      serviceName,
+      correlationId: context?.correlationId,
+      purposeId: context?.authData?.purposeId,
+      tenantId: context?.operationsAuth?.tenantId,
+    };
 
-const getLoggerMetadata = (): SessionMetaData => {
-  const appContext = getContext();
-  return !appContext
-    ? {
-        correlationId: "",
-      }
-    : {
-        correlationId: appContext.correlationId,
-      };
-};
+    const loggerInstance = logger(loggerMetadata);
 
-export const customFormat = winston.format.printf(
-  ({ level, message, timestamp }: winston.Logform.TransformableInfo) => {
-    const { correlationId } = getLoggerMetadata();
-    const lines = message
-      .toString()
-      .split("\n")
-      .map(
-        (line: string) =>
-          `${timestamp} ${level.toUpperCase()} - [CID=${correlationId}] ${line}`,
+    res.on("finish", () => {
+      loggerInstance.info(
+        `Request ${req.method} ${req.url} - Response ${res.statusCode} ${res.statusMessage}`,
       );
-    return lines.join("\n");
-  },
-);
+    });
 
-export const logger = winston.createLogger({
-  level: config.logLevel,
-  transports: [
-    new winston.transports.Console({
-      stderrLevels: ["error"],
-    }),
-  ],
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json(),
-    winston.format.errors({ stack: true }),
-    customFormat,
-  ),
-  silent: process.env.NODE_ENV === "test",
-});
-
-export const loggerMiddleware = expressWinston.logger({
-  winstonInstance: logger,
-  requestWhitelist:
-    config.logLevel === "debug" ? ["body", "headers", "query"] : [],
-  ignoredRoutes: ["/status"],
-  responseWhitelist:
-    config.logLevel === "debug" ? ["body", "statusCode", "statusMessage"] : [],
-});
+    next();
+  };
+}

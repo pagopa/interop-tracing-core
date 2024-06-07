@@ -4,7 +4,7 @@ import {
   Problem,
 } from "pagopa-interop-tracing-models";
 import { AxiosError } from "axios";
-import { logger } from "pagopa-interop-tracing-commons";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 
 export const errorCodes = {
   writeObjectS3BucketError: "0001",
@@ -22,7 +22,7 @@ export const resolveOperationsApiClientProblem = (error: unknown): Problem => {
   if (operationsApiProblem.success) {
     return operationsApiProblem.data;
   } else {
-    return makeApiProblem(error, () => 500, logger);
+    return makeApiProblem(error, () => 500, genericLogger);
   }
 };
 

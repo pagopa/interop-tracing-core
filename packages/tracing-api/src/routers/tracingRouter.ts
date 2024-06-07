@@ -3,7 +3,8 @@ import { ZodiosRouter } from "@zodios/express";
 import {
   ExpressContext,
   ZodiosContext,
-  logger,
+  genericLogger,
+  zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
 import { Api } from "pagopa-interop-tracing-operations-client";
 import { genericError } from "pagopa-interop-tracing-models";
@@ -18,7 +19,6 @@ import {
   ApiTracingErrorsContent,
   ApiTracingsContent,
 } from "../model/tracing.js";
-import validationErrorHandler from "../utilities/validationErrorHandler.js";
 
 const tracingRouter =
   (
@@ -30,7 +30,7 @@ const tracingRouter =
     const operationsService: OperationsService =
       operationsServiceBuilder(operationsApiClient);
     const router = ctx.router(api.api, {
-      validationErrorHandler,
+      validationErrorHandler: zodiosValidationErrorToApiProblem,
     });
 
     router
@@ -52,7 +52,7 @@ const tracingRouter =
 
           const result = z.array(ApiTracingsContent).safeParse(data.results);
           if (!result.success) {
-            logger.error(
+            genericLogger.error(
               `Unable to parse tracings items: result ${JSON.stringify(
                 result,
               )} - data ${JSON.stringify(data.results)} `,
@@ -85,7 +85,7 @@ const tracingRouter =
             .safeParse(data.errors);
 
           if (!result.success) {
-            logger.error(
+            genericLogger.error(
               `Unable to parse tracing errors items: result ${JSON.stringify(
                 result,
               )} - data ${JSON.stringify(data.errors)} `,
