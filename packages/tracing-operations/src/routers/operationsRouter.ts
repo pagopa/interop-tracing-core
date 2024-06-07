@@ -37,12 +37,7 @@ const operationsRouter = (
       if (purposeId) {
         throw genericInternalError("purpose_id is missing");
       }
-      const tenant_id = await operationsService.getTenantByPurposeId(purposeId);
-      const { tracingId, errors } = await operationsService.submitTracing({
-        ...req.body,
-        tenant_id,
-        purpose_id: purposeId,
-      });
+      const { tracingId, errors } = await operationsService.submitTracing();
       return res.status(200).json({ tracingId, errors }).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, () => 500, logger);
