@@ -1,7 +1,11 @@
 import helmet from "helmet";
 import express, { NextFunction, Request, Response } from "express";
 import cors, { CorsOptions } from "cors";
-import { zodiosCtx } from "pagopa-interop-tracing-commons";
+import {
+  authenticationMiddleware,
+  contextMiddleware,
+  zodiosCtx,
+} from "pagopa-interop-tracing-commons";
 import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import tracingRouter from "./routers/tracingRouter.js";
 import healthRouter from "./routers/healthRouter.js";
@@ -67,6 +71,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 
 app.use(healthRouter);
+app.use(contextMiddleware);
+app.use(authenticationMiddleware);
 app.use(tracingRouter(zodiosCtx)(operationsApiClient));
 
 export default app;
