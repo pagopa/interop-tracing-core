@@ -12,7 +12,7 @@ export type ExpressContext = NonNullable<typeof zodiosCtx.context>;
 
 export const ctx = z.object({
   correlationId: z.string().uuid(),
-  purpose_id: z.string().uuid(),
+  purposeId: z.string().uuid(),
 });
 
 export const zodiosCtx = zodiosContext(z.object({ ctx }));
@@ -20,7 +20,7 @@ export const zodiosCtx = zodiosContext(z.object({ ctx }));
 const globalStore = new AsyncLocalStorage<AppContext>();
 const defaultAppContext: AppContext = {
   correlationId: "",
-  purpose_id: "",
+  purposeId: "",
 };
 
 export const getContext = (): AppContext => {
@@ -42,7 +42,7 @@ export const contextMiddleware: ZodiosRouterContextRequestHandler<
 > = (req, res, next) => {
   try {
     req.ctx = {
-      purpose_id: "",
+      purposeId: "",
       correlationId: "",
     };
     return next();

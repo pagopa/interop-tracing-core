@@ -38,8 +38,8 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
     if (!valid) {
       throw unauthorizedError("Invalid token");
     }
-    const { purpose_id }: AuthData = readAuthDataFromJwtToken(jwtToken);
-    req.ctx.purpose_id = purpose_id;
+    const { purposeId }: AuthData = readAuthDataFromJwtToken(jwtToken);
+    req.ctx.purposeId = purposeId;
     next();
   };
 
@@ -52,14 +52,12 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
       .with(
         {
           authorization: P.string,
-          "x-correlation-id": P.string,
         },
         async (headers) => await addCtxAuthData(headers.authorization, logger),
       )
       .with(
         {
           authorization: P.nullish,
-          "x-correlation-id": P._,
         },
         () => {
           logger.warn(
@@ -67,15 +65,6 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
           );
 
           throw missingBearer;
-        },
-      )
-      .with(
-        {
-          authorization: P.string,
-          "x-correlation-id": P.nullish,
-        },
-        () => {
-          throw missingHeader("x-correlation-id");
         },
       )
       .otherwise(() => {
