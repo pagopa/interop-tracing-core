@@ -5,3 +5,4 @@ export * from "./types/index.js";
 export * from "./config/index.js";
 export * from "./repositories/db.js";
 export * from "./auth/authenticationMiddleware.js";
+export * from "./router/zodiosValidationErrorHandler.js";
