@@ -51,15 +51,18 @@ export function dbServiceBuilder(db: DB) {
     }> {
       try {
         const findOneTracingQuery = `
-          SELECT state FROM tracing.tracings
-          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval ‘1 day’`;
+          SELECT * FROM tracing.tracings
+          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'`;
 
         const tracing: Tracing | null = await db.oneOrNone(
           findOneTracingQuery,
           [data.tenant_id, data.date],
         );
 
-        if (tracing?.state === tracingState.completed) {
+        if (
+          tracing?.state === tracingState.completed ||
+          tracing?.state === tracingState.pending
+        ) {
           throw existingTenantError([
             {
               name: "tracingAlreadyExistsError",
@@ -76,9 +79,12 @@ export function dbServiceBuilder(db: DB) {
             AND tracing.id <> $2
           LIMIT 1`;
 
-        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
-          findPastTracingErrorsQuery,
-        );
+        const pastTracingsHasErrors: boolean | null = tracing
+          ? await db.oneOrNone(findPastTracingErrorsQuery, [
+              tracing.tenant_id,
+              tracing.id,
+            ])
+          : false;
 
         if (tracing?.state === tracingState.missing) {
           const updateTracingQuery = `
