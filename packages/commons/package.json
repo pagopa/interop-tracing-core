@@ -22,6 +22,7 @@
     "@zodios/express": "^10.6.1",
     "connection-string": "^4.4.0",
     "express-winston": "^4.2.0",
+    "pagopa-interop-tracing-models": "workspace:*",
     "pg-promise": "^11.7.8",
     "ts-pattern": "^5.0.1",
     "uuid": "^9.0.0",

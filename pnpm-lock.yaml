@@ -75,6 +75,9 @@ importers:
       express-winston:
         specifier: ^4.2.0
         version: 4.2.0(winston@3.13.0)
+      pagopa-interop-tracing-models:
+        specifier: workspace:*
+        version: link:../models
       pg-promise:
         specifier: ^11.7.8
         version: 11.8.0
