@@ -1,12 +1,6 @@
 import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
-import {
-  AuthData,
-  AuthToken,
-  KeySchema,
-  PublicKey,
-  getAuthDataFromToken,
-} from "./authData.js";
+import { AuthData, AuthToken, getAuthDataFromToken } from "./authData.js";
 import { Logger } from "winston";
 import { JWTConfig } from "../index.js";
 import { invalidClaim, jwtDecodingError } from "pagopa-interop-tracing-models";
@@ -29,33 +23,17 @@ export const readAuthDataFromJwtToken = (jwtToken: string): AuthData => {
   }
 };
 
-async function getKeyKid(
-  client: jwksClient.JwksClient,
-): Promise<PublicKey | undefined> {
-  const keys = await client.getKeys();
-  const result = KeySchema.safeParse(keys);
-  if (result.success) {
-    return result.data;
-  }
-  return undefined;
-}
-
 const getKey =
   (
     clients: jwksClient.JwksClient[],
     logger: Logger,
   ): ((header: JwtHeader, callback: SigningKeyCallback) => void) =>
-  async (header, callback) => {
+  (header, callback) => {
     for (const { client, last } of clients.map((c, i) => ({
       client: c,
       last: i === clients.length - 1,
     }))) {
-      const key = await getKeyKid(client);
-      let kid = header.kid;
-      if (!kid && key && key[0]) {
-        kid = key[0].kid;
-      }
-      await client.getSigningKey(header.kid ?? kid, function (err, key) {
+      client.getSigningKey(header.kid, function (err, key) {
         if (err && last) {
           logger.error(`Error getting signing key: ${err}`);
           return callback(err, undefined);
