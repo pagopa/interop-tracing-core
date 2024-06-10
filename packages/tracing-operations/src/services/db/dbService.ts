@@ -57,7 +57,7 @@ export function dbServiceBuilder(db: DB) {
         );
 
         const findOneTracingQuery = `
-          SELECT state FROM tracing.tracings
+          SELECT id, state FROM tracing.tracings
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
 
