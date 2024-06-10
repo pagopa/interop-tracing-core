@@ -8,13 +8,14 @@ import { genericLogger } from "pagopa-interop-tracing-commons";
 
 export const errorCodes = {
   writeObjectS3BucketError: "0001",
+  updateTracingStateError: "0002",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
 
 export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
-export const resolveOperationsApiClientProblem = (error: unknown): Problem => {
+export const resolveApiClientProblem = (error: unknown): Problem => {
   const operationsApiProblem = Problem.safeParse(
     (error as AxiosError).response?.data,
   );
@@ -32,5 +33,14 @@ export function writeObjectS3BucketError(
   return new InternalError({
     detail: `${detail}`,
     code: "writeObjectS3BucketError",
+  });
+}
+
+export function updateTracingStateError(
+  detail: unknown,
+): InternalError<ErrorCodes> {
+  return new InternalError({
+    detail: `${detail}`,
+    code: "updateTracingStateError",
   });
 }

@@ -10,8 +10,22 @@ import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import tracingRouter from "./routers/tracingRouter.js";
 import healthRouter from "./routers/healthRouter.js";
 import { config } from "./utilities/config.js";
+import { S3Client } from "@aws-sdk/client-s3";
+import {
+  BucketService,
+  bucketServiceBuilder,
+} from "./services/bucketService.js";
+import {
+  OperationsService,
+  operationsServiceBuilder,
+} from "./services/operationsService.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
+const operationsService: OperationsService =
+  operationsServiceBuilder(operationsApiClient);
+
+const s3client: S3Client = new S3Client({ region: config.awsRegion });
+const bucketService: BucketService = bucketServiceBuilder(s3client);
 
 const app = zodiosCtx.app();
 
@@ -69,10 +83,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
-
-app.use(healthRouter);
-app.use(contextMiddleware);
+app.use(contextMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
-app.use(tracingRouter(zodiosCtx)(operationsApiClient));
+app.use(healthRouter);
+app.use(tracingRouter(zodiosCtx)(operationsService, bucketService));
 
 export default app;

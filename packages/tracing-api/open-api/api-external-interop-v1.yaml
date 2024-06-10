@@ -259,9 +259,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
         date:
           type: string
           format: date
@@ -288,9 +288,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
       required:
         - file
     ReplaceTracingResponse:
@@ -312,9 +312,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
       required:
         - file
     RecoverTracingResponse:

@@ -1,4 +1,4 @@
-import { ZodiosEndpointDefinitions, ZodiosInstance } from "@zodios/core";
+import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
   ExpressContext,
@@ -6,46 +6,103 @@ import {
   genericLogger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
-import { Api } from "pagopa-interop-tracing-operations-client";
-import { genericError } from "pagopa-interop-tracing-models";
-import { z } from "zod";
-import { resolveOperationsApiClientProblem } from "../model/domain/errors.js";
 import {
-  OperationsService,
-  operationsServiceBuilder,
-} from "../services/operationsService.js";
+  badRequestError,
+  genericError,
+  tracingState,
+} from "pagopa-interop-tracing-models";
+import { z } from "zod";
+import {
+  resolveApiClientProblem,
+  updateTracingStateError,
+} from "../model/domain/errors.js";
+import { OperationsService } from "../services/operationsService.js";
 import { api } from "../model/generated/api.js";
 import {
   ApiTracingErrorsContent,
   ApiTracingsContent,
 } from "../model/tracing.js";
+import { BucketService } from "../services/bucketService.js";
+import storage from "../utilities/storage.js";
 
 const tracingRouter =
   (
     ctx: ZodiosContext,
   ): ((
-    operationsApiClient: ZodiosInstance<Api>,
+    operationsService: OperationsService,
+    bucketService: BucketService,
   ) => ZodiosRouter<ZodiosEndpointDefinitions, ExpressContext>) =>
-  (operationsApiClient: ZodiosInstance<Api>) => {
-    const operationsService: OperationsService =
-      operationsServiceBuilder(operationsApiClient);
+  (operationsService: OperationsService, bucketService: BucketService) => {
     const router = ctx.router(api.api, {
       validationErrorHandler: zodiosValidationErrorToApiProblem,
+      validate: false,
     });
 
     router
-      .post("/tracings/submit", async (req, res) => {
-        try {
-          const result = await operationsService.submitTracing({
-            date: req.body.date,
-          });
+      .post(
+        "/tracings/submit",
+        storage.upload.single("file"),
+        async (req, res) => {
+          try {
+            if (!req.file) {
+              throw badRequestError(`Incorrect value for file field`);
+            }
 
-          return res.status(200).json(result).end();
-        } catch (error) {
-          const errorRes = resolveOperationsApiClientProblem(error);
-          return res.status(errorRes.status).json(errorRes).end();
-        }
-      })
+            const result = await operationsService.submitTracing(
+              {
+                purposeId: req.ctx.authData.purposeId,
+                correlationId: req.ctx.correlationId,
+              },
+              {
+                date: req.body.date,
+              },
+            );
+
+            const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}`;
+
+            await bucketService
+              .writeObject(req.file, bucketS3Key)
+              .catch(async (error) => {
+                genericLogger.error(
+                  `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${error}`,
+                );
+
+                await operationsService
+                  .updateTracingState(
+                    {
+                      purposeId: req.ctx.authData.purposeId,
+                      correlationId: req.ctx.correlationId,
+                    },
+                    {
+                      version: result.version,
+                      tracingId: result.tracingId,
+                    },
+                    { state: tracingState.missing },
+                  )
+                  .catch((e) => {
+                    throw updateTracingStateError(`${e}`);
+                  });
+
+                throw error;
+              });
+
+            return res
+              .status(200)
+              .json({
+                tracingId: result.tracingId,
+                errors: result.errors,
+              })
+              .end();
+          } catch (error) {
+            const errorRes = resolveApiClientProblem(error);
+            return res.status(errorRes.status).json(errorRes).end();
+          } finally {
+            if (req.file) {
+              await storage.unlink(req.file.path);
+            }
+          }
+        },
+      )
       .get("/tracings", async (req, res) => {
         try {
           const data = await operationsService.getTracings(req.query);
@@ -69,7 +126,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveOperationsApiClientProblem(error);
+          const errorRes = resolveApiClientProblem(error);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -102,7 +159,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveOperationsApiClientProblem(error);
+          const errorRes = resolveApiClientProblem(error);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -114,7 +171,7 @@ const tracingRouter =
 
           return res.status(200).json(result).end();
         } catch (error) {
-          const errorRes = resolveOperationsApiClientProblem(error);
+          const errorRes = resolveApiClientProblem(error);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -126,7 +183,7 @@ const tracingRouter =
 
           return res.status(200).json(result).end();
         } catch (error) {
-          const errorRes = resolveOperationsApiClientProblem(error);
+          const errorRes = resolveApiClientProblem(error);
           return res.status(errorRes.status).json(errorRes).end();
         }
       });
