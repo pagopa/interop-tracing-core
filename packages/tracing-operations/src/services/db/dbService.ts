@@ -83,12 +83,10 @@ export function dbServiceBuilder(db: DB) {
             AND tracing.id <> $2
           LIMIT 1`;
 
-        const pastTracingsHasErrors: boolean | null = tracing
-          ? await db.oneOrNone(findPastTracingErrorsQuery, [
-              data.tenant_id,
-              tracing.id,
-            ])
-          : false;
+        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
+          findPastTracingErrorsQuery,
+          [data.tenant_id, data.id],
+        );
 
         if (tracing?.state === tracingState.missing) {
           const updateTracingQuery = `
