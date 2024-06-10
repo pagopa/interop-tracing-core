@@ -8,7 +8,6 @@ import {
 } from "pagopa-interop-tracing-models";
 import { P, match } from "ts-pattern";
 import { ExpressContext } from "../index.js";
-import { AuthData } from "./authData.js";
 import { readAuthDataFromJwtToken, verifyJwtToken } from "./jwt.js";
 import { Logger, logger } from "../logging/index.js";
 import { z } from "zod";
