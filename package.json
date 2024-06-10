@@ -5,6 +5,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "start:tracing-api": "turbo start --filter pagopa-interop-tracing-api",
     "start:tracing-operation": "turbo start --filter pagopa-interop-tracing-operations",
     "test": "turbo test",
     "test:it": "turbo test:it",
@@ -13,6 +14,7 @@
     "lint:autofix": "turbo lint:autofix",
     "format:check": "turbo format:check",
     "format:write": "turbo format:write",
+    "generate-model": "turbo generate-model",
     "generate-client": "turbo generate-client",
     "clean-generated": "turbo clean-generated"
   },

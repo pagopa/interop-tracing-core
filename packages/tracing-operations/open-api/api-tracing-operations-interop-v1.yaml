@@ -398,22 +398,29 @@ components:
     SavePurposeErrorRequest:
       type: object
       properties:
-        tenantId:
+        tracingId:
           type: string
           format: uuid
+        version: 
+          type: integer
+          format: int32
+          minimum: 0
         date:
           type: string
           format: date
-        error:
+        errorCode:
+          type: string
+        message:
           type: string
         rowNumber:
           type: integer
       required:
         - tracingId
-        - tenantId
-        - date
-        - error
         - version
+        - date
+        - errorCode
+        - message
+        - rowNumber
     SaveMissingTracingRequest:
       type: object
       properties:
