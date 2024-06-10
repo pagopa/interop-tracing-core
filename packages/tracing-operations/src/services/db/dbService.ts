@@ -2,13 +2,14 @@ import {
   PurposeId,
   TenantId,
   TracingState,
-  existingTenantError,
   genericInternalError,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { Tracing } from "../../model/domain/db.js";
 import { errorMapper } from "../../utilities/errorMappers.js";
+import { tracingAlreadyExists } from "../../model/domain/errors.js";
+import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
@@ -50,29 +51,32 @@ export function dbServiceBuilder(db: DB) {
       version: number;
     }> {
       try {
+        const truncatedDate: Date = truncatedTo(
+          new Date(data.date).toISOString(),
+          DateUnit.DAYS,
+        );
+
         const findOneTracingQuery = `
-          SELECT * FROM tracing.tracings
-          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'`;
+          SELECT state FROM tracing.tracings
+          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
+          LIMIT 1;`;
 
         const tracing: Tracing | null = await db.oneOrNone(
           findOneTracingQuery,
-          [data.tenant_id, data.date],
+          [data.tenant_id, truncatedDate],
         );
 
         if (
           tracing?.state === tracingState.completed ||
           tracing?.state === tracingState.pending
         ) {
-          throw existingTenantError([
-            {
-              name: "tracingAlreadyExistsError",
-              message: `A tracing for the current tenant already exists on this date: ${tracing.date}`,
-            },
-          ]);
+          throw tracingAlreadyExists(
+            `A tracing for the current tenant already exists on this date: ${data.date}`,
+          );
         }
 
         const findPastTracingErrorsQuery = `
-          SELECT 1
+          SELECT 1 
           FROM tracing.tracings tracing
           WHERE (tracing.state = 'ERROR' OR tracing.state = 'MISSING')
             AND tracing.tenant_id = $1
@@ -81,7 +85,7 @@ export function dbServiceBuilder(db: DB) {
 
         const pastTracingsHasErrors: boolean | null = tracing
           ? await db.oneOrNone(findPastTracingErrorsQuery, [
-              tracing.tenant_id,
+              data.tenant_id,
               tracing.id,
             ])
           : false;
@@ -116,7 +120,7 @@ export function dbServiceBuilder(db: DB) {
           data.id,
           data.tenant_id,
           data.state,
-          data.date,
+          truncatedDate,
           data.version,
         ]);
 

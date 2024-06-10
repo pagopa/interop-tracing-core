@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const Headers = z.object({
   "x-correlation-id": z.string().nullish(),
-  "x-purpose-id": z.string().nullish(),
+  "x-requester-purpose-id": z.string().nullish(),
 });
 export type Headers = z.infer<typeof Headers>;
 
@@ -22,12 +22,12 @@ export const readHeaders = (req: Request): ParsedHeaders | undefined => {
     return match(headers)
       .with(
         {
-          "x-purpose-id": P.string,
+          "x-requester-purpose-id": P.string,
           "x-correlation-id": P.string,
         },
         (headers) => {
           return {
-            purposeId: headers["x-purpose-id"] as PurposeId,
+            purposeId: headers["x-requester-purpose-id"] as PurposeId,
             correlationId: headers["x-correlation-id"],
           };
         },
