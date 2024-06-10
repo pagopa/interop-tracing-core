@@ -1,12 +1,9 @@
-import {
-  ApiError,
-  CommonErrorCodes,
-  makeApiProblemBuilder,
-} from "pagopa-interop-tracing-models";
+import { ApiError, makeApiProblemBuilder } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
   tracingNotFound: "0001",
   tenantNotFound: "0002",
+  tracingAlreadyExists: "0003",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
@@ -21,10 +18,10 @@ export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
   });
 }
 
-export function unauthorizedError(details: string): ApiError<CommonErrorCodes> {
+export function tracingAlreadyExists(details: string): ApiError<ErrorCodes> {
   return new ApiError({
     detail: details,
-    code: "unauthorizedError",
-    title: "Unauthorized",
+    code: "tracingAlreadyExists",
+    title: "Bad Request",
   });
 }

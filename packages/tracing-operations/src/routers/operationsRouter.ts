@@ -34,7 +34,7 @@ const operationsRouter = (
 
   operationsRouter.post(
     "/tracings/submit",
-    purposeAuthorizerMiddleware,
+    purposeAuthorizerMiddleware(),
     async (req, res) => {
       try {
         genericLogger.info(`${req.method} ${req.url}`);

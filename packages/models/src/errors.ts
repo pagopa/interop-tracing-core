@@ -169,17 +169,6 @@ export function badRequestError(
   });
 }
 
-export function existingTenantError(
-  errors: Error[],
-): ApiError<CommonErrorCodes> {
-  return new ApiError({
-    detail: "Tracing for this tenant already exist",
-    errors: errors,
-    code: "existingTenant",
-    title: "Bad Request",
-  });
-}
-
 export function invalidClaim(error: unknown): ApiError<CommonErrorCodes> {
   return new ApiError({
     detail: `Claim not valid or missing: ${parseErrorMessage(error)}`,
