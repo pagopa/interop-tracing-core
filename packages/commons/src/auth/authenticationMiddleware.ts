@@ -44,8 +44,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
     if (!valid) {
       throw unauthorizedError("Invalid token");
     }
-    const { purposeId }: AuthData = readAuthDataFromJwtToken(jwtToken);
-    req.ctx.authData.purposeId = purposeId;
+    req.ctx.authData = readAuthDataFromJwtToken(jwtToken);
     next();
   };
 
