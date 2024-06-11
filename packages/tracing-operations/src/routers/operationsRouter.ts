@@ -45,7 +45,11 @@ const operationsRouter = (
 
         return res.status(200).json(tracing).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, operationsErrorMapper, genericLogger);
+        const errorRes = makeApiProblem(
+          error,
+          operationsErrorMapper,
+          genericLogger,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },

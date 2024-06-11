@@ -210,7 +210,9 @@ export function unauthorizedError(details: string): ApiError<CommonErrorCodes> {
   });
 }
 
-export function tracingAlreadyExists(details: string): ApiError<CommonErrorCodes> {
+export function tracingAlreadyExists(
+  details: string,
+): ApiError<CommonErrorCodes> {
   return new ApiError({
     detail: details,
     code: "tracingAlreadyExists",

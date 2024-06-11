@@ -17,4 +17,3 @@ export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
     title: "Tracing not found",
   });
 }
-
