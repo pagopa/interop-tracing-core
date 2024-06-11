@@ -7,11 +7,11 @@ import {
 import { match, P } from "ts-pattern";
 import { T } from "vitest/dist/types-198fd1d9.js";
 
-export const errorMapper = (error: unknown) =>
+export const dbServiceErrorMapper = (error: unknown) =>
   match<unknown, Problem>(error)
     .with(P.instanceOf(ApiError<T | CommonErrorCodes>), (error) => {
       throw error;
     })
     .otherwise((error: unknown) => {
-      throw genericInternalError(`Error createTracing: ${error}`);
+      throw genericInternalError(`DB Service error: ${error}`);
     });

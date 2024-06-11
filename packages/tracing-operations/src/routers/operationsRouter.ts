@@ -12,6 +12,7 @@ import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
 import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
+import { operationsErrorMapper } from "../utilities/errorMapper.js";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -37,8 +38,6 @@ const operationsRouter = (
     purposeAuthorizerMiddleware(),
     async (req, res) => {
       try {
-        genericLogger.info(`${req.method} ${req.url}`);
-
         const tracing = await operationsService.submitTracing({
           ...req.body,
           tenantId: req.ctx.operationsAuth.tenantId,
@@ -46,7 +45,7 @@ const operationsRouter = (
 
         return res.status(200).json(tracing).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, genericLogger);
+        const errorRes = makeApiProblem(error, operationsErrorMapper, genericLogger);
         return res.status(errorRes.status).json(errorRes).end();
       }
     },

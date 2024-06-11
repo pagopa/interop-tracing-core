@@ -115,7 +115,7 @@ const errorCodes = {
   missingHeader: "9003",
   unauthorizedError: "9004",
   jwtDecodingError: "9005",
-  existingTenant: "9006",
+  tracingAlreadyExists: "9006",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -207,5 +207,13 @@ export function unauthorizedError(details: string): ApiError<CommonErrorCodes> {
     detail: details,
     code: "unauthorizedError",
     title: "Unauthorized",
+  });
+}
+
+export function tracingAlreadyExists(details: string): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: details,
+    code: "tracingAlreadyExists",
+    title: "Bad Request",
   });
 }
