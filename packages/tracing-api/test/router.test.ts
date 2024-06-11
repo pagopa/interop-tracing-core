@@ -1,11 +1,18 @@
 import {
-  ApiGetTracingsQuery,
+  ApiSubmitTracingResponse,
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
-import { tracingState } from "pagopa-interop-tracing-models";
+import {
+  generateId,
+  tracingAlreadyExists,
+} from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
-import { zodiosCtx } from "pagopa-interop-tracing-commons";
+import {
+  contextMiddleware,
+  logger,
+  zodiosCtx,
+} from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -17,6 +24,10 @@ import {
   OperationsService,
   operationsServiceBuilder,
 } from "../src/services/operationsService.js";
+import { NextFunction, Response, Request } from "express";
+import { mockOperationsApiClientError } from "./utils.js";
+import { makeApiProblem } from "../src/model/domain/errors.js";
+import { tracingErrorMapper } from "../src/utilities/errorMapper.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -26,31 +37,140 @@ const s3client: S3Client = new S3Client({ region: config.awsRegion });
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 
 const app = zodiosCtx.app();
+app.use(contextMiddleware(config.applicationName));
+const mockAppCtx = {
+  authData: {
+    purposeId: generateId(),
+  },
+  correlationId: generateId(),
+};
+const mockAuthenticationMiddleware = (
+  req: RequestWithZodiosCtx,
+  _res: Response,
+  next: NextFunction,
+) => {
+  req.ctx = mockAppCtx;
+  next();
+};
+
+app.use(mockAuthenticationMiddleware);
 app.use(tracingRouter(zodiosCtx)(operationsService, bucketService));
+
 const tracingApiClient = supertest(app);
+
+interface RequestWithZodiosCtx extends Request {
+  ctx: {
+    authData: {
+      purposeId: string;
+    };
+    correlationId: string;
+  };
+}
+
+const getHeaders = (correlationId: string, purposeId: string) => ({
+  "X-Correlation-Id": correlationId,
+  "X-Requester-Purpose-Id": purposeId,
+});
+
+const buildS3Key = (
+  tenantId: string,
+  date: string,
+  tracingId: string,
+  version: number,
+): string => `${tenantId}/${date}/${tracingId}/${version}/${tracingId}`;
 
 describe("Tracing Router", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("the list of tracings has been retrieved with empty results", async () => {
-    const getTracings: ApiGetTracingsQuery = {
-      offset: 0,
-      limit: 2,
-      states: [tracingState.error, tracingState.missing],
+  it("submitTracing should upload to bucket the submitted tracing file, update database with related record and return 200 status", async () => {
+    const mockFile = Buffer.from("test file content");
+    const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+      tracingId: generateId(),
+      tenantId: generateId(),
+      date: "2024-06-11",
+      version: 1,
+      errors: false,
     };
 
-    vi.spyOn(operationsApiClient, "getTracings").mockResolvedValue({
-      results: [],
-      totalCount: 0,
-    });
+    vi.spyOn(operationsApiClient, "submitTracing").mockResolvedValue(
+      mockSubmitTracingResponse,
+    );
 
+    vi.spyOn(bucketService, "writeObject").mockResolvedValue();
+
+    vi.spyOn(operationsService, "updateTracingState").mockResolvedValue();
+
+    const originalFilename: string = "testfile.txt";
     const response = await tracingApiClient
-      .get(`/tracings`)
-      .set("Content-Type", "application/json")
-      .query(getTracings);
+      .post("/tracings/submit")
+      .attach("file", mockFile, originalFilename)
+      .field("date", mockSubmitTracingResponse.date)
+      .set("Authorization", `Bearer test-token`)
+      .set("Content-Type", "multipart/form-data");
 
     expect(response.status).toBe(200);
+    expect(response.body.tracingId).toBe(mockSubmitTracingResponse.tracingId);
+    expect(response.body.errors).toEqual(false);
+
+    const bucketS3Key = buildS3Key(
+      mockSubmitTracingResponse.tenantId,
+      mockSubmitTracingResponse.date,
+      mockSubmitTracingResponse.tracingId,
+      mockSubmitTracingResponse.version,
+    );
+
+    expect(bucketService.writeObject).toHaveBeenCalledWith(
+      expect.objectContaining({ originalname: originalFilename }),
+      bucketS3Key,
+    );
+
+    expect(operationsApiClient.submitTracing).toHaveBeenCalledWith(
+      {
+        date: mockSubmitTracingResponse.date,
+      },
+      {
+        headers: getHeaders(
+          mockAppCtx.correlationId,
+          mockAppCtx.authData.purposeId,
+        ),
+      },
+    );
+  });
+
+  it("submitTracing should return a 400 status bad request error if a tracing already exists for the provided date", async () => {
+    const mockFile = Buffer.from("test file content");
+    const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+      tracingId: generateId(),
+      tenantId: generateId(),
+      date: "2024-06-11",
+      version: 1,
+      errors: false,
+    };
+
+    const errorMessage = `A tracing for the current tenant already exists on this date: ${mockSubmitTracingResponse.date}`;
+    const errorApiMock = makeApiProblem(
+      tracingAlreadyExists(errorMessage),
+      tracingErrorMapper,
+      logger({}),
+    );
+
+    const operationsApiClientError = mockOperationsApiClientError(errorApiMock);
+
+    vi.spyOn(operationsApiClient, "submitTracing").mockRejectedValue(
+      operationsApiClientError,
+    );
+
+    const originalFilename: string = "testfile.txt";
+    const response = await tracingApiClient
+      .post("/tracings/submit")
+      .attach("file", mockFile, originalFilename)
+      .field("date", mockSubmitTracingResponse.date)
+      .set("Authorization", `Bearer test-token`)
+      .set("Content-Type", "multipart/form-data");
+
+    expect(response.text).contains(errorMessage);
+    expect(response.status).toBe(400);
   });
 });
