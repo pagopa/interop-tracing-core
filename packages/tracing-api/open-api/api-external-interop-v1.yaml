@@ -259,7 +259,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
             `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
         date:
@@ -288,7 +288,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
             `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
       required:
@@ -312,7 +312,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,dailyCalls,status,purposeId`
+            `date,purpose_id,status,requests_count`
             <br>
             `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
       required:
@@ -343,10 +343,6 @@ components:
                 type: string
               message:
                 type: string
-              rowNumber:
-                type: integer
-                format: int32
-                minimum: 0
         totalCount:
           type: integer
           format: int64
