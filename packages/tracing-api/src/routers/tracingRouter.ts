@@ -58,7 +58,7 @@ const tracingRouter =
               },
             );
 
-            const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}`;
+            const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}/${result.tracingId}`;
 
             await bucketService
               .writeObject(req.file, bucketS3Key)
