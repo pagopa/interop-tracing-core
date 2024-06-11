@@ -18,10 +18,3 @@ export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
   });
 }
 
-export function tracingAlreadyExists(details: string): ApiError<ErrorCodes> {
-  return new ApiError({
-    detail: details,
-    code: "tracingAlreadyExists",
-    title: "Bad Request",
-  });
-}

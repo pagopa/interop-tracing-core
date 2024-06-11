@@ -3,12 +3,12 @@ import {
   TenantId,
   TracingState,
   genericInternalError,
+  tracingAlreadyExists,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { Tracing } from "../../model/domain/db.js";
-import { errorMapper } from "../../utilities/errorMappers.js";
-import { tracingAlreadyExists } from "../../model/domain/errors.js";
+import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -131,7 +131,7 @@ export function dbServiceBuilder(db: DB) {
           errors: !!pastTracingsHasErrors,
         };
       } catch (error) {
-        throw errorMapper(error);
+        throw dbServiceErrorMapper(error);
       }
     },
 
