@@ -97,13 +97,18 @@ export function dbServiceBuilder(db: DB) {
             tracing.id,
           ]);
 
+          const recheckErrors: boolean | null = await db.oneOrNone(
+            findPastTracingErrorsQuery,
+            [data.tenant_id, data.id],
+          );
+
           return {
             tracingId: updatedTracing.id,
             tenantId: updatedTracing.tenant_id,
             date: updatedTracing.date,
             state: updatedTracing.state,
             version: updatedTracing.version,
-            errors: false,
+            errors: !!recheckErrors,
           };
         }
 

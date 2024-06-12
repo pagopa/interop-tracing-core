@@ -59,7 +59,6 @@ describe("Operations Service", () => {
       .withPassword(config.dbPassword)
       .withDatabase(config.dbName)
       .withExposedPorts(config.dbPort)
-      .withReuse()
       .withCopyFilesToContainer([
         {
           source: resolve(__dirname, "init-db.sql"),
@@ -190,7 +189,6 @@ describe("Operations Service", () => {
       expect(result.state).toBe("PENDING");
       result.date && expect(new Date(result.date)).toEqual(expectedDate);
       expect(result.version).toBe(1);
-      expect(1).toBe(1);
     });
     it("should give error if tenant submits a tracing for the same day when status is not error or missing", async () => {
       const existingTracing = {
