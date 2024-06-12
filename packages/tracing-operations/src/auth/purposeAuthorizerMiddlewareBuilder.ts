@@ -11,7 +11,7 @@ import {
   genericLogger,
 } from "pagopa-interop-tracing-commons";
 import { readHeaders } from "./headers.js";
-import { genericError, unauthorizedError } from "pagopa-interop-tracing-models";
+import { genericInternalError } from "pagopa-interop-tracing-models";
 import { makeApiProblem } from "../model/domain/errors.js";
 import { match } from "ts-pattern";
 import { DBService } from "../services/db/dbService.js";
@@ -30,14 +30,14 @@ const purposeAuthorizerMiddleware =
 
     try {
       if (!headers?.purposeId) {
-        throw unauthorizedError(
+        throw genericInternalError(
           `No header requester purposedId found to execute this request ${req.method} ${req.url}`,
-        ); // TODO: make internal error
+        );
       }
 
       const tenantId = await dbService.getTenantByPurposeId(headers.purposeId);
       if (!tenantId) {
-        throw genericError(
+        throw genericInternalError(
           `No related tenant found to execute this request ${req.method} ${req.url}`,
         );
       }
