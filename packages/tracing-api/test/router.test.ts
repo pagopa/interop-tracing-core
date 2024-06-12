@@ -9,6 +9,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
 import {
+  ExpressContext,
   contextMiddleware,
   logger,
   zodiosCtx,
@@ -28,6 +29,9 @@ import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
 import { makeApiProblem } from "../src/model/domain/errors.js";
 import { tracingErrorMapper } from "../src/utilities/errorMapper.js";
+import { ZodiosApp } from "@zodios/express";
+import { ApiExternal } from "../src/model/types.js";
+import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -36,8 +40,9 @@ const operationsService: OperationsService =
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 
-const app = zodiosCtx.app();
+const app: ZodiosApp<ApiExternal, ExpressContext> = zodiosCtx.app();
 app.use(contextMiddleware(config.applicationName));
+configureMulterEndpoints(app);
 const mockAppCtx = {
   authData: {
     purposeId: generateId(),
