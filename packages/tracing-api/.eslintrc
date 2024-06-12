@@ -32,6 +32,7 @@
     ".eslintrc",
     "**/src/model/generated/*.ts",
     "vitest.config.ts",
-    "**/dist"
+    "**/dist",
+    "**/multerPatchZodios.ts"
   ]
 }
