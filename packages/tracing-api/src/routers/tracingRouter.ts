@@ -6,7 +6,11 @@ import {
   genericLogger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
-import { genericError, tracingState } from "pagopa-interop-tracing-models";
+import {
+  OperationsHeaders,
+  genericError,
+  tracingState,
+} from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import {
   resolveApiClientProblem,
@@ -38,8 +42,10 @@ const tracingRouter =
         try {
           const result = await operationsService.submitTracing(
             {
-              purposeId: req.ctx.authData.purposeId,
-              correlationId: req.ctx.correlationId,
+              ...operationsHeaders(
+                req.ctx.correlationId,
+                req.ctx.authData.purposeId,
+              ),
             },
             {
               date: req.body.date,
@@ -58,8 +64,10 @@ const tracingRouter =
               await operationsService
                 .updateTracingState(
                   {
-                    purposeId: req.ctx.authData.purposeId,
-                    correlationId: req.ctx.correlationId,
+                    ...operationsHeaders(
+                      req.ctx.correlationId,
+                      req.ctx.authData.purposeId,
+                    ),
                   },
                   {
                     version: result.version,
@@ -179,3 +187,11 @@ const tracingRouter =
   };
 
 export default tracingRouter;
+
+const operationsHeaders = (
+  correlationId: string,
+  purposeId: string,
+): OperationsHeaders => ({
+  "X-Correlation-Id": correlationId,
+  "X-Requester-Purpose-Id": purposeId,
+});

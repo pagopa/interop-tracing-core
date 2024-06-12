@@ -15,12 +15,28 @@ paths:
       operationId: submitTracing
       tags:
         - Write
+      parameters:
+        - in: header
+          name: X-Correlation-Id
+          description: Correlation ID for tracking requests
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Requester-Purpose-Id
+          description: Purpose ID for specifying the requester's purpose
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/SubmitTracingRequest"
+
       responses:
         "200":
           description: Successful response
@@ -140,6 +156,20 @@ paths:
           required: true
           schema:
             type: integer
+        - in: header
+          name: X-Correlation-Id
+          description: Correlation ID for tracking requests
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Requester-Purpose-Id
+          description: Purpose ID for specifying the requester's purpose
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -401,7 +431,7 @@ components:
         tracingId:
           type: string
           format: uuid
-        version: 
+        version:
           type: integer
           format: int32
           minimum: 0
@@ -479,7 +509,7 @@ components:
           format: int64
     SubmitTracingResponse:
       type: object
-      required: 
+      required:
         - tracingId
         - tenantId
         - version
