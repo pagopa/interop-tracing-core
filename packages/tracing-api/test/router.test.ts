@@ -43,12 +43,14 @@ const bucketService: BucketService = bucketServiceBuilder(s3client);
 const app: ZodiosApp<ApiExternal, ExpressContext> = zodiosCtx.app();
 app.use(contextMiddleware(config.applicationName));
 configureMulterEndpoints(app);
+
 const mockAppCtx = {
   authData: {
     purposeId: generateId(),
   },
   correlationId: generateId(),
 };
+
 const mockAuthenticationMiddleware = (
   req: RequestWithZodiosCtx,
   _res: Response,
