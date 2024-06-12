@@ -10,12 +10,6 @@ import { ApiExternal } from "../../model/types.js";
 import { ExpressContext } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
 
-type FormDataPutEndpoint =
-  | "/tracings/:tracingId/recover"
-  | "/tracings/:tracingId/replace";
-
-type FormDataPostEndpoint = "/tracings/submit";
-
 /**
  * Middleware function to handle file uploads.
  * This function ensures that the uploaded file instance is attached to the request body as 'file',
@@ -40,22 +34,21 @@ const attachFileInstance = (
 export const configureMulterEndpoints = (
   app: ZodiosApp<ApiExternal, ExpressContext>,
 ) => {
+  const submit = "/tracings/submit";
+  const recover = "/tracings/:tracingId/recover";
+  const replace = "/tracings/:tracingId/replace";
+
   for (const endpoint of api.api) {
     if (endpoint.requestFormat === "form-data") {
-      match(endpoint.method)
-        .with("put", () =>
-          app.put(
-            endpoint.path as FormDataPutEndpoint,
-            upload.single("file"),
-            attachFileInstance,
-          ),
+      match(endpoint.path)
+        .with(submit, () =>
+          app.post(submit, upload.single("file"), attachFileInstance),
         )
-        .with("post", () =>
-          app.post(
-            endpoint.path as FormDataPostEndpoint,
-            upload.single("file"),
-            attachFileInstance,
-          ),
+        .with(recover, () =>
+          app.put(recover, upload.single("file"), attachFileInstance),
+        )
+        .with(replace, () =>
+          app.put(replace, upload.single("file"), attachFileInstance),
         )
         .exhaustive();
     }
