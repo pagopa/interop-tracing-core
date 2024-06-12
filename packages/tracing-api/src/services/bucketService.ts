@@ -3,11 +3,12 @@ import { config } from "../utilities/config.js";
 import { writeObjectS3BucketError } from "../model/domain/errors.js";
 import fs from "fs";
 import path from "path";
+import { ExpressMulterFile } from "../model/multer.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
     async writeObject(
-      file: Express.Multer.File,
+      file: ExpressMulterFile,
       bucketS3Key: string,
     ): Promise<void> {
       try {

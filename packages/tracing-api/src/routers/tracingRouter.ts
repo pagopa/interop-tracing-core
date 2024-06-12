@@ -6,11 +6,7 @@ import {
   genericLogger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
-import {
-  badRequestError,
-  genericError,
-  tracingState,
-} from "pagopa-interop-tracing-models";
+import { genericError, tracingState } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import {
   resolveApiClientProblem,
@@ -23,7 +19,7 @@ import {
   ApiTracingsContent,
 } from "../model/tracing.js";
 import { BucketService } from "../services/bucketService.js";
-import storage from "../utilities/storage.js";
+import storage from "../utilities/multer.js";
 
 const tracingRouter =
   (
@@ -35,74 +31,65 @@ const tracingRouter =
   (operationsService: OperationsService, bucketService: BucketService) => {
     const router = ctx.router(api.api, {
       validationErrorHandler: zodiosValidationErrorToApiProblem,
-      validate: false,
     });
 
     router
-      .post(
-        "/tracings/submit",
-        storage.upload.single("file"),
-        async (req, res) => {
-          try {
-            if (!req.file) {
-              throw badRequestError(`Incorrect value for file field`);
-            }
+      .post("/tracings/submit", async (req, res) => {
+        try {
+          const result = await operationsService.submitTracing(
+            {
+              purposeId: req.ctx.authData.purposeId,
+              correlationId: req.ctx.correlationId,
+            },
+            {
+              date: req.body.date,
+            },
+          );
 
-            const result = await operationsService.submitTracing(
-              {
-                purposeId: req.ctx.authData.purposeId,
-                correlationId: req.ctx.correlationId,
-              },
-              {
-                date: req.body.date,
-              },
-            );
+          const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}/${result.tracingId}`;
 
-            const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}/${result.tracingId}`;
+          await bucketService
+            .writeObject(req.body.file, bucketS3Key)
+            .catch(async (error) => {
+              genericLogger.error(
+                `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${error}`,
+              );
 
-            await bucketService
-              .writeObject(req.file, bucketS3Key)
-              .catch(async (error) => {
-                genericLogger.error(
-                  `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${error}`,
-                );
+              await operationsService
+                .updateTracingState(
+                  {
+                    purposeId: req.ctx.authData.purposeId,
+                    correlationId: req.ctx.correlationId,
+                  },
+                  {
+                    version: result.version,
+                    tracingId: result.tracingId,
+                  },
+                  { state: tracingState.missing },
+                )
+                .catch((e) => {
+                  throw updateTracingStateError(`${e}`);
+                });
 
-                await operationsService
-                  .updateTracingState(
-                    {
-                      purposeId: req.ctx.authData.purposeId,
-                      correlationId: req.ctx.correlationId,
-                    },
-                    {
-                      version: result.version,
-                      tracingId: result.tracingId,
-                    },
-                    { state: tracingState.missing },
-                  )
-                  .catch((e) => {
-                    throw updateTracingStateError(`${e}`);
-                  });
+              throw error;
+            });
 
-                throw error;
-              });
-
-            return res
-              .status(200)
-              .json({
-                tracingId: result.tracingId,
-                errors: result.errors,
-              })
-              .end();
-          } catch (error) {
-            const errorRes = resolveApiClientProblem(error);
-            return res.status(errorRes.status).json(errorRes).end();
-          } finally {
-            if (req.file) {
-              await storage.unlink(req.file.path);
-            }
+          return res
+            .status(200)
+            .json({
+              tracingId: result.tracingId,
+              errors: result.errors,
+            })
+            .end();
+        } catch (error) {
+          const errorRes = resolveApiClientProblem(error);
+          return res.status(errorRes.status).json(errorRes).end();
+        } finally {
+          if (req.file) {
+            await storage.unlink(req.file.path);
           }
-        },
-      )
+        }
+      })
       .get("/tracings", async (req, res) => {
         try {
           const data = await operationsService.getTracings(req.query);

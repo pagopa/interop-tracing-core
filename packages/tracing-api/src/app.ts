@@ -1,7 +1,8 @@
 import helmet from "helmet";
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import cors, { CorsOptions } from "cors";
 import {
+  ExpressContext,
   authenticationMiddleware,
   contextMiddleware,
   zodiosCtx,
@@ -19,6 +20,10 @@ import {
   OperationsService,
   operationsServiceBuilder,
 } from "./services/operationsService.js";
+import { configureMulterEndpoints } from "./routers/config/multer.js";
+import { queryParamsMiddleware } from "./middlewares/query.js";
+import { ZodiosApp } from "@zodios/express";
+import { ApiExternal } from "./model/types.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -27,7 +32,7 @@ const operationsService: OperationsService =
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 
-const app = zodiosCtx.app();
+const app: ZodiosApp<ApiExternal, ExpressContext> = zodiosCtx.app();
 
 // Disable the "X-Powered-By: Express" HTTP header for security reasons.
 // See https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#recommendation_16
@@ -66,26 +71,14 @@ const corsOptions: CorsOptions = {
   allowedHeaders: "*",
 };
 
-/**
- * Middleware to preprocess the 'state' query parameter.
- * Ensures the 'state' parameter is always handled as an array.
- *
- * The issue arises when a query parameter that Zodios expects to handle as an array
- * contains a single element. In such cases, it is treated as a string, leading to validation errors.
- * To address this, the middleware converts the parameter to an array to ensure correct validation preserving schema integrity.
- */
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  if (req.query.state && typeof req.query.state === "string") {
-    req.query.state = req.query.state.split(",");
-  }
-  next();
-});
-
+app.use(queryParamsMiddleware);
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(contextMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
-app.use(healthRouter);
+
+configureMulterEndpoints(app);
 app.use(tracingRouter(zodiosCtx)(operationsService, bucketService));
+app.use(healthRouter);
 
 export default app;
