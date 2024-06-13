@@ -71,15 +71,6 @@ export async function addEservice(
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }
 
-export async function clearTestingData(db: DB) {
-  const deleteTestingDataQuery = `
-  DELETE FROM tracing.purposes;
-  DELETE FROM tracing.eservices;
-  DELETE FROM tracing.tracings;
-  DELETE FROM tracing.tenants;
-  `;
-  await db.any(deleteTestingDataQuery);
-}
 export async function clearTracings(db: DB) {
   const deleteTracingsQuery = `
   DELETE FROM tracing.tracings;

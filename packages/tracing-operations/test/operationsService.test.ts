@@ -1,8 +1,8 @@
 import { DB, initDB } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -15,7 +15,6 @@ import {
   operationsServiceBuilder,
 } from "../src/services/operationsService.js";
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
-import { resolve } from "path";
 import {
   CommonErrorCodes,
   InternalError,
@@ -24,20 +23,23 @@ import {
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
-import { Wait } from "testcontainers";
+import { StartedTestContainer } from "testcontainers";
 import {
   addEservice,
   addPurpose,
   addTenant,
   addTracing,
-  clearTestingData,
   clearTracings,
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
-let dbInstance: DB;
-describe("Operations Service", () => {
+import { postgreSQLContainer } from "./config.js";
+
+describe("database test", () => {
+  let dbInstance: DB;
+  let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
-  const tenantIdId: TenantId = generateId();
+
+  const tenantId: TenantId = generateId();
   const purposeId: PurposeId = generateId();
   const eservice_id = generateId();
   const todayTruncated = new Date().toISOString().split("T")[0];
@@ -49,29 +51,17 @@ describe("Operations Service", () => {
     vi.restoreAllMocks();
   });
 
-  afterAll(() => {
-    clearTestingData(dbInstance);
+  afterEach(async () => {
+    await clearTracings(dbInstance);
+  });
+
+  afterAll(async () => {
+    await startedPostgreSqlContainer.stop();
   });
 
   beforeAll(async () => {
-    const postgreSqlContainer = await new PostgreSqlContainer("postgres:14")
-      .withUsername(config.dbUsername)
-      .withPassword(config.dbPassword)
-      .withDatabase(config.dbName)
-      .withExposedPorts(config.dbPort)
-      .withCopyFilesToContainer([
-        {
-          source: resolve(__dirname, "init-db.sql"),
-          target: "/docker-entrypoint-initdb.d/01-init.sql",
-        },
-      ])
-      .withWaitStrategy(
-        Wait.forLogMessage("database system is ready to accept connections"),
-      )
-      .start();
-
-    const dbPort = postgreSqlContainer.getMappedPort(5432);
-    console.log(`PostgreSQL is running on port ${dbPort}`);
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
 
     dbInstance = initDB({
       username: config.dbUsername,
@@ -89,7 +79,7 @@ describe("Operations Service", () => {
 
     await addTenant(
       {
-        id: tenantIdId,
+        id: tenantId,
         name: "pagoPa",
         origin: "external",
         externalId: generateId(),
@@ -101,7 +91,7 @@ describe("Operations Service", () => {
     await addPurpose(
       {
         id: purposeId,
-        consumer_id: tenantIdId,
+        consumer_id: tenantId,
         eservice_id,
         purpose_title: "purpose_for_tenant",
       },
@@ -109,120 +99,137 @@ describe("Operations Service", () => {
     );
   });
 
-  describe("getTenantByPurposeId", () => {
-    it("retrieve tenant by purposeId", async () => {
-      const result = await operationsService.getTenantByPurposeId(purposeId);
+  describe("Operations service", () => {
+    describe("getTenantByPurposeId", () => {
+      it("retrieve tenant by purposeId", async () => {
+        const result = await operationsService.getTenantByPurposeId(purposeId);
 
-      expect(result).toBe(tenantIdId);
-    });
-    it("should give error when purposeId not a tenant", async () => {
-      const wrongPurposeId: PurposeId = generateId();
+        expect(result).toBe(tenantId);
+      });
 
-      try {
-        await operationsService.getTenantByPurposeId(wrongPurposeId);
-      } catch (e) {
-        const error = e as InternalError<CommonErrorCodes>;
-        expect(error).toBeInstanceOf(Error);
-        expect(error.message).toContain(
-          "Error getTenantByPurposeId: QueryResultError",
-        );
-        expect(error.code).toBe("genericError");
-      }
-    });
-  });
+      it("should give error when purposeId not a tenant", async () => {
+        const wrongPurposeId: PurposeId = generateId();
 
-  describe("submitTracing", () => {
-    it("should insert a tracing with errors to be false", async () => {
-      const tracing = {
-        tenantId: tenantIdId as string,
-        date: todayTruncated,
-      };
-      const result = await operationsService.submitTracing(tracing);
-      await clearTracings(dbInstance);
-      expect(result).toHaveProperty("tracingId");
-      expect(result.tenantId).toBe(tenantIdId);
-      expect(result.errors).toBe(false);
-      expect(result.state).toBe("PENDING");
-      expect(result.version).toBe(1);
+        try {
+          await operationsService.getTenantByPurposeId(wrongPurposeId);
+        } catch (e) {
+          const error = e as InternalError<CommonErrorCodes>;
+          expect(error).toBeInstanceOf(Error);
+          expect(error.message).toContain(
+            "Error getTenantByPurposeId: QueryResultError",
+          );
+          expect(error.code).toBe("genericError");
+        }
+      });
     });
-    it("should insert a tracing with errors to be true", async () => {
-      const tracing = {
-        tenantId: tenantIdId as string,
-        date: todayTruncated,
-      };
-      const tracingMissing: Tracing = {
-        id: generateId() as string,
-        tenant_id: tenantIdId as string,
-        state: tracingState.missing,
-        date: yesterdayTruncated,
-        version: 1,
-        errors: true,
-      };
-      await addTracing(tracingMissing, dbInstance);
-      const result = await operationsService.submitTracing(tracing);
-      await clearTracings(dbInstance);
-      expect(result).toHaveProperty("tracingId");
-      expect(result.tenantId).toBe(tenantIdId);
-      expect(result.errors).toBe(true);
-      expect(result.state).toBe("PENDING");
-      expect(result.version).toBe(1);
-    });
-    it("should update a tracing when state is missing", async () => {
-      const tracingMissing: Tracing = {
-        id: generateId() as string,
-        tenant_id: tenantIdId as string,
-        state: tracingState.missing,
-        date: todayTruncated,
-        version: 1,
-        errors: true,
-      };
-      await addTracing(tracingMissing, dbInstance);
-      const tracing = {
-        tenantId: tenantIdId as string,
-        date: todayTruncated,
-      };
-      const result = await operationsService.submitTracing(tracing);
-      const expectedDate = new Date(tracing.date);
-      expect(result).toHaveProperty("tracingId");
-      expect(result.tenantId).toBe(tenantIdId);
-      expect(result.errors).toBe(false);
-      expect(result.state).toBe("PENDING");
-      result.date && expect(new Date(result.date)).toEqual(expectedDate);
-      expect(result.version).toBe(1);
-    });
-    it("should give error if tenant submits a tracing for the same day when status is not error or missing", async () => {
-      const existingTracing = {
-        id: generateId() as string,
-        tenant_id: tenantIdId as string,
-        state: tracingState.completed,
-        date: todayTruncated,
-        version: 1,
-        errors: false,
-      };
-      await addTracing(existingTracing, dbInstance);
 
-      const tracing = {
-        tenantId: tenantIdId as string,
-        date: todayTruncated,
-      };
-      try {
-        await operationsService.submitTracing(tracing);
-      } catch (e) {
-        const error = e as InternalError<CommonErrorCodes>;
-        expect(error).toBeInstanceOf(Error);
-        expect(error.code).toBe("tracingAlreadyExists");
-      }
-    });
-    it("should give error if there's an error during database operations", async () => {
-      const mockDb = vi
-        .spyOn(dbInstance, "one")
-        .mockRejectedValueOnce(new Error("Database error"));
-      const tracing = {
-        tenantId: tenantIdId as string,
-        date: todayTruncated,
-      };
-      await expect(operationsService.submitTracing(tracing)).rejects.toThrow();
-      mockDb.mockRestore();
+    describe("submitTracing", () => {
+      it("should insert a tracing with errors to be false", async () => {
+        const tracing = {
+          tenantId: tenantId as string,
+          date: todayTruncated,
+        };
+        const result = await operationsService.submitTracing(tracing);
+
+        expect(result).toHaveProperty("tracingId");
+        expect(result.tenantId).toBe(tenantId);
+        expect(result.errors).toBe(false);
+        expect(result.state).toBe("PENDING");
+        expect(result.version).toBe(1);
+      });
+
+      it("should insert a tracing with errors to be true", async () => {
+        const tracing = {
+          tenantId: tenantId as string,
+          date: todayTruncated,
+        };
+        const tracingMissing: Tracing = {
+          id: generateId() as string,
+          tenant_id: tenantId as string,
+          state: tracingState.missing,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: true,
+        };
+        await addTracing(tracingMissing, dbInstance);
+        const result = await operationsService.submitTracing(tracing);
+
+        expect(result).toHaveProperty("tracingId");
+        expect(result.tenantId).toBe(tenantId);
+        expect(result.errors).toBe(true);
+        expect(result.state).toBe("PENDING");
+        expect(result.version).toBe(1);
+      });
+
+      it("should update a tracing when state is missing", async () => {
+        const tracingMissing: Tracing = {
+          id: generateId(),
+          tenant_id: tenantId,
+          state: tracingState.missing,
+          date: todayTruncated,
+          version: 1,
+          errors: true,
+        };
+
+        await addTracing(tracingMissing, dbInstance);
+
+        const tracing = {
+          tenantId: tenantId,
+          date: todayTruncated,
+        };
+
+        const result = await operationsService.submitTracing(tracing);
+
+        expect(result).toHaveProperty("tracingId");
+        expect(result.tenantId).toBe(tenantId);
+        expect(result.errors).toBe(false);
+        expect(result.state).toBe("PENDING");
+        expect(new Date(result.date)).toEqual(new Date(tracing.date));
+        expect(result.version).toBe(1);
+      });
+
+      it("should give error if tenant submits a tracing for the same day when status is not error or missing", async () => {
+        const existingTracing = {
+          id: generateId() as string,
+          tenant_id: tenantId as string,
+          state: tracingState.completed,
+          date: todayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(existingTracing, dbInstance);
+
+        const tracing = {
+          tenantId: tenantId as string,
+          date: todayTruncated,
+        };
+
+        try {
+          await operationsService.submitTracing(tracing);
+        } catch (e) {
+          const error = e as InternalError<CommonErrorCodes>;
+          expect(error).toBeInstanceOf(Error);
+          expect(error.code).toBe("tracingAlreadyExists");
+        }
+      });
+
+      it("should give error if there's an error during database operations", async () => {
+        const mockDb = vi
+          .spyOn(dbInstance, "one")
+          .mockRejectedValueOnce(new Error("Database error"));
+
+        const tracing = {
+          tenantId: tenantId as string,
+          date: todayTruncated,
+        };
+
+        await expect(
+          operationsService.submitTracing(tracing),
+        ).rejects.toThrow();
+
+        mockDb.mockRestore();
+      });
     });
   });
 });
