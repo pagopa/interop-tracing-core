@@ -7,6 +7,7 @@ import util from "util";
 import { ZodiosApp } from "@zodios/express";
 import { api } from "../../model/generated/api.js";
 import { ExpressContext } from "pagopa-interop-tracing-commons";
+import { ApiExternal } from "../../model/types.js";
 
 /**
  * Middleware function to handle file uploads.
@@ -43,8 +44,6 @@ const apiWithFormData = api.api.filter(
     el.requestFormat === "form-data",
 );
 
-type ApiExternalWithFormData = typeof apiWithFormData;
-
 /**
  * Configures endpoints for handling file uploads using Multer.
  * This function sets up the handler for routes that accept form data,
@@ -53,15 +52,14 @@ type ApiExternalWithFormData = typeof apiWithFormData;
  * @param app - The Zodios application instance to configure.
  */
 export const configureMulterEndpoints = (
-  app: ZodiosApp<ApiExternalWithFormData, ExpressContext>,
+  app: ZodiosApp<ApiExternal, ExpressContext>,
 ) => {
   for (const endpoint of apiWithFormData) {
-    app[
-      endpoint.method as keyof ZodiosApp<
-        ApiExternalWithFormData,
-        ExpressContext
-      >
-    ](endpoint.path, upload.single("file"), attachFileInstance);
+    app[endpoint.method as keyof ZodiosApp<ApiExternal, ExpressContext>](
+      endpoint.path,
+      upload.single("file"),
+      attachFileInstance,
+    );
   }
 };
 
