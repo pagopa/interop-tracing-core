@@ -27,31 +27,43 @@ const attachFileInstance = (
 };
 
 /**
- * Function to configure endpoints for handling file uploads using Multer.
- * This function sets up routes for PUT and POST requests with form data,
+ * Filters the given type to only include those with a specific request format.
+ *
+ * @template T - The type to filter.
+ */
+type FilterByRequestFormat<T extends { requestFormat: string }, U> = T extends {
+  requestFormat: U;
+}
+  ? T
+  : never;
+
+/**
+ * Filters the API endpoints to only include those that use the "form-data" request format.
+ */
+const apiWithFormData = api.api.filter(
+  (el): el is FilterByRequestFormat<typeof el, "form-data"> =>
+    el.requestFormat === "form-data",
+);
+
+type ApiExternalWithFormData = typeof apiWithFormData;
+
+/**
+ * Configures endpoints for handling file uploads using Multer.
+ * This function sets up the handler for routes that accept form data,
  * ensuring that uploaded files are processed and stored based on the provided configuration.
+ *
+ * @param app - The Zodios application instance to configure.
  */
 export const configureMulterEndpoints = (
-  app: ZodiosApp<ApiExternal, ExpressContext>,
+  app: ZodiosApp<ApiExternalWithFormData, ExpressContext>,
 ) => {
-  const submit = "/tracings/submit";
-  const recover = "/tracings/:tracingId/recover";
-  const replace = "/tracings/:tracingId/replace";
-
-  for (const endpoint of api.api) {
-    if (endpoint.requestFormat === "form-data") {
-      match(endpoint.path)
-        .with(submit, () =>
-          app.post(submit, upload.single("file"), attachFileInstance),
-        )
-        .with(recover, () =>
-          app.put(recover, upload.single("file"), attachFileInstance),
-        )
-        .with(replace, () =>
-          app.put(replace, upload.single("file"), attachFileInstance),
-        )
-        .exhaustive();
-    }
+  for (const endpoint of apiWithFormData) {
+    app[
+      endpoint.method as keyof ZodiosApp<
+        ApiExternalWithFormData,
+        ExpressContext
+      >
+    ](endpoint.path, upload.single("file"), attachFileInstance);
   }
 };
 
