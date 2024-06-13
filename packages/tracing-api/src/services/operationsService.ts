@@ -17,9 +17,17 @@ export const operationsServiceBuilder = (
   async submitTracing(
     payload: ApiSubmitTracingPayload,
   ): Promise<ApiSubmitTracingResponse> {
-    return await operationsApiClient.submitTracing({
-      date: payload.date,
-    });
+    return await operationsApiClient.submitTracing(
+      {
+        date: payload.date,
+      },
+      {
+        headers: {
+          "X-Correlation-Id": "mockUuid",
+          "X-Requester-Purpose-Id": "mockUuid",
+        },
+      },
+    );
   },
 
   async getTracings(

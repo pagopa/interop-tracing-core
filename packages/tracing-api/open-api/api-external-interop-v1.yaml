@@ -261,7 +261,7 @@ components:
             <br>
             `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
         date:
           type: string
           format: date
@@ -290,7 +290,7 @@ components:
             <br>
             `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
       required:
         - file
     ReplaceTracingResponse:
@@ -314,7 +314,7 @@ components:
             <br>
             `date,purpose_id,status,requests_count`
             <br>
-            `2023-05-01,100,404,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
       required:
         - file
     RecoverTracingResponse:
@@ -343,6 +343,10 @@ components:
                 type: string
               message:
                 type: string
+              rowNumber:
+                type: integer
+                format: int32
+                minimum: 0
         totalCount:
           type: integer
           format: int64
