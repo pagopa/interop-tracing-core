@@ -6,9 +6,7 @@ import fs from "fs";
 import util from "util";
 import { ZodiosApp } from "@zodios/express";
 import { api } from "../../model/generated/api.js";
-import { ApiExternal } from "../../model/types.js";
 import { ExpressContext } from "pagopa-interop-tracing-commons";
-import { match } from "ts-pattern";
 
 /**
  * Middleware function to handle file uploads.
