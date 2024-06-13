@@ -66,7 +66,7 @@ export type MakeApiProblemFn<T extends string> = (
   logger: { error: (message: string) => void; warn: (message: string) => void },
 ) => Problem;
 
-const makeProblemLogString = (
+export const makeProblemLogString = (
   problem: Problem,
   originalError: unknown,
 ): string => {

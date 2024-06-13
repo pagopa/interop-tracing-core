@@ -24,7 +24,9 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
 
         await s3Client.send(new PutObjectCommand(putObjectParams));
       } catch (error: unknown) {
-        throw writeObjectS3BucketError(error);
+        throw writeObjectS3BucketError(
+          `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${error}`,
+        );
       }
     },
   };

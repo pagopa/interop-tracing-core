@@ -4,7 +4,7 @@ import {
   ZodiosContext,
   ExpressContext,
   initDB,
-  genericLogger,
+  logger,
 } from "pagopa-interop-tracing-commons";
 import { api } from "pagopa-interop-tracing-operations-client";
 import { makeApiProblem } from "../model/domain/errors.js";
@@ -12,7 +12,7 @@ import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
 import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
-import { operationsErrorMapper } from "../utilities/errorMapper.js";
+import { errorMapper } from "../utilities/errorMapper.js";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -38,109 +38,108 @@ const operationsRouter = (
     purposeAuthorizerMiddleware(),
     async (req, res) => {
       try {
-        const tracing = await operationsService.submitTracing({
-          ...req.body,
-          tenantId: req.ctx.operationsAuth.tenantId,
-        });
+        const tracing = await operationsService.submitTracing(
+          {
+            ...req.body,
+            tenantId: req.ctx.operationsAuth.tenantId,
+          },
+          logger(req.ctx),
+        );
 
         return res.status(200).json(tracing).end();
       } catch (error) {
-        const errorRes = makeApiProblem(
-          error,
-          operationsErrorMapper,
-          genericLogger,
-        );
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
   );
 
-  operationsRouter.post("/tracings/:tracingId/recover", async (_req, res) => {
+  operationsRouter.post("/tracings/:tracingId/recover", async (req, res) => {
     try {
       await operationsService.recoverTracing();
       return res.status(200).json().end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, genericLogger);
-      return res.status(errorRes.status).end();
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 
-  operationsRouter.post("/tracings/:tracingId/replace", async (_req, res) => {
+  operationsRouter.post("/tracings/:tracingId/replace", async (req, res) => {
     try {
       await operationsService.replaceTracing();
       return res.status(200).json().end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, genericLogger);
-      return res.status(errorRes.status).end();
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 
   operationsRouter.post(
     "/tracings/:tracingId/versions/:version/state",
-    async (_req, res) => {
+    async (req, res) => {
       try {
         await operationsService.updateTracingState();
         return res.status(200).json().end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, genericLogger);
-        return res.status(errorRes.status).end();
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
       }
     },
   );
 
   operationsRouter.post(
     "/tracings/:tracingId/versions/:version/errors",
-    async (_req, res) => {
+    async (req, res) => {
       try {
         await operationsService.savePurposeError();
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, genericLogger);
-        return res.status(errorRes.status).end();
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
       }
     },
   );
 
-  operationsRouter.post("/tenants/:tenantId/missing", async (_req, res) => {
+  operationsRouter.post("/tenants/:tenantId/missing", async (req, res) => {
     try {
       await operationsService.saveMissingTracing();
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, genericLogger);
-      return res.status(errorRes.status).end();
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 
   operationsRouter.delete(
     "/tracings/:tracingId/versions/:version/errors",
-    async (_req, res) => {
+    async (req, res) => {
       try {
         await operationsService.deletePurposeErrors();
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, () => 500, genericLogger);
-        return res.status(errorRes.status).end();
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
       }
     },
   );
 
-  operationsRouter.get("/tracings", async (_req, res) => {
+  operationsRouter.get("/tracings", async (req, res) => {
     try {
       await operationsService.getTracings();
       return res.status(204).json({ results: [], totalCount: 0 }).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, genericLogger);
-      return res.status(errorRes.status).end();
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 
-  operationsRouter.get("/tracings/:tracingId/errors", async (_req, res) => {
+  operationsRouter.get("/tracings/:tracingId/errors", async (req, res) => {
     try {
       await operationsService.getTracingErrors();
       return res.status(204).json({ errors: [], totalCount: 0 }).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, () => 500, genericLogger);
-      return res.status(errorRes.status).end();
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
     }
   });
 

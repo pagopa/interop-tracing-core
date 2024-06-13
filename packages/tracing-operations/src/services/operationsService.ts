@@ -8,7 +8,7 @@ import {
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeId,
@@ -21,21 +21,21 @@ export function operationsServiceBuilder(dbService: DBService) {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
       return await dbService.getTenantByPurposeId(purposeId);
     },
-    async submitTracing({
-      tenantId,
-      date,
-    }: {
-      tenantId: string;
-      date: string;
-    }): Promise<ApiSubmitTracingResponse> {
-      genericLogger.info(
-        `Submitting tracing with tenantId: ${tenantId}, date: ${date}`,
+    async submitTracing(
+      data: {
+        tenantId: string;
+        date: string;
+      },
+      logger: Logger,
+    ): Promise<ApiSubmitTracingResponse> {
+      logger.info(
+        `Submitting tracing with tenantId: ${data.tenantId}, date: ${data.date}`,
       );
 
       const tracing = await dbService.submitTracing({
         id: generateId(),
-        tenant_id: tenantId,
-        date,
+        tenant_id: data.tenantId,
+        date: data.date,
         version: 1,
         state: tracingState.pending,
         errors: false,

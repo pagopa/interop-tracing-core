@@ -3,7 +3,7 @@ import { ZodiosRouter } from "@zodios/express";
 import {
   ExpressContext,
   ZodiosContext,
-  genericLogger,
+  logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
 import {
@@ -13,7 +13,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import {
-  resolveApiClientProblem,
+  resolveApiProblem,
   updateTracingStateError,
 } from "../model/domain/errors.js";
 import { OperationsService } from "../services/operationsService.js";
@@ -57,10 +57,6 @@ const tracingRouter =
           await bucketService
             .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
-              genericLogger.error(
-                `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${error}`,
-              );
-
               await operationsService
                 .updateTracingState(
                   {
@@ -76,7 +72,9 @@ const tracingRouter =
                   { state: tracingState.missing },
                 )
                 .catch((e) => {
-                  throw updateTracingStateError(`${e}`);
+                  throw updateTracingStateError(
+                    `Unable to update tracing state with tracingId: ${result.tracingId}. Details: ${e}`,
+                  );
                 });
 
               throw error;
@@ -90,11 +88,11 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiClientProblem(error);
+          const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
         } finally {
-          if (req.file) {
-            await storage.unlink(req.file.path);
+          if (req.body?.file) {
+            await storage.unlink(req.body.file.path);
           }
         }
       })
@@ -104,7 +102,7 @@ const tracingRouter =
 
           const result = z.array(ApiTracingsContent).safeParse(data.results);
           if (!result.success) {
-            genericLogger.error(
+            logger(req.ctx).error(
               `Unable to parse tracings items: result ${JSON.stringify(
                 result,
               )} - data ${JSON.stringify(data.results)} `,
@@ -121,7 +119,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiClientProblem(error);
+          const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -137,7 +135,7 @@ const tracingRouter =
             .safeParse(data.errors);
 
           if (!result.success) {
-            genericLogger.error(
+            logger(req.ctx).error(
               `Unable to parse tracing errors items: result ${JSON.stringify(
                 result,
               )} - data ${JSON.stringify(data.errors)} `,
@@ -154,7 +152,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiClientProblem(error);
+          const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -166,7 +164,7 @@ const tracingRouter =
 
           return res.status(200).json(result).end();
         } catch (error) {
-          const errorRes = resolveApiClientProblem(error);
+          const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -178,7 +176,7 @@ const tracingRouter =
 
           return res.status(200).json(result).end();
         } catch (error) {
-          const errorRes = resolveApiClientProblem(error);
+          const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
         }
       });

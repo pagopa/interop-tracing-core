@@ -1,10 +1,12 @@
 import {
   InternalError,
-  makeApiProblemBuilder,
   Problem,
+  makeApiProblemBuilder,
+  makeProblemLogString,
 } from "pagopa-interop-tracing-models";
+import { Logger } from "pagopa-interop-tracing-commons";
 import { AxiosError } from "axios";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import { errorMapper } from "../../utilities/errorMapper.js";
 
 export const errorCodes = {
   writeObjectS3BucketError: "0001",
@@ -15,15 +17,16 @@ export type ErrorCodes = keyof typeof errorCodes;
 
 export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
-export const resolveApiClientProblem = (error: unknown): Problem => {
+export const resolveApiProblem = (error: unknown, logger: Logger): Problem => {
   const operationsApiProblem = Problem.safeParse(
     (error as AxiosError).response?.data,
   );
 
   if (operationsApiProblem.success) {
+    logger.warn(makeProblemLogString(operationsApiProblem.data, error));
     return operationsApiProblem.data;
   } else {
-    return makeApiProblem(error, () => 500, genericLogger);
+    return makeApiProblem(error, errorMapper, logger);
   }
 };
 

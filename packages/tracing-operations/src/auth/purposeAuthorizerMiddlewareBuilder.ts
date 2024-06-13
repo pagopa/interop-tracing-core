@@ -5,11 +5,7 @@ import {
   ZodiosEndpointDefinition,
   ZodiosPathsByMethod,
 } from "@zodios/core";
-import {
-  AppContext,
-  Middleware,
-  genericLogger,
-} from "pagopa-interop-tracing-commons";
+import { AppContext, Middleware, logger } from "pagopa-interop-tracing-commons";
 import { readHeaders } from "./headers.js";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { makeApiProblem } from "../model/domain/errors.js";
@@ -53,7 +49,7 @@ const purposeAuthorizerMiddleware =
             .with("unauthorizedError", () => 401)
             .with("missingHeader", () => 400)
             .otherwise(() => 500),
-        genericLogger,
+        logger(ctx),
       );
 
       return (

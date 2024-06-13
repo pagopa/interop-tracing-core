@@ -28,7 +28,7 @@ import {
 import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
 import { makeApiProblem } from "../src/model/domain/errors.js";
-import { tracingErrorMapper } from "../src/utilities/errorMapper.js";
+import { errorMapper } from "../src/utilities/errorMapper.js";
 import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
@@ -159,7 +159,7 @@ describe("Tracing Router", () => {
     const errorMessage = `A tracing for the current tenant already exists on this date: ${mockSubmitTracingResponse.date}`;
     const errorApiMock = makeApiProblem(
       tracingAlreadyExists(errorMessage),
-      tracingErrorMapper,
+      errorMapper,
       logger({}),
     );
 
