@@ -18,13 +18,13 @@ export type ErrorCodes = keyof typeof errorCodes;
 export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
 export const resolveApiProblem = (error: unknown, logger: Logger): Problem => {
-  const operationsApiProblem = Problem.safeParse(
+  const axiosApiProblem = Problem.safeParse(
     (error as AxiosError).response?.data,
   );
 
-  if (operationsApiProblem.success) {
-    logger.warn(makeProblemLogString(operationsApiProblem.data, error));
-    return operationsApiProblem.data;
+  if (axiosApiProblem.success) {
+    logger.warn(makeProblemLogString(axiosApiProblem.data, error));
+    return axiosApiProblem.data;
   } else {
     return makeApiProblem(error, errorMapper, logger);
   }
