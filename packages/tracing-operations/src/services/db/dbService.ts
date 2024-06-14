@@ -55,14 +55,17 @@ export function dbServiceBuilder(db: DB) {
           new Date(data.date).toISOString(),
           DateUnit.DAYS,
         );
+
         const findOneTracingQuery = `
           SELECT id, state FROM tracing.tracings
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
+
         const tracing: Tracing | null = await db.oneOrNone(
           findOneTracingQuery,
           [data.tenant_id, truncatedDate],
         );
+
         if (
           tracing?.state === tracingState.completed ||
           tracing?.state === tracingState.pending
@@ -124,6 +127,7 @@ export function dbServiceBuilder(db: DB) {
           truncatedDate,
           data.version,
         ]);
+
         return {
           tracingId: newTracing.id,
           tenantId: newTracing.tenant_id,

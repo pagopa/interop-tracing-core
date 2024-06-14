@@ -1,4 +1,4 @@
-import { DB, initDB } from "pagopa-interop-tracing-commons";
+import { DB, initDB, logger } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
   afterAll,
@@ -129,7 +129,10 @@ describe("database test", () => {
           tenantId: tenantId as string,
           date: todayTruncated,
         };
-        const result = await operationsService.submitTracing(tracing);
+        const result = await operationsService.submitTracing(
+          tracing,
+          logger({}),
+        );
 
         expect(result).toHaveProperty("tracingId");
         expect(result.tenantId).toBe(tenantId);
@@ -152,7 +155,10 @@ describe("database test", () => {
           errors: true,
         };
         await addTracing(tracingMissing, dbInstance);
-        const result = await operationsService.submitTracing(tracing);
+        const result = await operationsService.submitTracing(
+          tracing,
+          logger({}),
+        );
 
         expect(result).toHaveProperty("tracingId");
         expect(result.tenantId).toBe(tenantId);
@@ -178,7 +184,10 @@ describe("database test", () => {
           date: todayTruncated,
         };
 
-        const result = await operationsService.submitTracing(tracing);
+        const result = await operationsService.submitTracing(
+          tracing,
+          logger({}),
+        );
 
         expect(result).toHaveProperty("tracingId");
         expect(result.tenantId).toBe(tenantId);
@@ -206,7 +215,7 @@ describe("database test", () => {
         };
 
         try {
-          await operationsService.submitTracing(tracing);
+          await operationsService.submitTracing(tracing, logger({}));
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);
@@ -225,7 +234,7 @@ describe("database test", () => {
         };
 
         await expect(
-          operationsService.submitTracing(tracing),
+          operationsService.submitTracing(tracing, logger({})),
         ).rejects.toThrow();
 
         mockDb.mockRestore();
