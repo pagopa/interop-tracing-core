@@ -55,17 +55,14 @@ export function dbServiceBuilder(db: DB) {
           new Date(data.date).toISOString(),
           DateUnit.DAYS,
         );
-
         const findOneTracingQuery = `
           SELECT id, state FROM tracing.tracings
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
-
         const tracing: Tracing | null = await db.oneOrNone(
           findOneTracingQuery,
           [data.tenant_id, truncatedDate],
         );
-
         if (
           tracing?.state === tracingState.completed ||
           tracing?.state === tracingState.pending
@@ -91,7 +88,8 @@ export function dbServiceBuilder(db: DB) {
         if (tracing?.state === tracingState.missing) {
           const updateTracingQuery = `
             UPDATE tracing.tracings 
-            SET state = 'PENDING' 
+            SET state = 'PENDING', 
+            errors = false
             WHERE id = $1 
             RETURNING id, tenant_id, date, state, version`;
 
@@ -99,13 +97,18 @@ export function dbServiceBuilder(db: DB) {
             tracing.id,
           ]);
 
+          const recheckErrors: boolean | null = await db.oneOrNone(
+            findPastTracingErrorsQuery,
+            [data.tenant_id, data.id],
+          );
+
           return {
             tracingId: updatedTracing.id,
             tenantId: updatedTracing.tenant_id,
             date: updatedTracing.date,
             state: updatedTracing.state,
             version: updatedTracing.version,
-            errors: !!pastTracingsHasErrors,
+            errors: !!recheckErrors,
           };
         }
 
@@ -121,7 +124,6 @@ export function dbServiceBuilder(db: DB) {
           truncatedDate,
           data.version,
         ]);
-
         return {
           tracingId: newTracing.id,
           tenantId: newTracing.tenant_id,
