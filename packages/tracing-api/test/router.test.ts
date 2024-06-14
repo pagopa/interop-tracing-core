@@ -3,6 +3,7 @@ import {
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
 import {
+  OperationsHeaders,
   generateId,
   tracingAlreadyExists,
 } from "pagopa-interop-tracing-models";
@@ -74,7 +75,10 @@ interface RequestWithZodiosCtx extends Request {
   };
 }
 
-const getHeaders = (correlationId: string, purposeId: string) => ({
+const operationsHeaders = (
+  correlationId: string,
+  purposeId: string,
+): OperationsHeaders => ({
   "X-Correlation-Id": correlationId,
   "X-Requester-Purpose-Id": purposeId,
 });
@@ -138,7 +142,7 @@ describe("Tracing Router", () => {
         date: mockSubmitTracingResponse.date,
       },
       {
-        headers: getHeaders(
+        headers: operationsHeaders(
           mockAppCtx.correlationId,
           mockAppCtx.authData.purposeId,
         ),
