@@ -5,19 +5,16 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
   ],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
   },
   "rules": {
     "@typescript-eslint/switch-exhaustiveness-check": "error",
     "default-case": "off",
     "prefer-arrow/prefer-arrow-functions": "off",
-    "eqeqeq": [
-      "error",
-      "smart"
-    ],
+    "eqeqeq": ["error", "smart"],
     "@typescript-eslint/consistent-type-definitions": "off",
     "sort-keys": "off",
     "functional/prefer-readonly-type": "off",
@@ -26,13 +23,13 @@
     "max-lines-per-function": "off",
     "@typescript-eslint/naming-convention": "off",
     "@typescript-eslint/no-use-before-define": "off",
-    "@typescript-eslint/await-thenable": "off"
+    "@typescript-eslint/await-thenable": "off",
   },
   "ignorePatterns": [
     ".eslintrc",
     "**/src/model/generated/*.ts",
     "vitest.config.ts",
     "**/dist",
-    "**/multerPatchZodios.ts"
-  ]
+    "**/multerPatchZodios.ts",
+  ],
 }
