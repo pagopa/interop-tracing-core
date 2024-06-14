@@ -16,7 +16,7 @@ const makeApiProblem = makeApiProblemBuilder({});
 
 export const Headers = z.object({
   authorization: z.string().nullish(),
-  "x-correlation-id": z.string().nullish(),
+  "X-Correlation-Id": z.string().nullish(),
 });
 
 export type Headers = z.infer<typeof Headers>;
@@ -82,7 +82,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
           authorization: P.string,
         },
         () => {
-          throw missingHeader("x-correlation-id");
+          throw missingHeader("X-Correlation-Id");
         },
       )
       .otherwise(() => {

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const Headers = z.object({
   authorization: z.string().nullish(),
-  "x-correlation-id": z.string().nullish(),
+  "X-Correlation-Id": z.string().nullish(),
 });
 
 export type Headers = z.infer<typeof Headers>;
@@ -12,7 +12,7 @@ export type Headers = z.infer<typeof Headers>;
 export const readCorrelationIdHeader = (req: Request): string | undefined =>
   match(req.headers)
     .with(
-      { "x-correlation-id": P.string },
-      (headers) => headers["x-correlation-id"],
+      { "X-Correlation-Id": P.string },
+      (headers) => headers["X-Correlation-Id"],
     )
     .otherwise(() => undefined);
