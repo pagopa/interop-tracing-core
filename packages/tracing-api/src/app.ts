@@ -5,6 +5,7 @@ import {
   ExpressContext,
   authenticationMiddleware,
   contextMiddleware,
+  loggerMiddleware,
   zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import { createApiClient } from "pagopa-interop-tracing-operations-client";
@@ -75,6 +76,7 @@ app.use(queryParamsMiddleware);
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(contextMiddleware(config.applicationName));
+app.use(loggerMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
 
 configureMulterEndpoints(app);
