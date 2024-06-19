@@ -9,14 +9,15 @@ export const processingServiceBuilder = (
   producerService: ProducerService,
 ) => {
   const enrichFile = (records: Array<unknown>, purposes: Array<unknown>) => {
-    for (let record of records) {
+    for (const record of records) {
       console.log(record, purposes);
     }
     return records;
   };
 
   const checkRecords = (records: Array<unknown>) => {
-    for (let _record of records) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const _record of records) {
       const error = null;
 
       if (error) {
@@ -30,7 +31,7 @@ export const processingServiceBuilder = (
   return {
     async processTracing(
       message: unknown,
-    ): Promise<{ error: boolean; value: {} }> {
+    ): Promise<{ error: boolean; value: object }> {
       const s3KeyPath = message as string;
       const records = await bucketService.readObject(s3KeyPath);
       const tracingId = "";

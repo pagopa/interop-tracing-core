@@ -2,7 +2,7 @@ import { genericInternalError } from "pagopa-interop-tracing-models";
 
 export const producerServiceBuilder = () => {
   return {
-    async sendErrorMessage(error: {}): Promise<{}> {
+    async sendErrorMessage(error: object): Promise<object> {
       try {
         return Promise.resolve(error);
       } catch (error) {

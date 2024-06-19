@@ -17,8 +17,8 @@ import {
 
 describe("Processing Service", () => {
   let processingService: ProcessingService;
-  let bucketService: BucketService = bucketServiceBuilder();
-  let producerService: ProducerService = producerServiceBuilder();
+  const bucketService: BucketService = bucketServiceBuilder();
+  const producerService: ProducerService = producerServiceBuilder();
   describe("Processing service", () => {
     const dbInstance = initDB({
       username: dbConfig.dbUsername,

@@ -1,9 +1,10 @@
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-
-export function dbServiceBuilder(_db: DB) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function dbServiceBuilder(db: DB) {
   return {
-    async getPurposesByTracingId(_tracingId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getPurposesByTracingId(tracingId: string) {
       try {
         return Promise.resolve([{}]);
       } catch (error) {

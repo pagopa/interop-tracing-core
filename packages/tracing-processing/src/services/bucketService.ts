@@ -3,7 +3,8 @@ export const bucketServiceBuilder = () => {
     async writeObject(file: unknown): Promise<unknown> {
       return Promise.resolve(file);
     },
-    async readObject(_s3KeyFile: string): Promise<unknown[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async readObject(s3KeyFile: string): Promise<unknown[]> {
       const data = [{}];
       return Promise.resolve(data);
     },
