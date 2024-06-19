@@ -33,8 +33,6 @@
   },
   "dependencies": {
     "@tsconfig/node-lts": "^20.1.0",
-    "@zodios/core": "^10.9.2",
-    "axios": "^1.6.7",
     "dotenv-flow": "^3.2.0",
     "pagopa-interop-tracing-commons": "workspace:*",
     "pagopa-interop-tracing-models": "workspace:*",
