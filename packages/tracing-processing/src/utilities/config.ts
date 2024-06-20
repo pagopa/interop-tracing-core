@@ -14,8 +14,8 @@ const tracingCallerConfig = AWSConfig.and(ConsumerConfig)
         SQS_PROCESSING_ERROR_ENDPOINT: z.string(),
       })
       .transform((c) => ({
-        sqsEndpointConsumer: c.SQS_TRACING_UPLOAD_ENDPOINT,
-        sqsEndpointProducer: c.SQS_PROCESSING_ERROR_ENDPOINT,
+        sqsTracingUploadEndpoint: c.SQS_TRACING_UPLOAD_ENDPOINT,
+        sqsProcessingErrorEndpoint: c.SQS_PROCESSING_ERROR_ENDPOINT,
       })),
   );
 
