@@ -3,7 +3,9 @@ import {
   genericInternalError,
   S3BodySchema,
 } from "pagopa-interop-tracing-models";
-import { TracingContent } from "./messages.js";
+import { TracingContent, TracingRecords } from "./messages.js";
+import csv from "csv-parser";
+import { Readable } from "stream";
 
 export function decodeSqsMessage(
   jsonStr: string | undefined,
@@ -28,4 +30,15 @@ export function decodeSqsMessage(
     correlationId: keyParts[3],
     tracingId: keyParts[4].replace(".csv", ""),
   };
+}
+
+export async function parseCSV(stream: Readable): Promise<TracingRecords> {
+  const results: TracingRecords = [];
+  return new Promise((resolve, reject) => {
+    stream
+      .pipe(csv())
+      .on("data", (data) => results.push(data))
+      .on("end", () => resolve(results))
+      .on("error", (error) => reject(error));
+  });
 }

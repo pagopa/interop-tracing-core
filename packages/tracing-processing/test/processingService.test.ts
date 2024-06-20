@@ -15,13 +15,16 @@ import {
   producerServiceBuilder,
 } from "../src/services/producerService.js";
 import { config } from "../src/utilities/config.js";
+import { S3Client } from "@aws-sdk/client-s3";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
     region: config.awsRegion,
   });
+  const s3client: S3Client = new S3Client({ region: config.awsRegion });
+
   let processingService: ProcessingService;
-  const bucketService: BucketService = bucketServiceBuilder();
+  const bucketService: BucketService = bucketServiceBuilder(s3client);
   const producerService: ProducerService = producerServiceBuilder(sqsClient);
   describe("Processing service", () => {
     const dbInstance = initDB({
