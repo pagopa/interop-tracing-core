@@ -323,6 +323,67 @@ importers:
         specifier: ^0.33.0
         version: 0.33.0
 
+  packages/tracing-processing:
+    dependencies:
+      '@tsconfig/node-lts':
+        specifier: ^20.1.0
+        version: 20.1.3
+      dotenv-flow:
+        specifier: ^3.2.0
+        version: 3.3.0
+      pagopa-interop-tracing-commons:
+        specifier: workspace:*
+        version: link:../commons
+      pagopa-interop-tracing-models:
+        specifier: workspace:*
+        version: link:../models
+      ts-pattern:
+        specifier: ^5.0.1
+        version: 5.1.2
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
+      zod:
+        specifier: ^3.21.4
+        version: 3.23.8
+    devDependencies:
+      '@types/dotenv-flow':
+        specifier: ^3.2.0
+        version: 3.3.3
+      '@types/node':
+        specifier: ^20.3.1
+        version: 20.14.1
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.14.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/parser':
+        specifier: ^6.14.0
+        version: 6.21.0(eslint@8.57.0)(typescript@5.4.5)
+      eslint:
+        specifier: ^8.49.0
+        version: 8.57.0
+      eslint-config-prettier:
+        specifier: ^9.0.0
+        version: 9.1.0(eslint@8.57.0)
+      eslint-plugin-prettier:
+        specifier: ^5.0.0
+        version: 5.1.3(eslint-config-prettier@9.1.0)(eslint@8.57.0)(prettier@3.3.0)
+      prettier:
+        specifier: ^3.0.3
+        version: 3.3.0
+      ts-node:
+        specifier: ^10.9.1
+        version: 10.9.2(@types/node@20.14.1)(typescript@5.4.5)
+      typescript:
+        specifier: ^5.1.3
+        version: 5.4.5
+      vitest:
+        specifier: ^0.33.0
+        version: 0.33.0
+
 packages:
 
   /@ampproject/remapping@2.3.0:
