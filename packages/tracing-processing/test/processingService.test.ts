@@ -5,7 +5,6 @@ import {
 } from "../src/services/processingService.js";
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import {
   BucketService,
   bucketServiceBuilder,
@@ -16,6 +15,7 @@ import {
 } from "../src/services/producerService.js";
 import { config } from "../src/utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
@@ -33,7 +33,7 @@ describe("Processing Service", () => {
       host: dbConfig.dbHost,
       port: dbConfig.dbPort,
       database: dbConfig.dbName,
-      schema: dbConfig.schemaName,
+      schema: dbConfig.dbSchemaName,
       useSSL: dbConfig.dbUseSSL,
     });
     processingService = processingServiceBuilder(

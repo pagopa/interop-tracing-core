@@ -23,7 +23,7 @@ const dbInstance = initDB({
   host: dbConfig.dbHost,
   port: dbConfig.dbPort,
   database: dbConfig.dbName,
-  schema: dbConfig.schemaName,
+  schema: dbConfig.dbSchemaName,
   useSSL: dbConfig.dbUseSSL,
 });
 
@@ -50,7 +50,7 @@ const processingService: ProcessingService = processingServiceBuilder(
 await SQS.runConsumer(
   sqsClient,
   {
-    queueUrl: config.sqsEndpointConsumer,
+    queueUrl: config.sqsTracingUploadEndpoint,
     consumerPollingTimeout: config.consumerPollingTimeout,
   },
   processMessage(producerService, processingService),
