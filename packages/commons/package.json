@@ -19,6 +19,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@zodios/core": "^10.9.6",
+    "@aws-sdk/client-sqs": "^3.507.0",
     "@zodios/express": "^10.6.1",
     "connection-string": "^4.4.0",
     "express-winston": "^4.2.0",

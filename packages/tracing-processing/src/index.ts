@@ -1,4 +1,4 @@
-import { initDB } from "pagopa-interop-tracing-commons";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { processMessage } from "./messageHandler.js";
 import { dbServiceBuilder } from "./services/db/dbService.js";
 import {
@@ -10,6 +10,8 @@ import {
   producerServiceBuilder,
 } from "./services/producerService.js";
 import { dbConfig } from "./utilities/dbConfig.js";
+import { config } from "./utilities/config.js";
+
 import {
   bucketServiceBuilder,
   BucketService,
@@ -24,12 +26,23 @@ const dbInstance = initDB({
   useSSL: dbConfig.dbUseSSL,
 });
 
+const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+  region: config.awsRegion,
+});
+
 const bucketService: BucketService = bucketServiceBuilder();
-const producerService: ProducerService = producerServiceBuilder();
+const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
   dbServiceBuilder(dbInstance),
   bucketService,
   producerService,
 );
 
-processMessage(producerService, processingService);
+await SQS.runConsumer(
+  sqsClient,
+  {
+    queueUrl: config.sqsEndpointConsumer,
+    consumerPollingTimeout: config.consumerPollingTimeout,
+  },
+  processMessage(producerService, processingService),
+);

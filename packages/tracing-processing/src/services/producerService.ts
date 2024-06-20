@@ -1,10 +1,16 @@
+import { config } from "../utilities/config.js";
+import { SQS } from "pagopa-interop-tracing-commons";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 
-export const producerServiceBuilder = () => {
+export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendErrorMessage(error: object): Promise<object> {
+    async sendErrorMessage(error: object): Promise<void> {
       try {
-        return Promise.resolve(error);
+        await SQS.sendMessage(
+          sqsClient,
+          config.sqsEndpointProducer,
+          JSON.stringify(error),
+        );
       } catch (error) {
         throw genericInternalError(`Error getPurposesByTracingId: ${error}`);
       }

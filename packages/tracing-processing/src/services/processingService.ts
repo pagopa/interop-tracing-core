@@ -2,6 +2,7 @@ import { genericInternalError } from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
+import { TracingContent } from "../models/messages.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -28,13 +29,18 @@ export const processingServiceBuilder = (
     return false;
   };
 
+  const createS3Path = (message: TracingContent) => {
+    return `${message}`;
+  };
+
   return {
     async processTracing(
-      message: unknown,
+      message: TracingContent,
     ): Promise<{ error: boolean; value: object }> {
-      const s3KeyPath = message as string;
+      console.log("MESSAGE PROCESS", message);
+      const s3KeyPath = createS3Path(message);
       const records = await bucketService.readObject(s3KeyPath);
-      const tracingId = "";
+      const tracingId = message.tracingId;
 
       const hasError = checkRecords(records);
 

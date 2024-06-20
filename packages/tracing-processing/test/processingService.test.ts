@@ -5,7 +5,7 @@ import {
 } from "../src/services/processingService.js";
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
-import { initDB } from "pagopa-interop-tracing-commons";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import {
   BucketService,
   bucketServiceBuilder,
@@ -14,11 +14,15 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "../src/services/producerService.js";
+import { config } from "../src/utilities/config.js";
 
 describe("Processing Service", () => {
+  const sqsClient: SQS.SQSClient = SQS.instantiateClient({
+    region: config.awsRegion,
+  });
   let processingService: ProcessingService;
   const bucketService: BucketService = bucketServiceBuilder();
-  const producerService: ProducerService = producerServiceBuilder();
+  const producerService: ProducerService = producerServiceBuilder(sqsClient);
   describe("Processing service", () => {
     const dbInstance = initDB({
       username: dbConfig.dbUsername,
@@ -36,7 +40,13 @@ describe("Processing Service", () => {
     );
     describe("readTracingId", () => {
       it("retrieve full purpose from tracing Id", async () => {
-        const message = "";
+        const message = {
+          tenantId: "",
+          tracingId: "",
+          version: "",
+          date: "",
+          correlationId: "",
+        };
         const result = await processingService.processTracing(message);
 
         expect(result).toStrictEqual({ error: false, value: {} });
