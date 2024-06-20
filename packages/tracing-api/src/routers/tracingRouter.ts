@@ -6,11 +6,7 @@ import {
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
-import {
-  OperationsHeaders,
-  genericError,
-  tracingState,
-} from "pagopa-interop-tracing-models";
+import { genericError, tracingState } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import {
   resolveApiProblem,
@@ -24,6 +20,7 @@ import {
 } from "../model/tracing.js";
 import { BucketService } from "../services/bucketService.js";
 import storage from "../utilities/multer.js";
+import { correlationIdToHeader, purposeIdToHeader } from "../model/headers.js";
 
 const tracingRouter =
   (
@@ -42,10 +39,8 @@ const tracingRouter =
         try {
           const result = await operationsService.submitTracing(
             {
-              ...operationsHeaders(
-                req.ctx.correlationId,
-                req.ctx.authData.purposeId,
-              ),
+              ...purposeIdToHeader(req.ctx.requesterAuthData.purposeId),
+              ...correlationIdToHeader(req.ctx.correlationId),
             },
             {
               date: req.body.date,
@@ -60,10 +55,7 @@ const tracingRouter =
               await operationsService
                 .updateTracingState(
                   {
-                    ...operationsHeaders(
-                      req.ctx.correlationId,
-                      req.ctx.authData.purposeId,
-                    ),
+                    ...correlationIdToHeader(req.ctx.correlationId),
                   },
                   {
                     version: result.version,
@@ -185,11 +177,3 @@ const tracingRouter =
   };
 
 export default tracingRouter;
-
-const operationsHeaders = (
-  correlationId: string,
-  purposeId: string,
-): OperationsHeaders => ({
-  "X-Correlation-Id": correlationId,
-  "X-Requester-Purpose-Id": purposeId,
-});

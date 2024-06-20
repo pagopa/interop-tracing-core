@@ -3,7 +3,6 @@ import {
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
 import {
-  OperationsHeaders,
   generateId,
   tracingAlreadyExists,
 } from "pagopa-interop-tracing-models";
@@ -33,6 +32,10 @@ import { errorMapper } from "../src/utilities/errorMapper.js";
 import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
+import {
+  correlationIdToHeader,
+  purposeIdToHeader,
+} from "../src/model/headers.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -46,7 +49,7 @@ app.use(contextMiddleware(config.applicationName));
 configureMulterEndpoints(app);
 
 const mockAppCtx = {
-  authData: {
+  requesterAuthData: {
     purposeId: generateId(),
   },
   correlationId: generateId(),
@@ -68,20 +71,12 @@ const tracingApiClient = supertest(app);
 
 interface RequestWithZodiosCtx extends Request {
   ctx: {
-    authData: {
+    requesterAuthData: {
       purposeId: string;
     };
     correlationId: string;
   };
 }
-
-const operationsHeaders = (
-  correlationId: string,
-  purposeId: string,
-): OperationsHeaders => ({
-  "X-Correlation-Id": correlationId,
-  "X-Requester-Purpose-Id": purposeId,
-});
 
 const buildS3Key = (
   tenantId: string,
@@ -142,10 +137,10 @@ describe("Tracing Router", () => {
         date: mockSubmitTracingResponse.date,
       },
       {
-        headers: operationsHeaders(
-          mockAppCtx.correlationId,
-          mockAppCtx.authData.purposeId,
-        ),
+        headers: {
+          ...correlationIdToHeader(mockAppCtx.correlationId),
+          ...purposeIdToHeader(mockAppCtx.requesterAuthData.purposeId),
+        },
       },
     );
   });

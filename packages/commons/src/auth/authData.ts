@@ -5,28 +5,19 @@ export const AuthToken = z.object({
 });
 export type AuthToken = z.infer<typeof AuthToken>;
 
-export const AuthData = z.object({
-  purposeId: z.string().uuid(),
+export const RequesterAuthData = z.object({
+  purposeId: z.string().uuid().default(""),
 });
-export type AuthData = z.infer<typeof AuthData>;
+export type RequesterAuthData = z.infer<typeof RequesterAuthData>;
 
-export const OperationsAuth = z.object({
+export const TenantAuthData = z.object({
   tenantId: z.string().uuid(),
 });
-export type OperationsAuth = z.infer<typeof OperationsAuth>;
+export type TenantAuthData = z.infer<typeof TenantAuthData>;
 
-export const defaultAuthData: AuthData = {
-  purposeId: "",
+export const getAuthDataFromToken = (token: AuthToken): RequesterAuthData => {
+  const parsedData = RequesterAuthData.parse({
+    purposeId: token.purposeId,
+  });
+  return parsedData;
 };
-
-export const KeySchema = z.array(
-  z.object({
-    kid: z.string(),
-  }),
-);
-
-export type PublicKey = z.infer<typeof KeySchema>;
-
-export const getAuthDataFromToken = (token: AuthToken): AuthData => ({
-  purposeId: token.purposeId ?? defaultAuthData.purposeId,
-});

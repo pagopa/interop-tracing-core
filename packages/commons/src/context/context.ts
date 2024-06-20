@@ -4,15 +4,15 @@ import {
 } from "@zodios/express";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-import { AuthData, OperationsAuth } from "../auth/authData.js";
-import { Logger, logger } from "../logging/index.js";
+import { RequesterAuthData, TenantAuthData } from "../auth/authData.js";
+import { Logger } from "../logging/index.js";
 import { readCorrelationIdHeader } from "../auth/headers.js";
 
 export const AppContext = z.object({
   serviceName: z.string(),
-  authData: AuthData,
-  operationsAuth: OperationsAuth,
   correlationId: z.string(),
+  requesterAuthData: RequesterAuthData,
+  tenantAuthData: TenantAuthData,
 });
 export type AppContext = z.infer<typeof AppContext>;
 
@@ -21,10 +21,7 @@ export type ZodiosContext = NonNullable<typeof zodiosCtx>;
 export type ExpressContext = NonNullable<typeof zodiosCtx.context>;
 
 export type WithLogger<T> = T & { logger: Logger };
-
-export function fromAppContext(ctx: AppContext): WithLogger<AppContext> {
-  return { ...ctx, logger: logger({ ...ctx }) };
-}
+export type WithSQSMessageId<T> = T & { messageId: string };
 
 export const contextMiddleware =
   (serviceName: string): ZodiosRouterContextRequestHandler<ExpressContext> =>

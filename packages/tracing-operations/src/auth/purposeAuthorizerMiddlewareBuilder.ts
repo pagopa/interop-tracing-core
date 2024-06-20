@@ -6,7 +6,7 @@ import {
   ZodiosPathsByMethod,
 } from "@zodios/core";
 import { AppContext, Middleware, logger } from "pagopa-interop-tracing-commons";
-import { readHeaders } from "./headers.js";
+import { getRequesterAuthData } from "./headers.js";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { makeApiProblem } from "../model/domain/errors.js";
 import { match } from "ts-pattern";
@@ -22,7 +22,7 @@ const purposeAuthorizerMiddleware =
   >(): Middleware<Api, M, Path, Context> =>
   async (req, res, next) => {
     const ctx = req.ctx as AppContext;
-    const headers = readHeaders(req as Request);
+    const headers = getRequesterAuthData(req as Request);
 
     try {
       if (!headers?.purposeId) {
@@ -38,7 +38,7 @@ const purposeAuthorizerMiddleware =
         );
       }
 
-      ctx.operationsAuth = { tenantId };
+      ctx.tenantAuthData = { tenantId };
 
       return next();
     } catch (error: unknown) {

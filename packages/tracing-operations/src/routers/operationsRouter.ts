@@ -41,7 +41,7 @@ const operationsRouter = (
         const tracing = await operationsService.submitTracing(
           {
             ...req.body,
-            tenantId: req.ctx.operationsAuth.tenantId,
+            tenantId: req.ctx.tenantAuthData.tenantId,
           },
           logger(req.ctx),
         );

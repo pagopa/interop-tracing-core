@@ -16,7 +16,6 @@ const makeApiProblem = makeApiProblemBuilder({});
 
 export const Headers = z.object({
   authorization: z.string().nullish(),
-  "X-Correlation-Id": z.string().nullish(),
 });
 
 export type Headers = z.infer<typeof Headers>;
@@ -43,7 +42,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
     if (!valid) {
       throw unauthorizedError("Invalid token");
     }
-    req.ctx.authData = readAuthDataFromJwtToken(jwtToken);
+    req.ctx.requesterAuthData = readAuthDataFromJwtToken(jwtToken);
     next();
   };
 
@@ -82,7 +81,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
           authorization: P.string,
         },
         () => {
-          throw missingHeader("X-Correlation-Id");
+          throw missingHeader("Authorization");
         },
       )
       .otherwise(() => {

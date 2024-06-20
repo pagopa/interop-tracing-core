@@ -163,13 +163,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - in: header
-          name: X-Requester-Purpose-Id
-          description: Purpose ID for specifying the requester's purpose
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
