@@ -10,12 +10,12 @@ const tracingCallerConfig = AWSConfig.and(ConsumerConfig)
   .and(
     z
       .object({
-        SQS_ENDPOINT_CONSUMER: z.string(),
-        SQS_ENDPOINT_PRODUCER: z.string(),
+        SQS_TRACING_UPLOAD_ENDPOINT: z.string(),
+        SQS_PROCESSING_ERROR_ENDPOINT: z.string(),
       })
       .transform((c) => ({
-        sqsEndpointConsumer: c.SQS_ENDPOINT_CONSUMER,
-        sqsEndpointProducer: c.SQS_ENDPOINT_PRODUCER,
+        sqsEndpointConsumer: c.SQS_TRACING_UPLOAD_ENDPOINT,
+        sqsEndpointProducer: c.SQS_PROCESSING_ERROR_ENDPOINT,
       })),
   );
 

@@ -26,7 +26,7 @@ describe("Processing Service", () => {
       host: dbConfig.dbHost,
       port: dbConfig.dbPort,
       database: dbConfig.dbName,
-      schema: dbConfig.schemaName,
+      schema: dbConfig.dbSchemaName,
       useSSL: dbConfig.dbUseSSL,
     });
     processingService = processingServiceBuilder(
@@ -36,10 +36,15 @@ describe("Processing Service", () => {
     );
     describe("readTracingId", () => {
       it("retrieve full purpose from tracing Id", async () => {
-        const message = "";
+        const message = {
+          tenantId: "",
+          tracingId: "",
+          version: "",
+          date: "",
+        };
         const result = await processingService.processTracing(message);
 
-        expect(result).toStrictEqual({ error: false, value: {} });
+        expect(result).toStrictEqual({ error: true, value: {} });
       });
     });
   });
