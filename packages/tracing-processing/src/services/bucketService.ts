@@ -1,14 +1,31 @@
 import { config } from "../utilities/config.js";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import { parseCSV } from "../models/models.js";
-import { TracingRecords } from "../models/messages.js";
+import { generateCSV, parseCSV } from "../models/models.js";
+import { EnrichedPurpose, TracingRecords } from "../models/messages.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
-    async writeObject(file: unknown): Promise<unknown> {
-      return Promise.resolve(file);
+    async writeObject(records: EnrichedPurpose[], s3KeyPath: string) {
+      try {
+        const csvData = generateCSV(records);
+        const params = {
+          Bucket: config.bucketEnrichedS3Name,
+          Key: s3KeyPath,
+          Body: csvData,
+          ContentType: "text/csv",
+        };
+        const result = await s3Client.send(new PutObjectCommand(params));
+        console.log(`File uploaded successfully: ${JSON.stringify(result)}`);
+      } catch (e) {
+        console.log("error", e);
+      }
     },
+
     async readObject(s3KeyFile: string): Promise<TracingRecords> {
       const params = {
         Bucket: config.bucketS3Name,

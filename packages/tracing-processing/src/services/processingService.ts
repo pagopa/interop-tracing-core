@@ -13,13 +13,6 @@ export const processingServiceBuilder = (
   bucketService: BucketService,
   producerService: ProducerService,
 ) => {
-  const enrichFile = (records: TracingRecords, purposes: Array<unknown>) => {
-    for (const record of records) {
-      console.log(record, purposes);
-    }
-    return records;
-  };
-
   const checkRecords = (records: TracingRecords) => {
     for (const record of records) {
       const result = TracingRecordSchema.safeParse(record);
@@ -52,11 +45,9 @@ export const processingServiceBuilder = (
           `Formal check error for tracing id: ${tracingId}`,
         );
 
-      const purposes = await dbService.getPurposesByTracingId(tracingId);
+      const enrichedPurposes = await dbService.getEnrichedPurpose(records);
 
-      const enrichedTracing = enrichFile(records, purposes);
-
-      await bucketService.writeObject(enrichedTracing);
+      await bucketService.writeObject(enrichedPurposes, s3KeyPath);
 
       return Promise.resolve({ error: false, value: {} });
     },

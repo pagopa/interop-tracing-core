@@ -3,7 +3,7 @@ import {
   genericInternalError,
   S3BodySchema,
 } from "pagopa-interop-tracing-models";
-import { TracingContent, TracingRecords } from "./messages.js";
+import { EnrichedPurpose, TracingContent, TracingRecords } from "./messages.js";
 import csv from "csv-parser";
 import { Readable } from "stream";
 
@@ -41,4 +41,15 @@ export async function parseCSV(stream: Readable): Promise<TracingRecords> {
       .on("end", () => resolve(results))
       .on("error", (error) => reject(error));
   });
+}
+
+export function generateCSV(records: EnrichedPurpose[]): string {
+  const header = "date,purpose_id,status,requests_count,purposeName\n";
+  const rows = records
+    .map(
+      (record) =>
+        `${record.date},${record.purpose_id},${record.status},${record.requests_count},${record.purposeName}`,
+    )
+    .join("\n");
+  return `${header}${rows}`;
 }
