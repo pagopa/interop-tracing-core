@@ -9,13 +9,20 @@ export function dbServiceBuilder(db: DB) {
       records: TracingRecords,
     ): Promise<EnrichedPurpose[]> {
       try {
-        const fullRecord = records.map(async (record) => {
-          const fullPurpose = await db.oneOrNone(
-            `SELECT * FROM tracing.purposes WHERE id = '${record.purpose_id}'`,
-          );
-          return { ...record, purposeName: fullPurpose?.purpose_title };
+        const fullRecordPromises = records.map(async (record) => {
+          const fullPurpose: { purpose_title: string } | null =
+            await db.oneOrNone<{ purpose_title: string }>(
+              `SELECT purpose_title FROM tracing.purposes WHERE id = $1`,
+              [record.purpose_id],
+            );
+
+          return {
+            ...record,
+            purposeName: fullPurpose?.purpose_title ?? "Purpose not found",
+            error: !!fullPurpose,
+          };
         });
-        return Promise.all(fullRecord);
+        return await Promise.all(fullRecordPromises);
       } catch (error) {
         throw genericInternalError(`Error getFullPurposeByPurposeId: ${error}`);
       }

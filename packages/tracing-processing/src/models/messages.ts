@@ -21,6 +21,7 @@ export const EnrichedPurpose = z.object({
   purpose_id: z.string().uuid(),
   status: z.string(),
   requests_count: z.string(),
+  error: z.boolean(),
 });
 
 export const TracingRecords = z.array(TracingRecordSchema);

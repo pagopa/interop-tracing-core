@@ -7,49 +7,80 @@ import {
   TracingRecordSchema,
   TracingRecords,
 } from "../models/messages.js";
+import { logger } from "pagopa-interop-tracing-commons";
 
 export const processingServiceBuilder = (
   dbService: DBService,
   bucketService: BucketService,
   producerService: ProducerService,
 ) => {
-  const checkRecords = (records: TracingRecords) => {
-    for (const record of records) {
-      const result = TracingRecordSchema.safeParse(record);
-
-      if (!result.success) {
-        const error = result.error;
-        producerService.sendErrorMessage(error);
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const createS3Path = (message: TracingContent) => {
-    return `${message.date}/${message.tenantId}/${message.version}/${message.correlationId}/${message.tracingId}.csv`;
-  };
-
   return {
-    async processTracing(
-      message: TracingContent,
-    ): Promise<{ error: boolean; value: object }> {
-      const s3KeyPath = createS3Path(message);
-      const records = await bucketService.readObject(s3KeyPath);
-      const tracingId = message.tracingId;
+    async checkRecords(
+      records: TracingRecords,
+      tracingId: string,
+      correlationId: string,
+    ) {
+      for (const record of records) {
+        const result = TracingRecordSchema.safeParse(record);
 
-      const hasError = checkRecords(records);
+        if (!result.success) {
+          const error = result.error;
+          await producerService.sendErrorMessage(
+            error.message,
+            tracingId,
+            record.purpose_id,
+            correlationId,
+          );
+          return true;
+        }
+      }
+      return false;
+    },
 
-      if (hasError)
-        throw genericInternalError(
-          `Formal check error for tracing id: ${tracingId}`,
+    createS3Path(message: TracingContent) {
+      return `${message.date}/${message.tenantId}/${message.version}/${message.correlationId}/${message.tracingId}.csv`;
+    },
+    async processTracing(message: TracingContent) {
+      try {
+        const tracingMessage = TracingContent.safeParse(message);
+        if (tracingMessage.error) {
+          throw genericInternalError(
+            `tracing message is not valid: ${JSON.stringify(tracingMessage.error)}`,
+          );
+        }
+        const s3KeyPath = this.createS3Path(tracingMessage.data);
+        const records = await bucketService.readObject(s3KeyPath);
+        const { tracingId, correlationId } = tracingMessage.data;
+
+        const hasError = await this.checkRecords(
+          records,
+          tracingId,
+          correlationId,
         );
 
-      const enrichedPurposes = await dbService.getEnrichedPurpose(records);
+        if (hasError) {
+          logger.error(`Formal check error for tracing id: ${tracingId}`);
+          return;
+        }
 
-      await bucketService.writeObject(enrichedPurposes, s3KeyPath);
-
-      return Promise.resolve({ error: false, value: {} });
+        const enrichedPurposes = await dbService.getEnrichedPurpose(records);
+        const errorPurposes = enrichedPurposes.filter(
+          (enrichedPurpose) => enrichedPurpose.error,
+        );
+        if (errorPurposes.length === 0) {
+          await bucketService.writeObject(enrichedPurposes, s3KeyPath);
+        } else {
+          producerService.handleMissingPurposes(
+            errorPurposes,
+            tracingId,
+            correlationId,
+          );
+        }
+      } catch (e) {
+        throw genericInternalError(
+          `Error for tracing id: ${message.tracingId}, ${JSON.stringify(e)}`,
+        );
+      }
     },
   };
 };
