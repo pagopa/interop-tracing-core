@@ -53,12 +53,13 @@ export async function parseCSV(stream: Readable): Promise<TracingRecords> {
 }
 
 export function generateCSV(records: EnrichedPurpose[]): string {
-  const header = "date,purpose_id,status,requests_count,purposeName\n";
+  const header =
+    "date,purpose_id,status,requests_count,purposeName,eserviceId,consumerId,producerId,origin,externalId,purposeTitle,producerName,consumerName";
   const rows = records
-    .map(
-      (record) =>
-        `${record.date},${record.purpose_id},${record.status},${record.requests_count},${record.purposeName}`,
-    )
+    .map((record) => {
+      return `${record.date},${record.purpose_id},${record.status},${record.requests_count},${record.purposeName},${record.eservice.eserviceId},${record.eservice.consumerId},${record.eservice.producerId},${record.eservice.origin},${record.eservice.externalId},${record.eservice.purposeTitle},${record.eservice.producerName},${record.eservice.consumerName}\n`;
+    })
     .join("\n");
+
   return `${header}${rows}`;
 }

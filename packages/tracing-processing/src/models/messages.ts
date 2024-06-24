@@ -15,7 +15,20 @@ export const TracingRecordSchema = z.object({
   requests_count: z.string(),
 });
 
-export const EnrichedPurpose = z.object({
+export const EserviceSchema = z.object({
+  eserviceId: z.string(),
+  purposeId: z.string().uuid(),
+  consumerId: z.string(),
+  producerId: z.string(),
+  date: z.string(),
+  origin: z.string(),
+  externalId: z.string(),
+  purposeTitle: z.string(),
+  producerName: z.string(),
+  consumerName: z.string(),
+});
+
+export const PurposeSchema = z.object({
   purposeName: z.string(),
   date: z.string(),
   purpose_id: z.string().uuid(),
@@ -25,8 +38,12 @@ export const EnrichedPurpose = z.object({
 });
 
 export const TracingRecords = z.array(TracingRecordSchema);
+export type EnrichedPurpose = z.infer<typeof PurposeSchema> & {
+  eservice: z.infer<typeof EserviceSchema>;
+};
 
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
 export type TracingRecords = z.infer<typeof TracingRecords>;
 export type TracingContent = z.infer<typeof TracingContent>;
-export type EnrichedPurpose = z.infer<typeof EnrichedPurpose>;
+export type EserviceSchema = z.infer<typeof EserviceSchema>;
+export type PurposeSchema = z.infer<typeof PurposeSchema>;

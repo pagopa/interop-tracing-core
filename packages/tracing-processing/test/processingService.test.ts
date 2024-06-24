@@ -62,7 +62,7 @@ describe("Processing Service", () => {
     it("should generate correct S3 path ", () => {
       const path = processingService.createS3Path(mockMessage);
       expect(path).toBe(
-        "2024-12-12/223e4567-e89b-12d3-a456-426614174001/a33e4567-e89b-12d3-a456-426614174abe/1/133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
+        "223e4567-e89b-12d3-a456-426614174001/2024-12-12/a33e4567-e89b-12d3-a456-426614174abe/1/133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
       );
     });
   });

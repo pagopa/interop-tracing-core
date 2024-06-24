@@ -1,4 +1,4 @@
-import { TracingContent } from "../src/models/messages.js";
+import { EserviceSchema, TracingContent } from "../src/models/messages.js";
 
 export const generateMockTracingRecords = () => {
   return [
@@ -41,6 +41,7 @@ export const generateEnrichedPurposes = () => {
       requests_count: "10",
       purposeName: "",
       error: false,
+      eservice: {} as EserviceSchema,
     },
     {
       date: "2023-01-02",
@@ -49,6 +50,7 @@ export const generateEnrichedPurposes = () => {
       requests_count: "5",
       purposeName: "",
       error: false,
+      eservice: {} as EserviceSchema,
     },
   ];
 };
@@ -62,6 +64,7 @@ export const generateEnrichedPurposesWithErrors = () => {
       requests_count: "10",
       purposeName: "",
       error: true,
+      eservice: {} as EserviceSchema,
     },
     {
       date: "2023-01-02",
@@ -70,6 +73,7 @@ export const generateEnrichedPurposesWithErrors = () => {
       requests_count: "5",
       purposeName: "",
       error: false,
+      eservice: {} as EserviceSchema,
     },
   ];
 };

@@ -1,6 +1,10 @@
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { EnrichedPurpose, TracingRecords } from "../../models/messages.js";
+import {
+  EnrichedPurpose,
+  EserviceSchema,
+  TracingRecords,
+} from "../../models/messages.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
@@ -10,21 +14,64 @@ export function dbServiceBuilder(db: DB) {
     ): Promise<EnrichedPurpose[]> {
       try {
         const fullRecordPromises = records.map(async (record) => {
-          const fullPurpose: { purpose_title: string } | null =
-            await db.oneOrNone<{ purpose_title: string }>(
-              `SELECT purpose_title FROM tracing.purposes WHERE id = $1`,
+          try {
+            const fullPurpose = await db.oneOrNone<{
+              purpose_title: string;
+              eservice_id: string;
+            }>(
+              `SELECT purpose_title, eservice_id FROM tracing.purposes WHERE id = $1`,
               [record.purpose_id],
             );
 
-          return {
-            ...record,
-            purposeName: fullPurpose?.purpose_title ?? "Purpose not found",
-            error: !!!fullPurpose,
-          };
+            if (!fullPurpose) {
+              return {
+                ...record,
+                purposeName: "Purpose not found",
+                eservice: {} as EserviceSchema,
+                error: true,
+              };
+            }
+
+            const eService = await db.oneOrNone<EserviceSchema>(
+              `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
+              [fullPurpose.eservice_id],
+            );
+
+            if (!eService) {
+              return {
+                ...record,
+                purposeName: "Purpose not found",
+                eservice: {} as EserviceSchema,
+                error: true,
+              };
+            }
+
+            return {
+              ...record,
+              eservice: eService,
+              purposeName: fullPurpose.purpose_title,
+              error: false,
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching record with purpose_id ${record.purpose_id}: ${error}`,
+            );
+            return {
+              ...record,
+              purposeName: "Purpose fetch error",
+              eservice: {} as EserviceSchema,
+              error: true,
+            };
+          }
         });
-        return await Promise.all(fullRecordPromises);
+
+        const enrichedPurposes = await Promise.all(fullRecordPromises);
+
+        return enrichedPurposes;
       } catch (error) {
-        throw genericInternalError(`Error getFullPurposeByPurposeId: ${error}`);
+        throw genericInternalError(
+          `Error in getEnrichedPurpose function: ${error}`,
+        );
       }
     },
   };
