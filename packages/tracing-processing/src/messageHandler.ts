@@ -8,9 +8,9 @@ export function processMessage(
   processingService: ProcessingService,
 ): (message: SQS.Message) => void {
   return async (message: SQS.Message) => {
-    const parsedMessage = decodeSqsMessage(message.Body);
-    if (parsedMessage) {
-      processingService.processTracing(parsedMessage);
+    const tracing = decodeSqsMessage(message.Body);
+    if (tracing) {
+      processingService.processTracing(tracing);
     }
   };
 }

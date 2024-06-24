@@ -23,13 +23,22 @@ export function decodeSqsMessage(
   const key = s3Body.data.Records[0].s3.object.key;
   const keyParts = key.split("/");
 
-  return {
-    date: keyParts[0],
-    tenantId: keyParts[1],
-    version: keyParts[2],
-    correlationId: keyParts[3],
-    tracingId: keyParts[4].replace(".csv", ""),
-  };
+  const result: Partial<TracingContent> = {};
+
+  keyParts.forEach((part) => {
+    const [key, value] = part.split("=");
+    if (TracingContent.shape.hasOwnProperty(key)) {
+      result[key as keyof TracingContent] = value;
+    }
+  });
+
+  const parsedResult = TracingContent.safeParse(result);
+  if (parsedResult.success) {
+    return parsedResult.data;
+  } else {
+    logger.error(`error parsing s3Key ${parsedResult.error.message}`);
+    return undefined;
+  }
 }
 
 export async function parseCSV(stream: Readable): Promise<TracingRecords> {

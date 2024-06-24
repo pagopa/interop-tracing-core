@@ -58,13 +58,11 @@ describe("Processing Service", () => {
     producerService,
   );
 
-  const handleMissingPurposesMock = vi.fn();
-  const writeObjectMock = vi.fn();
   describe("createS3Path", () => {
     it("should generate correct S3 path ", () => {
       const path = processingService.createS3Path(mockMessage);
       expect(path).toBe(
-        "2024-12-12/223e4567-e89b-12d3-a456-426614174001/1/133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
+        "2024-12-12/223e4567-e89b-12d3-a456-426614174001/a33e4567-e89b-12d3-a456-426614174abe/1/133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
       );
     });
   });
@@ -126,24 +124,23 @@ describe("Processing Service", () => {
         generateMockTracingRecords(),
       );
 
+      vi.spyOn(bucketService, "writeObject").mockResolvedValue(undefined);
+      vi.spyOn(producerService, "handleMissingPurposes").mockResolvedValue();
+
       const enrichedPurposes = await dbService.getEnrichedPurpose([]);
       const errorPurposes = enrichedPurposes.filter(
         (enrichedPurpose) => enrichedPurpose.error,
       );
 
-      vi.spyOn(processingService, "processTracing").mockImplementation(
-        async () => {
-          if (errorPurposes.length === 0) {
-            writeObjectMock();
-          } else {
-            handleMissingPurposesMock();
-          }
-        },
-      );
       await processingService.processTracing(mockMessage);
 
       expect(errorPurposes).toHaveLength(1);
-      expect(handleMissingPurposesMock).toHaveBeenCalledTimes(1);
+      expect(producerService.handleMissingPurposes).toHaveBeenCalledWith(
+        errorPurposes,
+        mockMessage.tracingId,
+        mockMessage.correlationId,
+      );
+      expect(bucketService.writeObject).toHaveBeenCalledTimes(0);
     });
 
     it("should call writeObject when there are no error purposes", async () => {
@@ -153,24 +150,19 @@ describe("Processing Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         generateMockTracingRecords(),
       );
-      const enrichedPurposes = await dbService.getEnrichedPurpose([]);
-      const errorPurposes = enrichedPurposes.filter(
-        (enrichedPurpose) => enrichedPurpose.error,
-      );
 
-      vi.spyOn(processingService, "processTracing").mockImplementation(
-        async () => {
-          if (errorPurposes.length === 0) {
-            writeObjectMock();
-          } else {
-            handleMissingPurposesMock();
-          }
-        },
-      );
+      vi.spyOn(bucketService, "writeObject").mockResolvedValue(undefined);
+      vi.spyOn(producerService, "handleMissingPurposes").mockResolvedValue();
+
+      const enrichedPurposes = await dbService.getEnrichedPurpose([]);
+
       await processingService.processTracing(mockMessage);
 
-      expect(writeObjectMock).toHaveBeenCalledTimes(1);
-      expect(handleMissingPurposesMock).toHaveBeenCalledTimes(0);
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        enrichedPurposes,
+        processingService.createS3Path(mockMessage),
+      );
+      expect(producerService.handleMissingPurposes).toHaveBeenCalledTimes(0);
     });
   });
 });

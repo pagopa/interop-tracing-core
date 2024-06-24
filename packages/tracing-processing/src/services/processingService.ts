@@ -38,8 +38,9 @@ export const processingServiceBuilder = (
     },
 
     createS3Path(message: TracingContent) {
-      return `${message.date}/${message.tenantId}/${message.version}/${message.correlationId}/${message.tracingId}.csv`;
+      return `${message.tenantId}/${message.date}/${message.tracingId}/${message.version}/${message.correlationId}/${message.tracingId}.csv`;
     },
+
     async processTracing(message: TracingContent) {
       try {
         const tracingMessage = TracingContent.safeParse(message);
@@ -50,6 +51,12 @@ export const processingServiceBuilder = (
         }
         const s3KeyPath = this.createS3Path(tracingMessage.data);
         const records = await bucketService.readObject(s3KeyPath);
+
+        if (!records || records.length === 0) {
+          logger.error(`No record found for key ${s3KeyPath}`);
+          return;
+        }
+
         const { tracingId, correlationId } = tracingMessage.data;
 
         const hasError = await this.checkRecords(

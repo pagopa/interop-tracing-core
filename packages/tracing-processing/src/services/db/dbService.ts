@@ -19,7 +19,7 @@ export function dbServiceBuilder(db: DB) {
           return {
             ...record,
             purposeName: fullPurpose?.purpose_title ?? "Purpose not found",
-            error: !!fullPurpose,
+            error: !!!fullPurpose,
           };
         });
         return await Promise.all(fullRecordPromises);
