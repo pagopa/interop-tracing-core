@@ -25,7 +25,7 @@
         "@types/express": "4.17.17",
         "@types/node": "20.14.1",
         "@types/supertest": "6.0.2",
-        "@types/uuid": "9.0.2",
+        "@types/uuid": "9.0.8",
         "supertest": "6.3.4",
         "ts-node": "10.9.2",
         "typescript": "5.5.2",
@@ -54,7 +54,7 @@
         "pagopa-interop-tracing-models": "workspace:*",
         "pagopa-interop-tracing-operations-client": "workspace:*",
         "ts-pattern": "5.1.2",
-        "uuid": "9.0.0",
+        "uuid": "10.0.0",
         "zod": "3.23.8"
     }
 }
