@@ -19,7 +19,7 @@
     "clean-generated": "turbo clean-generated"
   },
   "devDependencies": {
-    "@tsconfig/node-lts": "20.1.0",
+    "@tsconfig/node-lts": "20.1.3",
     "turbo": "1.13.3"
   },
   "packageManager": "pnpm@8.15.1"
