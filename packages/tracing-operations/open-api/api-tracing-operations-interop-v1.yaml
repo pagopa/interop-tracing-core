@@ -15,12 +15,28 @@ paths:
       operationId: submitTracing
       tags:
         - Write
+      parameters:
+        - in: header
+          name: X-Correlation-Id
+          description: Correlation ID for tracking requests
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Requester-Purpose-Id
+          description: Purpose ID for specifying the requester's purpose
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/SubmitTracingRequest"
+
       responses:
         "200":
           description: Successful response
@@ -126,7 +142,7 @@ paths:
   /tracings/{tracingId}/versions/{version}/state:
     post:
       summary: Update tracing state by tracingId
-      operationId: updateState
+      operationId: updateTracingState
       tags:
         - Write
       parameters:
@@ -139,7 +155,14 @@ paths:
           in: path
           required: true
           schema:
+            type: integer
+        - in: header
+          name: X-Correlation-Id
+          description: Correlation ID for tracking requests
+          required: true
+          schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -401,7 +424,7 @@ components:
         tracingId:
           type: string
           format: uuid
-        version: 
+        version:
           type: integer
           format: int32
           minimum: 0
@@ -479,6 +502,12 @@ components:
           format: int64
     SubmitTracingResponse:
       type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - errors
+        - date
       properties:
         tracingId:
           type: string
@@ -486,6 +515,9 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
         errors:
