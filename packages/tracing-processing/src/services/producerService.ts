@@ -1,21 +1,17 @@
 import { config } from "../utilities/config.js";
 import { SQS } from "pagopa-interop-tracing-commons";
 import { genericInternalError } from "pagopa-interop-tracing-models";
-import { EnrichedPurpose } from "../models/messages.js";
+import { EnrichedPurpose, TracingContent } from "../models/messages.js";
+import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendErrorMessage(
-      error: string,
-      tracingId: string,
-      purpose_id: string,
-      correlationId: string,
-    ): Promise<void> {
+    async sendErrorMessage(purposeError: SavePurposeErrorDto): Promise<void> {
       try {
         await SQS.sendMessage(
           sqsClient,
           config.sqsProcessingErrorEndpoint,
-          JSON.stringify({ error, tracingId, purpose_id, correlationId }),
+          JSON.stringify(purposeError),
         );
       } catch (err) {
         const errorMsg = `Error in sendErrorMessage: ${err instanceof Error ? err.message : String(err)}`;
@@ -25,18 +21,22 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
 
     async handleMissingPurposes(
       errorPurposes: EnrichedPurpose[],
-      tracingId: string,
-      correlationId: string,
+      tracing: TracingContent,
     ) {
       try {
-        const errorMessagePromises = errorPurposes.map((record) =>
-          this.sendErrorMessage(
-            "Purpose not found",
-            tracingId,
-            record.purpose_id,
-            correlationId,
-          ),
-        );
+        const errorMessagePromises = errorPurposes.map((record, index) => {
+          const purposeError = {
+            tracingId: tracing.tracingId,
+            version: tracing.version,
+            date: tracing.date,
+            errorCode: "INVALID_FORMAL_CHECK",
+            purposeId: record.purpose_id,
+            message: record.error!,
+            rowNumber: record.rowNumber,
+            updateTracingState: index === errorPurposes.length - 1,
+          };
+          return this.sendErrorMessage(purposeError);
+        });
         await Promise.all(errorMessagePromises);
       } catch (err) {
         const errorMsg = `Error in handleMissingPurposes: ${err instanceof Error ? err.message : String(err)}`;

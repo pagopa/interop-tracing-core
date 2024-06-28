@@ -61,6 +61,7 @@ describe("Processing Service", () => {
   describe("createS3Path", () => {
     it("should generate correct S3 path ", () => {
       const path = processingService.createS3Path(mockMessage);
+
       expect(path).toBe(
         "223e4567-e89b-12d3-a456-426614174001/2024-12-12/a33e4567-e89b-12d3-a456-426614174abe/1/133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
       );
@@ -72,17 +73,13 @@ describe("Processing Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         generateMockTracingRecords(),
       );
-      const { tracingId, correlationId } = {
-        tracingId: "",
-        correlationId: "",
-      };
       const records = await bucketService.readObject("dummy-s3-key");
       const hasError = await processingService.checkRecords(
         records,
-        tracingId,
-        correlationId,
+        mockMessage,
       );
-      expect(hasError).toBe(false);
+
+      expect(hasError).toHaveLength(0);
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
@@ -90,17 +87,13 @@ describe("Processing Service", () => {
         generateWrongMockTracingRecords() as unknown as TracingRecords,
       );
 
-      const tracingId = "";
-      const correlationId = "";
-
       const records = await bucketService.readObject("dummy-s3-key");
       const hasError = await processingService.checkRecords(
         records,
-        tracingId,
-        correlationId,
+        mockMessage,
       );
 
-      expect(hasError).toBe(true);
+      expect(hasError.length).toBeGreaterThan(0);
     });
   });
 
@@ -134,12 +127,13 @@ describe("Processing Service", () => {
 
       await processingService.processTracing(mockMessage);
 
-      expect(errorPurposes).toHaveLength(1);
+      expect(errorPurposes.length).toBeGreaterThan(0);
+
       expect(producerService.handleMissingPurposes).toHaveBeenCalledWith(
         errorPurposes,
-        mockMessage.tracingId,
-        mockMessage.correlationId,
+        mockMessage,
       );
+
       expect(bucketService.writeObject).toHaveBeenCalledTimes(0);
     });
 
@@ -150,7 +144,6 @@ describe("Processing Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         generateMockTracingRecords(),
       );
-
       vi.spyOn(bucketService, "writeObject").mockResolvedValue(undefined);
       vi.spyOn(producerService, "handleMissingPurposes").mockResolvedValue();
 
@@ -162,7 +155,40 @@ describe("Processing Service", () => {
         enrichedPurposes,
         processingService.createS3Path(mockMessage),
       );
+
       expect(producerService.handleMissingPurposes).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe("sendErrorMessage", () => {
+    it("only last message should have updateTracingState true", async () => {
+      const producerService = producerServiceBuilder(sqsClient);
+      const errorPurposes = generateEnrichedPurposesWithErrors();
+
+      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
+        undefined,
+      );
+
+      await producerService.handleMissingPurposes(errorPurposes, mockMessage);
+
+      expect(producerService.sendErrorMessage).toBeCalledTimes(
+        errorPurposes.length,
+      );
+
+      for (let i = 1; i < errorPurposes.length - 1; i++) {
+        expect(producerService.sendErrorMessage).nthCalledWith(
+          i,
+          expect.objectContaining({
+            updateTracingState: false,
+          }),
+        );
+      }
+
+      expect(producerService.sendErrorMessage).lastCalledWith(
+        expect.objectContaining({
+          updateTracingState: true,
+        }),
+      );
     });
   });
 });

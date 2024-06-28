@@ -7,6 +7,7 @@ import {
 import { Readable } from "stream";
 import { generateCSV, parseCSV } from "../models/models.js";
 import { EnrichedPurpose, TracingRecords } from "../models/messages.js";
+import { logger } from "pagopa-interop-tracing-commons";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
@@ -20,9 +21,9 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           ContentType: "text/csv",
         };
         const result = await s3Client.send(new PutObjectCommand(params));
-        console.log(`File uploaded successfully: ${JSON.stringify(result)}`);
+        logger.info(`File uploaded successfully: ${JSON.stringify(result)}`);
       } catch (e) {
-        console.log("error", e);
+        logger.error("error on writing object", e);
       }
     },
 
@@ -37,7 +38,10 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           throw new Error("No data found in S3 object");
         }
         const csvData = await parseCSV(s3Object.Body as Readable);
-        return csvData;
+        const csvDataWithRow = csvData.map((csv, index) => {
+          return { ...csv, ...{ rowNumber: index } };
+        });
+        return csvDataWithRow;
       } catch (e) {
         console.error("Error fetching object from S3:", e);
       }

@@ -1,4 +1,7 @@
-import { genericInternalError } from "pagopa-interop-tracing-models";
+import {
+  SavePurposeErrorDto,
+  genericInternalError,
+} from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
@@ -16,25 +19,28 @@ export const processingServiceBuilder = (
 ) => {
   return {
     async checkRecords(
+      //formal check
       records: TracingRecords,
-      tracingId: string,
-      correlationId: string,
-    ) {
+      tracing: TracingContent,
+    ): Promise<SavePurposeErrorDto[]> {
+      let errorsRecord = [];
       for (const record of records) {
         const result = TracingRecordSchema.safeParse(record);
 
-        if (!result.success) {
-          const error = result.error;
-          await producerService.sendErrorMessage(
-            error.message,
-            tracingId,
-            record.purpose_id,
-            correlationId,
-          );
-          return true;
+        if (result.error) {
+          errorsRecord.push({
+            tracingId: tracing.tracingId,
+            version: tracing.version,
+            date: tracing.date,
+            errorCode: "INVALID_FORMAL_CHECK",
+            purposeId: record.purpose_id,
+            message: result.error.message,
+            rowNumber: record.rowNumber,
+            updateTracingState: false,
+          });
         }
       }
-      return false;
+      return errorsRecord;
     },
 
     createS3Path(message: TracingContent) {
@@ -43,13 +49,15 @@ export const processingServiceBuilder = (
 
     async processTracing(message: TracingContent) {
       try {
-        const tracingMessage = TracingContent.safeParse(message);
-        if (tracingMessage.error) {
+        const { data: tracing, error: tracingError } =
+          TracingContent.safeParse(message);
+
+        if (tracingError) {
           throw genericInternalError(
-            `tracing message is not valid: ${JSON.stringify(tracingMessage.error)}`,
+            `tracing message is not valid: ${JSON.stringify(tracingError)}`,
           );
         }
-        const s3KeyPath = this.createS3Path(tracingMessage.data);
+        const s3KeyPath = this.createS3Path(tracing);
         const records = await bucketService.readObject(s3KeyPath);
 
         if (!records || records.length === 0) {
@@ -57,16 +65,21 @@ export const processingServiceBuilder = (
           return;
         }
 
-        const { tracingId, correlationId } = tracingMessage.data;
+        const errorRecords = await this.checkRecords(records, tracing);
 
-        const hasError = await this.checkRecords(
-          records,
-          tracingId,
-          correlationId,
-        );
+        if (errorRecords.length) {
+          logger.error(
+            `Formal check error for tracing id: ${tracing.tracingId}`,
+          );
 
-        if (hasError) {
-          logger.error(`Formal check error for tracing id: ${tracingId}`);
+          for (const [index, purposeError] of errorRecords.entries()) {
+            const isLast = index === errorRecords.length - 1;
+            if (isLast) {
+              purposeError.updateTracingState = true;
+            }
+
+            producerService.sendErrorMessage(purposeError);
+          }
           return;
         }
 
@@ -77,11 +90,7 @@ export const processingServiceBuilder = (
         if (errorPurposes.length === 0) {
           await bucketService.writeObject(enrichedPurposes, s3KeyPath);
         } else {
-          producerService.handleMissingPurposes(
-            errorPurposes,
-            tracingId,
-            correlationId,
-          );
+          producerService.handleMissingPurposes(errorPurposes, tracing);
         }
       } catch (e) {
         throw genericInternalError(

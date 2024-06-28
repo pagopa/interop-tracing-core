@@ -3,7 +3,7 @@ import { z } from "zod";
 export const TracingContent = z.object({
   tenantId: z.string(),
   date: z.string(),
-  version: z.string(),
+  version: z.number(),
   correlationId: z.string(),
   tracingId: z.string(),
 });
@@ -13,6 +13,7 @@ export const TracingRecordSchema = z.object({
   purpose_id: z.string().uuid(),
   status: z.string(),
   requests_count: z.string(),
+  rowNumber: z.number(),
 });
 
 export const EserviceSchema = z.object({
@@ -34,7 +35,8 @@ export const PurposeSchema = z.object({
   purpose_id: z.string().uuid(),
   status: z.string(),
   requests_count: z.string(),
-  error: z.boolean(),
+  rowNumber: z.number(),
+  error: z.string().optional(),
 });
 
 export const TracingRecords = z.array(TracingRecordSchema);

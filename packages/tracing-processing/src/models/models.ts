@@ -23,7 +23,8 @@ export function decodeSqsMessage(
   const key = s3Body.data.Records[0].s3.object.key;
   const keyParts = key.split("/");
 
-  const result: Partial<TracingContent> = {};
+  const result: Partial<{ [K in keyof TracingContent]: string | undefined }> =
+    {};
 
   keyParts.forEach((part) => {
     const [key, value] = part.split("=");

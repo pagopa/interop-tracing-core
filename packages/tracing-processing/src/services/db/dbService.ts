@@ -28,7 +28,7 @@ export function dbServiceBuilder(db: DB) {
                 ...record,
                 purposeName: "Purpose not found",
                 eservice: {} as EserviceSchema,
-                error: true,
+                error: `Purpose ${record.purpose_id} not found`,
               };
             }
 
@@ -42,7 +42,7 @@ export function dbServiceBuilder(db: DB) {
                 ...record,
                 purposeName: "Purpose not found",
                 eservice: {} as EserviceSchema,
-                error: true,
+                error: `Eservice ${fullPurpose.eservice_id} not found`,
               };
             }
 
@@ -50,7 +50,6 @@ export function dbServiceBuilder(db: DB) {
               ...record,
               eservice: eService,
               purposeName: fullPurpose.purpose_title,
-              error: false,
             };
           } catch (error) {
             console.error(
@@ -60,7 +59,7 @@ export function dbServiceBuilder(db: DB) {
               ...record,
               purposeName: "Purpose fetch error",
               eservice: {} as EserviceSchema,
-              error: true,
+              error: "purpose fetch error",
             };
           }
         });
