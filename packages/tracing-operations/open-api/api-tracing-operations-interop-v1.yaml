@@ -207,7 +207,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       requestBody:
         required: true
         content:
@@ -421,13 +421,6 @@ components:
     SavePurposeErrorRequest:
       type: object
       properties:
-        tracingId:
-          type: string
-          format: uuid
-        version:
-          type: integer
-          format: int32
-          minimum: 0
         date:
           type: string
           format: date
@@ -520,6 +513,8 @@ components:
           format: date
         version:
           type: number
+        state:
+          $ref: "#/components/schemas/TracingState"
         errors:
           type: boolean
     UpdateOnErrorResponse:
