@@ -11,7 +11,7 @@ export type UpdateTracingStateDto = z.infer<typeof UpdateTracingStateDto>;
 
 export const SavePurposeErrorDto = z.object({
   tracingId: z.string().uuid(),
-  purposeId: z.string(),
+  purposeId: z.string().uuid(),
   version: z.number(),
   date: z.string(),
   errorCode: z.string(),
