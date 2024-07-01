@@ -6,7 +6,7 @@ export const AuthToken = z.object({
 export type AuthToken = z.infer<typeof AuthToken>;
 
 export const RequesterAuthData = z.object({
-  purposeId: z.string().uuid().default(""),
+  purposeId: z.string().uuid(),
 });
 export type RequesterAuthData = z.infer<typeof RequesterAuthData>;
 
