@@ -14,6 +14,7 @@ export const SavePurposeErrorDto = z.object({
   purposeId: z.string().uuid(),
   version: z.number(),
   date: z.string(),
+  status: z.number(),
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.number(),
