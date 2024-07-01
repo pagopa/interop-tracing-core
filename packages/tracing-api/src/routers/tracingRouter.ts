@@ -47,7 +47,13 @@ const tracingRouter =
             },
           );
 
-          const bucketS3Key = `${result.tenantId}/${result.date}/${result.tracingId}/${result.version}/${result.tracingId}`;
+          const bucketS3Key = buildS3Key(
+            result.tenantId,
+            result.date,
+            result.tracingId,
+            result.version,
+            req.ctx.correlationId,
+          );
 
           await bucketService
             .writeObject(req.body.file, bucketS3Key)
@@ -175,5 +181,16 @@ const tracingRouter =
 
     return router;
   };
+
+const buildS3Key = (
+  tenantId: string,
+  date: string,
+  tracingId: string,
+  version: number,
+  correlationId: string,
+): string =>
+  `tenantId=${tenantId}/date=${
+    date.split("T")[0]
+  }/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export default tracingRouter;
