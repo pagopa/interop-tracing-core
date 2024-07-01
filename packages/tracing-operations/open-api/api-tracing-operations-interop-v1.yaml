@@ -421,6 +421,8 @@ components:
     SavePurposeErrorRequest:
       type: object
       properties:
+        purposeId:
+          type: string
         date:
           type: string
           format: date
@@ -431,8 +433,7 @@ components:
         rowNumber:
           type: integer
       required:
-        - tracingId
-        - version
+        - purposeId
         - date
         - errorCode
         - message
