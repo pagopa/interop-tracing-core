@@ -426,6 +426,8 @@ components:
         date:
           type: string
           format: date
+        status:
+          type: integer
         errorCode:
           type: string
         message:
@@ -435,6 +437,7 @@ components:
       required:
         - purposeId
         - date
+        - status
         - errorCode
         - message
         - rowNumber
