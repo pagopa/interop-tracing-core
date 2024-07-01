@@ -49,7 +49,7 @@ describe("Consumer state updater queue test", () => {
     const emptyMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.savePurposeError.empty),
+      Body: JSON.stringify(sqsMessages.updateTracingState.empty),
     };
 
     try {
