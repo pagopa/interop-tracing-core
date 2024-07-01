@@ -49,6 +49,7 @@ export const operationsServiceBuilder = (
       try {
         await operationsApiClient.savePurposeError(
           {
+            purposeId: data.purposeId,
             date: data.date,
             errorCode: data.errorCode,
             message: data.message,

@@ -88,6 +88,12 @@ export type ApiSavePurposeErrorResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/versions/:version/errors"
 >;
 
+export type ApiSavePurposeErrorParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/versions/:version/errors"
+>;
+
 export type ApiMissingPayload = ZodiosBodyByPath<
   Api,
   "post",

@@ -17,12 +17,14 @@ const PurposeSchema = z.object({
 });
 
 const PurposeErrorSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().brand("PurposeId"),
   tracing_id: z.string().uuid(),
-  version: z.number(),
   purpose_id: z.string().uuid(),
+  version: z.number(),
+  date: z.string(),
   error_code: z.string(),
   message: z.string(),
+  row_number: z.number(),
 });
 
 const TracingSchema = z.object({
