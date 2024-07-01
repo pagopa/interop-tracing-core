@@ -3,6 +3,7 @@ import { ApiError, makeApiProblemBuilder } from "pagopa-interop-tracing-models";
 export const errorCodes = {
   tracingNotFound: "0001",
   tenantNotFound: "0002",
+  tracingAlreadyExists: "0003",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;

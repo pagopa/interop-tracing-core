@@ -9,17 +9,43 @@ import {
   ApiGetTracingsQuery,
   ApiGetTracingErrorsQuery,
   ApiGetTracingErrorsResponse,
+  ApiUpdateTracingStatePayload,
+  ApiUpdateTracingStateParams,
+  ApiSubmitTracingHeaders,
+  ApiUpdateTracingStateHeaders,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
   operationsApiClient: ZodiosInstance<Api>,
 ) => ({
   async submitTracing(
+    headers: ApiSubmitTracingHeaders,
     payload: ApiSubmitTracingPayload,
   ): Promise<ApiSubmitTracingResponse> {
-    return await operationsApiClient.submitTracing({
-      date: payload.date,
-    });
+    return await operationsApiClient.submitTracing(
+      {
+        date: payload.date,
+      },
+      {
+        headers,
+      },
+    );
+  },
+
+  async updateTracingState(
+    headers: ApiUpdateTracingStateHeaders,
+    params: ApiUpdateTracingStateParams,
+    payload: ApiUpdateTracingStatePayload,
+  ): Promise<void> {
+    await operationsApiClient.updateTracingState(
+      {
+        state: payload.state,
+      },
+      {
+        headers,
+        params: { tracingId: params.tracingId, version: params.version },
+      },
+    );
   },
 
   async getTracings(

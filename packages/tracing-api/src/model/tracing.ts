@@ -4,7 +4,6 @@ const PurposeError = z.object({
   purposeId: z.string().uuid(),
   errorCode: z.string(),
   message: z.string(),
-  rowNumber: z.number(),
 });
 
 export const ApiTracingErrorsContent = z.object({

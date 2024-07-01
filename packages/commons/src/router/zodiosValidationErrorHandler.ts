@@ -1,44 +1,39 @@
-import { Request, Response, NextFunction } from "express";
+import { constants } from "http2";
+import express, { NextFunction, Response } from "express";
 import {
-  Problem,
-  genericError,
+  badRequestError,
   makeApiProblemBuilder,
-  validationFailed,
 } from "pagopa-interop-tracing-models";
-import { P, match } from "ts-pattern";
 import { z } from "zod";
-import { logger } from "../index.js";
+import { fromZodIssue } from "zod-validation-error";
+import { WithZodiosContext } from "@zodios/express";
+import { ExpressContext, logger } from "../index.js";
 
+const makeApiProblem = makeApiProblemBuilder({});
 interface ZodValidationError {
   context: string;
   error: z.ZodIssue[];
 }
-export const makeApiProblem = makeApiProblemBuilder({});
 
-const validationErrorHandler = (
-  error: unknown,
-  _req: Request,
+export function zodiosValidationErrorToApiProblem(
+  zodError: ZodValidationError,
+  req: WithZodiosContext<express.Request, ExpressContext>,
   res: Response,
   next: NextFunction,
-): void => {
-  if (!error) return next();
-  else {
-    const problem = match<unknown, Problem>(error)
-      .with(
-        P.shape({ context: P.string, error: P.array(P.any) }),
-        (e: ZodValidationError) => {
-          const errors = e.error.map(
-            (issue) => new Error(`${e.context}: ${JSON.stringify(issue)}`),
-          );
-          return makeApiProblem(validationFailed(errors), () => 400, logger);
-        },
-      )
-      .otherwise((e) => {
-        return makeApiProblem(genericError(`${e}`), () => 500, logger);
-      });
+): void {
+  if (!zodError) return next();
 
-    res.status(problem.status).json(problem).end();
-  }
-};
+  const detail = `Incorrect value for ${zodError.context}`;
+  const errors = zodError.error.map((e) => fromZodIssue(e));
 
-export default validationErrorHandler;
+  res
+    .status(constants.HTTP_STATUS_BAD_REQUEST)
+    .json(
+      makeApiProblem(
+        badRequestError(detail, errors),
+        () => constants.HTTP_STATUS_BAD_REQUEST,
+        logger({ ...req.ctx }),
+      ),
+    )
+    .send();
+}
