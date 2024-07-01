@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { purposeErrorCodes } from "pagopa-interop-tracing-commons";
+import { tracingState } from "pagopa-interop-tracing-models";
 
 export const sqsMessages = {
   savePurposeError: {
@@ -41,6 +42,23 @@ export const sqsMessages = {
       message: "Generic invalid purpose formal check",
       rowNumber: 13,
       updateTracingState: true,
+    },
+    empty: {},
+  },
+  updateTracingState: {
+    badFormatted: {
+      tracingId: uuidv4(),
+      state: tracingState.error,
+      version: null,
+    },
+    missingTracingId: {
+      state: tracingState.error,
+      version: null,
+    },
+    valid: {
+      tracingId: uuidv4(),
+      state: tracingState.error,
+      version: 1,
     },
     empty: {},
   },
