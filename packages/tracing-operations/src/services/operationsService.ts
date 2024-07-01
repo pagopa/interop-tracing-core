@@ -7,6 +7,8 @@ import {
   ApiUpdateTracingStateResponse,
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
+  ApiSavePurposeErrorPayload,
+  ApiSavePurposeErrorParams,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -15,6 +17,7 @@ import {
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
+import { PurposeError } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -68,10 +71,27 @@ export function operationsServiceBuilder(dbService: DBService) {
       return Promise.resolve();
     },
 
-    async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
-      genericLogger.info(`Save purpose error`);
-      await dbService.savePurposeError();
-      return Promise.resolve();
+    async savePurposeError(
+      params: ApiSavePurposeErrorParams,
+      payload: ApiSavePurposeErrorPayload,
+      logger: Logger,
+    ): Promise<ApiSavePurposeErrorResponse> {
+      logger.info(
+        `Save purpose error for tracingId: ${params.tracingId}, version: ${params.version}`,
+      );
+
+      const purposeError: PurposeError = {
+        id: generateId<PurposeId>(),
+        tracing_id: params.tracingId,
+        version: params.version,
+        purpose_id: payload.purposeId,
+        date: payload.date,
+        error_code: payload.errorCode,
+        message: payload.message,
+        row_number: payload.rowNumber,
+      };
+
+      return await dbService.savePurposeError(purposeError);
     },
 
     async deletePurposeErrors(): Promise<void> {

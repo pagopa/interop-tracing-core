@@ -7,7 +7,7 @@ import {
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { Tracing } from "../../model/domain/db.js";
+import { PurposeError, Tracing } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
@@ -160,14 +160,26 @@ export function dbServiceBuilder(db: DB) {
       try {
         return Promise.resolve();
       } catch (error) {
-        throw genericInternalError(`Error update state: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
-    async savePurposeError() {
+    async savePurposeError(data: PurposeError): Promise<void> {
       try {
-        return Promise.resolve();
+        const insertTracingQuery = `
+          INSERT INTO tracing.purposes_errors (id, tracing_id, purpose_id, date, error_code, message, row_number)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)`;
+
+        await db.one(insertTracingQuery, [
+          data.id,
+          data.tracing_id,
+          data.purpose_id,
+          data.date,
+          data.error_code,
+          data.message,
+          data.row_number,
+        ]);
       } catch (error) {
-        throw genericInternalError(`Error save purpose error: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
     async deletePurposeErrors() {
