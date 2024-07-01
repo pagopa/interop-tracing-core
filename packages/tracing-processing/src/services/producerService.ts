@@ -1,5 +1,5 @@
 import { config } from "../utilities/config.js";
-import { SQS } from "pagopa-interop-tracing-commons";
+import { SQS, logger } from "pagopa-interop-tracing-commons";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { EnrichedPurpose, TracingContent } from "../models/messages.js";
 import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
@@ -8,6 +8,9 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
     async sendErrorMessage(purposeError: SavePurposeErrorDto): Promise<void> {
       try {
+        logger.info(
+          `Error message sent on queue ${JSON.stringify(purposeError)}`,
+        );
         await SQS.sendMessage(
           sqsClient,
           config.sqsProcessingErrorEndpoint,

@@ -98,7 +98,7 @@ export const generateEnrichedPurposesWithErrors = () => {
 export const generateErrorPurposes: SavePurposeErrorDto[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
-    version: 1,
+    version: "1",
     date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
@@ -108,7 +108,7 @@ export const generateErrorPurposes: SavePurposeErrorDto[] = [
   },
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
-    version: 1,
+    version: "1",
     date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
@@ -121,7 +121,7 @@ export const generateErrorPurposes: SavePurposeErrorDto[] = [
 export const mockMessage: TracingContent = {
   tenantId: "223e4567-e89b-12d3-a456-426614174001",
   date: "2024-12-12",
-  version: 1,
+  version: "1",
   correlationId: "133e4567-e89b-12d3-a456-426614174e3a",
   tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
 };

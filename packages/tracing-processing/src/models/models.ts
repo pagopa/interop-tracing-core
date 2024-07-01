@@ -27,12 +27,12 @@ export function decodeSqsMessage(
     {};
 
   keyParts.forEach((part) => {
-    const [key, value] = part.split("=");
+    const decodedPart = decodeURIComponent(part);
+    const [key, value] = decodedPart.split("=");
     if (TracingContent.shape.hasOwnProperty(key)) {
       result[key as keyof TracingContent] = value;
     }
   });
-
   const parsedResult = TracingContent.safeParse(result);
   if (parsedResult.success) {
     return parsedResult.data;
@@ -54,13 +54,43 @@ export async function parseCSV(stream: Readable): Promise<TracingRecords> {
 }
 
 export function generateCSV(records: EnrichedPurpose[]): string {
-  const header =
-    "date,purpose_id,status,requests_count,purposeName,eserviceId,consumerId,producerId,origin,externalId,purposeTitle,producerName,consumerName";
+  const header = [
+    "date",
+    "purpose_id",
+    "status",
+    "requests_count",
+    "purpose_name",
+    "eservice_id",
+    "consumer_id",
+    "producer_id",
+    "origin",
+    "external_id",
+    "purpose_title",
+    "producer_name",
+    "consumer_name",
+  ].join(",");
+
   const rows = records
     .map((record) => {
-      return `${record.date},${record.purpose_id},${record.status},${record.requests_count},${record.purposeName},${record.eservice.eserviceId},${record.eservice.consumerId},${record.eservice.producerId},${record.eservice.origin},${record.eservice.externalId},${record.eservice.purposeTitle},${record.eservice.producerName},${record.eservice.consumerName}\n`;
+      return [
+        record.date,
+        record.purpose_id,
+        record.status,
+        record.requests_count,
+        record.purposeName,
+        record.eservice.id,
+        record.eservice.consumer_id,
+        record.eservice.producer_id,
+        record.eservice.origin,
+        record.eservice.external_id,
+        record.eservice.purpose_title,
+        record.eservice.producer_name,
+        record.eservice.consumer_name,
+      ]
+        .map((field) => (field === null || field === undefined ? "" : field))
+        .join(",");
     })
     .join("\n");
 
-  return `${header}${rows}`;
+  return `${header}\n${rows}`;
 }

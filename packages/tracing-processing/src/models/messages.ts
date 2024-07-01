@@ -3,7 +3,7 @@ import { z } from "zod";
 export const TracingContent = z.object({
   tenantId: z.string(),
   date: z.string(),
-  version: z.number(),
+  version: z.string(),
   correlationId: z.string(),
   tracingId: z.string(),
 });
@@ -17,16 +17,16 @@ export const TracingRecordSchema = z.object({
 });
 
 export const EserviceSchema = z.object({
-  eserviceId: z.string(),
+  id: z.string(),
   purposeId: z.string().uuid(),
-  consumerId: z.string(),
-  producerId: z.string(),
+  consumer_id: z.string(),
+  producer_id: z.string(),
   date: z.string(),
   origin: z.string(),
-  externalId: z.string(),
-  purposeTitle: z.string(),
-  producerName: z.string(),
-  consumerName: z.string(),
+  external_id: z.string(),
+  purpose_title: z.string(),
+  producer_name: z.string(),
+  consumer_name: z.string(),
 });
 
 export const PurposeSchema = z.object({

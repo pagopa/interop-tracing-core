@@ -33,7 +33,7 @@ export function dbServiceBuilder(db: DB) {
             }
 
             const eService = await db.oneOrNone<EserviceSchema>(
-              `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
+              `SELECT * FROM tracing.eservices WHERE id = $1`,
               [fullPurpose.eservice_id],
             );
 
