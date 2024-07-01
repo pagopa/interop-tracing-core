@@ -78,7 +78,11 @@ const operationsRouter = (
     "/tracings/:tracingId/versions/:version/state",
     async (req, res) => {
       try {
-        await operationsService.updateTracingState();
+        await operationsService.updateTracingState(
+          req.params,
+          req.body,
+          logger(req.ctx),
+        );
         return res.status(200).json().end();
       } catch (error) {
         const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));

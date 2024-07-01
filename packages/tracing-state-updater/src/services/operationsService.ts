@@ -53,6 +53,7 @@ export const operationsServiceBuilder = (
             date: data.date,
             errorCode: data.errorCode,
             message: data.message,
+            status: data.status,
             rowNumber: data.rowNumber,
           },
           {

@@ -7,7 +7,11 @@ import {
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { PurposeError, Tracing } from "../../model/domain/db.js";
+import {
+  PurposeError,
+  Tracing,
+  UpdateTracingState,
+} from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
@@ -156,24 +160,38 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async updateTracingState() {
+    async updateTracingState(data: UpdateTracingState): Promise<void> {
       try {
-        return Promise.resolve();
+        const updateTracingStateQuery = `
+          UPDATE tracing.tracings
+            SET state = $1
+          WHERE id = $2`;
+
+        await db.one(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }
     },
     async savePurposeError(data: PurposeError): Promise<void> {
       try {
-        const insertTracingQuery = `
-          INSERT INTO tracing.purposes_errors (id, tracing_id, purpose_id, date, error_code, message, row_number)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)`;
+        const upsertTracingQuery = `
+          INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, date, status, error_code, message, row_number)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          ON CONFLICT (tracing_id, purpose_id, version, status)
+          DO UPDATE SET
+              id = EXCLUDED.id,
+              date = EXCLUDED.date,
+              error_code = EXCLUDED.error_code,
+              message = EXCLUDED.message;
+        `;
 
-        await db.one(insertTracingQuery, [
+        await db.one(upsertTracingQuery, [
           data.id,
           data.tracing_id,
+          data.version,
           data.purpose_id,
           data.date,
+          data.status,
           data.error_code,
           data.message,
           data.row_number,
