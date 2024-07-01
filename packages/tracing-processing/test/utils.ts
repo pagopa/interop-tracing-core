@@ -1,19 +1,30 @@
 import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
-import { EserviceSchema, TracingContent } from "../src/models/messages.js";
+import {
+  EserviceSchema,
+  TracingContent,
+  TracingRecords,
+} from "../src/models/messages.js";
 
-export const generateMockTracingRecords = () => {
+export const generateMockTracingRecords = (): TracingRecords => {
   return [
     {
-      date: "2023-01-01",
+      date: "2024-12-12",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "active",
+      status: "200",
       requests_count: "10",
       rowNumber: 1,
     },
     {
-      date: "2023-01-02",
+      date: "2024-12-12",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "inactive",
+      status: "204",
+      requests_count: "5",
+      rowNumber: 2,
+    },
+    {
+      date: "2024-12-12",
+      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      status: "204",
       requests_count: "5",
       rowNumber: 2,
     },
@@ -24,15 +35,34 @@ export const generateWrongMockTracingRecords = () => {
     {
       date: "2023-01-01",
       purposeId: "123e4567-e89b-12d3-a456-426614174000",
-      status: "active",
+      status: "200",
       requests_count: "10",
       rowNumber: 1,
     },
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      requests_count: "5",
+      requests_count: "404",
       rowNumber: 2,
+    },
+    {
+      date: "2023-01-02",
+      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      status: "404",
+      requests_count: "404",
+      rowNumber: 2,
+    },
+    {
+      date: "2023-01-02",
+      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      status: "404",
+      requests_count: "404",
+    },
+    {
+      date: "2023-01-02",
+      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      status: "404",
+      rowNumber: undefined,
     },
   ];
 };
@@ -40,18 +70,18 @@ export const generateWrongMockTracingRecords = () => {
 export const generateEnrichedPurposes = () => {
   return [
     {
-      date: "2023-01-01",
+      date: "2024-12-12",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "active",
+      status: "200",
       requests_count: "10",
       purposeName: "",
       eservice: {} as EserviceSchema,
       rowNumber: 1,
     },
     {
-      date: "2023-01-02",
+      date: "2024-12-12",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "inactive",
+      status: "404",
       requests_count: "5",
       purposeName: "",
       eservice: {} as EserviceSchema,
@@ -65,7 +95,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-01",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "active",
+      status: "200",
       requests_count: "10",
       purposeName: "",
       error: "Purpose not found",
@@ -75,7 +105,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "inactive",
+      status: "404",
       requests_count: "5",
       purposeName: "",
       error: "Purpose not found",
@@ -85,7 +115,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "inactive",
+      status: "404",
       requests_count: "5",
       purposeName: "",
       error: "Purpose not found",

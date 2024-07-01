@@ -11,6 +11,23 @@ import {
   TracingRecords,
 } from "../models/messages.js";
 import { logger } from "pagopa-interop-tracing-commons";
+import { match } from "ts-pattern";
+
+function parseErrorMessage(errorObj: string) {
+  const error = JSON.parse(errorObj);
+  const {
+    path,
+    received,
+  }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
+  const error_code = match(path[0])
+    .with("status", () => "INVALID_STATUS_CODE")
+    .with("purpose_id", () => "INVALID_PURPOSE")
+    .with("date", () => "INVALID_DATE")
+    .with("requests_count", () => "INVALID_REQUEST_COUNT")
+    .otherwise(() => "INVALID_FORMAL_CHECK");
+  console.log("PATH", path, "error code", error_code);
+  return { message: `{ ${path}: ${received} } is not valid`, error_code };
+}
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -32,9 +49,21 @@ export const processingServiceBuilder = (
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
-            errorCode: "INVALID_FORMAL_CHECK",
+            errorCode: parseErrorMessage(result.error.message).error_code,
             purposeId: record.purpose_id,
-            message: result.error.message,
+            message: parseErrorMessage(result.error.message).message,
+            rowNumber: record.rowNumber,
+            updateTracingState: false,
+          });
+        }
+        if (result.data?.date !== tracing.date) {
+          errorsRecord.push({
+            tracingId: tracing.tracingId,
+            version: tracing.version,
+            date: tracing.date,
+            errorCode: "DATE_NOT_VALID",
+            purposeId: record.purpose_id,
+            message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
             rowNumber: record.rowNumber,
             updateTracingState: false,
           });
@@ -83,7 +112,7 @@ export const processingServiceBuilder = (
 
         const enrichedPurposes = await dbService.getEnrichedPurpose(records);
         const errorPurposes = enrichedPurposes.filter(
-          (enrichedPurpose) => enrichedPurpose.error,
+          (enrichedPurpose) => !!enrichedPurpose.error,
         );
         if (errorPurposes.length === 0) {
           await bucketService.writeObject(enrichedPurposes, s3KeyPath);

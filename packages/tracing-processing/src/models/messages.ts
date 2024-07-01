@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+const acceptedStatusCodes = [
+  "200",
+  "201",
+  "202",
+  "204",
+  "301",
+  "302",
+  "304",
+  "400",
+  "401",
+  "403",
+  "404",
+  "405",
+  "409",
+  "500",
+  "501",
+  "502",
+  "503",
+  "504",
+] as const;
+
 export const TracingContent = z.object({
   tenantId: z.string(),
   date: z.string(),
@@ -11,7 +32,7 @@ export const TracingContent = z.object({
 export const TracingRecordSchema = z.object({
   date: z.string(),
   purpose_id: z.string().uuid(),
-  status: z.string(),
+  status: z.enum(acceptedStatusCodes),
   requests_count: z.string(),
   rowNumber: z.number(),
 });

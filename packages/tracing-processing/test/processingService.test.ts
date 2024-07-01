@@ -70,7 +70,7 @@ describe("Processing Service", () => {
 
   describe("checkRecords", () => {
     it("should not send error messages when all records pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
         generateMockTracingRecords(),
       );
       const records = await bucketService.readObject("dummy-s3-key");
@@ -83,17 +83,35 @@ describe("Processing Service", () => {
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
         generateWrongMockTracingRecords() as unknown as TracingRecords,
       );
 
       const records = await bucketService.readObject("dummy-s3-key");
-      const hasError = await processingService.checkRecords(
-        records,
-        mockMessage,
+      const errors = await processingService.checkRecords(records, mockMessage);
+
+      const dateNotValidError = errors.filter(
+        (error) => error.errorCode === "DATE_NOT_VALID",
+      );
+      const invalidFormalCheckError = errors.filter(
+        (error) => error.errorCode === "INVALID_FORMAL_CHECK",
+      );
+      const statusNotValidError = errors.filter(
+        (error) => error.errorCode === "INVALID_STATUS_CODE",
+      );
+      const purposeIdNotValid = errors.filter(
+        (error) => error.errorCode === "INVALID_PURPOSE",
+      );
+      const requestsCountNotValid = errors.filter(
+        (error) => error.errorCode === "INVALID_REQUEST_COUNT",
       );
 
-      expect(hasError.length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(invalidFormalCheckError.length).toBeGreaterThan(0);
+      expect(statusNotValidError.length).toBeGreaterThan(0);
+      expect(dateNotValidError.length).toBeGreaterThan(0);
+      expect(purposeIdNotValid.length).toBeGreaterThan(0);
+      expect(requestsCountNotValid.length).toBeGreaterThan(0);
     });
   });
 
@@ -113,12 +131,15 @@ describe("Processing Service", () => {
         generateEnrichedPurposesWithErrors(),
       );
 
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
         generateMockTracingRecords(),
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValue(undefined);
-      vi.spyOn(producerService, "handleMissingPurposes").mockResolvedValue();
+      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(
+        producerService,
+        "handleMissingPurposes",
+      ).mockResolvedValueOnce();
 
       const enrichedPurposes = await dbService.getEnrichedPurpose([]);
       const errorPurposes = enrichedPurposes.filter(
@@ -141,11 +162,14 @@ describe("Processing Service", () => {
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
         generateEnrichedPurposes(),
       );
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
         generateMockTracingRecords(),
       );
-      vi.spyOn(bucketService, "writeObject").mockResolvedValue(undefined);
-      vi.spyOn(producerService, "handleMissingPurposes").mockResolvedValue();
+      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(
+        producerService,
+        "handleMissingPurposes",
+      ).mockResolvedValueOnce();
 
       const enrichedPurposes = await dbService.getEnrichedPurpose([]);
 
@@ -165,7 +189,7 @@ describe("Processing Service", () => {
       const producerService = producerServiceBuilder(sqsClient);
       const errorPurposes = generateEnrichedPurposesWithErrors();
 
-      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
+      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValueOnce(
         undefined,
       );
 
