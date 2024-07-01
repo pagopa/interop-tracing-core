@@ -83,7 +83,11 @@ const buildS3Key = (
   date: string,
   tracingId: string,
   version: number,
-): string => `${tenantId}/${date}/${tracingId}/${version}/${tracingId}`;
+  correlationId: string,
+): string =>
+  `tenantId=${tenantId}/date=${
+    date.split("T")[0]
+  }/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 describe("Tracing Router", () => {
   beforeEach(() => {
@@ -125,6 +129,7 @@ describe("Tracing Router", () => {
       mockSubmitTracingResponse.date,
       mockSubmitTracingResponse.tracingId,
       mockSubmitTracingResponse.version,
+      mockAppCtx.correlationId,
     );
 
     expect(bucketService.writeObject).toHaveBeenCalledWith(
