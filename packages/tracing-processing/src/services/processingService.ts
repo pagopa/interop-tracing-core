@@ -19,7 +19,7 @@ function parseErrorMessage(errorObj: string) {
     path,
     received,
   }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
-
+  console.log("PATH", path);
   const error_code = match(path[0])
     .with("status", () => "INVALID_STATUS_CODE")
     .with("purpose_id", () => "INVALID_PURPOSE")
@@ -40,25 +40,31 @@ export const processingServiceBuilder = (
       records: TracingRecords,
       tracing: TracingContent,
     ): Promise<SavePurposeErrorDto[]> {
-      let errorsRecord = [];
+      const errorsRecord: SavePurposeErrorDto[] = [];
+
       for (const record of records) {
+        record.status = record.status?.toString();
         const result = TracingRecordSchema.safeParse(record);
-        const statusNumber = isNaN(Number(record.status))
-          ? 0
-          : Number(record.status);
 
         if (result.error) {
+          const parsedError = parseErrorMessage(result.error.message);
+          const statusNumber = isNaN(Number(record.status))
+            ? 0
+            : Number(record.status);
+
           errorsRecord.push({
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
             status: statusNumber,
-            errorCode: parseErrorMessage(result.error.message).error_code,
+            errorCode: parsedError.error_code,
             purposeId: record.purpose_id,
-            message: parseErrorMessage(result.error.message).message,
+            message: parsedError.message,
             rowNumber: record.rowNumber,
             updateTracingState: false,
           });
+
+          continue;
         }
 
         if (result.data?.date !== tracing.date) {
