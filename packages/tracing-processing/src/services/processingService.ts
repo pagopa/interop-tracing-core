@@ -42,20 +42,16 @@ export const processingServiceBuilder = (
       const errorsRecord: SavePurposeErrorDto[] = [];
 
       for (const record of records) {
-        record.status = record.status?.toString();
         const result = TracingRecordSchema.safeParse(record);
 
         if (result.error) {
           const parsedError = parseErrorMessage(result.error.message);
-          const statusNumber = isNaN(Number(record.status))
-            ? 0
-            : Number(record.status);
 
           errorsRecord.push({
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
-            status: statusNumber,
+            status: record.status,
             errorCode: parsedError.error_code,
             purposeId: record.purpose_id,
             message: parsedError.message,
@@ -71,7 +67,7 @@ export const processingServiceBuilder = (
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
-            status: Number(record.status),
+            status: record.status,
             errorCode: "DATE_NOT_VALID",
             purposeId: record.purpose_id,
             message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,

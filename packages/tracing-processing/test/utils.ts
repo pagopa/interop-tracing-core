@@ -10,21 +10,21 @@ export const generateMockTracingRecords = (): TracingRecords => {
     {
       date: "2024-12-12",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "200",
+      status: 200,
       requests_count: "10",
       rowNumber: 1,
     },
     {
       date: "2024-12-12",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "204",
+      status: 204,
       requests_count: "5",
       rowNumber: 2,
     },
     {
       date: "2024-12-12",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "204",
+      status: 204,
       requests_count: "5",
       rowNumber: 2,
     },
@@ -42,7 +42,7 @@ export const generateWrongMockTracingRecords = () => {
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      requests_count: 404,
+      requests_count: "40",
       rowNumber: 2,
     },
     {

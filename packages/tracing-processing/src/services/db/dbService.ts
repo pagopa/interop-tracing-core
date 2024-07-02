@@ -31,7 +31,7 @@ export function dbServiceBuilder(db: DB) {
             if (!fullPurpose) {
               return {
                 ...record,
-                status: Number(record.status),
+                status: record.status,
                 purposeName: "Purpose not found",
                 eservice: {} as EserviceSchema,
                 message: `Purpose ${record.purpose_id} not found`,
@@ -47,7 +47,7 @@ export function dbServiceBuilder(db: DB) {
             if (!eService) {
               return {
                 ...record,
-                status: Number(record.status),
+                status: record.status,
                 purposeName: "Eservice not found",
                 eservice: {} as EserviceSchema,
                 message: `Eservice ${fullPurpose.eservice_id} not found`,
@@ -63,7 +63,7 @@ export function dbServiceBuilder(db: DB) {
             if (!tenantEservice) {
               return {
                 ...record,
-                status: Number(record.status),
+                status: record.status,
                 purposeName: "Eservice not associated",
                 eservice: {} as EserviceSchema,
                 message: `Eservice ${fullPurpose.eservice_id} is not associated with the producer or consumer`,
@@ -73,7 +73,7 @@ export function dbServiceBuilder(db: DB) {
 
             return {
               ...record,
-              status: Number(record.status),
+              status: record.status,
               eservice: eService,
               purposeName: fullPurpose.purpose_title,
             };
@@ -83,7 +83,7 @@ export function dbServiceBuilder(db: DB) {
             );
             return {
               ...record,
-              status: Number(record.status),
+              status: record.status,
               purposeName: "Purpose fetch error",
               eservice: {} as EserviceSchema,
               message: "purpose fetch error",
