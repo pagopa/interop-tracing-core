@@ -77,7 +77,7 @@ const acceptedStatusCodes = [
 export const TracingRecordSchema = z.object({
   date: z.string(),
   purpose_id: z.string().uuid(),
-  status: z
+  status: z.coerce
     .number()
     .refine((value) => acceptedStatusCodes.includes(value.toString()), {
       message: "Invalid HTTP status code",
