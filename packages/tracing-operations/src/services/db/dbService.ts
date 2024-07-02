@@ -199,7 +199,6 @@ export function dbServiceBuilder(db: DB) {
           data.row_number,
         ]);
       } catch (error) {
-        console.log(`${error}`.toString());
         throw dbServiceErrorMapper(error);
       }
     },
