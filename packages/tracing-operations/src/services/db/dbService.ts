@@ -72,7 +72,8 @@ export function dbServiceBuilder(db: DB) {
 
         if (
           tracing?.state === tracingState.completed ||
-          tracing?.state === tracingState.pending
+          tracing?.state === tracingState.pending ||
+          tracing?.state === tracingState.error
         ) {
           throw tracingAlreadyExists(
             `A tracing for the current tenant already exists on this date: ${data.date}`,
