@@ -35,7 +35,7 @@ export const operationsServiceBuilder = (
         );
 
         genericLogger.info(
-          `Updating tracing state with tracingId: ${data.tracingId}, version: ${data.version}`,
+          `Updating tracing state to "${data.state}" for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {
         throw errorProcessingUpdateTracingState(
@@ -63,7 +63,7 @@ export const operationsServiceBuilder = (
         );
 
         genericLogger.info(
-          `Saving purpose error for tracingId: ${data.tracingId}, version: ${data.version}`,
+          `Saving purpose error with purposeId ${data.purposeId} status ${data.status} for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {
         throw errorProcessingSavePurposeError(
