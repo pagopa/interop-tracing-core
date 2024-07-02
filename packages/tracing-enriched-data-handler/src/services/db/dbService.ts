@@ -11,6 +11,7 @@ export function dbServiceBuilder(_db: DB) {
         throw genericInternalError(`Error insertTracing: ${error}`);
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async deleteTracing(_tracingId: string) {
       try {
         return Promise.resolve([{}]);

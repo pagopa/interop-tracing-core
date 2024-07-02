@@ -6,7 +6,8 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async deleteTracing(_message: unknown): Promise<{}> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async deleteTracing(_message: unknown): Promise<unknown> {
       const tracingId = "";
       const result = await dbService.deleteTracing(tracingId);
       if (!result) {
