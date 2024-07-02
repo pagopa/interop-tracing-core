@@ -11,4 +11,13 @@ export const purposeErrorCodes = {
   INVALID_DATE: {
     code: "INVALID_DATE",
   },
+  ESERVICE_NOT_ASSOCIATED: {
+    code: "ESERVICE_NOT_ASSOCIATED",
+  },
+  ESERVICE_NOT_FOUND: {
+    code: "ESERVICE_NOT_FOUND",
+  },
+  PURPOSE_NOT_FOUND: {
+    code: "PURPOSE_NOT_FOUND",
+  },
 };
