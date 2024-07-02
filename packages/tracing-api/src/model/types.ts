@@ -5,58 +5,58 @@ import {
 } from "@zodios/core";
 import { api } from "./generated/api.js";
 
-export type Api = typeof api.api;
+export type ApiExternal = typeof api.api;
 
-export type ApiSubmitTracingPayload = ZodiosBodyByPath<
-  Api,
+export type ApiExternalSubmitTracingPayload = ZodiosBodyByPath<
+  ApiExternal,
   "post",
   "/tracings/submit"
 >;
 
-export type ApiSubmitTracingResponse = ZodiosResponseByPath<
-  Api,
+export type ApiExternalSubmitTracingResponse = ZodiosResponseByPath<
+  ApiExternal,
   "post",
   "/tracings/submit"
 >;
 
-export type ApiGetTracingsQuery = ZodiosQueryParamsByPath<
-  Api,
+export type ApiExternalGetTracingsQuery = ZodiosQueryParamsByPath<
+  ApiExternal,
   "get",
   "/tracings"
 >;
 
-export type ApiGetTracingsResponse = ZodiosResponseByPath<
-  Api,
+export type ApiExternalGetTracingsResponse = ZodiosResponseByPath<
+  ApiExternal,
   "get",
   "/tracings"
 >;
 
-export type ApiGetTracingErrorsResponse = ZodiosResponseByPath<
-  Api,
+export type ApiExternalGetTracingErrorsResponse = ZodiosResponseByPath<
+  ApiExternal,
   "get",
   "/tracings/:tracingId/errors"
 >;
 
-export type ApiRecoverTracingPayload = ZodiosBodyByPath<
-  Api,
+export type ApiExternalRecoverTracingPayload = ZodiosBodyByPath<
+  ApiExternal,
   "put",
   "/tracings/:tracingId/recover"
 >;
 
-export type ApiRecoverTracingResponse = ZodiosResponseByPath<
-  Api,
+export type ApiExternalRecoverTracingResponse = ZodiosResponseByPath<
+  ApiExternal,
   "put",
   "/tracings/:tracingId/recover"
 >;
 
-export type ApiReplaceTracingPayload = ZodiosBodyByPath<
-  Api,
+export type ApiExternalReplaceTracingPayload = ZodiosBodyByPath<
+  ApiExternal,
   "put",
   "/tracings/:tracingId/replace"
 >;
 
-export type ApiReplaceTracingResponse = ZodiosResponseByPath<
-  Api,
+export type ApiExternalReplaceTracingResponse = ZodiosResponseByPath<
+  ApiExternal,
   "put",
   "/tracings/:tracingId/replace"
 >;

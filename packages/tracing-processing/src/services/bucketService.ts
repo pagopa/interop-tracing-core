@@ -7,7 +7,7 @@ import {
 import { Readable } from "stream";
 import { generateCSV, parseCSV } from "../models/models.js";
 import { EnrichedPurpose, TracingRecords } from "../models/messages.js";
-import { logger } from "pagopa-interop-tracing-commons";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
@@ -22,9 +22,11 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           ContentType: "text/csv",
         };
         const result = await s3Client.send(new PutObjectCommand(params));
-        logger.info(`File uploaded successfully: ${JSON.stringify(result)}`);
+        genericLogger.info(
+          `File uploaded successfully: ${JSON.stringify(result)}`,
+        );
       } catch (e) {
-        logger.error("error on writing object", e);
+        genericLogger.error("error on writing object");
       }
     },
 

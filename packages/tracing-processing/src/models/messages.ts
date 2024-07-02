@@ -35,7 +35,7 @@ export const PurposeSchema = z.object({
   purposeName: z.string(),
   date: z.string(),
   purpose_id: z.string().uuid(),
-  status: z.string(),
+  status: z.number(),
   requests_count: z.string(),
   rowNumber: z.number(),
   errorMessage: z.string().optional(),

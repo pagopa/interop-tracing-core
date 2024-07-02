@@ -10,7 +10,7 @@ import {
   TracingRecordSchema,
   TracingRecords,
 } from "../models/messages.js";
-import { logger } from "pagopa-interop-tracing-commons";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
 
 function parseErrorMessage(errorObj: string) {
@@ -43,12 +43,16 @@ export const processingServiceBuilder = (
       let errorsRecord = [];
       for (const record of records) {
         const result = TracingRecordSchema.safeParse(record);
+        const statusNumber = isNaN(Number(record.status))
+          ? 0
+          : Number(record.status);
 
         if (result.error) {
           errorsRecord.push({
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
+            status: statusNumber,
             errorCode: parseErrorMessage(result.error.message).error_code,
             purposeId: record.purpose_id,
             message: parseErrorMessage(result.error.message).message,
@@ -62,6 +66,7 @@ export const processingServiceBuilder = (
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
+            status: Number(record.status),
             errorCode: "DATE_NOT_VALID",
             purposeId: record.purpose_id,
             message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
@@ -91,13 +96,13 @@ export const processingServiceBuilder = (
         const s3KeyPath = this.createS3Path(tracing);
         const records = await bucketService.readObject(s3KeyPath);
         if (!records || records.length === 0) {
-          logger.error(`No record found for key ${s3KeyPath}`);
+          genericLogger.error(`No record found for key ${s3KeyPath}`);
           return;
         }
 
         const errorRecords = await this.checkRecords(records, tracing);
         if (errorRecords.length) {
-          logger.error(
+          genericLogger.error(
             `Formal check error for tracing id: ${tracing.tracingId}`,
           );
 

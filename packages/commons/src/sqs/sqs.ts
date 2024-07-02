@@ -8,7 +8,7 @@ import {
   SQSClientConfig,
   SendMessageCommandInput,
 } from "@aws-sdk/client-sqs";
-import { logger } from "../logging/index.js";
+import { genericLogger } from "../logging/index.js";
 import { ConsumerConfig } from "../config/consumerConfig.js";
 
 const serializeError = (error: unknown): string => {
@@ -20,7 +20,7 @@ const serializeError = (error: unknown): string => {
 };
 
 const processExit = async (exitStatusCode: number = 1): Promise<void> => {
-  logger.error(`Process exit with code ${exitStatusCode}`);
+  genericLogger.error(`Process exit with code ${exitStatusCode}`);
   await new Promise((resolve) => setTimeout(resolve, 1000));
   process.exit(exitStatusCode);
 };
@@ -76,12 +76,12 @@ export const runConsumer = async (
   config: { queueUrl: string; runUntilQueueIsEmpty?: boolean } & ConsumerConfig,
   consumerHandler: (messagePayload: Message) => void,
 ): Promise<void> => {
-  logger.info(`Consumer processing on Queue: ${config.queueUrl}`);
+  genericLogger.info(`Consumer processing on Queue: ${config.queueUrl}`);
 
   try {
     await processQueue(sqsClient, config, consumerHandler);
   } catch (e) {
-    logger.error(
+    genericLogger.error(
       `Generic error occurs processing Queue: ${
         config.queueUrl
       }. Details: ${serializeError(e)}`,
@@ -89,7 +89,9 @@ export const runConsumer = async (
     await processExit();
   }
 
-  logger.info(`Queue processing Completed for Queue: ${config.queueUrl}`);
+  genericLogger.info(
+    `Queue processing Completed for Queue: ${config.queueUrl}`,
+  );
 };
 
 export const sendMessage = async (

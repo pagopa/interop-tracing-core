@@ -35,33 +35,33 @@ export const generateWrongMockTracingRecords = () => {
     {
       date: "2023-01-01",
       purposeId: "123e4567-e89b-12d3-a456-426614174000",
-      status: "200",
+      status: 200,
       requests_count: "10",
       rowNumber: 1,
     },
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      requests_count: 404,
+      rowNumber: 2,
+    },
+    {
+      date: "2023-01-02",
+      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
+      status: 404,
       requests_count: "404",
       rowNumber: 2,
     },
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
-      requests_count: "404",
-      rowNumber: 2,
-    },
-    {
-      date: "2023-01-02",
-      purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
+      status: 404,
       requests_count: "404",
     },
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
+      status: 404,
       rowNumber: undefined,
     },
   ];
@@ -72,7 +72,7 @@ export const generateEnrichedPurposes = () => {
     {
       date: "2024-12-12",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "200",
+      status: 200,
       requests_count: "10",
       purposeName: "",
       eservice: {} as EserviceSchema,
@@ -81,7 +81,7 @@ export const generateEnrichedPurposes = () => {
     {
       date: "2024-12-12",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
+      status: 404,
       requests_count: "5",
       purposeName: "",
       eservice: {} as EserviceSchema,
@@ -95,7 +95,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-01",
       purpose_id: "123e4567-e89b-12d3-a456-426614174000",
-      status: "200",
+      status: 200,
       requests_count: "10",
       purposeName: "",
       error: "Purpose not found",
@@ -106,7 +106,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
+      status: 404,
       requests_count: "5",
       purposeName: "",
       errorMessage: "Eservice not found",
@@ -117,7 +117,7 @@ export const generateEnrichedPurposesWithErrors = () => {
     {
       date: "2023-01-02",
       purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-      status: "404",
+      status: 404,
       requests_count: "5",
       purposeName: "",
       errorMessage: "Eservice not associated",
@@ -128,7 +128,7 @@ export const generateEnrichedPurposesWithErrors = () => {
   ];
 };
 
-export const generateErrorPurposes: SavePurposeErrorDto[] = [
+export const generateErrorPurposes: Partial<SavePurposeErrorDto>[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: "1",

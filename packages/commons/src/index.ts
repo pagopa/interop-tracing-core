@@ -4,6 +4,7 @@ export * from "./model/apiEndpoint.js";
 export * from "./types/index.js";
 export * from "./config/index.js";
 export * from "./repositories/db.js";
+export * from "./auth/index.js";
 export * from "./router/zodiosValidationErrorHandler.js";
 export * from "./sqs/index.js";
 export * from "./constants/index.js";

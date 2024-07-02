@@ -1,4 +1,4 @@
-import { logger } from "pagopa-interop-tracing-commons";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 import {
   genericInternalError,
   S3BodySchema,
@@ -16,7 +16,7 @@ export function decodeSqsMessage(
   const s3Body = S3BodySchema.safeParse(JSON.parse(jsonStr));
 
   if (s3Body.error) {
-    logger.error(`error parsing s3Body ${s3Body.error}`);
+    genericLogger.error(`error parsing s3Body ${s3Body.error}`);
     return undefined;
   }
 
@@ -37,7 +37,7 @@ export function decodeSqsMessage(
   if (parsedResult.success) {
     return parsedResult.data;
   } else {
-    logger.error(`error parsing s3Key ${parsedResult.error.message}`);
+    genericLogger.error(`error parsing s3Key ${parsedResult.error.message}`);
     return undefined;
   }
 }
