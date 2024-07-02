@@ -8,6 +8,7 @@ import { Readable } from "stream";
 import { generateCSV, parseCSV } from "../models/models.js";
 import { EnrichedPurpose, TracingRecords } from "../models/messages.js";
 import { logger } from "pagopa-interop-tracing-commons";
+import { genericInternalError } from "pagopa-interop-tracing-models";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
@@ -43,9 +44,8 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
         });
         return csvDataWithRow;
       } catch (e) {
-        console.error("Error fetching object from S3:", e);
+        throw genericInternalError("Error fetching object from S3");
       }
-      return Promise.resolve([]);
     },
   };
 };

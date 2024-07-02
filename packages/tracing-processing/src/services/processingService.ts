@@ -122,7 +122,7 @@ export const processingServiceBuilder = (
         if (errorPurposes.length === 0) {
           await bucketService.writeObject(enrichedPurposes, s3KeyPath);
         } else {
-          producerService.handleMissingPurposes(errorPurposes, tracing);
+          producerService.handleErrorPurposes(errorPurposes, tracing);
         }
       } catch (e) {
         throw genericInternalError(

@@ -136,10 +136,7 @@ describe("Processing Service", () => {
       );
 
       vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
-      vi.spyOn(
-        producerService,
-        "handleMissingPurposes",
-      ).mockResolvedValueOnce();
+      vi.spyOn(producerService, "handleErrorPurposes").mockResolvedValueOnce();
 
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
@@ -153,7 +150,7 @@ describe("Processing Service", () => {
 
       expect(errorPurposes.length).toBeGreaterThan(0);
 
-      expect(producerService.handleMissingPurposes).toHaveBeenCalledWith(
+      expect(producerService.handleErrorPurposes).toHaveBeenCalledWith(
         errorPurposes,
         mockMessage,
       );
@@ -169,10 +166,7 @@ describe("Processing Service", () => {
         generateMockTracingRecords(),
       );
       vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
-      vi.spyOn(
-        producerService,
-        "handleMissingPurposes",
-      ).mockResolvedValueOnce();
+      vi.spyOn(producerService, "handleErrorPurposes").mockResolvedValueOnce();
 
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
@@ -186,7 +180,7 @@ describe("Processing Service", () => {
         processingService.createS3Path(mockMessage),
       );
 
-      expect(producerService.handleMissingPurposes).toHaveBeenCalledTimes(0);
+      expect(producerService.handleErrorPurposes).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -199,7 +193,7 @@ describe("Processing Service", () => {
         undefined,
       );
 
-      await producerService.handleMissingPurposes(errorPurposes, mockMessage);
+      await producerService.handleErrorPurposes(errorPurposes, mockMessage);
 
       expect(producerService.sendErrorMessage).toBeCalledTimes(
         errorPurposes.length,
