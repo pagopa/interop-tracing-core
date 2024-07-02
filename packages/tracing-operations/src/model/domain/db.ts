@@ -21,8 +21,6 @@ const PurposeErrorSchema = z.object({
   tracing_id: z.string().uuid(),
   purpose_id: z.string().uuid(),
   version: z.number(),
-  status: z.number(),
-  date: z.string(),
   error_code: z.string(),
   message: z.string(),
   row_number: z.number(),
