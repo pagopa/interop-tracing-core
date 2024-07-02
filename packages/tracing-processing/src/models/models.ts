@@ -29,6 +29,7 @@ export function decodeSqsMessage(
   keyParts.forEach((part) => {
     const decodedPart = decodeURIComponent(part);
     const [key, value] = decodedPart.split("=");
+    // eslint-disable-next-line no-prototype-builtins
     if (TracingContent.shape.hasOwnProperty(key)) {
       result[key as keyof TracingContent] = value;
     }

@@ -17,7 +17,9 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
           JSON.stringify(purposeError),
         );
       } catch (err) {
-        const errorMsg = `Error in sendErrorMessage: ${err instanceof Error ? err.message : String(err)}`;
+        const errorMsg = `Error in sendErrorMessage: ${
+          err instanceof Error ? err.message : String(err)
+        }`;
         throw genericInternalError(errorMsg);
       }
     },
@@ -43,7 +45,9 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
         });
         await Promise.all(errorMessagePromises);
       } catch (err) {
-        const errorMsg = `Error in handleErrorPurposes: ${err instanceof Error ? err.message : String(err)}`;
+        const errorMsg = `Error in handleErrorPurposes: ${
+          err instanceof Error ? err.message : String(err)
+        }`;
         throw genericInternalError(errorMsg);
       }
     },

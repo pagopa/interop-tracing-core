@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  ProcessingService,
-  processingServiceBuilder,
-} from "../src/services/processingService.js";
+import { processingServiceBuilder } from "../src/services/processingService.js";
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
 import {
@@ -37,7 +34,6 @@ describe("Processing Service", () => {
     },
   });
 
-  let processingService: ProcessingService;
   const bucketService: BucketService = bucketServiceBuilder(s3client);
   const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
@@ -52,7 +48,7 @@ describe("Processing Service", () => {
   });
   const dbService = dbServiceBuilder(dbInstance);
 
-  processingService = processingServiceBuilder(
+  const processingService = processingServiceBuilder(
     dbService,
     bucketService,
     producerService,

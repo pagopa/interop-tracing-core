@@ -19,7 +19,6 @@ function parseErrorMessage(errorObj: string) {
     path,
     received,
   }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
-  console.log("PATH", path);
   const error_code = match(path[0])
     .with("status", () => "INVALID_STATUS_CODE")
     .with("purpose_id", () => "INVALID_PURPOSE")
