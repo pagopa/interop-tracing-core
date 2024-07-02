@@ -185,7 +185,7 @@ describe("Processing Service", () => {
       const producerService = producerServiceBuilder(sqsClient);
       const errorPurposes = generateEnrichedPurposesWithErrors();
 
-      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValueOnce(
+      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
       );
 
