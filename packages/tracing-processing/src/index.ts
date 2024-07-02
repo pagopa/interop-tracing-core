@@ -33,10 +33,6 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
 
 const s3client: S3Client = new S3Client({
   region: config.awsRegion,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
-  },
 });
 
 const bucketService: BucketService = bucketServiceBuilder(s3client);

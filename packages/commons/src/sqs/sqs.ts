@@ -28,10 +28,6 @@ const processExit = async (exitStatusCode: number = 1): Promise<void> => {
 export const instantiateClient = (config: SQSClientConfig): SQSClient => {
   const sqsClient = new SQSClient({
     region: config.region,
-    credentials: {
-      accessKeyId: process.env.ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
-    },
   });
   return sqsClient;
 };
