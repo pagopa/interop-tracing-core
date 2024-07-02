@@ -1,26 +1,5 @@
 import { z } from "zod";
 
-const acceptedStatusCodes = [
-  "200",
-  "201",
-  "202",
-  "204",
-  "301",
-  "302",
-  "304",
-  "400",
-  "401",
-  "403",
-  "404",
-  "405",
-  "409",
-  "500",
-  "501",
-  "502",
-  "503",
-  "504",
-] as const;
-
 export const TracingContent = z.object({
   tenantId: z.string(),
   date: z.string(),
@@ -29,10 +8,12 @@ export const TracingContent = z.object({
   tracingId: z.string(),
 });
 
+const statusCodeRegex = /^(?:[1-5][0-9]{2})$/;
+
 export const TracingRecordSchema = z.object({
   date: z.string(),
   purpose_id: z.string().uuid(),
-  status: z.enum(acceptedStatusCodes),
+  status: z.string().regex(statusCodeRegex, { message: "Invalid status code" }),
   requests_count: z.string(),
   rowNumber: z.number(),
 });
@@ -57,14 +38,15 @@ export const PurposeSchema = z.object({
   status: z.string(),
   requests_count: z.string(),
   rowNumber: z.number(),
-  error: z.string().optional(),
+  errorMessage: z.string().optional(),
+  errorCode: z.string().optional(),
 });
 
 export const TracingRecords = z.array(TracingRecordSchema);
+
 export type EnrichedPurpose = z.infer<typeof PurposeSchema> & {
   eservice: z.infer<typeof EserviceSchema>;
 };
-
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
 export type TracingRecords = z.infer<typeof TracingRecords>;
 export type TracingContent = z.infer<typeof TracingContent>;

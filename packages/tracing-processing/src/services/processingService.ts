@@ -19,13 +19,14 @@ function parseErrorMessage(errorObj: string) {
     path,
     received,
   }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
+
   const error_code = match(path[0])
     .with("status", () => "INVALID_STATUS_CODE")
     .with("purpose_id", () => "INVALID_PURPOSE")
     .with("date", () => "INVALID_DATE")
     .with("requests_count", () => "INVALID_REQUEST_COUNT")
     .otherwise(() => "INVALID_FORMAL_CHECK");
-  console.log("PATH", path, "error code", error_code);
+
   return { message: `{ ${path}: ${received} } is not valid`, error_code };
 }
 
@@ -36,7 +37,6 @@ export const processingServiceBuilder = (
 ) => {
   return {
     async checkRecords(
-      //formal check
       records: TracingRecords,
       tracing: TracingContent,
     ): Promise<SavePurposeErrorDto[]> {
@@ -56,6 +56,7 @@ export const processingServiceBuilder = (
             updateTracingState: false,
           });
         }
+
         if (result.data?.date !== tracing.date) {
           errorsRecord.push({
             tracingId: tracing.tracingId,
@@ -69,6 +70,7 @@ export const processingServiceBuilder = (
           });
         }
       }
+
       return errorsRecord;
     },
 
@@ -110,9 +112,12 @@ export const processingServiceBuilder = (
           return;
         }
 
-        const enrichedPurposes = await dbService.getEnrichedPurpose(records);
+        const enrichedPurposes = await dbService.getEnrichedPurpose(
+          records,
+          tracing,
+        );
         const errorPurposes = enrichedPurposes.filter(
-          (enrichedPurpose) => !!enrichedPurpose.error,
+          (enrichedPurpose) => !!enrichedPurpose.errorCode,
         );
         if (errorPurposes.length === 0) {
           await bucketService.writeObject(enrichedPurposes, s3KeyPath);

@@ -32,9 +32,9 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
             tracingId: tracing.tracingId,
             version: tracing.version,
             date: tracing.date,
-            errorCode: "INVALID_FORMAL_CHECK",
+            errorCode: record.errorCode!,
             purposeId: record.purpose_id,
-            message: record.error!,
+            message: record.errorMessage!,
             rowNumber: record.rowNumber,
             updateTracingState: index === errorPurposes.length - 1,
           };

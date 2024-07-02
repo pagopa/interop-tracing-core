@@ -141,9 +141,12 @@ describe("Processing Service", () => {
         "handleMissingPurposes",
       ).mockResolvedValueOnce();
 
-      const enrichedPurposes = await dbService.getEnrichedPurpose([]);
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        [],
+        mockMessage,
+      );
       const errorPurposes = enrichedPurposes.filter(
-        (enrichedPurpose) => enrichedPurpose.error,
+        (enrichedPurpose) => enrichedPurpose.errorCode,
       );
 
       await processingService.processTracing(mockMessage);
@@ -171,7 +174,10 @@ describe("Processing Service", () => {
         "handleMissingPurposes",
       ).mockResolvedValueOnce();
 
-      const enrichedPurposes = await dbService.getEnrichedPurpose([]);
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        [],
+        mockMessage,
+      );
 
       await processingService.processTracing(mockMessage);
 

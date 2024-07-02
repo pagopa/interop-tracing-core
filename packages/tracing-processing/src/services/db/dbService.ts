@@ -1,8 +1,9 @@
 import { genericInternalError } from "pagopa-interop-tracing-models";
-import { DB } from "pagopa-interop-tracing-commons";
+import { DB, logger } from "pagopa-interop-tracing-commons";
 import {
   EnrichedPurpose,
   EserviceSchema,
+  TracingContent,
   TracingRecords,
 } from "../../models/messages.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -11,10 +12,14 @@ export function dbServiceBuilder(db: DB) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getEnrichedPurpose(
       records: TracingRecords,
+      tracing: TracingContent,
     ): Promise<EnrichedPurpose[]> {
       try {
         const fullRecordPromises = records.map(async (record) => {
           try {
+            logger.info(
+              `Get enriched purpose for tracingId: ${tracing.tracingId}`,
+            );
             const fullPurpose = await db.oneOrNone<{
               purpose_title: string;
               eservice_id: string;
@@ -28,7 +33,8 @@ export function dbServiceBuilder(db: DB) {
                 ...record,
                 purposeName: "Purpose not found",
                 eservice: {} as EserviceSchema,
-                error: `Purpose ${record.purpose_id} not found`,
+                message: `Purpose ${record.purpose_id} not found`,
+                errorCode: `PURPOSE_NOT_FOUND`,
               };
             }
 
@@ -40,9 +46,25 @@ export function dbServiceBuilder(db: DB) {
             if (!eService) {
               return {
                 ...record,
-                purposeName: "Purpose not found",
+                purposeName: "Eservice not found",
                 eservice: {} as EserviceSchema,
-                error: `Eservice ${fullPurpose.eservice_id} not found`,
+                message: `Eservice ${fullPurpose.eservice_id} not found`,
+                errorCode: `ESERVICE_NOT_FOUND`,
+              };
+            }
+
+            const tenantEservice = await db.oneOrNone<EserviceSchema>(
+              `SELECT * FROM tracing.eservices WHERE producer = $1 OR consumer = $1`,
+              [tracing.tenantId],
+            );
+
+            if (!tenantEservice) {
+              return {
+                ...record,
+                purposeName: "Eservice not associated",
+                eservice: {} as EserviceSchema,
+                message: `Eservice ${fullPurpose.eservice_id} is not associated with the producer or consumer`,
+                errorCode: `ESERVICE_NOT_ASSOCIATED`,
               };
             }
 
@@ -59,7 +81,8 @@ export function dbServiceBuilder(db: DB) {
               ...record,
               purposeName: "Purpose fetch error",
               eservice: {} as EserviceSchema,
-              error: "purpose fetch error",
+              message: "purpose fetch error",
+              code: `PURPOSE_FETCH_ERROR`,
             };
           }
         });
