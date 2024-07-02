@@ -81,7 +81,7 @@ export function operationsServiceBuilder(dbService: DBService) {
         state: payload.state,
       };
 
-      return await dbService.updateTracingState(updateTracingState);
+      await dbService.updateTracingState(updateTracingState);
     },
 
     async savePurposeError(
@@ -98,14 +98,12 @@ export function operationsServiceBuilder(dbService: DBService) {
         tracing_id: params.tracingId,
         version: params.version,
         purpose_id: payload.purposeId,
-        date: payload.date,
-        status: payload.status,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,
       };
 
-      return await dbService.savePurposeError(purposeError);
+      await dbService.savePurposeError(purposeError);
     },
 
     async deletePurposeErrors(): Promise<void> {

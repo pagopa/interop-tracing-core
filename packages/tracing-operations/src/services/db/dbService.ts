@@ -167,7 +167,7 @@ export function dbServiceBuilder(db: DB) {
             SET state = $1
           WHERE id = $2`;
 
-        await db.one(updateTracingStateQuery, [data.state, data.tracing_id]);
+        await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }
@@ -175,28 +175,31 @@ export function dbServiceBuilder(db: DB) {
     async savePurposeError(data: PurposeError): Promise<void> {
       try {
         const upsertTracingQuery = `
-          INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, date, status, error_code, message, row_number)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          ON CONFLICT (tracing_id, purpose_id, version, status)
-          DO UPDATE SET
-              id = EXCLUDED.id,
-              date = EXCLUDED.date,
-              error_code = EXCLUDED.error_code,
-              message = EXCLUDED.message;
+          WITH upsert AS (
+            UPDATE tracing.purposes_errors
+            SET error_code = $5, message = $6
+            WHERE tracing_id = $2
+              AND purpose_id = $4
+              AND version = $3
+              AND row_number = $7
+            RETURNING *
+          )
+          INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
+          SELECT $1, $2, $3, $4, $5, $6, $7
+          WHERE NOT EXISTS (SELECT * FROM upsert);
         `;
 
-        await db.one(upsertTracingQuery, [
+        await db.none(upsertTracingQuery, [
           data.id,
           data.tracing_id,
           data.version,
           data.purpose_id,
-          data.date,
-          data.status,
           data.error_code,
           data.message,
           data.row_number,
         ]);
       } catch (error) {
+        console.log(`${error}`.toString());
         throw dbServiceErrorMapper(error);
       }
     },
