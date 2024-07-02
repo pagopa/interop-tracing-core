@@ -20,6 +20,7 @@ import {
   InternalError,
   PurposeId,
   TenantId,
+  TracingId,
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -30,6 +31,7 @@ import {
   addTenant,
   addTracing,
   clearTracings,
+  findTracingById,
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -39,8 +41,8 @@ describe("database test", () => {
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
 
-  const tenantId: TenantId = generateId();
-  const purposeId: PurposeId = generateId();
+  const tenantId: TenantId = generateId<TenantId>();
+  const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
   const todayTruncated = new Date().toISOString().split("T")[0];
   const yesterday = new Date();
@@ -239,6 +241,72 @@ describe("database test", () => {
 
         mockDb.mockRestore();
       });
+    });
+  });
+
+  describe("updateTracingState", () => {
+    it("should update a tracing by tracingId with new state 'ERROR' successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: true,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      expect(
+        async () =>
+          await operationsService.updateTracingState(
+            {
+              tracingId: tracing.id,
+              version: tracing.version,
+            },
+            {
+              state: tracingState.error,
+            },
+            logger({}),
+          ),
+      ).not.toThrowError();
+
+      const result = await findTracingById(tracing.id, dbInstance);
+
+      expect(result.id).toBe(tracingData.id);
+      expect(result.state).toBe(tracingState.error);
+    });
+
+    it("should throw an error when attempting to update the state with a tracingId that is not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: true,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      try {
+        await operationsService.updateTracingState(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          {
+            state: tracingState.error,
+          },
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("DB Service error: QueryResultError");
+        expect(error.message).toContain("queryResultErrorCode.noData");
+        expect(error.code).toBe("genericError");
+      }
     });
   });
 });
