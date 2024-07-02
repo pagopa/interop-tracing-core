@@ -25,7 +25,7 @@ await SQS.runConsumer(
     queueUrl: config.sqsEndpointProcessingErrorQueue,
     consumerPollingTimeout: config.consumerPollingTimeout,
   },
-  processTracingStateMessage(OperationsService),
+  processPurposeErrorMessage(OperationsService),
 );
 
 await SQS.runConsumer(
@@ -34,5 +34,5 @@ await SQS.runConsumer(
     queueUrl: config.sqsEndpointEnricherStateQueue,
     consumerPollingTimeout: config.consumerPollingTimeout,
   },
-  processPurposeErrorMessage(OperationsService),
+  processTracingStateMessage(OperationsService),
 );
