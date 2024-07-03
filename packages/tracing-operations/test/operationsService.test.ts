@@ -267,9 +267,7 @@ describe("database test", () => {
         state: tracingState.error,
       };
 
-      await addTracing(tracingData, dbInstance);
-
-      const tracing = await findTracingById(tracingData.id, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
       expect(
         async () =>
@@ -303,9 +301,7 @@ describe("database test", () => {
         state: tracingState.error,
       };
 
-      await addTracing(tracingData, dbInstance);
-
-      const tracing = await findTracingById(tracingData.id, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
       try {
         await operationsService.updateTracingState(
@@ -347,8 +343,7 @@ describe("database test", () => {
         rowNumber: 12,
       };
 
-      await addTracing(tracingData, dbInstance);
-      const tracing = await findTracingById(tracingData.id, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
       expect(
         async () =>
@@ -383,8 +378,7 @@ describe("database test", () => {
         rowNumber: 12,
       };
 
-      await addTracing(tracingData, dbInstance);
-      const tracing = await findTracingById(tracingData.id, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
       try {
         await operationsService.savePurposeError(

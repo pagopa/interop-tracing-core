@@ -43,7 +43,7 @@ export async function addPurposeError(
 export async function addTracing(
   tracingValues: Tracing,
   db: DB,
-): Promise<{ id: string }> {
+): Promise<Tracing> {
   const truncatedDate: Date = truncatedTo(
     new Date(tracingValues.date).toISOString(),
     DateUnit.DAYS,
@@ -51,7 +51,7 @@ export async function addTracing(
   const insertTracingQuery = `
       INSERT INTO tracing.tracings (id, tenant_id, state, date, version, errors)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id
+      RETURNING id, date, version, tenant_id, state, errors
     `;
 
   return await db.one(insertTracingQuery, [
