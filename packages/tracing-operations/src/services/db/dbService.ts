@@ -184,14 +184,15 @@ export function dbServiceBuilder(db: DB) {
               AND purpose_id = $4
               AND version = $3
               AND row_number = $7
-            RETURNING *
+            RETURNING id
           )
           INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
           SELECT $1, $2, $3, $4, $5, $6, $7
-          WHERE NOT EXISTS (SELECT * FROM upsert);
+          WHERE NOT EXISTS (SELECT 1 FROM upsert)
+          RETURNING id;
         `;
 
-        await db.none(upsertTracingQuery, [
+        await db.one(upsertTracingQuery, [
           data.id,
           data.tracing_id,
           data.version,

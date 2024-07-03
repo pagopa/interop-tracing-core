@@ -43,7 +43,7 @@ export async function addPurposeError(
 export async function addTracing(
   tracingValues: Tracing,
   db: DB,
-): Promise<{ id: string; version: number }> {
+): Promise<{ id: string }> {
   const truncatedDate: Date = truncatedTo(
     new Date(tracingValues.date).toISOString(),
     DateUnit.DAYS,
@@ -51,7 +51,7 @@ export async function addTracing(
   const insertTracingQuery = `
       INSERT INTO tracing.tracings (id, tenant_id, state, date, version, errors)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, version
+      RETURNING id
     `;
 
   return await db.one(insertTracingQuery, [
@@ -74,6 +74,19 @@ export async function findTracingById(id: string, db: DB): Promise<Tracing> {
   return await db.one(selectTracingQuery, [id]);
 }
 
+export async function findPurposeErrorById(
+  id: string,
+  db: DB,
+): Promise<PurposeError> {
+  const selectPurposeErrorQuery = `
+      SELECT * 
+      FROM tracing.purposes_errors
+      WHERE id = $1
+    `;
+
+  return await db.one(selectPurposeErrorQuery, [id]);
+}
+
 export async function addEservice(
   eServiceValues: { eservice_id: string; producer_id: string },
   db: DB,
@@ -87,7 +100,14 @@ export async function addEservice(
 
 export async function clearTracings(db: DB) {
   const deleteTracingsQuery = `
-  DELETE FROM tracing.tracings;
+    TRUNCATE TABLE tracing.tracings CASCADE;
   `;
   await db.any(deleteTracingsQuery);
+}
+
+export async function clearPurposesErrors(db: DB) {
+  const deletePurposesErrorsQuery = `
+    TRUNCATE TABLE tracing.purposes_errors CASCADE;
+  `;
+  await db.any(deletePurposesErrorsQuery);
 }

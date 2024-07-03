@@ -1,8 +1,12 @@
-import { DB, initDB, logger } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  initDB,
+  logger,
+  purposeErrorCodes,
+} from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -17,6 +21,7 @@ import {
 import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
+  EserviceId,
   InternalError,
   PurposeId,
   TenantId,
@@ -30,11 +35,16 @@ import {
   addPurpose,
   addTenant,
   addTracing,
+  clearPurposesErrors,
   clearTracings,
   findTracingById,
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
+import {
+  ApiSavePurposeErrorPayload,
+  ApiUpdateTracingStatePayload,
+} from "pagopa-interop-tracing-operations-client";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -49,11 +59,9 @@ describe("database test", () => {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = yesterday.toISOString().split("T")[0];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.restoreAllMocks();
-  });
-
-  afterEach(async () => {
+    await clearPurposesErrors(dbInstance);
     await clearTracings(dbInstance);
   });
 
@@ -252,10 +260,16 @@ describe("database test", () => {
         state: tracingState.pending,
         date: yesterdayTruncated,
         version: 1,
-        errors: true,
+        errors: false,
       };
 
-      const tracing = await addTracing(tracingData, dbInstance);
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
+
+      await addTracing(tracingData, dbInstance);
+
+      const tracing = await findTracingById(tracingData.id, dbInstance);
 
       expect(
         async () =>
@@ -264,9 +278,7 @@ describe("database test", () => {
               tracingId: tracing.id,
               version: tracing.version,
             },
-            {
-              state: tracingState.error,
-            },
+            updateStateData,
             logger({}),
           ),
       ).not.toThrowError();
@@ -284,10 +296,16 @@ describe("database test", () => {
         state: tracingState.pending,
         date: yesterdayTruncated,
         version: 1,
-        errors: true,
+        errors: false,
       };
 
-      const tracing = await addTracing(tracingData, dbInstance);
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
+
+      await addTracing(tracingData, dbInstance);
+
+      const tracing = await findTracingById(tracingData.id, dbInstance);
 
       try {
         await operationsService.updateTracingState(
@@ -295,9 +313,7 @@ describe("database test", () => {
             tracingId: generateId<TracingId>(),
             version: tracing.version,
           },
-          {
-            state: tracingState.error,
-          },
+          updateStateData,
           logger({}),
         );
       } catch (e) {
@@ -305,6 +321,85 @@ describe("database test", () => {
         expect(error).toBeInstanceOf(Error);
         expect(error.message).toContain("DB Service error: QueryResultError");
         expect(error.message).toContain("queryResultErrorCode.noData");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
+
+  describe("savePurposeError", () => {
+    it("should create a new purpose error successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        date: tracingData.date,
+        status: 200,
+        purposeId: purposeId,
+        errorCode: purposeErrorCodes.ESERVICE_NOT_FOUND.code,
+        message: `Eservice ${generateId<EserviceId>()} not found`,
+        rowNumber: 12,
+      };
+
+      await addTracing(tracingData, dbInstance);
+      const tracing = await findTracingById(tracingData.id, dbInstance);
+
+      expect(
+        async () =>
+          await operationsService.savePurposeError(
+            {
+              tracingId: tracing.id,
+              version: tracing.version,
+            },
+            purposeErrorData,
+            logger({}),
+          ),
+      ).not.toThrowError();
+    });
+
+    it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        date: tracingData.date,
+        status: 200,
+        purposeId: purposeId,
+        errorCode: purposeErrorCodes.ESERVICE_NOT_FOUND.code,
+        message: `Eservice ${generateId<EserviceId>()} not found`,
+        rowNumber: 12,
+      };
+
+      await addTracing(tracingData, dbInstance);
+      const tracing = await findTracingById(tracingData.id, dbInstance);
+
+      try {
+        await operationsService.savePurposeError(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          purposeErrorData,
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("DB Service error");
+        expect(error.message).toContain("purposes_errors_tracing_id_fkey");
         expect(error.code).toBe("genericError");
       }
     });

@@ -15,6 +15,7 @@ import {
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
+  PurposeErrorId,
   PurposeId,
   generateId,
   tracingState,
@@ -94,10 +95,10 @@ export function operationsServiceBuilder(dbService: DBService) {
       );
 
       const purposeError: PurposeError = {
-        id: generateId<PurposeId>(),
+        id: generateId<PurposeErrorId>(),
         tracing_id: params.tracingId,
         version: params.version,
-        purpose_id: payload.purposeId,
+        purpose_id: payload.purposeId as PurposeId,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,
