@@ -52,7 +52,6 @@ import { TracingContent, TracingRecords } from "../src/models/messages.js";
 import { InternalError } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSqsMessage } from "../src/models/models.js";
-import { processMessage } from "../src//messageHandler.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 
