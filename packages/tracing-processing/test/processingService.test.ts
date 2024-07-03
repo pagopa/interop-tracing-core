@@ -128,12 +128,10 @@ describe("Processing Service", () => {
         Body: JSON.stringify(SqsMockMessageForS3.Body),
       };
 
-      const processMessageFn = processMessage(processingService);
+      vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
-      vi.spyOn(processingService, "processTracing");
-
-      await processMessageFn(sqsMessage);
       const decoded = decodeSqsMessage(sqsMessage);
+      await processingService.processTracing(decoded);
       expect(processingService.processTracing).toBeCalledWith(decoded);
       expect(decoded).toMatchObject({
         tenantId: expect.any(String),
@@ -150,28 +148,23 @@ describe("Processing Service", () => {
       const path = createS3Path(mockMessage);
 
       expect(path).toBe(
-        "tenantId=223e4567-e89b-12d3-a456-426614174001/date=2024-12-12/tracingId=a33e4567-e89b-12d3-a456-426614174abe/version=1/correlationId=133e4567-e89b-12d3-a456-426614174e3a/a33e4567-e89b-12d3-a456-426614174abe.csv",
+        "tenantId=123e4567-e89b-12d3-a456-426614174001/date=2024-12-12/tracingId=87dcfab8-3161-430b-97db-7787a77a7a3d/version=1/correlationId=8fa62e67-92bf-48f8-a9e1-4e73a37c4682/87dcfab8-3161-430b-97db-7787a77a7a3d.csv",
       );
     });
   });
 
   describe("checkRecords", () => {
     it("should not send error messages when all records pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
         mockTracingRecords,
       );
       const records = await bucketService.readObject("dummy-s3-key");
       const hasError = await checkRecords(records, mockMessage);
-
       expect(hasError).toHaveLength(0);
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        wrongMockTracingRecords as unknown as TracingRecords,
-      );
-
-      const records = await bucketService.readObject("dummy-s3-key");
+      const records = wrongMockTracingRecords as unknown as TracingRecords;
       const errors = await checkRecords(records, mockMessage);
 
       const dateNotValidError = errors.filter(

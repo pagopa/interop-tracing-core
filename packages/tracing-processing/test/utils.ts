@@ -197,11 +197,11 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
 ];
 
 export const mockMessage: TracingContent = {
-  tenantId: "223e4567-e89b-12d3-a456-426614174001",
+  tenantId: "123e4567-e89b-12d3-a456-426614174001",
   date: "2024-12-12",
   version: "1",
-  correlationId: "133e4567-e89b-12d3-a456-426614174e3a",
-  tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
+  correlationId: "8fa62e67-92bf-48f8-a9e1-4e73a37c4682",
+  tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
 };
 
 export const SqsMockMessageForS3 = {
@@ -235,7 +235,7 @@ export const SqsMockMessageForS3 = {
             arn: "arn:aws:s3:::interop-tracing",
           },
           object: {
-            key: "tenantId%3D123e4567-e89b-12d3-a456-426614174001/date%3D2024-07-05/tracingId%3D87dcfab8-3161-430b-97db-7787a77a7a3d/version%3D1/correlationId%3D8fa62e67-92bf-48f8-a9e1-4e73a37c4682/9b523269-2e59-4d74-b6dc-4d0594e56eb3.csv",
+            key: "tenantId%3D123e4567-e89b-12d3-a456-426614174001/date%3D2024-12-12/tracingId%3D87dcfab8-3161-430b-97db-7787a77a7a3d/version%3D1/correlationId%3D8fa62e67-92bf-48f8-a9e1-4e73a37c4682/9b523269-2e59-4d74-b6dc-4d0594e56eb3.csv",
             size: 642,
             eTag: "16727c9a88cb1ee281c49bf3e9c50565",
             sequencer: "0066852DD516200820",
