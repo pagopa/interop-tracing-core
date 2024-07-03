@@ -6,6 +6,7 @@ import {
   TracingContent,
   TracingRecords,
 } from "../../models/messages.js";
+import { getEnrichedPurposeError } from "../../models/errors.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
@@ -18,7 +19,7 @@ export function dbServiceBuilder(db: DB) {
         const fullRecordPromises = records.map(async (record) => {
           try {
             genericLogger.info(
-              `Get enriched purpose for tracingId: ${tracing.tracingId}`,
+              `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
             );
             const fullPurpose = await db.oneOrNone<{
               purpose_title: string;
@@ -40,10 +41,9 @@ export function dbServiceBuilder(db: DB) {
             }
 
             const eService = await db.oneOrNone<EserviceSchema>(
-              `SELECT * FROM tracing.eservices WHERE id = $1`,
+              `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
               [fullPurpose.eservice_id],
             );
-
             if (!eService) {
               return {
                 ...record,
@@ -54,9 +54,8 @@ export function dbServiceBuilder(db: DB) {
                 errorCode: `ESERVICE_NOT_FOUND`,
               };
             }
-
             const tenantEservice = await db.oneOrNone<EserviceSchema>(
-              `SELECT * FROM tracing.eservices WHERE producer = $1 OR consumer = $1`,
+              `SELECT * FROM tracing.eservices WHERE (producer_id = $1 OR consumer_id = $1)`,
               [tracing.tenantId],
             );
 
@@ -66,7 +65,7 @@ export function dbServiceBuilder(db: DB) {
                 status: record.status,
                 purposeName: "Eservice not associated",
                 eservice: {} as EserviceSchema,
-                message: `Eservice ${fullPurpose.eservice_id} is not associated with the producer or consumer`,
+                message: `Eservice ${fullPurpose.eservice_id} is not associated with the producer or consumer ${tracing.tenantId}`,
                 errorCode: `ESERVICE_NOT_ASSOCIATED`,
               };
             }
@@ -78,17 +77,9 @@ export function dbServiceBuilder(db: DB) {
               purposeName: fullPurpose.purpose_title,
             };
           } catch (error) {
-            console.error(
-              `Error fetching record with purpose_id ${record.purpose_id}: ${error}`,
+            throw getEnrichedPurposeError(
+              `Error fetching record for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}: Details: ${error}`,
             );
-            return {
-              ...record,
-              status: record.status,
-              purposeName: "Purpose fetch error",
-              eservice: {} as EserviceSchema,
-              message: "purpose fetch error",
-              code: `PURPOSE_FETCH_ERROR`,
-            };
           }
         });
 

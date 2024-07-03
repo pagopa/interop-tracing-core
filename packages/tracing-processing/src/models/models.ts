@@ -1,45 +1,49 @@
-import { genericLogger } from "pagopa-interop-tracing-commons";
-import {
-  genericInternalError,
-  S3BodySchema,
-} from "pagopa-interop-tracing-models";
+import { S3BodySchema } from "pagopa-interop-tracing-models";
 import { EnrichedPurpose, TracingContent, TracingRecords } from "./messages.js";
 import csv from "csv-parser";
 import { Readable } from "stream";
+import { decodeSQSMessageError } from "./errors.js";
+import { SQS } from "pagopa-interop-tracing-commons";
 
-export function decodeSqsMessage(
-  jsonStr: string | undefined,
-): TracingContent | undefined {
-  if (!jsonStr) {
-    throw genericInternalError("Message body is undefined");
-  }
-  const s3Body = S3BodySchema.safeParse(JSON.parse(jsonStr));
+export function decodeSqsMessage(message: SQS.Message): TracingContent {
+  try {
+    const messageBody = message.Body;
 
-  if (s3Body.error) {
-    genericLogger.error(`error parsing s3Body ${s3Body.error}`);
-    return undefined;
-  }
-
-  const key = s3Body.data.Records[0].s3.object.key;
-  const keyParts = key.split("/");
-
-  const result: Partial<{ [K in keyof TracingContent]: string | undefined }> =
-    {};
-
-  keyParts.forEach((part) => {
-    const decodedPart = decodeURIComponent(part);
-    const [key, value] = decodedPart.split("=");
-    // eslint-disable-next-line no-prototype-builtins
-    if (TracingContent.shape.hasOwnProperty(key)) {
-      result[key as keyof TracingContent] = value;
+    if (!messageBody) {
+      throw "Message body is undefined";
     }
-  });
-  const parsedResult = TracingContent.safeParse(result);
-  if (parsedResult.success) {
-    return parsedResult.data;
-  } else {
-    genericLogger.error(`error parsing s3Key ${parsedResult.error.message}`);
-    return undefined;
+    const s3Body = S3BodySchema.safeParse(JSON.parse(messageBody));
+    if (s3Body.error) {
+      throw `error parsing s3Body ${s3Body.error}`;
+    }
+
+    const key = s3Body.data.Records[0].s3.object.key;
+
+    const keyParts = key.split("/");
+
+    const result: Partial<{ [K in keyof TracingContent]: string | undefined }> =
+      {};
+
+    keyParts.forEach((part) => {
+      const decodedPart = decodeURIComponent(part);
+      const [key, value] = decodedPart.split("=");
+      // eslint-disable-next-line no-prototype-builtins
+      if (TracingContent.shape.hasOwnProperty(key)) {
+        result[key as keyof TracingContent] = value;
+      }
+    });
+
+    const parsedResult = TracingContent.safeParse(result);
+
+    if (parsedResult.success) {
+      return parsedResult.data;
+    } else {
+      throw `error parsing s3Key ${JSON.stringify(parsedResult.error)}`;
+    }
+  } catch (error: unknown) {
+    throw decodeSQSMessageError(
+      `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Error details: ${error}`,
+    );
   }
 }
 
@@ -79,7 +83,7 @@ export function generateCSV(records: EnrichedPurpose[]): string {
         record.status,
         record.requests_count,
         record.purposeName,
-        record.eservice.id,
+        record.eservice.eservice_id,
         record.eservice.consumer_id,
         record.eservice.producer_id,
         record.eservice.origin,

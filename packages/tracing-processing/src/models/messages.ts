@@ -87,8 +87,8 @@ export const TracingRecordSchema = z.object({
 });
 
 export const EserviceSchema = z.object({
-  id: z.string(),
-  purposeId: z.string().uuid(),
+  eservice_id: z.string(),
+  purpose_id: z.string().uuid(),
   consumer_id: z.string(),
   producer_id: z.string(),
   date: z.string(),

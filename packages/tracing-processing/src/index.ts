@@ -49,5 +49,5 @@ await SQS.runConsumer(
     queueUrl: config.sqsTracingUploadEndpoint,
     consumerPollingTimeout: config.consumerPollingTimeout,
   },
-  processMessage(producerService, processingService),
+  processMessage(processingService),
 );
