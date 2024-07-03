@@ -9,8 +9,8 @@ CREATE TABLE tracing.tenants (
 );
 
 CREATE TABLE tracing.eservices (
-   eservice_id UUID NOT NULL,
-   producer_id UUID NOT NULL,
+    eservice_id UUID PRIMARY KEY,
+    producer_id UUID NOT NULL
 );
 
 CREATE TABLE tracing.purposes (
@@ -24,7 +24,9 @@ CREATE TABLE tracing.purposes (
 CREATE TABLE tracing.tracings (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
-    state VARCHAR(255) NOT NULL CHECK (state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR')),
+    state VARCHAR(255) NOT NULL CHECK (
+        state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR')
+    ),
     date TIMESTAMP NOT NULL,
     version INT NOT NULL,
     errors BOOLEAN NOT NULL DEFAULT false,
