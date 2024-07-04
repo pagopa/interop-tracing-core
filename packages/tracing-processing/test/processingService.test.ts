@@ -143,13 +143,14 @@ describe("Processing Service", () => {
 
       vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
+      console.log("DECODED", sqsMessage);
       const decoded = decodeSqsMessage(sqsMessage);
       await processingService.processTracing(decoded);
       expect(processingService.processTracing).toBeCalledWith(decoded);
       expect(decoded).toMatchObject({
         tenantId: expect.any(String),
         date: expect.any(String),
-        version: expect.any(String),
+        version: expect.any(Number),
         correlationId: expect.any(String),
         tracingId: expect.any(String),
       });

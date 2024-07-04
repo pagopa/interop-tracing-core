@@ -3,7 +3,7 @@ import { z } from "zod";
 export const TracingFromCsv = z.object({
   tenantId: z.string(),
   date: z.string(),
-  version: z.string(),
+  version: z.coerce.number(),
   correlationId: z.string(),
   tracingId: z.string(),
 });

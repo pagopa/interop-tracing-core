@@ -158,7 +158,7 @@ export const mockEnrichedPurposesWithErrors = [
 export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
-    version: "1",
+    version: 1,
     date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
@@ -168,7 +168,7 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
   },
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
-    version: "1",
+    version: 1,
     date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
@@ -232,7 +232,7 @@ const purposeId2 = generateId() as string;
 export const mockMessage: TracingFromCsv = {
   tenantId: tenant_id,
   date: "2024-12-12",
-  version: "1",
+  version: 1,
   correlationId: "8fa62e67-92bf-48f8-a9e1-4e73a37c4682",
   tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
 };
