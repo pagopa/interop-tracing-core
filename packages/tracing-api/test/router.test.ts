@@ -36,6 +36,7 @@ import {
   correlationIdToHeader,
   purposeIdToHeader,
 } from "../src/model/headers.js";
+import { ISODateFormat } from "../src/model/dates.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -85,9 +86,9 @@ const buildS3Key = (
   version: number,
   correlationId: string,
 ): string =>
-  `tenantId=${tenantId}/date=${
-    date.split("T")[0]
-  }/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
+  `tenantId=${tenantId}/date=${ISODateFormat.parse(
+    date,
+  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 describe("Tracing Router", () => {
   beforeEach(() => {

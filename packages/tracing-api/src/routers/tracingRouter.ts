@@ -21,6 +21,7 @@ import {
 import { BucketService } from "../services/bucketService.js";
 import storage from "../utilities/multer.js";
 import { correlationIdToHeader, purposeIdToHeader } from "../model/headers.js";
+import { ISODateFormat } from "../model/dates.js";
 
 const tracingRouter =
   (
@@ -97,8 +98,7 @@ const tracingRouter =
       .get("/tracings", async (req, res) => {
         try {
           const data = await operationsService.getTracings(req.query);
-
-          const result = z.array(ApiTracingsContent).safeParse(data.results);
+          const result = ApiTracingsContent.safeParse(data);
           if (!result.success) {
             logger(req.ctx).error(
               `Unable to parse tracings items: result ${JSON.stringify(
@@ -112,8 +112,8 @@ const tracingRouter =
           return res
             .status(200)
             .json({
-              results: result.data,
-              totalCount: data.totalCount,
+              results: result.data.results,
+              totalCount: result.data.totalCount,
             })
             .end();
         } catch (error) {
@@ -189,8 +189,8 @@ const buildS3Key = (
   version: number,
   correlationId: string,
 ): string =>
-  `tenantId=${tenantId}/date=${
-    date.split("T")[0]
-  }/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
+  `tenantId=${tenantId}/date=${ISODateFormat.parse(
+    date,
+  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export default tracingRouter;
