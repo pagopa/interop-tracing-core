@@ -10,6 +10,11 @@ import { DB } from "pagopa-interop-tracing-commons";
 import { Tracing } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
+import {
+  ApiGetTracingsQuery,
+  ApiGetTracingsResponse,
+} from "pagopa-interop-tracing-operations-client";
+import { TracingsContentResponse } from "../../model/domain/tracing.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
@@ -26,12 +31,48 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async getTracings() {
-      try {
-        return Promise.resolve();
-      } catch (error) {
-        throw genericInternalError(`Error getTracings: ${error}`);
+    async getTracings(
+      filters: ApiGetTracingsQuery,
+    ): Promise<ApiGetTracingsResponse> {
+      const { offset, limit, states = [] } = filters;
+
+      const getTracingsTotalCountQuery = `
+        SELECT COUNT(*)::integer as total_count
+        FROM tracing.tracings
+         WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
+      `;
+
+      const { total_count }: { total_count: number } = await db.one(
+        getTracingsTotalCountQuery,
+        [states],
+      );
+
+      const getTracingsQuery = `
+        SELECT *
+        FROM tracing.tracings
+        WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
+        OFFSET $2 LIMIT $3
+      `;
+
+      const tracings: Tracing[] = await db.any(getTracingsQuery, [
+        states,
+        offset,
+        limit,
+      ]);
+
+      const parsedTracings = TracingsContentResponse.safeParse(tracings);
+      if (!parsedTracings.success) {
+        throw new Error(
+          `Unable to parse tracings items: result ${JSON.stringify(
+            parsedTracings,
+          )} - data ${JSON.stringify(tracings)}`,
+        );
       }
+
+      return {
+        results: parsedTracings.data,
+        totalCount: total_count,
+      };
     },
 
     async getTracingErrors() {

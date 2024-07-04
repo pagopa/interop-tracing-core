@@ -7,6 +7,7 @@ import {
   ApiUpdateTracingStateResponse,
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
+  ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -86,10 +87,12 @@ export function operationsServiceBuilder(dbService: DBService) {
       return Promise.resolve();
     },
 
-    async getTracings(): Promise<ApiGetTracingsResponse> {
-      genericLogger.info(`Get tracings`);
-      await dbService.getTracings();
-      return Promise.resolve({ results: [], totalCount: 0 });
+    async getTracings(
+      filters: ApiGetTracingsQuery,
+      logger: Logger,
+    ): Promise<ApiGetTracingsResponse> {
+      logger.info(`Get tracings`);
+      return await dbService.getTracings(filters);
     },
 
     async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {

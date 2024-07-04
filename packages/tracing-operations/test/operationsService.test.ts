@@ -33,6 +33,7 @@ import {
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
+import { ISODateFormat } from "../src/model/domain/dates.js";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -42,10 +43,10 @@ describe("database test", () => {
   const tenantId: TenantId = generateId();
   const purposeId: PurposeId = generateId();
   const eservice_id = generateId();
-  const todayTruncated = new Date().toISOString().split("T")[0];
+  const todayTruncated = ISODateFormat.parse(new Date().toISOString());
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayTruncated = yesterday.toISOString().split("T")[0];
+  const yesterdayTruncated = ISODateFormat.parse(yesterday.toISOString());
 
   beforeEach(() => {
     vi.restoreAllMocks();
