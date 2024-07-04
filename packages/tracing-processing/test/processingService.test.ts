@@ -143,7 +143,6 @@ describe("Processing Service", () => {
 
       vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
-      console.log("DECODED", sqsMessage);
       const decoded = decodeSqsMessage(sqsMessage);
       await processingService.processTracing(decoded);
       expect(processingService.processTracing).toBeCalledWith(decoded);
