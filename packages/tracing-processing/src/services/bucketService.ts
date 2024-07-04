@@ -5,13 +5,13 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import { generateCSV, parseCSV } from "../models/models.js";
-import { EnrichedPurpose, TracingRecords } from "../models/messages.js";
+import { EnrichedPurpose, TracingRecordSchema } from "../models/messages.js";
 import { genericLogger } from "pagopa-interop-tracing-commons";
 import {
   readObjectBucketS3Error,
   writeObjectBucketS3Error,
 } from "../models/errors.js";
+import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
@@ -35,7 +35,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
       }
     },
 
-    async readObject(s3KeyFile: string): Promise<TracingRecords> {
+    async readObject(s3KeyFile: string): Promise<TracingRecordSchema[]> {
       const params = {
         Bucket: config.bucketS3Name,
         Key: s3KeyFile,

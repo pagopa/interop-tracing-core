@@ -20,4 +20,10 @@ export const purposeErrorCodes = {
   PURPOSE_NOT_FOUND: {
     code: "PURPOSE_NOT_FOUND",
   },
+  PRODUCER_NOT_FOUND: {
+    code: "PRODUCER_NOT_FOUND",
+  },
+  CONSUMER_NOT_FOUND: {
+    code: "CONSUMER_NOT_FOUND",
+  },
 };

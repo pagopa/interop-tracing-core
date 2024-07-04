@@ -2,11 +2,7 @@ import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
-import {
-  TracingContent,
-  TracingRecordSchema,
-  TracingRecords,
-} from "../models/messages.js";
+import { TracingFromCsv, TracingRecordSchema } from "../models/messages.js";
 import { genericLogger } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
 import { errorMapper } from "../utilities/errorMapper.js";
@@ -17,10 +13,10 @@ export const processingServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async processTracing(message: TracingContent) {
+    async processTracing(message: TracingFromCsv) {
       try {
         const { data: tracing, error: tracingError } =
-          TracingContent.safeParse(message);
+          TracingFromCsv.safeParse(message);
 
         if (tracingError) {
           throw `Tracing message is not valid: ${JSON.stringify(tracingError)}`;
@@ -74,9 +70,9 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   bucketService: BucketService,
   producerService: ProducerService,
   dbService: DBService,
-  tracingRecords: TracingRecords,
+  tracingRecords: TracingRecordSchema[],
   s3KeyPath: string,
-  tracing: TracingContent,
+  tracing: TracingFromCsv,
 ) {
   const enrichedPurposes = await dbService.getEnrichedPurpose(
     tracingRecords,
@@ -96,7 +92,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
         date: tracing.date,
         errorCode: record.errorCode!,
         status: record.status,
-        purposeId: record.purpose_id,
+        purposeId: record.purposeId,
         message: record.errorMessage!,
         rowNumber: record.rowNumber,
         updateTracingState: index === enrichedPurposeErrors.length - 1,
@@ -108,8 +104,8 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
 }
 
 export async function checkRecords(
-  records: TracingRecords,
-  tracing: TracingContent,
+  records: TracingRecordSchema[],
+  tracing: TracingFromCsv,
 ): Promise<SavePurposeErrorDto[]> {
   const errorsRecord: SavePurposeErrorDto[] = [];
 
@@ -168,7 +164,7 @@ function parseErrorMessage(errorObj: string) {
   return { message: `{ ${path}: ${received} } is not valid`, error_code };
 }
 
-export function createS3Path(message: TracingContent) {
+export function createS3Path(message: TracingFromCsv) {
   return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
 }
 

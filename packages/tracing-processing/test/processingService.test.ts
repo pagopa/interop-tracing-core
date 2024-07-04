@@ -27,38 +27,49 @@ import {
 } from "../src/services/producerService.js";
 import { config } from "../src/utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
+import { DB, SQS, initDB } from "pagopa-interop-tracing-commons";
 import {
-  SqsMockMessageForS3,
   addEservice,
   addPurpose,
   addTenant,
-  eServiceData,
-  eServiceDataNotAssociated,
-  errorPurposesWithInvalidEserviceId,
-  errorPurposesWithInvalidPurposeId,
-  mockEnrichedPurposes,
-  mockEnrichedPurposesWithErrors,
-  mockMessage,
-  mockTracingRecords,
-  purposeData,
-  purposeDataWithWrongEservice,
-  tenantData,
-  validPurpose,
-  validPurposeNotAssociated,
-  wrongMockTracingRecords,
+  parseCSVFromString,
+  removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
-import { TracingContent, TracingRecords } from "../src/models/messages.js";
-import { InternalError } from "pagopa-interop-tracing-models";
+import {
+  Eservice,
+  TracingEnriched,
+  TracingFromCsv,
+  TracingRecordSchema,
+} from "../src/models/messages.js";
+import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSqsMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
+import { generateCSV } from "../src/utilities/csvHandler.js";
+import {
+  eServiceData,
+  tenantData,
+  purposeData,
+  purposeDataWithWrongEservice,
+  SqsMockMessageForS3,
+  mockMessage,
+  mockTracingRecords,
+  wrongMockTracingRecords,
+  mockEnrichedPurposesWithErrors,
+  mockEnrichedPurposes,
+  validPurpose,
+  errorPurposesWithInvalidPurposeId,
+  errorPurposesWithInvalidEserviceId,
+  validPurposeNotAssociated,
+  validEnrichedPurpose,
+} from "./costants.js";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
     region: config.awsRegion,
   });
+
   const s3client: S3Client = new S3Client({
     region: config.awsRegion,
   });
@@ -68,6 +79,7 @@ describe("Processing Service", () => {
   let startedPostgreSqlContainer: StartedTestContainer;
   let processingService: ProcessingService;
   let dbService: DBService;
+  let dbInstance: DB;
 
   afterAll(async () => {
     startedPostgreSqlContainer.stop();
@@ -76,7 +88,8 @@ describe("Processing Service", () => {
   beforeAll(async () => {
     startedPostgreSqlContainer = await postgreSQLContainer(dbConfig).start();
     dbConfig.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
-    const dbInstance = initDB({
+
+    dbInstance = initDB({
       username: dbConfig.dbUsername,
       password: dbConfig.dbPassword,
       host: dbConfig.dbHost,
@@ -85,6 +98,7 @@ describe("Processing Service", () => {
       schema: dbConfig.dbSchemaName,
       useSSL: dbConfig.dbUseSSL,
     });
+
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
@@ -93,8 +107,8 @@ describe("Processing Service", () => {
       bucketService,
       producerService,
     );
+
     await addEservice(eServiceData, dbInstance);
-    await addEservice(eServiceDataNotAssociated, dbInstance);
 
     await addTenant(tenantData, dbInstance);
 
@@ -163,9 +177,9 @@ describe("Processing Service", () => {
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
-      const records = wrongMockTracingRecords as unknown as TracingRecords;
+      const records =
+        wrongMockTracingRecords as unknown as TracingRecordSchema[];
       const errors = await checkRecords(records, mockMessage);
-
       const dateNotValidError = errors.filter(
         (error) => error.errorCode === "DATE_NOT_VALID",
       );
@@ -201,9 +215,10 @@ describe("Processing Service", () => {
     afterEach(() => {
       dbService.getEnrichedPurpose = originalGetEnrichedPurpose;
     });
-    it("should get errors on message not tipe of TracingContent", async () => {
+
+    it("should get errors on message not tipe of TracingFromCsv", async () => {
       try {
-        await processingService.processTracing({} as unknown as TracingContent);
+        await processingService.processTracing({} as unknown as TracingFromCsv);
       } catch (error) {
         const e = error as InternalError<ErrorCodes>;
         expect(error).toBeInstanceOf(InternalError);
@@ -273,7 +288,7 @@ describe("Processing Service", () => {
   describe("sendErrorMessage", () => {
     it("should send error messages when all records don't pass formal check", async () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        wrongMockTracingRecords as unknown as TracingRecords,
+        wrongMockTracingRecords as unknown as TracingRecordSchema[],
       );
 
       const records = await bucketService.readObject("dummy-s3-key");
@@ -301,49 +316,61 @@ describe("Processing Service", () => {
       expect(dateNotValidError.length).toBeGreaterThan(0);
       expect(purposeIdNotValid.length).toBeGreaterThan(0);
       expect(requestsCountNotValid.length).toBeGreaterThan(0);
-    }),
-      it("only last message should have updateTracingState true", async () => {
-        const producerService = producerServiceBuilder(sqsClient);
-        const errorPurposes = mockEnrichedPurposesWithErrors;
-        vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
-          undefined,
-        );
+    });
 
-        vi.spyOn(processingService, "processTracing");
-        vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValueOnce(
-          errorPurposes,
-        );
+    it("only last message should have updateTracingState true", async () => {
+      const producerService = producerServiceBuilder(sqsClient);
+      const errorPurposes = mockEnrichedPurposesWithErrors;
+      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
+        undefined,
+      );
 
-        await writeEnrichedTracingOrSendPurposeErrors(
-          bucketService,
-          producerService,
-          dbService,
-          errorPurposes,
-          "s3KeyPath",
-          mockMessage,
-        );
+      vi.spyOn(processingService, "processTracing");
+      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValueOnce(
+        errorPurposes,
+      );
 
-        expect(producerService.sendErrorMessage).toBeCalledTimes(
-          errorPurposes.length,
-        );
+      await writeEnrichedTracingOrSendPurposeErrors(
+        bucketService,
+        producerService,
+        dbService,
+        mockTracingRecords,
+        "s3KeyPath",
+        mockMessage,
+      );
 
-        for (let i = 1; i < errorPurposes.length - 1; i++) {
-          expect(producerService.sendErrorMessage).nthCalledWith(
-            i,
-            expect.objectContaining({
-              updateTracingState: false,
-            }),
-          );
-        }
+      expect(producerService.sendErrorMessage).toBeCalledTimes(
+        errorPurposes.length,
+      );
 
-        expect(producerService.sendErrorMessage).lastCalledWith(
+      for (let i = 1; i < errorPurposes.length - 1; i++) {
+        expect(producerService.sendErrorMessage).nthCalledWith(
+          i,
           expect.objectContaining({
-            updateTracingState: true,
+            updateTracingState: false,
           }),
         );
-      });
+      }
+
+      expect(producerService.sendErrorMessage).lastCalledWith(
+        expect.objectContaining({
+          updateTracingState: true,
+        }),
+      );
+    });
   });
+
   describe("getEnrichedPurpose", () => {
+    it("should return empty errorCode if purpose is valid", async () => {
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurpose,
+        mockMessage,
+      );
+      enrichedPurposes.forEach((item) => {
+        expect(item.errorCode).toBe(undefined);
+      });
+    });
+
     it("should return errorCode PURPOSE_NOT_FOUND if purpose is not found", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         errorPurposesWithInvalidPurposeId,
@@ -353,6 +380,7 @@ describe("Processing Service", () => {
         expect(item.errorCode).toBe("PURPOSE_NOT_FOUND");
       });
     });
+
     it("should return errorCode ESERVICE_NOT_FOUND if eservice is not found", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         errorPurposesWithInvalidEserviceId,
@@ -362,7 +390,31 @@ describe("Processing Service", () => {
         expect(item.errorCode).toBe("ESERVICE_NOT_FOUND");
       });
     });
+
+    it("should return errorCode CONSUMER_NOT_FOUND if consumer is not found", async () => {
+      const invalidConsumer = generateId();
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurpose,
+        {
+          ...mockMessage,
+          ...{ tenantId: invalidConsumer },
+        },
+      );
+      enrichedPurposes.forEach((item) => {
+        expect(item.errorCode).toBe("CONSUMER_NOT_FOUND");
+      });
+    });
+
     it("should return ESERVICE_NOT_ASSOCIATED  if tenant is not a consumer or a producer", async () => {
+      await removeAndInsertWrongEserviceAndPurpose(
+        eServiceData.eserviceId,
+        validPurposeNotAssociated[0] as unknown as {
+          eservice: Eservice;
+          purpose_id: string;
+        },
+        purposeData.id,
+        dbInstance,
+      );
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
@@ -371,15 +423,19 @@ describe("Processing Service", () => {
         expect(item.errorCode).toBe("ESERVICE_NOT_ASSOCIATED");
       });
     });
+  });
 
-    it("should return empty errorCode if purpose is valid", async () => {
-      const producer = eServiceData.producer_id;
-      const enrichedPurposes = await dbService.getEnrichedPurpose(
-        validPurpose,
-        { ...mockMessage, ...{ tenantId: producer } },
-      );
-      enrichedPurposes.forEach((item) => {
-        expect(item.errorCode).toBe(undefined);
+  describe("generateCsv", () => {
+    it("should generate a TracingEnriched object from csv", async () => {
+      const csv = generateCSV(validEnrichedPurpose);
+      const parsedCsv = await parseCSVFromString(csv);
+      expect(parsedCsv).toBeDefined();
+      parsedCsv.forEach((item, index) => {
+        if (index) {
+          // skipping index 0 because is csv header
+          const validationResult = TracingEnriched.safeParse(item);
+          expect(validationResult.success).toBe(true);
+        }
       });
     });
   });

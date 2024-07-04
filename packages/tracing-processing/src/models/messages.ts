@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const TracingContent = z.object({
+export const TracingFromCsv = z.object({
   tenantId: z.string(),
   date: z.string(),
   version: z.string(),
@@ -88,35 +88,60 @@ export const TracingRecordSchema = z.object({
 
 export const EserviceSchema = z.object({
   eservice_id: z.string(),
-  purpose_id: z.string().uuid(),
   consumer_id: z.string(),
   producer_id: z.string(),
-  date: z.string(),
-  origin: z.string(),
-  external_id: z.string(),
-  purpose_title: z.string(),
-  producer_name: z.string(),
-  consumer_name: z.string(),
+});
+
+export const Eservice = z.object({
+  eserviceId: z.string(),
+  consumerId: z.string(),
+  producerId: z.string(),
 });
 
 export const PurposeSchema = z.object({
+  tracingId: z.string(),
+  producerOrigin: z.string(),
+  producerExternalId: z.string(),
+  producerName: z.string(),
+  consumerExternalId: z.string(),
+  consumerOrigin: z.string(),
+  consumerName: z.string(),
   purposeName: z.string(),
   date: z.string(),
-  purpose_id: z.string().uuid(),
+  purposeId: z.string().uuid(),
   status: z.number(),
-  requests_count: z.string(),
+  requestsCount: z.string(),
   rowNumber: z.number(),
   errorMessage: z.string().optional(),
   errorCode: z.string().optional(),
 });
 
-export const TracingRecords = z.array(TracingRecordSchema);
+export const TracingEnriched = z.object({
+  date: z.string(),
+  purposeId: z.string(),
+  purposeName: z.string(),
+  status: z.coerce.number(),
+  requestsCount: z.string(),
+  eserviceId: z.string(),
+  consumerId: z.string(),
+  consumerOrigin: z.string(),
+  consumerName: z.string(),
+  consumerExternalId: z.string(),
+  producerId: z.string(),
+  producerName: z.string(),
+  producerOrigin: z.string(),
+  producerExternalId: z.string(),
+});
 
 export type EnrichedPurpose = z.infer<typeof PurposeSchema> & {
-  eservice: z.infer<typeof EserviceSchema>;
+  eservice: z.infer<typeof Eservice>;
 };
+
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
-export type TracingRecords = z.infer<typeof TracingRecords>;
-export type TracingContent = z.infer<typeof TracingContent>;
+export type TracingFromCsv = z.infer<typeof TracingFromCsv>;
+
 export type EserviceSchema = z.infer<typeof EserviceSchema>;
+export type Eservice = z.infer<typeof Eservice>;
+
 export type PurposeSchema = z.infer<typeof PurposeSchema>;
+export type TracingEnriched = z.infer<typeof TracingEnriched>;
