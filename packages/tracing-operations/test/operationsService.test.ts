@@ -20,6 +20,7 @@ import {
   InternalError,
   PurposeId,
   TenantId,
+  TracingId,
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -34,6 +35,7 @@ import {
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
 import { ISODateFormat } from "../src/model/domain/dates.js";
+import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -239,6 +241,185 @@ describe("database test", () => {
         ).rejects.toThrow();
 
         mockDb.mockRestore();
+      });
+    });
+
+    describe("getTracings", () => {
+      it("searching with 'states' parameter 'ERROR' should return an empty list of tracings", async () => {
+        const filters: ApiGetTracingsQuery = {
+          states: [tracingState.error],
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        const result = await operationsService.getTracings(filters, logger({}));
+
+        expect(result.results).toStrictEqual([]);
+        expect(result.totalCount).toBe(0);
+      });
+
+      it("searching with 'states' parameter 'ERROR' should return a only 1 record with 'ERROR' state", async () => {
+        const filters: ApiGetTracingsQuery = {
+          states: [tracingState.error],
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingErrorData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracingPendingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingErrorData, dbInstance);
+        await addTracing(tracingPendingData, dbInstance);
+
+        const result = await operationsService.getTracings(filters, logger({}));
+
+        expect(result.totalCount).toBe(1);
+        expect(result.results.length).toBe(1);
+        expect(result.results[0].state).toBe(tracingState.error);
+      });
+
+      it("searching with 'states' parameter 'ERROR' & 'MISSING' should return 2 records with both states", async () => {
+        const filters: ApiGetTracingsQuery = {
+          states: [tracingState.error, tracingState.missing],
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingErrorData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracingMissingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.missing,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingErrorData, dbInstance);
+        await addTracing(tracingMissingData, dbInstance);
+
+        const result = await operationsService.getTracings(filters, logger({}));
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(2);
+        const hasErrorState = result.results.some(
+          (tracing) => tracing.state === tracingState.error,
+        );
+        const hasMissingState = result.results.some(
+          (tracing) => tracing.state === tracingState.missing,
+        );
+        expect(hasErrorState).toBe(true);
+        expect(hasMissingState).toBe(true);
+      });
+
+      it("searching without 'states' parameter should return 3 records", async () => {
+        const filters: ApiGetTracingsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingErrorData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracingMissingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.missing,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracingPendingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingErrorData, dbInstance);
+        await addTracing(tracingMissingData, dbInstance);
+        await addTracing(tracingPendingData, dbInstance);
+
+        const result = await operationsService.getTracings(filters, logger({}));
+
+        expect(result.totalCount).toBe(3);
+        expect(result.results.length).toBe(3);
+      });
+
+      it("searching with 'limit' parameter value to 1, should return 1 records with totalCount 2", async () => {
+        const filters = {
+          offset: 0,
+          limit: 1,
+        };
+
+        const tracingErrorData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracingMissingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.missing,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingErrorData, dbInstance);
+        await addTracing(tracingMissingData, dbInstance);
+
+        const result = await operationsService.getTracings(filters, logger({}));
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(1);
       });
     });
   });
