@@ -1,9 +1,38 @@
-export const bucketServiceBuilder = () => {
+import { Readable } from "stream";
+import { TracingEnriched } from "../models/messages.js";
+import { config } from "../utilities/config.js";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { parseCSV } from "../utilities/csvHandler.js";
+import { readObjectBucketS3Error } from "../models/errors.js";
+
+export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async readObject(_s3KeyFile: string): Promise<unknown[]> {
-      const data = [{}];
-      return Promise.resolve(data);
+    async readObject(s3KeyFile: string): Promise<TracingEnriched[]> {
+      const params = {
+        Bucket: config.bucketS3Enriched,
+        Key: s3KeyFile,
+      };
+      try {
+        const s3Object = await s3Client.send(new GetObjectCommand(params));
+
+        if (!s3Object.Body) {
+          throw "No data found in S3 object";
+        }
+
+        const csvData = await parseCSV(s3Object.Body as Readable);
+
+        const csvDataWithRow = csvData.map((csv, index) => {
+          return { ...csv, ...{ rowNumber: index } };
+        });
+
+        return csvDataWithRow;
+      } catch (error: unknown) {
+        throw readObjectBucketS3Error(
+          `Error fetching object from bucket with path: ${s3KeyFile}. Details: ${JSON.stringify(
+            error,
+          )}`,
+        );
+      }
     },
   };
 };

@@ -1,5 +1,3 @@
-import { initDB } from "pagopa-interop-tracing-commons";
-import { processMessage } from "./messageHandler.js";
 import { dbServiceBuilder } from "./services/db/dbService.js";
 import {
   ProducerService,
@@ -18,6 +16,13 @@ import {
   ReplacementServiceBuilder,
   replacementServiceBuilder,
 } from "./services/replacementService.js";
+import { config } from "./utilities/config.js";
+import {
+  processReplacementUploadMessage,
+  processEnrichedStateMessage,
+} from "./messageHandler.js";
+import { S3Client } from "@aws-sdk/client-s3";
+import { initDB, SQS } from "pagopa-interop-tracing-commons";
 const dbInstance = initDB({
   username: dbConfig.dbUsername,
   password: dbConfig.dbPassword,
@@ -27,9 +32,12 @@ const dbInstance = initDB({
   schema: dbConfig.dbSchemaName,
   useSSL: dbConfig.dbUseSSL,
 });
-
-const bucketService: BucketService = bucketServiceBuilder();
+const s3client: S3Client = new S3Client({
+  region: config.awsRegion,
+});
+const bucketService: BucketService = bucketServiceBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder();
+
 const replacementService: ReplacementServiceBuilder = replacementServiceBuilder(
   dbServiceBuilder(dbInstance),
   producerService,
@@ -40,4 +48,24 @@ const enrichedService: EnrichedService = enrichedServiceBuilder(
   producerService,
 );
 
-processMessage(enrichedService, replacementService);
+const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+  region: config.awsRegion,
+});
+
+await SQS.runConsumer(
+  sqsClient,
+  {
+    queueUrl: config.sqsReplacementUploadEndpoint,
+    consumerPollingTimeout: config.consumerPollingTimeout,
+  },
+  processReplacementUploadMessage(replacementService),
+);
+
+await SQS.runConsumer(
+  sqsClient,
+  {
+    queueUrl: config.sqsEnrichedUploadEndpoint,
+    consumerPollingTimeout: config.consumerPollingTimeout,
+  },
+  processEnrichedStateMessage(enrichedService),
+);
