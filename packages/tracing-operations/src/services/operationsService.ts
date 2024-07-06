@@ -16,6 +16,7 @@ import {
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
+import { TracingsContentResponse } from "../model/domain/tracing.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -92,7 +93,21 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger: Logger,
     ): Promise<ApiGetTracingsResponse> {
       logger.info(`Get tracings`);
-      return await dbService.getTracings(filters);
+
+      const data = await dbService.getTracings(filters);
+      const parsedTracings = TracingsContentResponse.safeParse(data.results);
+      if (!parsedTracings.success) {
+        throw new Error(
+          `Unable to parse tracings items: result ${JSON.stringify(
+            parsedTracings,
+          )} - data ${JSON.stringify(data.results)}`,
+        );
+      }
+
+      return {
+        results: parsedTracings.data,
+        totalCount: data.totalCount,
+      };
     },
 
     async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {

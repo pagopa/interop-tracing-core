@@ -10,11 +10,7 @@ import { DB } from "pagopa-interop-tracing-commons";
 import { Tracing } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
-import {
-  ApiGetTracingsQuery,
-  ApiGetTracingsResponse,
-} from "pagopa-interop-tracing-operations-client";
-import { TracingsContentResponse } from "../../model/domain/tracing.js";
+import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
@@ -33,7 +29,7 @@ export function dbServiceBuilder(db: DB) {
 
     async getTracings(
       filters: ApiGetTracingsQuery,
-    ): Promise<ApiGetTracingsResponse> {
+    ): Promise<{ results: Tracing[]; totalCount: number }> {
       const { offset, limit, states = [] } = filters;
 
       const getTracingsTotalCountQuery = `
@@ -60,17 +56,8 @@ export function dbServiceBuilder(db: DB) {
         limit,
       ]);
 
-      const parsedTracings = TracingsContentResponse.safeParse(tracings);
-      if (!parsedTracings.success) {
-        throw new Error(
-          `Unable to parse tracings items: result ${JSON.stringify(
-            parsedTracings,
-          )} - data ${JSON.stringify(tracings)}`,
-        );
-      }
-
       return {
-        results: parsedTracings.data,
+        results: tracings,
         totalCount: total_count,
       };
     },
