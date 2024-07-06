@@ -7,7 +7,6 @@ import {
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
 import { genericError, tracingState } from "pagopa-interop-tracing-models";
-import { z } from "zod";
 import {
   resolveApiProblem,
   updateTracingStateError,
@@ -128,25 +127,22 @@ const tracingRouter =
             req.query,
           );
 
-          const result = z
-            .array(ApiTracingErrorsContent)
-            .safeParse(data.errors);
-
+          const result = ApiTracingErrorsContent.safeParse(data);
           if (!result.success) {
             logger(req.ctx).error(
-              `Unable to parse tracing errors items: result ${JSON.stringify(
+              `Unable to parse tracing errors content items: result ${JSON.stringify(
                 result,
-              )} - data ${JSON.stringify(data.errors)} `,
+              )} - data ${JSON.stringify(data.results)} `,
             );
 
-            throw genericError("Unable to parse tracing errors items");
+            throw genericError("Unable to parse tracing errors content items");
           }
 
           return res
             .status(200)
             .json({
-              errors: result.data,
-              totalCount: data.totalCount,
+              results: result.data.results,
+              totalCount: result.data.totalCount,
             })
             .end();
         } catch (error) {
