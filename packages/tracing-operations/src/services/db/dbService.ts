@@ -31,36 +31,40 @@ export function dbServiceBuilder(db: DB) {
       limit: number;
       states?: TracingState[];
     }): Promise<{ results: Tracing[]; totalCount: number }> {
-      const { offset, limit, states = [] } = filters;
+      try {
+        const { offset, limit, states = [] } = filters;
 
-      const getTracingsTotalCountQuery = `
-        SELECT COUNT(*)::integer as total_count
-        FROM tracing.tracings
-         WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
-      `;
+        const getTracingsTotalCountQuery = `
+          SELECT COUNT(*)::integer as total_count
+          FROM tracing.tracings
+           WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
+        `;
 
-      const { total_count }: { total_count: number } = await db.one(
-        getTracingsTotalCountQuery,
-        [states],
-      );
+        const { total_count }: { total_count: number } = await db.one(
+          getTracingsTotalCountQuery,
+          [states],
+        );
 
-      const getTracingsQuery = `
-        SELECT *
-        FROM tracing.tracings
-        WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
-        OFFSET $2 LIMIT $3
-      `;
+        const getTracingsQuery = `
+          SELECT *
+          FROM tracing.tracings
+          WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
+          OFFSET $2 LIMIT $3
+        `;
 
-      const tracings: Tracing[] = await db.any(getTracingsQuery, [
-        states,
-        offset,
-        limit,
-      ]);
+        const tracings: Tracing[] = await db.any(getTracingsQuery, [
+          states,
+          offset,
+          limit,
+        ]);
 
-      return {
-        results: tracings,
-        totalCount: total_count,
-      };
+        return {
+          results: tracings,
+          totalCount: total_count,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper(error);
+      }
     },
 
     async getTracingErrors() {
