@@ -1,13 +1,14 @@
 import {
   PurposeId,
   TenantId,
+  TracingId,
   TracingState,
   genericInternalError,
   tracingAlreadyExists,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { Tracing } from "../../model/domain/db.js";
+import { PurposeError, Tracing } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
@@ -67,11 +68,45 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async getTracingErrors() {
+    async getTracingErrors(filters: {
+      offset: number;
+      limit: number;
+      tracing_id: TracingId;
+    }): Promise<{ results: PurposeError[]; totalCount: number }> {
       try {
-        return Promise.resolve();
+        const { offset, limit, tracing_id } = filters;
+
+        const getTracingErrorsTotalCountQuery = `
+          SELECT COUNT(*)::integer as total_count
+          FROM tracing.purposes_errors pe 
+            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $1
+        `;
+
+        const { total_count }: { total_count: number } = await db.one(
+          getTracingErrorsTotalCountQuery,
+          [tracing_id],
+        );
+
+        const getTracingErrorsQuery = `
+          SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.error_code, pe.message, pe.row_number
+          FROM tracing.purposes_errors pe 
+            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $3
+          OFFSET $1 LIMIT $2
+        `;
+
+        const tracingErrors: PurposeError[] = await db.any(
+          getTracingErrorsQuery,
+          [offset, limit, tracing_id],
+        );
+
+        return {
+          results: tracingErrors,
+          totalCount: total_count,
+        };
       } catch (error) {
-        throw genericInternalError(`Error getTracingErrors: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
 

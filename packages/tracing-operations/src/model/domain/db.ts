@@ -1,7 +1,7 @@
 import { TracingState } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 
-const TenantSchema = z.object({
+export const TenantSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   origin: z.string(),
@@ -9,20 +9,21 @@ const TenantSchema = z.object({
   deleted: z.boolean(),
 });
 
-const PurposeSchema = z.object({
+export const PurposeSchema = z.object({
   id: z.string().uuid(),
   consumer_id: z.string().uuid(),
   eservice_id: z.string().uuid(),
   purpose_title: z.string(),
 });
 
-const PurposeErrorSchema = z.object({
+export const PurposeErrorSchema = z.object({
   id: z.string().uuid(),
   tracing_id: z.string().uuid(),
   version: z.number(),
   purpose_id: z.string().uuid(),
   error_code: z.string(),
   message: z.string(),
+  row_number: z.number(),
 });
 
 export const TracingSchema = z.object({
