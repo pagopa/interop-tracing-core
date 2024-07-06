@@ -10,7 +10,6 @@ import { DB } from "pagopa-interop-tracing-commons";
 import { Tracing } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
-import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
@@ -27,9 +26,11 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async getTracings(
-      filters: ApiGetTracingsQuery,
-    ): Promise<{ results: Tracing[]; totalCount: number }> {
+    async getTracings(filters: {
+      offset: number;
+      limit: number;
+      states?: TracingState[];
+    }): Promise<{ results: Tracing[]; totalCount: number }> {
       const { offset, limit, states = [] } = filters;
 
       const getTracingsTotalCountQuery = `
