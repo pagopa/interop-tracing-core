@@ -373,7 +373,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetErrorsResponse"
+                $ref: "#/components/schemas/GetTracingErrorsResponse"
         "400":
           description: The provided input data is invalid
           content:
@@ -445,13 +445,13 @@ components:
           format: date
       required:
         - date
-    GetErrorsResponse:
+    GetTracingErrorsResponse:
       type: object
       required:
-        - errors
+        - results
         - totalCount
       properties:
-        errors:
+        results:
           type: array
           items:
             type: object
@@ -463,6 +463,15 @@ components:
                 type: string
               message:
                 type: string
+              rowNumber:
+                type: integer
+                format: int32
+                minimum: 0
+            required:
+              - purposeId
+              - errorCode
+              - message
+              - rowNumber
         totalCount:
           type: integer
           format: int64
