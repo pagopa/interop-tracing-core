@@ -1,6 +1,4 @@
 import {
-  ApiGetTracingErrorsParams,
-  ApiGetTracingErrorsQuery,
   ApiGetTracingErrorsResponse,
   ApiGetTracingsResponse,
   ApiSubmitTracingResponse,
