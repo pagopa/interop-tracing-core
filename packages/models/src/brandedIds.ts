@@ -7,10 +7,13 @@ export type TenantId = z.infer<typeof TenantId>;
 export const PurposeId = z.string().uuid().brand("PurposeId");
 export type PurposeId = z.infer<typeof PurposeId>;
 
+export const PurposeErrorId = z.string().uuid().brand("PurposeErrorId");
+export type PurposeErrorId = z.infer<typeof PurposeErrorId>;
+
 export const TracingId = z.string().uuid().brand("TracingId");
 export type TracingId = z.infer<typeof TracingId>;
 
-type IDS = TenantId | PurposeId | TracingId;
+type IDS = TenantId | PurposeId | TracingId | PurposeErrorId;
 
 // This function is used to generate a new ID for a new object
 // it infers the type of the ID based on how is used the result
