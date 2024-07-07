@@ -32,8 +32,8 @@ export async function addPurposeError(
   db: DB,
 ) {
   const insertPurposeErrorQuery = `
-      INSERT INTO tracing.purpose_errors (id, tracing_id, version, purpose_id, error_code, message)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `;
 
@@ -73,7 +73,14 @@ export async function addEservice(
 
 export async function clearTracings(db: DB) {
   const deleteTracingsQuery = `
-  DELETE FROM tracing.tracings;
+    TRUNCATE TABLE tracing.tracings CASCADE;
   `;
   await db.any(deleteTracingsQuery);
+}
+
+export async function clearPurposesErrors(db: DB) {
+  const deletePurposesErrorsQuery = `
+    TRUNCATE TABLE tracing.purposes_errors CASCADE;
+  `;
+  await db.any(deletePurposesErrorsQuery);
 }
