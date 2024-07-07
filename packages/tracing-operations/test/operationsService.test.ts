@@ -1,8 +1,12 @@
-import { DB, initDB, logger } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  initDB,
+  logger,
+  purposeErrorCodes,
+} from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -18,6 +22,7 @@ import { dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
+  PurposeErrorId,
   PurposeId,
   TenantId,
   TracingId,
@@ -28,14 +33,20 @@ import { StartedTestContainer } from "testcontainers";
 import {
   addEservice,
   addPurpose,
+  addPurposeError,
   addTenant,
   addTracing,
+  clearPurposesErrors,
   clearTracings,
 } from "./utils.js";
-import { Tracing } from "../src/model/domain/db.js";
+import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
 import { ISODateFormat } from "../src/model/domain/dates.js";
-import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
+import {
+  ApiGetTracingErrorsParams,
+  ApiGetTracingErrorsQuery,
+  ApiGetTracingsQuery,
+} from "pagopa-interop-tracing-operations-client";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -50,11 +61,9 @@ describe("database test", () => {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = ISODateFormat.parse(yesterday.toISOString());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.restoreAllMocks();
-  });
-
-  afterEach(async () => {
+    await clearPurposesErrors(dbInstance);
     await clearTracings(dbInstance);
   });
 
@@ -420,6 +429,113 @@ describe("database test", () => {
 
         expect(result.totalCount).toBe(2);
         expect(result.results.length).toBe(1);
+      });
+    });
+
+    describe("getTracingErrors", () => {
+      it("searching should return an empty list of tracing errors", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          logger({}),
+        );
+
+        expect(result.results).toStrictEqual([]);
+        expect(result.totalCount).toBe(0);
+      });
+
+      it("searching with 'limit' parameter value to 1, should return only 1 record with an INVALID_STATUS_CODE errorCode and totalCount 2", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 1,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: tracingData.version,
+          purpose_id: purposeId,
+          error_code: purposeErrorCodes.INVALID_STATUS_CODE.code,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            row_number: 2,
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          logger({}),
+        );
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(1);
+        expect(result.results[0].errorCode).toBe(
+          purposeErrorCodes.INVALID_STATUS_CODE.code,
+        );
+      });
+
+      it("searching with invalid 'tracingId' parameter value should throw an error", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: "invalid_uuid",
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        try {
+          await operationsService.getTracingErrors(query, params, logger({}));
+        } catch (e) {
+          const error = e as InternalError<CommonErrorCodes>;
+          expect(error).toBeInstanceOf(Error);
+          expect(error.message).toContain("DB Service error");
+          expect(error.message).toContain("invalid input syntax for type uuid");
+          expect(error.code).toBe("genericError");
+        }
       });
     });
   });
