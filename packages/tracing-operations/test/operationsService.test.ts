@@ -278,7 +278,7 @@ describe("database test", () => {
         expect(result.totalCount).toBe(0);
       });
 
-      it("searching with 'states' parameter 'ERROR' should return a only 1 record with 'ERROR' state", async () => {
+      it("searching with 'states' parameter 'ERROR' should return only 1 record with 'ERROR' state", async () => {
         const filters: ApiGetTracingsQuery = {
           states: [tracingState.error],
           offset: 0,
