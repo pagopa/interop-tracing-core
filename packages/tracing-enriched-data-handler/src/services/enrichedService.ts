@@ -8,8 +8,8 @@ export const enrichedServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async insertTracing(message: unknown): Promise<unknown> {
-      const s3KeyPath = message as string;
+    async insertTracing(message: string): Promise<unknown> {
+      const s3KeyPath = message;
       const tracingId = "";
       const records = await bucketService.readObject(s3KeyPath);
       const result = await dbService.insertTracing(tracingId, records);

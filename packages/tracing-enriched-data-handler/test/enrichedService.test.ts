@@ -42,7 +42,7 @@ describe("Processing Service", () => {
           version: "",
           date: "",
         };
-        const result = await enrichedService.insertTracing(message);
+        const result = await enrichedService.insertTracing(message.tracingId);
 
         expect(result).toStrictEqual({});
       });
