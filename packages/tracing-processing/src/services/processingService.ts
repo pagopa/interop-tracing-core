@@ -58,8 +58,8 @@ export const processingServiceBuilder = (
             tracing,
           );
         }
-      } catch (e) {
-        throw errorMapper(e);
+      } catch (error) {
+        throw errorMapper(error);
       }
     },
   };

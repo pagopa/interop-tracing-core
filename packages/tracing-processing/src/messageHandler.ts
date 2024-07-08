@@ -10,8 +10,8 @@ export function processMessage(
     try {
       const tracing = decodeSqsMessage(message);
       await processingService.processTracing(tracing);
-    } catch (e) {
-      throw errorMapper(e);
+    } catch (error) {
+      throw errorMapper(error);
     }
   };
 }
