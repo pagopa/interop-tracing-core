@@ -368,8 +368,6 @@ components:
                 format: date
               state:
                 type: string
-              errorMessage:
-                type: string
         totalCount:
           type: integer
           format: int64

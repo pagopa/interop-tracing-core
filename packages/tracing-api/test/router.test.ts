@@ -15,7 +15,6 @@ import {
   ExpressContext,
   contextMiddleware,
   logger,
-  tracingErrorCodesMapper,
   zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
@@ -215,13 +214,7 @@ describe("Tracing Router", () => {
           date: ISODateFormat.parse(new Date().toISOString()),
           state: tracingState.missing,
         },
-      ].map((tracing) => {
-        const errorMessage = tracingErrorCodesMapper(
-          tracing.state,
-          tracing.date,
-        );
-        return { ...tracing, ...(errorMessage && { errorMessage }) };
-      });
+      ];
 
       const result: ApiGetTracingsResponse = {
         results,
