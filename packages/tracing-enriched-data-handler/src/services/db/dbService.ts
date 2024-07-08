@@ -15,10 +15,12 @@ export function dbServiceBuilder(db: DB) {
             id, tracing_id, date, purpose_id, purpose_name, status, requests_count, eservice_id,
             consumer_id, consumer_origin, consumer_name, consumer_external_id,
             producer_id, producer_name, producer_origin, producer_external_id, created_at
-          ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
-          )
-          RETURNING *;
+           ) 
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+            ) 
+            ON CONFLICT DO NOTHING
+            RETURNING *;
         `;
 
         const insertPromises = records.map(async (record) => {

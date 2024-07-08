@@ -15,7 +15,11 @@ export function processEnrichedStateMessage(
 ): (message: SQS.Message) => void {
   return async (message: SQS.Message) => {
     console.log(message);
-    const tracing = decodeSqsMessage(message);
-    enrichedService.insertEnrichedTrace(tracing);
+    try {
+      const tracing = decodeSqsMessage(message);
+      await enrichedService.insertEnrichedTrace(tracing);
+    } catch (e) {
+      throw e;
+    }
   };
 }
