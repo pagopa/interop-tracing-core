@@ -38,7 +38,7 @@ export const processingServiceBuilder = (
         });
 
         if (hasSemiColonSeparator) {
-          throw `Invalid delimiter found on csv`;
+          throw `Invalid delimiter found on csv at ${s3KeyPath}`;
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
