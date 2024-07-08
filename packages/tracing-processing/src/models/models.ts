@@ -1,9 +1,9 @@
 import { S3BodySchema } from "pagopa-interop-tracing-models";
-import { TracingFromCsv } from "./messages.js";
 import { decodeSQSMessageError } from "./errors.js";
 import { SQS } from "pagopa-interop-tracing-commons";
+import { TracingFromS3Path } from "./tracing.js";
 
-export function decodeSqsMessage(message: SQS.Message): TracingFromCsv {
+export function decodeSqsMessage(message: SQS.Message): TracingFromS3Path {
   try {
     const messageBody = message.Body;
 
@@ -19,19 +19,20 @@ export function decodeSqsMessage(message: SQS.Message): TracingFromCsv {
 
     const keyParts = key.split("/");
 
-    const result: Partial<{ [K in keyof TracingFromCsv]: string | undefined }> =
-      {};
+    const result: Partial<{
+      [K in keyof TracingFromS3Path]: string | undefined;
+    }> = {};
 
     keyParts.forEach((part) => {
       const decodedPart = decodeURIComponent(part);
       const [key, value] = decodedPart.split("=");
       // eslint-disable-next-line no-prototype-builtins
-      if (TracingFromCsv.shape.hasOwnProperty(key)) {
-        result[key as keyof TracingFromCsv] = value;
+      if (TracingFromS3Path.shape.hasOwnProperty(key)) {
+        result[key as keyof TracingFromS3Path] = value;
       }
     });
 
-    const parsedResult = TracingFromCsv.safeParse(result);
+    const parsedResult = TracingFromS3Path.safeParse(result);
 
     if (parsedResult.success) {
       return parsedResult.data;

@@ -35,12 +35,7 @@ import {
   parseCSVFromString,
   removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
-import {
-  Eservice,
-  TracingEnriched,
-  TracingFromCsv,
-  TracingRecordSchema,
-} from "../src/models/messages.js";
+
 import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSqsMessage } from "../src/models/models.js";
@@ -64,6 +59,9 @@ import {
   validPurposeNotAssociated,
   validEnrichedPurpose,
 } from "./costants.js";
+import { Eservice } from "../src/models/csv.js";
+import { TracingRecordSchema } from "../src/models/db.js";
+import { TracingFromS3Path, TracingEnriched } from "../src/models/tracing.js";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
@@ -96,7 +94,7 @@ describe("Processing Service", () => {
       port: dbConfig.dbPort,
       database: dbConfig.dbName,
       schema: dbConfig.dbSchemaName,
-      useSSL: dbConfig.dbUseSSL,
+      useSSL: false,
     });
 
     dbService = dbServiceBuilder(dbInstance);
@@ -181,7 +179,7 @@ describe("Processing Service", () => {
         wrongMockTracingRecords as unknown as TracingRecordSchema[];
       const errors = await checkRecords(records, mockMessage);
       const dateNotValidError = errors.filter(
-        (error) => error.errorCode === "DATE_NOT_VALID",
+        (error) => error.errorCode === "INVALID_DATE",
       );
       const invalidFormalCheckError = errors.filter(
         (error) => error.errorCode === "INVALID_FORMAL_CHECK",
@@ -216,9 +214,11 @@ describe("Processing Service", () => {
       dbService.getEnrichedPurpose = originalGetEnrichedPurpose;
     });
 
-    it("should get errors on message not tipe of TracingFromCsv", async () => {
+    it("should get errors on message not tipe of TracingFromS3Path", async () => {
       try {
-        await processingService.processTracing({} as unknown as TracingFromCsv);
+        await processingService.processTracing(
+          {} as unknown as TracingFromS3Path,
+        );
       } catch (error) {
         const e = error as InternalError<ErrorCodes>;
         expect(error).toBeInstanceOf(InternalError);
@@ -295,7 +295,7 @@ describe("Processing Service", () => {
       const errors = await checkRecords(records, mockMessage);
 
       const dateNotValidError = errors.filter(
-        (error) => error.errorCode === "DATE_NOT_VALID",
+        (error) => error.errorCode === "INVALID_DATE",
       );
       const invalidFormalCheckError = errors.filter(
         (error) => error.errorCode === "INVALID_FORMAL_CHECK",

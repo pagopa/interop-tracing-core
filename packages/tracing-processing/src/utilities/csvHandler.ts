@@ -1,6 +1,7 @@
 import csv from "csv-parser";
 import { Readable } from "stream";
-import { TracingRecordSchema, EnrichedPurpose } from "../models/messages.js";
+import { TracingRecordSchema } from "../models/db.js";
+import { EnrichedPurpose } from "../models/csv.js";
 
 export async function parseCSV(
   stream: Readable,

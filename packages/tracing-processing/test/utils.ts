@@ -1,7 +1,7 @@
 import { generateId } from "pagopa-interop-tracing-models";
-import { Eservice } from "../src/models/messages.js";
 import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
+import { Eservice } from "../src/models/csv.js";
 
 export async function addPurpose(
   purposeValues: {
