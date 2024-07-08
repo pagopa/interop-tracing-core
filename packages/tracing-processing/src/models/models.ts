@@ -1,7 +1,7 @@
-import { S3BodySchema } from "pagopa-interop-tracing-models";
 import { decodeSQSMessageError } from "./errors.js";
 import { SQS } from "pagopa-interop-tracing-commons";
 import { TracingFromS3Path } from "./tracing.js";
+import { S3BodySchema } from "pagopa-interop-tracing-models";
 
 export function decodeSqsMessage(message: SQS.Message): TracingFromS3Path {
   try {
@@ -10,12 +10,14 @@ export function decodeSqsMessage(message: SQS.Message): TracingFromS3Path {
     if (!messageBody) {
       throw "Message body is undefined";
     }
-    const s3Body = S3BodySchema.safeParse(JSON.parse(messageBody));
-    if (s3Body.error) {
-      throw `error parsing s3Body ${s3Body.error}`;
+
+    const s3Body: S3BodySchema = JSON.parse(messageBody);
+
+    if (!s3Body.Records.length) {
+      throw `S3Body doesn't contain records`;
     }
 
-    const key = s3Body.data.Records[0].s3.object.key;
+    const key = s3Body.Records[0].s3.object.key;
 
     const keyParts = key.split("/");
 
