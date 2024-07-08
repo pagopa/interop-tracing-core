@@ -2,7 +2,7 @@ import {
   DB,
   initDB,
   logger,
-  purposeErrorCodes,
+  PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
@@ -338,7 +338,7 @@ describe("database test", () => {
         date: tracingData.date,
         status: 200,
         purposeId: purposeId,
-        errorCode: purposeErrorCodes.ESERVICE_NOT_FOUND.code,
+        errorCode: PurposeErrorCodes.ESERVICE_NOT_FOUND,
         message: `Eservice ${generateId<EserviceId>()} not found`,
         rowNumber: 12,
       };
@@ -373,7 +373,7 @@ describe("database test", () => {
         date: tracingData.date,
         status: 200,
         purposeId: purposeId,
-        errorCode: purposeErrorCodes.ESERVICE_NOT_FOUND.code,
+        errorCode: PurposeErrorCodes.ESERVICE_NOT_FOUND,
         message: `Eservice ${generateId<EserviceId>()} not found`,
         rowNumber: 12,
       };

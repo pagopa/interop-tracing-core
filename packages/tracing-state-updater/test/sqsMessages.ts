@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { purposeErrorCodes } from "pagopa-interop-tracing-commons";
+import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import { tracingState } from "pagopa-interop-tracing-models";
 
 export const sqsMessages = {
@@ -9,7 +9,7 @@ export const sqsMessages = {
       purposeId: uuidv4(),
       version: null,
       date: "2023-04-06T00:00:00.000Z",
-      errorCode: purposeErrorCodes.INVALID_STATUS_CODE.code,
+      errorCode: PurposeErrorCodes.INVALID_STATUS_CODE,
       message: "INVALID_STATUS_CODE",
       rowNumber: 13,
       updateTracingState: false,
@@ -19,7 +19,7 @@ export const sqsMessages = {
       purposeId: uuidv4(),
       version: 1,
       date: "2023-04-06T00:00:00.000Z",
-      errorCode: purposeErrorCodes.INVALID_PURPOSE.code,
+      errorCode: PurposeErrorCodes.INVALID_PURPOSE,
       message: "INVALID_PURPOSE",
       rowNumber: 13,
       updateTracingState: false,
@@ -30,7 +30,7 @@ export const sqsMessages = {
       purposeId: uuidv4(),
       version: 1,
       date: "2023-04-06T00:00:00.000Z",
-      errorCode: purposeErrorCodes.ESERVICE_NOT_ASSOCIATED.code,
+      errorCode: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
       message: "ESERVICE_NOT_ASSOCIATED",
       rowNumber: 13,
       updateTracingState: false,
@@ -41,7 +41,7 @@ export const sqsMessages = {
       purposeId: uuidv4(),
       version: 1,
       date: "2023-04-06T00:00:00.000Z",
-      errorCode: purposeErrorCodes.ESERVICE_NOT_ASSOCIATED.code,
+      errorCode: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
       message: "ESERVICE_NOT_ASSOCIATED",
       rowNumber: 13,
       updateTracingState: true,
