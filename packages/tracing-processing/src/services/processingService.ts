@@ -33,6 +33,14 @@ export const processingServiceBuilder = (
           throw `No record found for key ${s3KeyPath}`;
         }
 
+        const hasSemiColonSeparator = tracingRecords.some((trace) => {
+          return JSON.stringify(Object.keys(trace)).includes(";");
+        });
+
+        if (hasSemiColonSeparator) {
+          throw `Invalid delimiter found on csv`;
+        }
+
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
 
         if (formalErrorsRecords.length) {
@@ -112,7 +120,6 @@ export async function checkRecords(
 
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
-
     if (result.error) {
       const parsedError = parseErrorMessage(result.error.message);
 
