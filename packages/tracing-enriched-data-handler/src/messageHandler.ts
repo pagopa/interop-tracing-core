@@ -7,7 +7,6 @@ export function processReplacementUploadMessage(
   replacementService: ReplacementServiceBuilder,
 ): (message: unknown) => void {
   return async (message: unknown) => {
-    console.log("MESSAGE");
     replacementService.deleteTracing(message);
   };
 }
@@ -17,7 +16,6 @@ export function processEnrichedStateMessage(
   return async (message: SQS.Message) => {
     console.log(message);
     const tracing = decodeSqsMessage(message);
-    console.log("TRACING", tracing);
-    enrichedService.insertTracing(message);
+    enrichedService.insertTracing(tracing);
   };
 }

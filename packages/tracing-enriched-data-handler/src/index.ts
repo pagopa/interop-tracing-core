@@ -22,7 +22,8 @@ import {
   processEnrichedStateMessage,
 } from "./messageHandler.js";
 import { S3Client } from "@aws-sdk/client-s3";
-import { initDB, SQS } from "pagopa-interop-tracing-commons";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
+
 const dbInstance = initDB({
   username: dbConfig.dbUsername,
   password: dbConfig.dbPassword,
@@ -30,13 +31,19 @@ const dbInstance = initDB({
   port: dbConfig.dbPort,
   database: dbConfig.dbName,
   schema: dbConfig.dbSchemaName,
-  useSSL: dbConfig.dbUseSSL,
+  useSSL: false,
 });
+
 const s3client: S3Client = new S3Client({
   region: config.awsRegion,
 });
+
+const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+  region: config.awsRegion,
+});
+
 const bucketService: BucketService = bucketServiceBuilder(s3client);
-const producerService: ProducerService = producerServiceBuilder();
+const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
 const replacementService: ReplacementServiceBuilder = replacementServiceBuilder(
   dbServiceBuilder(dbInstance),
@@ -48,9 +55,14 @@ const enrichedService: EnrichedService = enrichedServiceBuilder(
   producerService,
 );
 
-const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
-  region: config.awsRegion,
-});
+await SQS.runConsumer(
+  sqsClient,
+  {
+    queueUrl: config.sqsEnrichedUploadEndpoint,
+    consumerPollingTimeout: config.consumerPollingTimeout,
+  },
+  processEnrichedStateMessage(enrichedService),
+);
 
 await SQS.runConsumer(
   sqsClient,
@@ -59,13 +71,4 @@ await SQS.runConsumer(
     consumerPollingTimeout: config.consumerPollingTimeout,
   },
   processReplacementUploadMessage(replacementService),
-);
-
-await SQS.runConsumer(
-  sqsClient,
-  {
-    queueUrl: config.sqsEnrichedUploadEndpoint,
-    consumerPollingTimeout: config.consumerPollingTimeout,
-  },
-  processEnrichedStateMessage(enrichedService),
 );

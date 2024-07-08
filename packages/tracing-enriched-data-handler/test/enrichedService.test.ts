@@ -13,7 +13,7 @@ import {
   producerServiceBuilder,
 } from "../src/services/producerService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
-import { initDB } from "pagopa-interop-tracing-commons";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
 
@@ -22,8 +22,12 @@ describe("Processing Service", () => {
   const s3client: S3Client = new S3Client({
     region: config.awsRegion,
   });
+  const sqsClient: SQS.SQSClient = SQS.instantiateClient({
+    region: config.awsRegion,
+  });
   const bucketService: BucketService = bucketServiceBuilder(s3client);
-  const producerService: ProducerService = producerServiceBuilder();
+  const producerService: ProducerService = producerServiceBuilder(sqsClient);
+
   describe("Processing service", () => {
     const dbInstance = initDB({
       username: dbConfig.dbUsername,

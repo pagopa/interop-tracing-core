@@ -7,10 +7,10 @@ import { ProducerService } from "./producerService.js";
 export const enrichedServiceBuilder = (
   dbService: DBService,
   bucketService: BucketService,
-  _producerService: ProducerService,
+  producerService: ProducerService,
 ) => {
   return {
-    async insertTracing(message: unknown) {
+    async insertTracing(message: TracingFromCsv) {
       try {
         const { data: tracing, error: tracingError } =
           TracingFromCsv.safeParse(message);
@@ -29,8 +29,17 @@ export const enrichedServiceBuilder = (
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
           throw `No record found for key ${s3KeyPath}`;
         }
-        dbService.insertTracing(tracing.tracingId, enrichedTracingRecords);
+        await dbService.insertTracing(
+          tracing.tracingId,
+          enrichedTracingRecords,
+        );
+        producerService.sendUpdateState(tracing.tracingId, "COMPLETE");
       } catch (e) {
+        producerService.sendUpdateState(
+          message.tracingId,
+          "ERROR",
+          JSON.stringify(e),
+        );
         console.log("ERROR", e);
       }
     },
