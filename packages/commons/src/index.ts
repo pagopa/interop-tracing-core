@@ -6,4 +6,3 @@ export * from "./config/index.js";
 export * from "./repositories/db.js";
 export * from "./auth/index.js";
 export * from "./router/zodiosValidationErrorHandler.js";
-export * from "./mappers/index.js";
