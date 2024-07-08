@@ -177,18 +177,9 @@ export function dbServiceBuilder(db: DB) {
     async savePurposeError(data: PurposeError): Promise<void> {
       try {
         const upsertTracingQuery = `
-          WITH upsert AS (
-            UPDATE tracing.purposes_errors
-            SET error_code = $5, message = $6
-            WHERE tracing_id = $2
-              AND purpose_id = $4
-              AND version = $3
-              AND row_number = $7
-            RETURNING id
-          )
           INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
-          SELECT $1, $2, $3, $4, $5, $6, $7
-          WHERE NOT EXISTS (SELECT 1 FROM upsert)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (tracing_id, purpose_id, version, row_number) DO NOTHING
           RETURNING id;
         `;
 

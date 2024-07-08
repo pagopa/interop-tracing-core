@@ -42,7 +42,9 @@ CREATE TABLE tracing.purposes_errors (
     purpose_id UUID NOT NULL,
     error_code VARCHAR(255) NOT NULL,
     message VARCHAR(2048) NOT NULL,
+    row_number INT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tracing_id) REFERENCES tracing.tracings(id),
-    FOREIGN KEY (purpose_id) REFERENCES tracing.purposes(id)
+    FOREIGN KEY (purpose_id) REFERENCES tracing.purposes(id),
+    UNIQUE (tracing_id, purpose_id, version, row_number)
 );
