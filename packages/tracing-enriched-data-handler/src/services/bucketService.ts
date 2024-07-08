@@ -20,12 +20,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
         }
 
         const csvData = await parseCSV(s3Object.Body as Readable);
-
-        const csvDataWithRow = csvData.map((csv, index) => {
-          return { ...csv, ...{ rowNumber: index } };
-        });
-
-        return csvDataWithRow;
+        return csvData;
       } catch (error: unknown) {
         throw readObjectBucketS3Error(
           `Error fetching object from bucket with path: ${s3KeyFile}. Details: ${JSON.stringify(

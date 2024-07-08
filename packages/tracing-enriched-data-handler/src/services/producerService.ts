@@ -4,16 +4,16 @@ import { config } from "../utilities/config.js";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendUpdateState(tracingId: string, state: string, error?: string) {
+    async sendUpdateState(tracingId: string, version: number, state: string) {
       try {
         await SQS.sendMessage(
           sqsClient,
           config.sqsEnricherStateEndpoint,
-          JSON.stringify({ tracingId, state }),
+          JSON.stringify({ tracingId, version, state }),
         );
         genericLogger.info(
           `Message sent on enricher-state queue",
-          ${JSON.stringify({ tracingId, state, error })}`,
+          ${JSON.stringify({ tracingId, version, state })}`,
         );
       } catch (error) {
         throw genericInternalError(`Error getPurposesByTracingId: ${error}`);

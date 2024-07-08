@@ -10,7 +10,7 @@ export const enrichedServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async insertTracing(message: TracingFromCsv) {
+    async insertEnrichedTrace(message: TracingFromCsv) {
       try {
         const { data: tracing, error: tracingError } =
           TracingFromCsv.safeParse(message);
@@ -29,18 +29,19 @@ export const enrichedServiceBuilder = (
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
           throw `No record found for key ${s3KeyPath}`;
         }
+
         await dbService.insertTracing(
           tracing.tracingId,
           enrichedTracingRecords,
         );
-        producerService.sendUpdateState(tracing.tracingId, "COMPLETE");
-      } catch (e) {
+
         producerService.sendUpdateState(
-          message.tracingId,
-          "ERROR",
-          JSON.stringify(e),
+          tracing.tracingId,
+          tracing.version,
+          "COMPLETE",
         );
-        console.log("ERROR", e);
+      } catch (e) {
+        throw e; // to do throw
       }
     },
   };
