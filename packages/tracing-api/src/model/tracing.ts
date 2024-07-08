@@ -19,7 +19,6 @@ const TracingContent = z.object({
   tracingId: z.string().uuid(),
   date: z.string(),
   state: TracingState,
-  errorMessage: z.string().optional(),
 });
 
 export const ApiTracingsContent = z.object({

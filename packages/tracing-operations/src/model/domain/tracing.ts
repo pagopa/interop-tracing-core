@@ -1,5 +1,4 @@
 import { TracingState } from "pagopa-interop-tracing-models";
-import { tracingErrorCodesMapper } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 import { TracingSchema, PurposeErrorSchema } from "./db.js";
 import { ISODateFormat } from "./dates.js";
@@ -8,24 +7,17 @@ export const TracingsContent = z.object({
   tracingId: z.string().uuid(),
   date: z.string(),
   state: TracingState,
-  errorMessage: z.string().optional(),
 });
 export type TracingsContent = z.infer<typeof TracingsContent>;
 
 export const TracingsContentResponse = z
   .array(TracingSchema)
   .transform((tracings) =>
-    tracings.map((tracing): TracingsContent => {
-      const tracingDate = ISODateFormat.parse(tracing.date);
-      const errorMessage = tracingErrorCodesMapper(tracing.state, tracingDate);
-
-      return {
-        tracingId: tracing.id,
-        date: tracingDate,
-        state: tracing.state,
-        ...(errorMessage && { errorMessage }),
-      };
-    }),
+    tracings.map((tracing) => ({
+      tracingId: tracing.id,
+      date: ISODateFormat.parse(tracing.date),
+      state: tracing.state,
+    })),
   )
   .refine(
     (results) => {
