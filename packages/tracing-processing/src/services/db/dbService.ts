@@ -23,6 +23,15 @@ export function dbServiceBuilder(db: DB) {
               genericLogger.info(
                 `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
               );
+
+              if (isPurposeAndStatusNotUnique(record, records)) {
+                return enrichPurposeWithError(
+                  record,
+                  tracing,
+                  "PURPOSE_AND_STATUS_NOT_UNIQUE",
+                );
+              }
+
               const fullPurpose = await db.oneOrNone<{
                 purpose_title: string;
                 eservice_id: string;
@@ -32,13 +41,9 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!fullPurpose) {
-                return enrichPurpose(
+                return enrichPurposeWithError(
                   record,
                   tracing,
-                  null,
-                  null,
-                  null,
-                  null,
                   "PURPOSE_NOT_FOUND",
                 );
               }
@@ -58,25 +63,17 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!consumer) {
-                return enrichPurpose(
+                return enrichPurposeWithError(
                   record,
                   tracing,
-                  eService,
-                  fullPurpose,
-                  null,
-                  null,
                   "CONSUMER_NOT_FOUND",
                 );
               }
 
               if (!eService) {
-                return enrichPurpose(
+                return enrichPurposeWithError(
                   record,
                   tracing,
-                  null,
-                  fullPurpose,
-                  consumer,
-                  null,
                   "ESERVICE_NOT_FOUND",
                 );
               }
@@ -87,13 +84,9 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!tenantEservice) {
-                return enrichPurpose(
+                return enrichPurposeWithError(
                   record,
                   tracing,
-                  eService,
-                  fullPurpose,
-                  consumer,
-                  null,
                   "ESERVICE_NOT_ASSOCIATED",
                 );
               }
@@ -108,25 +101,20 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!producer) {
-                return enrichPurpose(
+                return enrichPurposeWithError(
                   record,
                   tracing,
-                  eService,
-                  fullPurpose,
-                  consumer,
-                  null,
                   "PRODUCER_NOT_FOUND",
                 );
               }
 
-              return enrichPurpose(
+              return enrichSuccessfulPurpose(
                 record,
                 tracing,
                 eService,
                 fullPurpose,
                 consumer,
                 producer,
-                undefined,
               );
             } catch (error) {
               throw getEnrichedPurposeError(
@@ -148,14 +136,13 @@ export function dbServiceBuilder(db: DB) {
   };
 }
 
-function enrichPurpose(
+function enrichSuccessfulPurpose(
   record: TracingRecordSchema,
   tracing: TracingFromS3Path,
-  eService: EserviceSchema | null,
-  fullPurpose: { purpose_title: string; eservice_id: string } | null,
-  tenant: { name: string; origin: string; external_id: string } | null,
-  producer: { name: string; origin: string; external_id: string } | null,
-  errorType?: keyof typeof purposeErrorCodes,
+  eService: EserviceSchema,
+  fullPurpose: { purpose_title: string; eservice_id: string },
+  tenant: { name: string; origin: string; external_id: string },
+  producer: { name: string; origin: string; external_id: string },
 ): EnrichedPurpose {
   const baseRecord = {
     ...record,
@@ -167,23 +154,60 @@ function enrichPurpose(
 
   return {
     ...baseRecord,
-    eservice: eService
-      ? {
-          producerId: eService.producer_id,
-          consumerId: eService.consumer_id,
-          eserviceId: eService.eservice_id,
-        }
-      : ({} as Eservice),
-    purposeName: fullPurpose ? fullPurpose.purpose_title : "",
-    consumerName: tenant ? tenant.name : "",
-    consumerOrigin: tenant ? tenant.origin : "",
-    consumerExternalId: tenant ? tenant.external_id : "",
-    producerName: producer ? producer.name : "",
-    producerOrigin: producer ? producer.origin : "",
-    producerExternalId: producer ? producer.external_id : "",
-    errorCode: errorType,
-    errorMessage: errorType ? purposeErrorCodes[errorType].code : undefined,
+    eservice: {
+      producerId: eService.producer_id,
+      consumerId: eService.consumer_id,
+      eserviceId: eService.eservice_id,
+    },
+    purposeName: fullPurpose.purpose_title,
+    consumerName: tenant.name,
+    consumerOrigin: tenant.origin,
+    consumerExternalId: tenant.external_id,
+    producerName: producer.name,
+    producerOrigin: producer.origin,
+    producerExternalId: producer.external_id,
+    errorCode: undefined,
+    errorMessage: undefined,
   };
+}
+
+function enrichPurposeWithError(
+  record: TracingRecordSchema,
+  tracing: TracingFromS3Path,
+  errorType: keyof typeof purposeErrorCodes,
+): EnrichedPurpose {
+  const baseRecord = {
+    ...record,
+    purposeId: record.purpose_id,
+    requestsCount: record.requests_count,
+    tracingId: tracing.tracingId,
+    status: record.status,
+  };
+
+  return {
+    ...baseRecord,
+    eservice: {} as Eservice,
+    purposeName: "",
+    consumerName: "",
+    consumerOrigin: "",
+    consumerExternalId: "",
+    producerName: "",
+    producerOrigin: "",
+    producerExternalId: "",
+    errorCode: errorType,
+    errorMessage: purposeErrorCodes[errorType].code,
+  };
+}
+
+function isPurposeAndStatusNotUnique(
+  record: TracingRecordSchema,
+  records: TracingRecordSchema[],
+): boolean {
+  const duplicateRecords = records.filter(
+    (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+  );
+
+  return duplicateRecords.length > 1;
 }
 
 export type DBService = ReturnType<typeof dbServiceBuilder>;
