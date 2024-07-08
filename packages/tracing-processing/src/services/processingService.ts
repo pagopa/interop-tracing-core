@@ -2,7 +2,10 @@ import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  PurposeErrorCodes,
+  genericLogger,
+} from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
 import { errorMapper } from "../utilities/errorMapper.js";
 import { TracingRecordSchema } from "../models/db.js";
@@ -144,7 +147,7 @@ export async function checkRecords(
         version: tracing.version,
         date: tracing.date,
         status: record.status,
-        errorCode: "INVALID_DATE",
+        errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
         message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
         rowNumber: record.rowNumber,
@@ -163,11 +166,11 @@ function parseErrorMessage(errorObj: string) {
     received,
   }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
   const error_code = match(path[0])
-    .with("status", () => "INVALID_STATUS_CODE")
-    .with("purpose_id", () => "INVALID_PURPOSE")
-    .with("date", () => "INVALID_DATE")
-    .with("requests_count", () => "INVALID_REQUEST_COUNT")
-    .otherwise(() => "INVALID_FORMAL_CHECK");
+    .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
+    .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
+    .with("date", () => PurposeErrorCodes.INVALID_DATE)
+    .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
+    .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
 
   return { message: `{ ${path}: ${received} } is not valid`, error_code };
 }

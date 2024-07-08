@@ -27,7 +27,12 @@ import {
 } from "../src/services/producerService.js";
 import { config } from "../src/utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
-import { DB, SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  PurposeErrorCodes,
+  SQS,
+  initDB,
+} from "pagopa-interop-tracing-commons";
 import {
   addEservice,
   addPurpose,
@@ -179,23 +184,23 @@ describe("Processing Service", () => {
         wrongMockTracingRecords as unknown as TracingRecordSchema[];
       const errors = await checkRecords(records, mockMessage);
       const dateNotValidError = errors.filter(
-        (error) => error.errorCode === "INVALID_DATE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );
-      const invalidFormalCheckError = errors.filter(
-        (error) => error.errorCode === "INVALID_FORMAL_CHECK",
+      const invalidRowSchemaError = errors.filter(
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_ROW_SCHEMA,
       );
       const statusNotValidError = errors.filter(
-        (error) => error.errorCode === "INVALID_STATUS_CODE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_STATUS_CODE,
       );
       const purposeIdNotValid = errors.filter(
-        (error) => error.errorCode === "INVALID_PURPOSE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_PURPOSE,
       );
       const requestsCountNotValid = errors.filter(
-        (error) => error.errorCode === "INVALID_REQUEST_COUNT",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_REQUEST_COUNT,
       );
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(invalidFormalCheckError.length).toBeGreaterThan(0);
+      expect(invalidRowSchemaError.length).toBeGreaterThan(0);
       expect(statusNotValidError.length).toBeGreaterThan(0);
       expect(dateNotValidError.length).toBeGreaterThan(0);
       expect(purposeIdNotValid.length).toBeGreaterThan(0);
@@ -295,23 +300,23 @@ describe("Processing Service", () => {
       const errors = await checkRecords(records, mockMessage);
 
       const dateNotValidError = errors.filter(
-        (error) => error.errorCode === "INVALID_DATE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );
-      const invalidFormalCheckError = errors.filter(
-        (error) => error.errorCode === "INVALID_FORMAL_CHECK",
+      const invalidRowSchemaError = errors.filter(
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_ROW_SCHEMA,
       );
       const statusNotValidError = errors.filter(
-        (error) => error.errorCode === "INVALID_STATUS_CODE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_STATUS_CODE,
       );
       const purposeIdNotValid = errors.filter(
-        (error) => error.errorCode === "INVALID_PURPOSE",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_PURPOSE,
       );
       const requestsCountNotValid = errors.filter(
-        (error) => error.errorCode === "INVALID_REQUEST_COUNT",
+        (error) => error.errorCode === PurposeErrorCodes.INVALID_REQUEST_COUNT,
       );
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(invalidFormalCheckError.length).toBeGreaterThan(0);
+      expect(invalidRowSchemaError.length).toBeGreaterThan(0);
       expect(statusNotValidError.length).toBeGreaterThan(0);
       expect(dateNotValidError.length).toBeGreaterThan(0);
       expect(purposeIdNotValid.length).toBeGreaterThan(0);

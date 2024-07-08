@@ -2,7 +2,7 @@ import { genericInternalError } from "pagopa-interop-tracing-models";
 import {
   DB,
   genericLogger,
-  purposeErrorCodes,
+  PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
 
 import { getEnrichedPurposeError } from "../../models/errors.js";
@@ -28,7 +28,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "PURPOSE_AND_STATUS_NOT_UNIQUE",
+                  PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
                 );
               }
 
@@ -44,7 +44,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "PURPOSE_NOT_FOUND",
+                  PurposeErrorCodes.PURPOSE_NOT_FOUND,
                 );
               }
 
@@ -66,7 +66,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "CONSUMER_NOT_FOUND",
+                  PurposeErrorCodes.CONSUMER_NOT_FOUND,
                 );
               }
 
@@ -74,7 +74,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "ESERVICE_NOT_FOUND",
+                  PurposeErrorCodes.ESERVICE_NOT_FOUND,
                 );
               }
 
@@ -87,7 +87,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "ESERVICE_NOT_ASSOCIATED",
+                  PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
                 );
               }
 
@@ -104,7 +104,7 @@ export function dbServiceBuilder(db: DB) {
                 return enrichPurposeWithError(
                   record,
                   tracing,
-                  "PRODUCER_NOT_FOUND",
+                  PurposeErrorCodes.PRODUCER_NOT_FOUND,
                 );
               }
 
@@ -174,7 +174,7 @@ function enrichSuccessfulPurpose(
 function enrichPurposeWithError(
   record: TracingRecordSchema,
   tracing: TracingFromS3Path,
-  errorType: keyof typeof purposeErrorCodes,
+  errorType: keyof typeof PurposeErrorCodes,
 ): EnrichedPurpose {
   const baseRecord = {
     ...record,
@@ -195,7 +195,7 @@ function enrichPurposeWithError(
     producerOrigin: "",
     producerExternalId: "",
     errorCode: errorType,
-    errorMessage: purposeErrorCodes[errorType].code,
+    errorMessage: PurposeErrorCodes[errorType],
   };
 }
 
