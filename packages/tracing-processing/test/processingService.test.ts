@@ -444,7 +444,7 @@ describe("Processing Service", () => {
       }
     });
 
-    it("should return ESERVICE_NOT_ASSOCIATED  if tenant is not a consumer or a producer", async () => {
+    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer", async () => {
       await removeAndInsertWrongEserviceAndPurpose(
         eServiceData.eserviceId,
         validPurposeNotAssociated[0] as unknown as {
@@ -471,7 +471,7 @@ describe("Processing Service", () => {
       );
 
       purposeErrors?.forEach((item) => {
-        expect(item.errorCode).toBe("ESERVICE_NOT_ASSOCIATED");
+        expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
       });
     });
   });

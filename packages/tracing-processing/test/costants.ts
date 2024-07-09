@@ -74,15 +74,15 @@ export const mockEnrichedPurposesWithErrors = [
     purposeId: generateId(),
     status: 200,
     rowNumber: 1,
-    message: PurposeErrorCodes.ESERVICE_NOT_FOUND,
-    errorCode: PurposeErrorCodes.ESERVICE_NOT_FOUND,
+    message: PurposeErrorCodes.INVALID_DATE,
+    errorCode: PurposeErrorCodes.INVALID_DATE,
   },
   {
     purposeId: generateId(),
     status: 200,
     rowNumber: 1,
-    message: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
-    errorCode: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
+    message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+    errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
   },
 ];
 export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [

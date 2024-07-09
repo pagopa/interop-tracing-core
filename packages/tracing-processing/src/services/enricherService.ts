@@ -93,8 +93,9 @@ export function dbServiceBuilder(db: DB) {
                 return {
                   purposeId: record.purpose_id,
                   status: record.status,
-                  errorCode: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
-                  message: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
+                  errorCode:
+                    PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+                  message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
                   rowNumber: record.rowNumber,
                 };
               }
