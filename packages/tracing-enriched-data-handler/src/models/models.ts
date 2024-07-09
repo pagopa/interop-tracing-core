@@ -1,7 +1,6 @@
-import { SQS } from "pagopa-interop-tracing-commons";
-import { S3BodySchema } from "pagopa-interop-tracing-models";
-import { TracingFromCsv } from "./messages.js";
 import { decodeSQSMessageError } from "./errors.js";
+import { SQS } from "pagopa-interop-tracing-commons";
+import { TracingFromCsv } from "./messages.js";
 
 export function decodeSqsMessage(message: SQS.Message): TracingFromCsv {
   try {
@@ -10,19 +9,22 @@ export function decodeSqsMessage(message: SQS.Message): TracingFromCsv {
     if (!messageBody) {
       throw "Message body is undefined";
     }
-    const s3Body = S3BodySchema.safeParse(JSON.parse(messageBody));
-    if (s3Body.error) {
-      throw `error parsing s3Body ${s3Body.error}`;
+
+    const s3Body = JSON.parse(messageBody);
+
+    if (!s3Body.Records.length) {
+      throw `S3Body doesn't contain records`;
     }
 
-    const key = s3Body.data.Records[0].s3.object.key;
+    const key = s3Body.Records[0].s3.object.key;
 
     const keyParts = key.split("/");
 
-    const result: Partial<{ [K in keyof TracingFromCsv]: string | undefined }> =
-      {};
+    const result: Partial<{
+      [K in keyof TracingFromCsv]: string | undefined;
+    }> = {};
 
-    keyParts.forEach((part) => {
+    keyParts.forEach((part: string) => {
       const decodedPart = decodeURIComponent(part);
       const [key, value] = decodedPart.split("=");
       // eslint-disable-next-line no-prototype-builtins

@@ -49,7 +49,6 @@ const replacementService: ReplacementServiceBuilder = replacementServiceBuilder(
   dbServiceBuilder(dbInstance),
   producerService,
 );
-
 const enrichedService: EnrichedService = enrichedServiceBuilder(
   dbServiceBuilder(dbInstance),
   bucketService,
