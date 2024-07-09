@@ -2,7 +2,7 @@ import {
   DB,
   initDB,
   logger,
-  purposeErrorCodes,
+  PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
@@ -488,7 +488,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: tracingData.version,
           purpose_id: purposeId,
-          error_code: purposeErrorCodes.INVALID_STATUS_CODE.code,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
         };
@@ -513,7 +513,7 @@ describe("database test", () => {
         expect(result.totalCount).toBe(2);
         expect(result.results.length).toBe(1);
         expect(result.results[0].errorCode).toBe(
-          purposeErrorCodes.INVALID_STATUS_CODE.code,
+          PurposeErrorCodes.INVALID_STATUS_CODE,
         );
       });
 

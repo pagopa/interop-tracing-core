@@ -17,7 +17,7 @@ import {
   ExpressContext,
   contextMiddleware,
   logger,
-  purposeErrorCodes,
+  PurposeErrorCodes,
   zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
@@ -299,7 +299,7 @@ describe("Tracing Router", () => {
         results: [
           {
             purposeId: generateId<PurposeId>(),
-            errorCode: purposeErrorCodes.INVALID_STATUS_CODE.code,
+            errorCode: PurposeErrorCodes.INVALID_STATUS_CODE,
             message: "INVALID_STATUS_CODE",
             rowNumber: 2,
           },
