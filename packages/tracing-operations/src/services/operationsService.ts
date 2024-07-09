@@ -7,6 +7,7 @@ import {
   ApiUpdateTracingStateResponse,
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
+  ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -15,6 +16,7 @@ import {
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
+import { TracingsContentResponse } from "../model/domain/tracing.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -86,10 +88,26 @@ export function operationsServiceBuilder(dbService: DBService) {
       return Promise.resolve();
     },
 
-    async getTracings(): Promise<ApiGetTracingsResponse> {
-      genericLogger.info(`Get tracings`);
-      await dbService.getTracings();
-      return Promise.resolve({ results: [], totalCount: 0 });
+    async getTracings(
+      filters: ApiGetTracingsQuery,
+      logger: Logger,
+    ): Promise<ApiGetTracingsResponse> {
+      logger.info(`Get tracings`);
+
+      const data = await dbService.getTracings(filters);
+      const parsedTracings = TracingsContentResponse.safeParse(data.results);
+      if (!parsedTracings.success) {
+        throw new Error(
+          `Unable to parse tracings items: result ${JSON.stringify(
+            parsedTracings,
+          )} - data ${JSON.stringify(data.results)}`,
+        );
+      }
+
+      return {
+        results: parsedTracings.data,
+        totalCount: data.totalCount,
+      };
     },
 
     async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {
