@@ -324,7 +324,6 @@ export const validEnrichedPurpose = [
     purposeName: "purpose title",
     eservice: {
       producerId: "123e4567-e89b-12d3-a456-426614174001",
-      consumerId: "123e4567-e89b-12d3-a456-426614174001",
       eserviceId: "b669a838-3306-4c7b-be24-16b17e1c8a0d",
     },
     rowNumber: 1,
@@ -337,8 +336,6 @@ export const validEnrichedPurpose = [
     producerName: "comune",
     producerOrigin: "pagoPa",
     producerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
-    errorCode: undefined,
-    errorMessage: undefined,
   },
   {
     date: "2024-12-12",
@@ -348,7 +345,6 @@ export const validEnrichedPurpose = [
     purposeName: "purpose title",
     eservice: {
       producerId: "123e4567-e89b-12d3-a456-426614174001",
-      consumerId: "123e4567-e89b-12d3-a456-426614174001",
       eserviceId: "b669a838-3306-4c7b-be24-16b17e1c8a0d",
     },
     rowNumber: 2,
@@ -361,7 +357,5 @@ export const validEnrichedPurpose = [
     producerName: "comune",
     producerOrigin: "pagoPa",
     producerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
-    errorCode: undefined,
-    errorMessage: undefined,
   },
 ];

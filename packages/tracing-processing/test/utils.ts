@@ -103,14 +103,13 @@ export async function parseCSVFromString(
           status: row[3],
           requestsCount: row[4],
           eserviceId: row[5],
-          consumerId: row[6],
-          consumerOrigin: row[7],
-          consumerName: row[8],
-          consumerExternalId: row[9],
-          producerId: row[10],
-          producerName: row[11],
-          producerOrigin: row[12],
-          producerExternalId: row[13],
+          consumerOrigin: row[6],
+          consumerName: row[7],
+          consumerExternalId: row[8],
+          producerId: row[9],
+          producerName: row[10],
+          producerOrigin: row[11],
+          producerExternalId: row[12],
         };
         parsedRecords.push(record);
       })

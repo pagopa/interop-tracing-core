@@ -485,6 +485,9 @@ describe("Processing Service", () => {
         if (index) {
           // skipping index 0 because is csv header
           const validationResult = TracingEnriched.safeParse(item);
+          if (validationResult.error) {
+            console.log(validationResult.error.message);
+          }
           expect(validationResult.success).toBe(true);
         }
       });

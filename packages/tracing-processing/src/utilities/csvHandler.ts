@@ -7,6 +7,7 @@ export async function parseCSV(
   stream: Readable,
 ): Promise<TracingRecordSchema[]> {
   const results: TracingRecordSchema[] = [];
+
   return new Promise((resolve, reject) => {
     stream
       .pipe(csv())
@@ -24,7 +25,6 @@ export function generateCSV(records: EnrichedPurpose[]): string {
     "status",
     "requestsCount",
     "eserviceId",
-    "consumerId",
     "consumerOrigin",
     "consumerName",
     "consumerExternalId",
@@ -43,7 +43,6 @@ export function generateCSV(records: EnrichedPurpose[]): string {
         record.status,
         record.requestsCount,
         record.eservice.eserviceId,
-        record.eservice.consumerId,
         record.consumerOrigin,
         record.consumerName,
         record.consumerExternalId,
