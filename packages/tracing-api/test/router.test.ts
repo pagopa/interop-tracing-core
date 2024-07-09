@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
 import {
   ExpressContext,
+  ISODateFormat,
   contextMiddleware,
   logger,
   PurposeErrorCodes,
@@ -47,7 +48,6 @@ import {
   correlationIdToHeader,
   purposeIdToHeader,
 } from "../src/model/headers.js";
-import { ISODateFormat } from "../src/model/dates.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
