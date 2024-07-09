@@ -5,6 +5,7 @@ import {
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
 import {
+  PurposeId,
   TracingId,
   generateId,
   tracingAlreadyExists,
