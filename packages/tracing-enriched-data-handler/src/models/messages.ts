@@ -9,6 +9,7 @@ export const TracingFromCsv = z.object({
 });
 
 export const TracingEnriched = z.object({
+  submitterId: z.string(),
   date: z.string(),
   purposeId: z.string(),
   purposeName: z.string(),

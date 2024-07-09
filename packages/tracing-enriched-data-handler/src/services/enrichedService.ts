@@ -3,6 +3,7 @@ import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
+import { insertEnrichedTraceError } from "../models/errors.js";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
@@ -30,18 +31,22 @@ export const enrichedServiceBuilder = (
           throw `No record found for key ${s3KeyPath}`;
         }
 
-        await dbService.insertTracing(
+        const tracingInserted = await dbService.insertTracing(
           tracing.tracingId,
           enrichedTracingRecords,
         );
 
-        producerService.sendUpdateState(
-          tracing.tracingId,
-          tracing.version,
-          "COMPLETE",
-        );
+        if (tracingInserted) {
+          await producerService.sendUpdateState(
+            tracing.tracingId,
+            tracing.version,
+            "COMPLETE",
+          );
+        }
       } catch (e) {
-        throw e; // to do throw
+        throw insertEnrichedTraceError(
+          `Error on inserting tracing ${message.tracingId}`,
+        );
       }
     },
   };

@@ -1,9 +1,7 @@
-import {
-  generateId,
-  genericInternalError,
-} from "pagopa-interop-tracing-models";
+import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../../models/messages.js";
+import { insertTracingError, deleteTracingError } from "../../models/errors.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
@@ -49,7 +47,7 @@ export function dbServiceBuilder(db: DB) {
         const results = await Promise.all(insertPromises);
         return results.map((result) => result);
       } catch (error) {
-        throw genericInternalError(`Error insertTracing: ${error}`);
+        throw insertTracingError(`Error insertTracing: ${error}`);
       }
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -57,7 +55,7 @@ export function dbServiceBuilder(db: DB) {
       try {
         return Promise.resolve([{}]);
       } catch (error) {
-        throw genericInternalError(`Error insertTracing: ${error}`);
+        throw deleteTracingError(`Error insertTracing: ${error}`);
       }
     },
   };
