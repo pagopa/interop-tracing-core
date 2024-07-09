@@ -414,52 +414,34 @@ describe("Processing Service", () => {
       });
     });
 
-    it("should return errorCode ESERVICE_NOT_FOUND if eservice is not found", async () => {
-      const enrichedPurposes = await dbService.getEnrichedPurpose(
-        errorPurposesWithInvalidEserviceId,
-        mockMessage,
-      );
-      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
-        if (PurposeErrorMessage.safeParse(item).success) {
-          return item;
-        } else {
-          return null;
-        }
-      });
-
-      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-        purposeErrorsFiltered,
-      );
-
-      purposeErrors?.forEach((item) => {
-        expect(item.errorCode).toBe("ESERVICE_NOT_FOUND");
-      });
+    it("should return getEnrichedPurposeError if eservice is not found", async () => {
+      try {
+        await dbService.getEnrichedPurpose(
+          errorPurposesWithInvalidEserviceId,
+          mockMessage,
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "getEnrichedPurposeError",
+        );
+      }
     });
 
-    it("should return errorCode CONSUMER_NOT_FOUND if consumer is not found", async () => {
-      const invalidConsumer = generateId();
-      const enrichedPurposes = await dbService.getEnrichedPurpose(
-        validPurpose,
-        {
+    it("should return getEnrichedPurposeError if consumer is not found", async () => {
+      try {
+        const invalidConsumer = generateId();
+        await dbService.getEnrichedPurpose(validPurpose, {
           ...mockMessage,
           ...{ tenantId: invalidConsumer },
-        },
-      );
-      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
-        if (PurposeErrorMessage.safeParse(item).success) {
-          return item;
-        } else {
-          return null;
-        }
-      });
-
-      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-        purposeErrorsFiltered,
-      );
-
-      purposeErrors?.forEach((item) => {
-        expect(item.errorCode).toBe("CONSUMER_NOT_FOUND");
-      });
+        });
+      } catch (error) {
+        console.log("ERROR", error);
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "getEnrichedPurposeError",
+        );
+      }
     });
 
     it("should return ESERVICE_NOT_ASSOCIATED  if tenant is not a consumer or a producer", async () => {

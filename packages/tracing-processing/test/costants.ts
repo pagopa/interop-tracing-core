@@ -182,13 +182,11 @@ export const purposeDataWithWrongEservice = {
 
 export const eServiceData = {
   eserviceId: eservice_id,
-  consumerId: tenant_id,
   producerId: tenant_id,
 };
 
 export const eServiceDataNotAssociated = {
   eserviceId: eservice_idNotAssociated,
-  consumerId: generateId() as string,
   producerId: generateId() as string,
 };
 

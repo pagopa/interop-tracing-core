@@ -50,14 +50,13 @@ export async function addTenant(
 export async function addEservice(
   eServiceValues: {
     eserviceId: string;
-    consumerId: string;
     producerId: string;
   },
   db: DB,
 ) {
   const insertEserviceQuery = `
-  INSERT INTO tracing.eservices (eservice_id, consumer_id, producer_id)
-  VALUES ($1, $2, $3)
+  INSERT INTO tracing.eservices (eservice_id, producer_id)
+  VALUES ($1, $2)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }
@@ -70,7 +69,6 @@ export async function removeAndInsertWrongEserviceAndPurpose(
   await addEservice(
     {
       eserviceId: purpose.eservice.eserviceId,
-      consumerId: generateId(),
       producerId: generateId(),
     },
     db,

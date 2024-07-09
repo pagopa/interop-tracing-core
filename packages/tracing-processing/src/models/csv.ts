@@ -6,7 +6,7 @@ export const Eservice = z.object({
   producerId: z.string(),
 });
 
-export const PurposeEnriched = z.object({
+export const EnrichedPurpose = z.object({
   tracingId: z.string(),
   producerOrigin: z.string(),
   producerExternalId: z.string(),
@@ -20,6 +20,10 @@ export const PurposeEnriched = z.object({
   status: z.number(),
   requestsCount: z.string(),
   rowNumber: z.number(),
+  eservice: z.object({
+    eserviceId: z.string(),
+    producerId: z.string(),
+  }),
 });
 
 export const PurposeErrorMessage = z.object({
@@ -29,17 +33,12 @@ export const PurposeErrorMessage = z.object({
   message: z.string(),
   errorCode: z.string(),
 });
+
 export const PurposeErrorMessageArray = z.array(PurposeErrorMessage);
 
-const EnrichedPurpose = PurposeEnriched.extend({
-  eservice: Eservice,
-});
-
-export type EnrichedPurpose = z.infer<typeof PurposeEnriched> & {
-  eservice: z.infer<typeof Eservice>;
-};
-
 export const EnrichedPurposeArray = z.array(EnrichedPurpose);
+
+export type EnrichedPurpose = z.infer<typeof EnrichedPurpose>;
 
 export type Eservice = z.infer<typeof Eservice>;
 

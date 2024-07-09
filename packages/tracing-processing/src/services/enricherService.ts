@@ -1,4 +1,3 @@
-import { genericInternalError } from "pagopa-interop-tracing-models";
 import {
   DB,
   genericLogger,
@@ -70,31 +69,27 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!consumer) {
-                return {
-                  purposeId: record.purpose_id,
-                  status: record.status,
-                  errorCode: PurposeErrorCodes.CONSUMER_NOT_FOUND,
-                  message: PurposeErrorCodes.CONSUMER_NOT_FOUND,
-                  rowNumber: record.rowNumber,
-                };
+                throw getEnrichedPurposeError(
+                  `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                );
               }
 
               if (!eService) {
-                return {
-                  purposeId: record.purpose_id,
-                  status: record.status,
-                  errorCode: PurposeErrorCodes.ESERVICE_NOT_FOUND,
-                  message: PurposeErrorCodes.ESERVICE_NOT_FOUND,
-                  rowNumber: record.rowNumber,
-                };
+                throw getEnrichedPurposeError(
+                  `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                );
               }
 
               const tenantEservice = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE (producer_id = $1 OR consumer_id = $1)`,
+                `SELECT * FROM tracing.eservices WHERE producer_id = $1`,
                 [tracing.tenantId],
               );
+              const tenantPurpose = await db.oneOrNone<EserviceSchema>(
+                `SELECT * FROM tracing.purposes WHERE id = $1 AND consumer_id = $2`,
+                [record.purpose_id, tracing.tenantId],
+              );
 
-              if (!tenantEservice) {
+              if (!tenantEservice || !tenantPurpose) {
                 return {
                   purposeId: record.purpose_id,
                   status: record.status,
@@ -143,7 +138,7 @@ export function dbServiceBuilder(db: DB) {
 
         return enrichedPurposes;
       } catch (error) {
-        throw genericInternalError(
+        throw getEnrichedPurposeError(
           `Error in getEnrichedPurpose function: ${error}`,
         );
       }
@@ -171,7 +166,6 @@ function enrichSuccessfulPurpose(
     ...baseRecord,
     eservice: {
       producerId: eService.producer_id,
-      consumerId: eService.consumer_id,
       eserviceId: eService.eservice_id,
     },
     purposeName: fullPurpose.purpose_title,
