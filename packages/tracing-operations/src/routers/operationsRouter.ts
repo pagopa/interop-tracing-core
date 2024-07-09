@@ -125,8 +125,14 @@ const operationsRouter = (
 
   operationsRouter.get("/tracings", async (req, res) => {
     try {
-      await operationsService.getTracings();
-      return res.status(204).json({ results: [], totalCount: 0 }).end();
+      const tracings = await operationsService.getTracings(
+        req.query,
+        logger(req.ctx),
+      );
+      return res
+        .status(200)
+        .json({ results: tracings.results, totalCount: tracings.totalCount })
+        .end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();
