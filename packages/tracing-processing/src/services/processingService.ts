@@ -1,6 +1,6 @@
 import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
-import { DBService } from "./db/dbService.js";
+import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
   PurposeErrorCodes,
@@ -9,6 +9,11 @@ import {
 import { match } from "ts-pattern";
 import { errorMapper } from "../utilities/errorMapper.js";
 import { TracingRecordSchema } from "../models/db.js";
+import {
+  EnrichedPurposeArray,
+  PurposeErrorMessage,
+  PurposeErrorMessageArray,
+} from "../models/csv.js";
 import { TracingFromS3Path } from "../models/tracing.js";
 
 export const processingServiceBuilder = (
@@ -91,27 +96,25 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     tracing,
   );
 
-  const enrichedPurposeErrors = enrichedPurposes.filter(
-    (enrichedPurpose) => !!enrichedPurpose.errorCode,
+  const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+    if (PurposeErrorMessage.safeParse(item).success) {
+      return item;
+    } else {
+      return null;
+    }
+  });
+
+  const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+    purposeErrorsFiltered,
   );
-  if (enrichedPurposeErrors.length === 0) {
-    await bucketService.writeObject(enrichedPurposes, s3KeyPath);
+
+  if (purposeErrors && purposeErrors.length > 0) {
+    await sendPurposeErrors(purposeErrors, tracing, producerService);
   } else {
-    const errorMessagePromises = enrichedPurposeErrors.map((record, index) => {
-      const purposeError = {
-        tracingId: tracing.tracingId,
-        version: tracing.version,
-        date: tracing.date,
-        errorCode: record.errorCode!,
-        status: record.status,
-        purposeId: record.purposeId,
-        message: record.errorMessage!,
-        rowNumber: record.rowNumber,
-        updateTracingState: index === enrichedPurposeErrors.length - 1,
-      };
-      return producerService.sendErrorMessage(purposeError);
-    });
-    await Promise.all(errorMessagePromises);
+    const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
+    if (purposeEnriched.data) {
+      await bucketService.writeObject(purposeEnriched.data, s3KeyPath);
+    }
   }
 }
 
@@ -131,7 +134,7 @@ export async function checkRecords(
         version: tracing.version,
         date: tracing.date,
         status: record.status,
-        errorCode: parsedError.error_code,
+        errorCode: parsedError.errorCode,
         purposeId: record.purpose_id,
         message: parsedError.message,
         rowNumber: record.rowNumber,
@@ -165,14 +168,36 @@ function parseErrorMessage(errorObj: string) {
     path,
     received,
   }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
-  const error_code = match(path[0])
+  const errorCode = match(path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
     .with("date", () => PurposeErrorCodes.INVALID_DATE)
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
 
-  return { message: `{ ${path}: ${received} } is not valid`, error_code };
+  return { message: `{ ${path}: ${received} } is not valid`, errorCode };
+}
+
+async function sendPurposeErrors(
+  purposeErrors: PurposeErrorMessage[],
+  tracing: TracingFromS3Path,
+  producerService: ProducerService,
+) {
+  const errorMessagePromises = purposeErrors.map((record, index) => {
+    const purposeError = {
+      tracingId: tracing.tracingId,
+      version: tracing.version,
+      date: tracing.date,
+      errorCode: record.errorCode,
+      status: record.status,
+      purposeId: record.purposeId,
+      message: record.message,
+      rowNumber: record.rowNumber,
+      updateTracingState: index === purposeErrors.length - 1,
+    };
+    return producerService.sendErrorMessage(purposeError);
+  });
+  await Promise.all(errorMessagePromises);
 }
 
 export function createS3Path(message: TracingFromS3Path) {

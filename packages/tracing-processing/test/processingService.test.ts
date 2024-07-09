@@ -15,7 +15,10 @@ import {
   processingServiceBuilder,
   writeEnrichedTracingOrSendPurposeErrors,
 } from "../src/services/processingService.js";
-import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
+import {
+  DBService,
+  dbServiceBuilder,
+} from "../src/services/enricherService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
 import {
   BucketService,
@@ -64,7 +67,12 @@ import {
   validPurposeNotAssociated,
   validEnrichedPurpose,
 } from "./costants.js";
-import { Eservice } from "../src/models/csv.js";
+import {
+  EnrichedPurposeArray,
+  Eservice,
+  PurposeErrorMessage,
+  PurposeErrorMessageArray,
+} from "../src/models/csv.js";
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingFromS3Path, TracingEnriched } from "../src/models/tracing.js";
 
@@ -248,13 +256,21 @@ describe("Processing Service", () => {
         [],
         mockMessage,
       );
-      const errorPurposes = enrichedPurposes.filter(
-        (enrichedPurpose) => enrichedPurpose.errorCode,
+      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
+
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
       );
 
       await processingService.processTracing(mockMessage);
 
-      expect(errorPurposes.length).toBeGreaterThan(0);
+      expect(purposeErrors?.length).toBeGreaterThan(0);
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(3);
 
@@ -366,14 +382,14 @@ describe("Processing Service", () => {
   });
 
   describe("getEnrichedPurpose", () => {
-    it("should return empty errorCode if purpose is valid", async () => {
+    it("should return a type of EnrichedPurpose if purpose is valid", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
         mockMessage,
       );
-      enrichedPurposes.forEach((item) => {
-        expect(item.errorCode).toBe(undefined);
-      });
+
+      const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
+      expect(safeEnriched.success).toBe(true);
     });
 
     it("should return errorCode PURPOSE_NOT_FOUND if purpose is not found", async () => {
@@ -381,7 +397,19 @@ describe("Processing Service", () => {
         errorPurposesWithInvalidPurposeId,
         mockMessage,
       );
-      enrichedPurposes.forEach((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
+
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
+
+      purposeErrors?.forEach((item) => {
         expect(item.errorCode).toBe("PURPOSE_NOT_FOUND");
       });
     });
@@ -391,7 +419,19 @@ describe("Processing Service", () => {
         errorPurposesWithInvalidEserviceId,
         mockMessage,
       );
-      enrichedPurposes.forEach((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
+
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
+
+      purposeErrors?.forEach((item) => {
         expect(item.errorCode).toBe("ESERVICE_NOT_FOUND");
       });
     });
@@ -405,7 +445,19 @@ describe("Processing Service", () => {
           ...{ tenantId: invalidConsumer },
         },
       );
-      enrichedPurposes.forEach((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
+
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
+
+      purposeErrors?.forEach((item) => {
         expect(item.errorCode).toBe("CONSUMER_NOT_FOUND");
       });
     });
@@ -424,7 +476,19 @@ describe("Processing Service", () => {
         validPurposeNotAssociated,
         mockMessage,
       );
-      enrichedPurposes.forEach((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
+
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
+
+      purposeErrors?.forEach((item) => {
         expect(item.errorCode).toBe("ESERVICE_NOT_ASSOCIATED");
       });
     });

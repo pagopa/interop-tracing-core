@@ -1,6 +1,6 @@
 import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { processMessage } from "./messageHandler.js";
-import { dbServiceBuilder } from "./services/db/dbService.js";
+import { dbServiceBuilder } from "./services/enricherService.js";
 import {
   ProcessingService,
   processingServiceBuilder,

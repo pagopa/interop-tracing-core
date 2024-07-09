@@ -20,13 +20,27 @@ export const PurposeEnriched = z.object({
   status: z.number(),
   requestsCount: z.string(),
   rowNumber: z.number(),
-  errorMessage: z.string().optional(),
-  errorCode: z.string().optional(),
+});
+
+export const PurposeErrorMessage = z.object({
+  purposeId: z.string().uuid(),
+  status: z.number(),
+  rowNumber: z.number(),
+  message: z.string(),
+  errorCode: z.string(),
+});
+export const PurposeErrorMessageArray = z.array(PurposeErrorMessage);
+
+const EnrichedPurpose = PurposeEnriched.extend({
+  eservice: Eservice,
 });
 
 export type EnrichedPurpose = z.infer<typeof PurposeEnriched> & {
   eservice: z.infer<typeof Eservice>;
 };
+
+export const EnrichedPurposeArray = z.array(EnrichedPurpose);
+
 export type Eservice = z.infer<typeof Eservice>;
 
-export type PurposeEnriched = z.infer<typeof PurposeEnriched>;
+export type PurposeErrorMessage = z.infer<typeof PurposeErrorMessage>;

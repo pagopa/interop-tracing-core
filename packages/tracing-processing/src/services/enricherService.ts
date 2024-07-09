@@ -5,17 +5,20 @@ import {
   PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
 
-import { getEnrichedPurposeError } from "../../models/errors.js";
-import { TracingRecordSchema, EserviceSchema } from "../../models/db.js";
-import { EnrichedPurpose, Eservice } from "../../models/csv.js";
-import { TracingFromS3Path } from "../../models/tracing.js";
+import { getEnrichedPurposeError } from "../models/errors.js";
+import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
+import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
+import { TracingFromS3Path } from "../models/tracing.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+type EnrichedPurposeResult = (PurposeErrorMessage | EnrichedPurpose)[];
+
 export function dbServiceBuilder(db: DB) {
   return {
     async getEnrichedPurpose(
       records: TracingRecordSchema[],
       tracing: TracingFromS3Path,
-    ): Promise<EnrichedPurpose[]> {
+    ): Promise<EnrichedPurposeResult> {
       try {
         const fullRecordPromises = records.map(
           async (record: TracingRecordSchema) => {
@@ -25,11 +28,13 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (isPurposeAndStatusNotUnique(record, records)) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
+                  message: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               const fullPurpose = await db.oneOrNone<{
@@ -41,11 +46,13 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!fullPurpose) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.PURPOSE_NOT_FOUND,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
+                  message: PurposeErrorCodes.PURPOSE_NOT_FOUND,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               const eService = await db.oneOrNone<EserviceSchema>(
@@ -63,19 +70,23 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!consumer) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.CONSUMER_NOT_FOUND,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.CONSUMER_NOT_FOUND,
+                  message: PurposeErrorCodes.CONSUMER_NOT_FOUND,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               if (!eService) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.ESERVICE_NOT_FOUND,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.ESERVICE_NOT_FOUND,
+                  message: PurposeErrorCodes.ESERVICE_NOT_FOUND,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               const tenantEservice = await db.oneOrNone<EserviceSchema>(
@@ -84,11 +95,13 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!tenantEservice) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
+                  message: PurposeErrorCodes.ESERVICE_NOT_ASSOCIATED,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               const producer = await db.oneOrNone<{
@@ -101,11 +114,13 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!producer) {
-                return enrichPurposeWithError(
-                  record,
-                  tracing,
-                  PurposeErrorCodes.PRODUCER_NOT_FOUND,
-                );
+                return {
+                  purposeId: record.purpose_id,
+                  status: record.status,
+                  errorCode: PurposeErrorCodes.PRODUCER_NOT_FOUND,
+                  message: PurposeErrorCodes.PRODUCER_NOT_FOUND,
+                  rowNumber: record.rowNumber,
+                };
               }
 
               return enrichSuccessfulPurpose(
@@ -166,36 +181,6 @@ function enrichSuccessfulPurpose(
     producerName: producer.name,
     producerOrigin: producer.origin,
     producerExternalId: producer.external_id,
-    errorCode: undefined,
-    errorMessage: undefined,
-  };
-}
-
-function enrichPurposeWithError(
-  record: TracingRecordSchema,
-  tracing: TracingFromS3Path,
-  errorType: keyof typeof PurposeErrorCodes,
-): EnrichedPurpose {
-  const baseRecord = {
-    ...record,
-    purposeId: record.purpose_id,
-    requestsCount: record.requests_count,
-    tracingId: tracing.tracingId,
-    status: record.status,
-  };
-
-  return {
-    ...baseRecord,
-    eservice: {} as Eservice,
-    purposeName: "",
-    consumerName: "",
-    consumerOrigin: "",
-    consumerExternalId: "",
-    producerName: "",
-    producerOrigin: "",
-    producerExternalId: "",
-    errorCode: errorType,
-    errorMessage: PurposeErrorCodes[errorType],
   };
 }
 
