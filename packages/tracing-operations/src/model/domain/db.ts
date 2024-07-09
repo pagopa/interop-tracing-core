@@ -26,11 +26,11 @@ const PurposeErrorSchema = z.object({
   row_number: z.number(),
 });
 
-const TracingSchema = z.object({
+export const TracingSchema = z.object({
   id: z.string().uuid(),
   tenant_id: z.string().uuid(),
   state: TracingState,
-  date: z.string(),
+  date: z.date().transform((date) => date.toISOString()),
   version: z.number(),
   errors: z.boolean(),
 });
