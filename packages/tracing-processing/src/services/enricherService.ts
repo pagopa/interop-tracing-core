@@ -110,13 +110,9 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!producer) {
-                return {
-                  purposeId: record.purpose_id,
-                  status: record.status,
-                  errorCode: PurposeErrorCodes.PRODUCER_NOT_FOUND,
-                  message: PurposeErrorCodes.PRODUCER_NOT_FOUND,
-                  rowNumber: record.rowNumber,
-                };
+                throw getEnrichedPurposeError(
+                  `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                );
               }
 
               return enrichSuccessfulPurpose(
