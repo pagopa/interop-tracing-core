@@ -1,7 +1,7 @@
 import { TracingState } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import { TracingSchema } from "./db.js";
-import { ISODateFormat } from "./dates.js";
+import { ISODateFormat } from "pagopa-interop-tracing-commons";
 
 export const TracingsContent = z.object({
   tracingId: z.string().uuid(),

@@ -1,4 +1,9 @@
-import { DB, initDB, logger } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  ISODateFormat,
+  initDB,
+  logger,
+} from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
   afterAll,
@@ -34,7 +39,6 @@ import {
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
-import { ISODateFormat } from "../src/model/domain/dates.js";
 import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
 
 describe("database test", () => {
