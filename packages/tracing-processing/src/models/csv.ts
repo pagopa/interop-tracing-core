@@ -18,7 +18,7 @@ export const EnrichedPurpose = z.object({
   purposeName: z.string(),
   date: z.string(),
   purposeId: z.string().uuid(),
-  status: z.number(),
+  status: z.coerce.number(),
   requestsCount: z.string(),
   rowNumber: z.number(),
   eservice: z.object({
@@ -29,7 +29,7 @@ export const EnrichedPurpose = z.object({
 
 export const PurposeErrorMessage = z.object({
   purposeId: z.string().uuid(),
-  status: z.number(),
+  status: z.coerce.number(),
   rowNumber: z.number(),
   message: z.string(),
   errorCode: z.string(),

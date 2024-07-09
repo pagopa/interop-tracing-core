@@ -1,4 +1,7 @@
-import { SavePurposeErrorDto } from "pagopa-interop-tracing-models";
+import {
+  SavePurposeErrorDto,
+  genericInternalError,
+} from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
@@ -112,6 +115,13 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     await sendPurposeErrors(purposeErrors, tracing, producerService);
   } else {
     const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
+
+    if (purposeEnriched.error) {
+      throw genericInternalError(
+        `Error processing enriched purpose ${purposeEnriched.error.message}`,
+      );
+    }
+
     if (purposeEnriched.data) {
       await bucketService.writeObject(
         purposeEnriched.data,
