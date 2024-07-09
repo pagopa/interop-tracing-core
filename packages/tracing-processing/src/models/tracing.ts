@@ -9,12 +9,14 @@ export const TracingFromS3Path = z.object({
 });
 
 export const TracingEnriched = z.object({
+  submitterId: z.string(),
   date: z.string(),
   purposeId: z.string(),
   purposeName: z.string(),
   status: z.coerce.number(),
   requestsCount: z.string(),
   eserviceId: z.string(),
+  consumerId: z.string(),
   consumerOrigin: z.string(),
   consumerName: z.string(),
   consumerExternalId: z.string(),

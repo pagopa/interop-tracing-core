@@ -300,6 +300,7 @@ describe("Processing Service", () => {
       expect(bucketService.writeObject).toHaveBeenCalledWith(
         enrichedPurposes,
         createS3Path(mockMessage),
+        mockMessage.tenantId,
       );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
@@ -478,7 +479,7 @@ describe("Processing Service", () => {
 
   describe("generateCsv", () => {
     it("should generate a TracingEnriched object from csv", async () => {
-      const csv = generateCSV(validEnrichedPurpose);
+      const csv = generateCSV(validEnrichedPurpose, mockMessage.tenantId);
       const parsedCsv = await parseCSVFromString(csv);
       expect(parsedCsv).toBeDefined();
       parsedCsv.forEach((item, index) => {

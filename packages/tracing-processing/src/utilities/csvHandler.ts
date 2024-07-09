@@ -17,14 +17,19 @@ export async function parseCSV(
   });
 }
 
-export function generateCSV(records: EnrichedPurpose[]): string {
+export function generateCSV(
+  records: EnrichedPurpose[],
+  tenantId: string,
+): string {
   const header = [
+    "submitterId",
     "date",
     "purposeId",
     "purposeName",
     "status",
     "requestsCount",
     "eserviceId",
+    "consumerId",
     "consumerOrigin",
     "consumerName",
     "consumerExternalId",
@@ -37,12 +42,14 @@ export function generateCSV(records: EnrichedPurpose[]): string {
   const rows = records
     .map((record) => {
       return [
+        tenantId,
         record.date,
         record.purposeId,
         record.purposeName,
         record.status,
         record.requestsCount,
         record.eservice.eserviceId,
+        record.consumerId,
         record.consumerOrigin,
         record.consumerName,
         record.consumerExternalId,

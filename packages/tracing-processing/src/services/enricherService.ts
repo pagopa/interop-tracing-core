@@ -36,11 +36,27 @@ export function dbServiceBuilder(db: DB) {
                 };
               }
 
+              const consumer = await db.oneOrNone<{
+                name: string;
+                origin: string;
+                external_id: string;
+              }>(
+                `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
+                [tracing.tenantId],
+              );
+
+              if (!consumer) {
+                throw getEnrichedPurposeError(
+                  `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                );
+              }
+
               const fullPurpose = await db.oneOrNone<{
                 purpose_title: string;
                 eservice_id: string;
+                consumer_id: string;
               }>(
-                `SELECT purpose_title, eservice_id FROM tracing.purposes WHERE id = $1`,
+                `SELECT purpose_title, eservice_id, consumer_id FROM tracing.purposes WHERE id = $1`,
                 [record.purpose_id],
               );
 
@@ -59,37 +75,21 @@ export function dbServiceBuilder(db: DB) {
                 [fullPurpose.eservice_id],
               );
 
-              const consumer = await db.oneOrNone<{
-                name: string;
-                origin: string;
-                external_id: string;
-              }>(
-                `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
-                [tracing.tenantId],
-              );
-
-              if (!consumer) {
-                throw getEnrichedPurposeError(
-                  `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
-                );
-              }
-
               if (!eService) {
                 throw getEnrichedPurposeError(
                   `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
                 );
               }
 
-              const tenantEservice = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE producer_id = $1`,
-                [tracing.tenantId],
-              );
-              const tenantPurpose = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.purposes WHERE id = $1 AND consumer_id = $2`,
-                [record.purpose_id, tracing.tenantId],
+              const tenantEservice = await db.manyOrNone<EserviceSchema>(
+                `SELECT * FROM tracing.eservices WHERE producer_id = $1 AND eservice_id = $2`,
+                [tracing.tenantId, eService.eservice_id],
               );
 
-              if (!tenantEservice || !tenantPurpose) {
+              if (
+                tenantEservice.length === 0 &&
+                fullPurpose.consumer_id !== tracing.tenantId
+              ) {
                 return {
                   purposeId: record.purpose_id,
                   status: record.status,
@@ -147,13 +147,18 @@ function enrichSuccessfulPurpose(
   record: TracingRecordSchema,
   tracing: TracingFromS3Path,
   eService: EserviceSchema,
-  fullPurpose: { purpose_title: string; eservice_id: string },
+  fullPurpose: {
+    purpose_title: string;
+    eservice_id: string;
+    consumer_id: string;
+  },
   tenant: { name: string; origin: string; external_id: string },
   producer: { name: string; origin: string; external_id: string },
 ): EnrichedPurpose {
   const baseRecord = {
     ...record,
     purposeId: record.purpose_id,
+    consumerId: fullPurpose.consumer_id,
     requestsCount: record.requests_count,
     tracingId: tracing.tracingId,
     status: record.status,

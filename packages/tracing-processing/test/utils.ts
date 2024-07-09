@@ -97,19 +97,21 @@ export async function parseCSVFromString(
     stream
       .on("data", (row) => {
         const record = {
-          date: row[0],
-          purposeId: row[1],
-          purposeName: row[2],
-          status: row[3],
-          requestsCount: row[4],
-          eserviceId: row[5],
-          consumerOrigin: row[6],
-          consumerName: row[7],
-          consumerExternalId: row[8],
-          producerId: row[9],
-          producerName: row[10],
-          producerOrigin: row[11],
-          producerExternalId: row[12],
+          submitterId: row[0],
+          date: row[1],
+          purposeId: row[2],
+          purposeName: row[3],
+          status: row[4],
+          requestsCount: row[5],
+          eserviceId: row[6],
+          consumerId: row[7],
+          consumerOrigin: row[8],
+          consumerName: row[9],
+          consumerExternalId: row[10],
+          producerId: row[11],
+          producerName: row[12],
+          producerOrigin: row[13],
+          producerExternalId: row[14],
         };
         parsedRecords.push(record);
       })

@@ -11,6 +11,7 @@ export const EnrichedPurpose = z.object({
   producerOrigin: z.string(),
   producerExternalId: z.string(),
   producerName: z.string(),
+  consumerId: z.string(),
   consumerExternalId: z.string(),
   consumerOrigin: z.string(),
   consumerName: z.string(),

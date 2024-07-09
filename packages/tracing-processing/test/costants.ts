@@ -287,6 +287,7 @@ export const mockEnrichedPurposes = [
     producerOrigin: "origin",
     consumerExternalId: "external id",
     producerExternalId: "external id",
+    consumerId: "123e4567-e89b-12d3-a456-426614174001",
     consumerName: "consumer name",
     producerName: "consumer name",
     date: "2024-12-12",
@@ -303,6 +304,7 @@ export const mockEnrichedPurposes = [
     producerOrigin: "origin",
     consumerExternalId: "external id",
     producerExternalId: "external id",
+    consumerId: "123e4567-e89b-12d3-a456-426614174001",
     consumerName: "consumer name",
     producerName: "consumer name",
     date: "2024-12-12",
@@ -317,6 +319,7 @@ export const mockEnrichedPurposes = [
 
 export const validEnrichedPurpose = [
   {
+    submitterId: "123e4567-e89b-12d3-a456-426614174001",
     date: "2024-12-12",
     purpose_id: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     status: 200,
@@ -330,6 +333,7 @@ export const validEnrichedPurpose = [
     purposeId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     requestsCount: "10",
     tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
+    consumerId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     consumerName: "comune",
     consumerOrigin: "pagoPa",
     consumerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
@@ -338,6 +342,7 @@ export const validEnrichedPurpose = [
     producerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
   },
   {
+    submitterId: "123e4567-e89b-12d3-a456-426614174001",
     date: "2024-12-12",
     purpose_id: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     status: 404,
@@ -351,6 +356,7 @@ export const validEnrichedPurpose = [
     purposeId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     requestsCount: "5",
     tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
+    consumerId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     consumerName: "comune",
     consumerOrigin: "pagoPa",
     consumerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",

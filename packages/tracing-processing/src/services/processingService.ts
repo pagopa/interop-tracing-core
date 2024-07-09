@@ -113,7 +113,11 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   } else {
     const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
     if (purposeEnriched.data) {
-      await bucketService.writeObject(purposeEnriched.data, s3KeyPath);
+      await bucketService.writeObject(
+        purposeEnriched.data,
+        s3KeyPath,
+        tracing.tenantId,
+      );
     }
   }
 }

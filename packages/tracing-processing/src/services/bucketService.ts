@@ -16,9 +16,13 @@ import { EnrichedPurpose } from "../models/csv.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
-    async writeObject(records: EnrichedPurpose[], s3KeyPath: string) {
+    async writeObject(
+      records: EnrichedPurpose[],
+      s3KeyPath: string,
+      tenantId: string,
+    ) {
       try {
-        const csvData = generateCSV(records);
+        const csvData = generateCSV(records, tenantId);
         const params = {
           Bucket: config.bucketEnrichedS3Name,
           Key: s3KeyPath,
