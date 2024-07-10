@@ -1,3 +1,4 @@
+import { TracingState } from "pagopa-interop-tracing-models";
 import z from "zod";
 
 const PurposeError = z.object({
@@ -12,15 +13,14 @@ export const ApiTracingErrorsContent = z.object({
 
 export type ApiTracingErrorsContent = z.infer<typeof ApiTracingErrorsContent>;
 
-const TracingError = z.object({
+const TracingContent = z.object({
   tracingId: z.string().uuid(),
   date: z.string(),
-  state: z.string(),
-  errorMessage: z.string(),
+  state: TracingState,
 });
 
 export const ApiTracingsContent = z.object({
-  results: z.array(TracingError),
+  results: z.array(TracingContent),
   totalCount: z.number(),
 });
 
