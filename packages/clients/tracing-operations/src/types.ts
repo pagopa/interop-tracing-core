@@ -28,6 +28,12 @@ export type ApiSubmitTracingResponse = ZodiosResponseByPath<
   "/tracings/submit"
 >;
 
+export type ApiRecoverTracingParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/recover"
+>;
+
 export type ApiRecoverTracingPayload = ZodiosBodyByPath<
   Api,
   "post",

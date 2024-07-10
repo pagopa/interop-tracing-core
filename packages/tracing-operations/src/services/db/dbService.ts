@@ -8,7 +8,12 @@ import {
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { PurposeError, Tracing } from "../../model/domain/db.js";
+import {
+  PurposeError,
+  Tracing,
+  UpdateTracingState,
+  UpdateTracingVersion,
+} from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
@@ -209,13 +214,25 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async recoverTracing() {
+    async findTracingById(tracingId: string): Promise<Tracing | null> {
       try {
-        return Promise.resolve();
+        const findOneTracingQuery = `
+          SELECT id, tenant_id, state, date, version, errors 
+          FROM tracing.tracings
+          WHERE id = $1
+          LIMIT 1;`;
+
+        const tracing: Tracing | null = await db.oneOrNone(
+          findOneTracingQuery,
+          [tracingId],
+        );
+
+        return tracing;
       } catch (error) {
-        throw genericInternalError(`Error updateTracingOnError: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
+
     async replaceTracing() {
       try {
         return Promise.resolve();
@@ -224,11 +241,30 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async updateTracingState() {
+    async updateTracingState(data: UpdateTracingState): Promise<void> {
       try {
-        return Promise.resolve();
+        const updateTracingStateQuery = `
+          UPDATE tracing.tracings
+            SET state = $1
+          WHERE id = $2 
+          RETURNING id`;
+
+        await db.one(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
-        throw genericInternalError(`Error update state: ${error}`);
+        throw dbServiceErrorMapper(error);
+      }
+    },
+    async updateTracingVersion(data: UpdateTracingVersion): Promise<void> {
+      try {
+        const updateTracingStateQuery = `
+          UPDATE tracing.tracings
+            SET version = $2
+          WHERE id = $1 
+          RETURNING id`;
+
+        await db.one(updateTracingStateQuery, [data.tracing_id, data.version]);
+      } catch (error) {
+        throw dbServiceErrorMapper(error);
       }
     },
     async savePurposeError() {

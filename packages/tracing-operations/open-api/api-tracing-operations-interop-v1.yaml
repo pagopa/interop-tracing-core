@@ -65,7 +65,7 @@ paths:
 
   /tracings/{tracingId}/recover:
     post:
-      summary: Update tracing with state error by tracingId
+      summary: Update data of existing tracing with state error by tracingId
       operationId: recoverTracing
       tags:
         - Write
@@ -81,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateOnErrorResponse"
+                $ref: "#/components/schemas/RecoverTracingResponse"
         "400":
           description: The provided input data is invalid
           content:
@@ -525,8 +525,13 @@ components:
           $ref: "#/components/schemas/TracingState"
         errors:
           type: boolean
-    UpdateOnErrorResponse:
+    RecoverTracingResponse:
       type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
       properties:
         tracingId:
           type: string
@@ -534,6 +539,9 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
     UpdateOnCompleteResponse:

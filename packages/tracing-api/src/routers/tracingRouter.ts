@@ -156,7 +156,45 @@ const tracingRouter =
             req.params.tracingId,
           );
 
-          return res.status(200).json(result).end();
+          console.log("result", result);
+
+          const bucketS3Key = buildS3Key(
+            result.tenantId,
+            result.date,
+            result.tracingId,
+            result.version,
+            req.ctx.correlationId,
+          );
+
+          await bucketService
+            .writeObject(req.body.file, bucketS3Key)
+            .catch(async (error) => {
+              await operationsService
+                .updateTracingState(
+                  {
+                    ...correlationIdToHeader(req.ctx.correlationId),
+                  },
+                  {
+                    version: result.version,
+                    tracingId: result.tracingId,
+                  },
+                  { state: tracingState.error },
+                )
+                .catch((e) => {
+                  throw updateTracingStateError(
+                    `Unable to update tracing state with tracingId: ${result.tracingId}, version: ${result.version}. Details: ${e}`,
+                  );
+                });
+
+              throw error;
+            });
+
+          return res
+            .status(200)
+            .json({
+              tracingId: result.tracingId,
+            })
+            .end();
         } catch (error) {
           const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();

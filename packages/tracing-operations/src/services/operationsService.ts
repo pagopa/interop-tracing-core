@@ -10,6 +10,9 @@ import {
   ApiGetTracingsQuery,
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
+  ApiRecoverTracingParams,
+  ApiUpdateTracingStateParams,
+  ApiUpdateTracingStatePayload,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -23,6 +26,11 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
+import {
+  tracingCannotBeUpdated,
+  tracingNotFound,
+} from "../model/domain/errors.js";
+import { UpdateTracingState } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -58,10 +66,39 @@ export function operationsServiceBuilder(dbService: DBService) {
         errors: tracing.errors,
       };
     },
-    async recoverTracing(): Promise<ApiRecoverTracingResponse> {
-      genericLogger.info(`Recover tracing`);
-      await dbService.recoverTracing();
-      return Promise.resolve({});
+    async recoverTracing(
+      params: ApiRecoverTracingParams,
+      logger: Logger,
+    ): Promise<ApiRecoverTracingResponse> {
+      logger.info(`Recover data for tracingId: ${params.tracingId}`);
+
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      if (!/^(ERROR|MISSING)$/.test(tracing.state)) {
+        throw tracingCannotBeUpdated(
+          `Tracing with Id ${params.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`,
+        );
+      }
+
+      await dbService.updateTracingState({
+        tracing_id: params.tracingId,
+        state: tracingState.pending,
+      });
+
+      await dbService.updateTracingVersion({
+        tracing_id: params.tracingId,
+        version: tracing.version + 1,
+      });
+
+      return {
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
+        version: tracing.version + 1,
+        date: tracing.date,
+      };
     },
 
     async replaceTracing(): Promise<ApiReplaceTracingResponse> {
@@ -70,10 +107,21 @@ export function operationsServiceBuilder(dbService: DBService) {
       return Promise.resolve({});
     },
 
-    async updateTracingState(): Promise<ApiUpdateTracingStateResponse> {
-      genericLogger.info(`Updating state of tracing`);
-      await dbService.updateTracingState();
-      return Promise.resolve();
+    async updateTracingState(
+      params: ApiUpdateTracingStateParams,
+      payload: ApiUpdateTracingStatePayload,
+      logger: Logger,
+    ): Promise<ApiUpdateTracingStateResponse> {
+      logger.info(
+        `Update state for tracingId: ${params.tracingId}, version: ${params.version}`,
+      );
+
+      const updateTracingState: UpdateTracingState = {
+        tracing_id: params.tracingId,
+        state: payload.state,
+      };
+
+      await dbService.updateTracingState(updateTracingState);
     },
 
     async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
