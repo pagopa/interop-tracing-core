@@ -515,8 +515,6 @@ describe("database test", () => {
 
       const purposeErrorData: ApiSavePurposeErrorPayload = {
         version: tracingData.version,
-        date: tracingData.date,
-        status: 200,
         purposeId: purposeId,
         errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
         message: `INVALID_ROW_SCHEMA`,
@@ -550,8 +548,6 @@ describe("database test", () => {
 
       const purposeErrorData: ApiSavePurposeErrorPayload = {
         version: tracingData.version,
-        date: tracingData.date,
-        status: 200,
         purposeId: purposeId,
         errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
         message: `INVALID_ROW_SCHEMA`,
