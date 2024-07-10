@@ -44,7 +44,11 @@ import {
   removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
 
-import { InternalError, generateId } from "pagopa-interop-tracing-models";
+import {
+  InternalError,
+  TracingFromS3KeyPathDto,
+  generateId,
+} from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSQSMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
@@ -73,7 +77,7 @@ import {
   PurposeErrorMessageArray,
 } from "../src/models/csv.js";
 import { TracingRecordSchema } from "../src/models/db.js";
-import { TracingFromS3Path, TracingEnriched } from "../src/models/tracing.js";
+import { TracingEnriched } from "../src/models/tracing.js";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
@@ -226,10 +230,10 @@ describe("Processing Service", () => {
       dbService.getEnrichedPurpose = originalGetEnrichedPurpose;
     });
 
-    it("should get errors on message not tipe of TracingFromS3Path", async () => {
+    it("should get errors on message not tipe of TracingFromS3KeyPathDto", async () => {
       try {
         await processingService.processTracing(
-          {} as unknown as TracingFromS3Path,
+          {} as unknown as TracingFromS3KeyPathDto,
         );
       } catch (error) {
         const e = error as InternalError<ErrorCodes>;

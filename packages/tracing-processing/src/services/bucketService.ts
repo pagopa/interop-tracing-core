@@ -47,7 +47,6 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
       };
       try {
         const s3Object = await s3Client.send(new GetObjectCommand(params));
-
         if (!s3Object.Body) {
           throw "No data found in S3 object";
         }

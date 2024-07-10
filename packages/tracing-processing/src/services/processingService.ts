@@ -1,5 +1,6 @@
 import {
   SavePurposeErrorDto,
+  TracingFromS3KeyPathDto,
   genericInternalError,
 } from "pagopa-interop-tracing-models";
 import { BucketService } from "./bucketService.js";
@@ -17,7 +18,6 @@ import {
   PurposeErrorMessage,
   PurposeErrorMessageArray,
 } from "../models/csv.js";
-import { TracingFromS3Path } from "../models/tracing.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -25,21 +25,13 @@ export const processingServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async processTracing(message: TracingFromS3Path) {
+    async processTracing(tracing: TracingFromS3KeyPathDto) {
       try {
-        const { data: tracing, error: tracingError } =
-          TracingFromS3Path.safeParse(message);
-
-        if (tracingError) {
-          throw `Tracing message is not valid: ${JSON.stringify(tracingError)}`;
-        }
-
         genericLogger.info(`Processing tracing id: ${tracing.tracingId}`);
 
         const s3KeyPath = createS3Path(tracing);
 
         const tracingRecords = await bucketService.readObject(s3KeyPath);
-
         if (!tracingRecords || tracingRecords.length === 0) {
           throw `No record found for key ${s3KeyPath}`;
         }
@@ -92,7 +84,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
   s3KeyPath: string,
-  tracing: TracingFromS3Path,
+  tracing: TracingFromS3KeyPathDto,
 ) {
   const enrichedPurposes = await dbService.getEnrichedPurpose(
     tracingRecords,
@@ -134,7 +126,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
 
 export async function checkRecords(
   records: TracingRecordSchema[],
-  tracing: TracingFromS3Path,
+  tracing: TracingFromS3KeyPathDto,
 ): Promise<SavePurposeErrorDto[]> {
   const errorsRecord: SavePurposeErrorDto[] = [];
 
@@ -190,7 +182,7 @@ function parseErrorMessage(errorObj: string) {
 
 async function sendPurposeErrors(
   purposeErrors: PurposeErrorMessage[],
-  tracing: TracingFromS3Path,
+  tracing: TracingFromS3KeyPathDto,
   producerService: ProducerService,
 ) {
   const errorMessagePromises = purposeErrors.map((record, index) => {
@@ -208,7 +200,7 @@ async function sendPurposeErrors(
   await Promise.all(errorMessagePromises);
 }
 
-export function createS3Path(message: TracingFromS3Path) {
+export function createS3Path(message: TracingFromS3KeyPathDto) {
   return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
 }
 

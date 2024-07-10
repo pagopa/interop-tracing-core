@@ -3,12 +3,10 @@ import {
   genericLogger,
   PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
-
 import { getEnrichedPurposeError } from "../models/errors.js";
 import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
-import { TracingFromS3Path } from "../models/tracing.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
 
 type EnrichedPurposeResult = (PurposeErrorMessage | EnrichedPurpose)[];
 
@@ -16,7 +14,7 @@ export function dbServiceBuilder(db: DB) {
   return {
     async getEnrichedPurpose(
       records: TracingRecordSchema[],
-      tracing: TracingFromS3Path,
+      tracing: TracingFromS3KeyPathDto,
     ): Promise<EnrichedPurposeResult> {
       try {
         const fullRecordPromises = records.map(
@@ -145,7 +143,7 @@ export function dbServiceBuilder(db: DB) {
 
 function enrichSuccessfulPurpose(
   record: TracingRecordSchema,
-  tracing: TracingFromS3Path,
+  tracing: TracingFromS3KeyPathDto,
   eService: EserviceSchema,
   fullPurpose: {
     purpose_title: string;

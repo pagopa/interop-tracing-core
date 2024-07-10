@@ -1,6 +1,9 @@
-import { generateId, SavePurposeErrorDto } from "pagopa-interop-tracing-models";
+import {
+  generateId,
+  SavePurposeErrorDto,
+  TracingFromS3KeyPathDto,
+} from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
-import { TracingFromS3Path } from "../src/models/tracing.js";
 import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 
 export const mockTracingRecords: TracingRecordSchema[] = [
@@ -157,7 +160,7 @@ const tenant_id = "123e4567-e89b-12d3-a456-426614174001";
 const purposeId = generateId() as string;
 const purposeId2 = generateId() as string;
 
-export const mockMessage: TracingFromS3Path = {
+export const mockMessage: TracingFromS3KeyPathDto = {
   tenantId: tenant_id,
   date: "2024-12-12",
   version: 1,
