@@ -27,7 +27,9 @@ export const processingServiceBuilder = (
   return {
     async processTracing(tracing: TracingFromS3KeyPathDto) {
       try {
-        genericLogger.info(`Processing tracing id: ${tracing.tracingId}`);
+        genericLogger.info(
+          `Reading and processing file for tracingId: ${tracing.tracingId}`,
+        );
 
         const s3KeyPath = createS3Path(tracing);
 
