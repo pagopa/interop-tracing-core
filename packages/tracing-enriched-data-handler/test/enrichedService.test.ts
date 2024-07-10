@@ -21,6 +21,7 @@ import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
+import { insertTraceError } from "../src/models/errors.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
@@ -70,7 +71,7 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTracing")
-        .mockResolvedValue([]);
+        .mockResolvedValue([{ id: generateId() }]);
       const sendUpdateStateSpy = vi
         .spyOn(producerService, "sendUpdateState")
         .mockResolvedValue();
@@ -128,7 +129,7 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTracing")
-        .mockRejectedValue(new Error("DB error"));
+        .mockRejectedValue(insertTraceError(``));
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
       try {
@@ -147,7 +148,9 @@ describe("Enriched Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockEnrichedPuposes,
       );
-      vi.spyOn(dbService, "insertTracing").mockReturnValue(Promise.resolve([]));
+      vi.spyOn(dbService, "insertTracing").mockReturnValue(
+        Promise.resolve([{ id: generateId() }]),
+      );
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
