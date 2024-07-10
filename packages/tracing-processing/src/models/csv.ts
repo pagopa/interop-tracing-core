@@ -26,7 +26,6 @@ export const EnrichedPurpose = z.object({
 
 export const PurposeErrorMessage = z.object({
   purposeId: z.string().uuid(),
-  status: z.coerce.number(),
   rowNumber: z.number(),
   message: z.string(),
   errorCode: z.string(),

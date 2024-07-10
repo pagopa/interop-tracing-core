@@ -146,8 +146,6 @@ export async function checkRecords(
       errorsRecord.push({
         tracingId: tracing.tracingId,
         version: tracing.version,
-        date: tracing.date,
-        status: record.status,
         errorCode: parsedError.errorCode,
         purposeId: record.purpose_id,
         message: parsedError.message,
@@ -162,8 +160,6 @@ export async function checkRecords(
       errorsRecord.push({
         tracingId: tracing.tracingId,
         version: tracing.version,
-        date: tracing.date,
-        status: record.status,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
         message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
@@ -201,9 +197,7 @@ async function sendPurposeErrors(
     const purposeError = {
       tracingId: tracing.tracingId,
       version: tracing.version,
-      date: tracing.date,
       errorCode: record.errorCode,
-      status: record.status,
       purposeId: record.purposeId,
       message: record.message,
       rowNumber: record.rowNumber,

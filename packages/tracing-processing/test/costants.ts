@@ -89,7 +89,6 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: 1,
-    date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
@@ -99,7 +98,6 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: 1,
-    date: "2024-12-12",
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
