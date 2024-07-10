@@ -29,13 +29,13 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           Body: csvData,
           ContentType: "text/csv",
         };
-        const result = await s3Client.send(new PutObjectCommand(params));
+        await s3Client.send(new PutObjectCommand(params));
         genericLogger.info(
-          `File uploaded successfully: ${JSON.stringify(result)}`,
+          `File uploaded successfully with path: ${s3KeyPath}`,
         );
       } catch (error: unknown) {
         throw writeObjectBucketS3Error(
-          `Error writing object with path: ${s3KeyPath}, Details: ${error}`,
+          `Error writing object with path: ${s3KeyPath}. Details: ${error}`,
         );
       }
     },
