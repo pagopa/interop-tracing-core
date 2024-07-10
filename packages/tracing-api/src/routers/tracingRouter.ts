@@ -156,8 +156,6 @@ const tracingRouter =
             req.params.tracingId,
           );
 
-          console.log("result", result);
-
           const bucketS3Key = buildS3Key(
             result.tenantId,
             result.date,
@@ -187,7 +185,8 @@ const tracingRouter =
                 });
 
               throw error;
-            });
+            })
+            .then(() => {});
 
           return res
             .status(200)
