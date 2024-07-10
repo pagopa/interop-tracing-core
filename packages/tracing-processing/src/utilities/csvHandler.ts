@@ -22,6 +22,7 @@ export function generateCSV(
   tenantId: string,
 ): string {
   const header = [
+    "tracingId",
     "submitterId",
     "date",
     "purposeId",
@@ -42,6 +43,7 @@ export function generateCSV(
   const rows = records
     .map((record) => {
       return [
+        record.tracingId,
         tenantId,
         record.date,
         record.purposeId,

@@ -9,6 +9,7 @@ export const TracingFromS3Path = z.object({
 });
 
 export const TracingEnriched = z.object({
+  tracingId: z.string(),
   submitterId: z.string(),
   date: z.string(),
   purposeId: z.string(),
