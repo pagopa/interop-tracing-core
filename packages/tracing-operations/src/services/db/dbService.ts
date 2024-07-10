@@ -222,7 +222,7 @@ export function dbServiceBuilder(db: DB) {
           WHERE id = $1
           LIMIT 1;`;
 
-        const tracing: Tracing | null = await db.oneOrNone(
+        const tracing = await db.oneOrNone<Tracing | null>(
           findOneTracingQuery,
           [tracingId],
         );
@@ -246,27 +246,27 @@ export function dbServiceBuilder(db: DB) {
         const updateTracingStateQuery = `
           UPDATE tracing.tracings
             SET state = $1
-          WHERE id = $2 
-          RETURNING id`;
+          WHERE id = $2`;
 
-        await db.one(updateTracingStateQuery, [data.state, data.tracing_id]);
+        await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }
     },
+
     async updateTracingVersion(data: UpdateTracingVersion): Promise<void> {
       try {
         const updateTracingStateQuery = `
           UPDATE tracing.tracings
             SET version = $2
-          WHERE id = $1 
-          RETURNING id`;
+          WHERE id = $1`;
 
-        await db.one(updateTracingStateQuery, [data.tracing_id, data.version]);
+        await db.none(updateTracingStateQuery, [data.tracing_id, data.version]);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }
     },
+
     async savePurposeError() {
       try {
         return Promise.resolve();
@@ -274,6 +274,7 @@ export function dbServiceBuilder(db: DB) {
         throw genericInternalError(`Error save purpose error: ${error}`);
       }
     },
+
     async deletePurposeErrors() {
       try {
         return Promise.resolve();
@@ -281,6 +282,7 @@ export function dbServiceBuilder(db: DB) {
         throw genericInternalError(`Error delete purpose error: ${error}`);
       }
     },
+
     async saveMissingTracing() {
       try {
         return Promise.resolve();
