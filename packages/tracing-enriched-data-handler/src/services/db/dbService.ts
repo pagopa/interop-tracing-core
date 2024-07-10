@@ -12,16 +12,16 @@ export function dbServiceBuilder(db: DB) {
           INSERT INTO traces.traces (
             id, tracing_id, date, purpose_id, purpose_name, status, requests_count, eservice_id,
             consumer_id, consumer_origin, consumer_name, consumer_external_id,
-            producer_id, producer_name, producer_origin, producer_external_id, created_at
+            producer_id, producer_name, producer_origin, producer_external_id, submitter_id, created_at
            ) 
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
             ) 
             ON CONFLICT DO NOTHING
             RETURNING *;
         `;
 
-        const insertPromises = records.map(async (record) => {
+        const insertPromises = records.map((record) => {
           const values = [
             generateId(),
             tracingId,
@@ -39,13 +39,20 @@ export function dbServiceBuilder(db: DB) {
             record.producerName,
             record.producerOrigin,
             record.producerExternalId,
+            record.submitterId,
             new Date(),
           ];
-          await db.any(queryText, values);
+          return { query: queryText, values };
         });
 
-        const results = await Promise.all(insertPromises);
-        return results.map((result) => result);
+        return await db.tx(async (t) => {
+          const results = [];
+          for (const { query, values } of insertPromises) {
+            const result = await t.any(query, values);
+            results.push(result);
+          }
+          return results;
+        });
       } catch (error) {
         throw insertTracingError(`Error insertTracing: ${error}`);
       }
