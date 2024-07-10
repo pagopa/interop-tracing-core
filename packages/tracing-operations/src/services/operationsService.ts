@@ -88,11 +88,6 @@ export function operationsServiceBuilder(dbService: DBService) {
         state: tracingState.pending,
       });
 
-      await dbService.updateTracingVersion({
-        tracing_id: params.tracingId,
-        version: tracing.version + 1,
-      });
-
       return {
         tracingId: tracing.id,
         tenantId: tracing.tenant_id,
