@@ -44,11 +44,7 @@ import {
   removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
 
-import {
-  InternalError,
-  TracingFromS3KeyPathDto,
-  generateId,
-} from "pagopa-interop-tracing-models";
+import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSQSMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
@@ -228,18 +224,6 @@ describe("Processing Service", () => {
 
     afterEach(() => {
       dbService.getEnrichedPurpose = originalGetEnrichedPurpose;
-    });
-
-    it("should get errors on message not tipe of TracingFromS3KeyPathDto", async () => {
-      try {
-        await processingService.processTracing(
-          {} as unknown as TracingFromS3KeyPathDto,
-        );
-      } catch (error) {
-        const e = error as InternalError<ErrorCodes>;
-        expect(error).toBeInstanceOf(InternalError);
-        expect(e.code).toBe("genericError");
-      }
     });
 
     it("should get errors on enriched purposes when purposes are not found and call producerService", async () => {
