@@ -1,11 +1,9 @@
 import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../../models/messages.js";
-import { insertTracingError, deleteTracingError } from "../../models/errors.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { insertTraceError, deleteTraceError } from "../../models/errors.js";
 export function dbServiceBuilder(db: DB) {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async insertTracing(tracingId: string, records: TracingEnriched[]) {
       try {
         const queryText = `
@@ -18,7 +16,7 @@ export function dbServiceBuilder(db: DB) {
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
             ) 
             ON CONFLICT DO NOTHING
-            RETURNING *;
+            RETURNING id;
         `;
 
         const insertPromises = records.map((record) => {
@@ -48,13 +46,13 @@ export function dbServiceBuilder(db: DB) {
         return await db.tx(async (t) => {
           const results = [];
           for (const { query, values } of insertPromises) {
-            const result = await t.any(query, values);
+            const result = await t.one<{ id: string }>(query, values);
             results.push(result);
           }
           return results;
         });
       } catch (error) {
-        throw insertTracingError(`Error insertTracing: ${error}`);
+        throw insertTraceError(`Error insertTracing: ${error}`);
       }
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -62,7 +60,7 @@ export function dbServiceBuilder(db: DB) {
       try {
         return Promise.resolve([{}]);
       } catch (error) {
-        throw deleteTracingError(`Error insertTracing: ${error}`);
+        throw deleteTraceError(`Error insertTracing: ${error}`);
       }
     },
   };

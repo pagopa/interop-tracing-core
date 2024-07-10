@@ -1,4 +1,4 @@
-import { decodeSQSMessageError } from "./errors.js";
+import { decodeSqsMessageError } from "./errors.js";
 import { SQS } from "pagopa-interop-tracing-commons";
 import { TracingFromCsv } from "./messages.js";
 
@@ -41,7 +41,7 @@ export function decodeSqsMessage(message: SQS.Message): TracingFromCsv {
       throw `error parsing s3Key ${JSON.stringify(parsedResult.error)}`;
     }
   } catch (error: unknown) {
-    throw decodeSQSMessageError(
+    throw decodeSqsMessageError(
       `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Error details: ${error}`,
     );
   }

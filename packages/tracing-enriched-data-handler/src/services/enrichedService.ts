@@ -36,12 +36,14 @@ export const enrichedServiceBuilder = (
           enrichedTracingRecords,
         );
 
-        if (tracingInserted) {
+        if (tracingInserted.length > 0) {
           await producerService.sendUpdateState(
             tracing.tracingId,
             tracing.version,
             "COMPLETE",
           );
+        } else {
+          throw `Error on inserting tracing ${message.tracingId}`;
         }
       } catch (e) {
         throw insertEnrichedTraceError(
