@@ -81,13 +81,13 @@ export function dbServiceBuilder(db: DB) {
                 );
               }
 
-              const tenantEservice = await db.manyOrNone<EserviceSchema>(
+              const tenantEservice = await db.oneOrNone<EserviceSchema>(
                 `SELECT * FROM tracing.eservices WHERE producer_id = $1 AND eservice_id = $2`,
                 [tracing.tenantId, eService.eservice_id],
               );
 
               if (
-                tenantEservice.length === 0 &&
+                !tenantEservice &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
                 return {
@@ -155,21 +155,15 @@ function enrichSuccessfulPurpose(
   tenant: { name: string; origin: string; external_id: string },
   producer: { name: string; origin: string; external_id: string },
 ): EnrichedPurpose {
-  const baseRecord = {
+  return {
     ...record,
     purposeId: record.purpose_id,
     consumerId: fullPurpose.consumer_id,
     requestsCount: record.requests_count,
     tracingId: tracing.tracingId,
     status: record.status,
-  };
-
-  return {
-    ...baseRecord,
-    eservice: {
-      producerId: eService.producer_id,
-      eserviceId: eService.eservice_id,
-    },
+    producerId: eService.producer_id,
+    eserviceId: eService.eservice_id,
     purposeName: fullPurpose.purpose_title,
     consumerName: tenant.name,
     consumerOrigin: tenant.origin,

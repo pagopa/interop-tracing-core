@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const Eservice = z.object({
   eserviceId: z.string(),
-  consumerId: z.string(),
   producerId: z.string(),
 });
 
@@ -21,10 +20,8 @@ export const EnrichedPurpose = z.object({
   status: z.coerce.number(),
   requestsCount: z.string(),
   rowNumber: z.number(),
-  eservice: z.object({
-    eserviceId: z.string(),
-    producerId: z.string(),
-  }),
+  eserviceId: z.string(),
+  producerId: z.string(),
 });
 
 export const PurposeErrorMessage = z.object({

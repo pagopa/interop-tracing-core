@@ -69,7 +69,6 @@ import {
 } from "./costants.js";
 import {
   EnrichedPurposeArray,
-  Eservice,
   PurposeErrorMessage,
   PurposeErrorMessageArray,
 } from "../src/models/csv.js";
@@ -437,7 +436,6 @@ describe("Processing Service", () => {
           ...{ tenantId: invalidConsumer },
         });
       } catch (error) {
-        console.log("ERROR", error);
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
           "getEnrichedPurposeError",
@@ -448,10 +446,7 @@ describe("Processing Service", () => {
     it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer", async () => {
       await removeAndInsertWrongEserviceAndPurpose(
         eServiceData.eserviceId,
-        validPurposeNotAssociated[0] as unknown as {
-          eservice: Eservice;
-          purpose_id: string;
-        },
+        validPurposeNotAssociated[0],
         purposeData.id,
         dbInstance,
       );

@@ -1,7 +1,6 @@
 import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
-import { Eservice } from "../src/models/csv.js";
 
 export async function addPurpose(
   purposeValues: {
@@ -62,13 +61,13 @@ export async function addEservice(
 }
 export async function removeAndInsertWrongEserviceAndPurpose(
   eservice_id: string,
-  purpose: { eservice: Eservice; purpose_id: string },
+  purpose: { eserviceId: string; purpose_id: string },
   purposeId: string,
   db: DB,
 ) {
   await addEservice(
     {
-      eserviceId: purpose.eservice.eserviceId,
+      eserviceId: purpose.eserviceId,
       producerId: generateId(),
     },
     db,
@@ -78,7 +77,7 @@ export async function removeAndInsertWrongEserviceAndPurpose(
     {
       id: purpose.purpose_id,
       consumerId: generateId(),
-      eserviceId: purpose.eservice.eserviceId,
+      eserviceId: purpose.eserviceId,
       purposeTitle: "NOT ASSOCIATED",
     },
     db,
