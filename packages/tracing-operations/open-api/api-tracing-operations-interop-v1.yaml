@@ -423,11 +423,6 @@ components:
       properties:
         purposeId:
           type: string
-        date:
-          type: string
-          format: date
-        status:
-          type: integer
         errorCode:
           type: string
         message:
@@ -436,8 +431,6 @@ components:
           type: integer
       required:
         - purposeId
-        - date
-        - status
         - errorCode
         - message
         - rowNumber
