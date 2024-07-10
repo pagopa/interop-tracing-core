@@ -3,16 +3,14 @@ import { SQS } from "pagopa-interop-tracing-commons";
 import { TracingFromS3Path } from "./tracing.js";
 import { S3BodySchema } from "pagopa-interop-tracing-models";
 
-export function decodeSqsMessage(message: SQS.Message): TracingFromS3Path {
+export function decodeSQSMessage(message: SQS.Message): TracingFromS3Path {
   try {
     const messageBody = message.Body;
-
     if (!messageBody) {
       throw "Message body is undefined";
     }
 
     const s3Body: S3BodySchema = JSON.parse(messageBody);
-
     if (!s3Body.Records.length) {
       throw `S3Body doesn't contain records`;
     }

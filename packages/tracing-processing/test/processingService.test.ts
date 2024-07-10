@@ -46,7 +46,7 @@ import {
 
 import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
-import { decodeSqsMessage } from "../src/models/models.js";
+import { decodeSQSMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { generateCSV } from "../src/utilities/csvHandler.js";
@@ -126,7 +126,7 @@ describe("Processing Service", () => {
     await addPurpose(purposeDataWithWrongEservice, dbInstance);
   });
 
-  describe("decodeSqsMessage", () => {
+  describe("decodeSQSMessage", () => {
     it("should throw error when message is wrong or empty", async () => {
       const emptyMessage: SQS.Message = {
         MessageId: "12345",
@@ -135,7 +135,7 @@ describe("Processing Service", () => {
       };
 
       try {
-        await decodeSqsMessage(emptyMessage);
+        await decodeSQSMessage(emptyMessage);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
@@ -153,7 +153,7 @@ describe("Processing Service", () => {
 
       vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
-      const decoded = decodeSqsMessage(sqsMessage);
+      const decoded = decodeSQSMessage(sqsMessage);
       await processingService.processTracing(decoded);
       expect(processingService.processTracing).toBeCalledWith(decoded);
       expect(decoded).toMatchObject({
