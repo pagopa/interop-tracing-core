@@ -50,10 +50,8 @@ export const operationsServiceBuilder = (
         await operationsApiClient.savePurposeError(
           {
             purposeId: data.purposeId,
-            date: data.date,
             errorCode: data.errorCode,
             message: data.message,
-            status: data.status,
             rowNumber: data.rowNumber,
           },
           {
@@ -63,7 +61,7 @@ export const operationsServiceBuilder = (
         );
 
         genericLogger.info(
-          `Saving purpose error with purposeId ${data.purposeId} status ${data.status} for tracingId: ${data.tracingId}, version: ${data.version}`,
+          `Saving purpose error with purposeId ${data.purposeId} rowNumber ${data.rowNumber} for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {
         throw errorProcessingSavePurposeError(

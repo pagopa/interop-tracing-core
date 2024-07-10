@@ -13,8 +13,6 @@ export const SavePurposeErrorDto = z.object({
   tracingId: z.string().uuid(),
   purposeId: z.string().uuid(),
   version: z.coerce.number(),
-  date: z.string(),
-  status: z.coerce.number(),
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.coerce.number(),
