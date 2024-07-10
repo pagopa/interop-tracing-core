@@ -1,10 +1,7 @@
 import { z } from "zod";
 import http from "http";
 
-const acceptedStatusCodes = Object.keys(http.STATUS_CODES).map((code) =>
-  parseInt(code, 10),
-);
-
+const acceptedStatusCodes = Object.keys(http.STATUS_CODES).map(Number);
 export const TracingRecordSchema = z.object({
   date: z.string(),
   purpose_id: z.string().uuid(),
