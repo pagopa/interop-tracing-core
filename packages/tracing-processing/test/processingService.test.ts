@@ -66,6 +66,7 @@ import {
   errorPurposesWithInvalidEserviceId,
   validPurposeNotAssociated,
   validEnrichedPurpose,
+  eServiceDataNotAssociated,
 } from "./costants.js";
 import {
   EnrichedPurposeArray,
@@ -119,6 +120,7 @@ describe("Processing Service", () => {
     );
 
     await addEservice(eServiceData, dbInstance);
+    await addEservice(eServiceDataNotAssociated, dbInstance);
 
     await addTenant(tenantData, dbInstance);
 
@@ -435,6 +437,7 @@ describe("Processing Service", () => {
       await removeAndInsertWrongEserviceAndPurpose(
         eServiceData.eserviceId,
         validPurposeNotAssociated[0],
+        mockMessage.tenantId,
         purposeData.id,
         dbInstance,
       );
