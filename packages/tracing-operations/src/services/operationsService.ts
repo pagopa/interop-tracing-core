@@ -33,7 +33,6 @@ import {
   tracingCannotBeUpdated,
   tracingNotFound,
 } from "../model/domain/errors.js";
-import { UpdateTracingState } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -141,12 +140,10 @@ export function operationsServiceBuilder(dbService: DBService) {
         `Update state for tracingId: ${params.tracingId}, version: ${params.version}`,
       );
 
-      const updateTracingState: UpdateTracingState = {
+      await dbService.updateTracingState({
         tracing_id: params.tracingId,
         state: payload.state,
-      };
-
-      await dbService.updateTracingState(updateTracingState);
+      });
     },
 
     async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {

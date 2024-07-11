@@ -182,8 +182,7 @@ const tracingRouter =
                 });
 
               throw error;
-            })
-            .then(() => {});
+            });
 
           return res
             .status(200)

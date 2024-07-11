@@ -69,6 +69,20 @@ const operationsRouter = (
     }
   });
 
+  operationsRouter.post("/tracings/:tracingId/cancel", async (req, res) => {
+    try {
+      await operationsService.cancelTracingStateAndVersion(
+        req.params,
+        req.body,
+        logger(req.ctx),
+      );
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
   operationsRouter.post("/tracings/:tracingId/replace", async (req, res) => {
     try {
       await operationsService.replaceTracing();
