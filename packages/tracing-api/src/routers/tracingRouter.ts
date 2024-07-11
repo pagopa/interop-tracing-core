@@ -124,7 +124,7 @@ const tracingRouter =
       .get("/tracings/:tracingId/errors", async (req, res) => {
         try {
           const data = await operationsService.getTracingErrors(
-            req.params.tracingId,
+            req.params,
             req.query,
           );
 
@@ -153,9 +153,7 @@ const tracingRouter =
       })
       .put("/tracings/:tracingId/recover", async (req, res) => {
         try {
-          const result = await operationsService.recoverTracing(
-            req.params.tracingId,
-          );
+          const result = await operationsService.recoverTracing(req.params);
 
           const bucketS3Key = buildS3Key(
             result.tenantId,

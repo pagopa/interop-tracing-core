@@ -1,6 +1,7 @@
 import {
   ApiGetTracingErrorsResponse,
   ApiGetTracingsResponse,
+  ApiRecoverTracingResponse,
   ApiSubmitTracingResponse,
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
@@ -9,6 +10,8 @@ import {
   TracingId,
   generateId,
   tracingAlreadyExists,
+  tracingCannotBeUpdated,
+  tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -375,6 +378,131 @@ describe("Tracing Router", () => {
         .query({});
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe("recoverTracing", () => {
+    it("should upload to bucket a revisited tracing file, update relative db existing tracing version and state to 'PENDING'", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "MISSING",
+      };
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockResolvedValue(
+        mockRecoverTracingResponse,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockResolvedValue();
+
+      vi.spyOn(
+        operationsService,
+        "cancelTracingStateAndVersion",
+      ).mockResolvedValue();
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracingId).toBe(
+        mockRecoverTracingResponse.tracingId,
+      );
+
+      const bucketS3Key = buildS3Key(
+        mockRecoverTracingResponse.tenantId,
+        mockRecoverTracingResponse.date,
+        mockRecoverTracingResponse.tracingId,
+        mockRecoverTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+      );
+
+      expect(operationsApiClient.recoverTracing).toHaveBeenCalledWith(
+        undefined,
+        {
+          params: { tracingId: mockRecoverTracingResponse.tracingId },
+        },
+      );
+    });
+
+    it("should return a 409 status error if the tracing to update does not have a state ERROR or MISSING", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "MISSING",
+      };
+
+      const errorMessage = `Tracing with Id ${mockRecoverTracingResponse.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`;
+      const errorApiMock = makeApiProblem(
+        tracingCannotBeUpdated(errorMessage),
+        errorMapper,
+        logger({}),
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(errorApiMock);
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockRejectedValue(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(errorApiMock.detail);
+      expect(response.status).toBe(409);
+    });
+
+    it("should return a 404 status error if the tracing cannot be found", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const errorApiMock = makeApiProblem(
+        tracingNotFound(mockRecoverTracingResponse.tracingId),
+        errorMapper,
+        logger({}),
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(errorApiMock);
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockRejectedValue(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(errorApiMock.detail);
+      expect(response.status).toBe(404);
     });
   });
 });

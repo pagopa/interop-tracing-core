@@ -1,9 +1,6 @@
 import { constants } from "http2";
 import { ApiError, CommonErrorCodes } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
-import { ErrorCodes as LocalErrorCodes } from "../model/domain/errors.js";
-
-type ErrorCodes = LocalErrorCodes | CommonErrorCodes;
 
 const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -12,7 +9,7 @@ const {
   HTTP_STATUS_CONFLICT,
 } = constants;
 
-export const errorMapper = (error: ApiError<ErrorCodes>): number =>
+export const errorMapper = (error: ApiError<CommonErrorCodes>): number =>
   match(error.code)
     .with("tracingAlreadyExists", () => HTTP_STATUS_BAD_REQUEST)
     .with("tracingNotFound", () => HTTP_STATUS_NOT_FOUND)

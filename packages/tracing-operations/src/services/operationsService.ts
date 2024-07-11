@@ -23,16 +23,14 @@ import {
   PurposeId,
   TracingId,
   generateId,
+  tracingCannotBeUpdated,
+  tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
-import {
-  tracingCannotBeUpdated,
-  tracingNotFound,
-} from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
