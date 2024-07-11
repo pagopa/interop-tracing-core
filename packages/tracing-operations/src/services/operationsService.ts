@@ -7,6 +7,10 @@ import {
   ApiUpdateTracingStateResponse,
   ApiMissingResponse,
   ApiGetTracingErrorsResponse,
+  ApiSavePurposeErrorPayload,
+  ApiSavePurposeErrorParams,
+  ApiUpdateTracingStateParams,
+  ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
@@ -14,6 +18,7 @@ import {
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
+  PurposeErrorId,
   PurposeId,
   TracingId,
   generateId,
@@ -23,6 +28,7 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
+import { PurposeError } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -50,8 +56,8 @@ export function operationsServiceBuilder(dbService: DBService) {
       });
 
       return {
-        tracingId: tracing.tracingId,
-        tenantId: tracing.tenantId,
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
         version: tracing.version,
         date: tracing.date,
         state: tracing.state,
@@ -70,16 +76,41 @@ export function operationsServiceBuilder(dbService: DBService) {
       return Promise.resolve({});
     },
 
-    async updateTracingState(): Promise<ApiUpdateTracingStateResponse> {
-      genericLogger.info(`Updating state of tracing`);
-      await dbService.updateTracingState();
-      return Promise.resolve();
+    async updateTracingState(
+      params: ApiUpdateTracingStateParams,
+      payload: ApiUpdateTracingStatePayload,
+      logger: Logger,
+    ): Promise<ApiUpdateTracingStateResponse> {
+      logger.info(
+        `Update state for tracingId: ${params.tracingId}, version: ${params.version}`,
+      );
+
+      await dbService.updateTracingState({
+        tracing_id: params.tracingId,
+        state: payload.state,
+      });
     },
 
-    async savePurposeError(): Promise<ApiSavePurposeErrorResponse> {
-      genericLogger.info(`Save purpose error`);
-      await dbService.savePurposeError();
-      return Promise.resolve();
+    async savePurposeError(
+      params: ApiSavePurposeErrorParams,
+      payload: ApiSavePurposeErrorPayload,
+      logger: Logger,
+    ): Promise<ApiSavePurposeErrorResponse> {
+      logger.info(
+        `Save purpose error for tracingId: ${params.tracingId}, version: ${params.version}`,
+      );
+
+      const purposeError: PurposeError = {
+        id: generateId<PurposeErrorId>(),
+        tracing_id: params.tracingId,
+        version: params.version,
+        purpose_id: payload.purposeId as PurposeId,
+        error_code: payload.errorCode,
+        message: payload.message,
+        row_number: payload.rowNumber,
+      };
+
+      await dbService.savePurposeError(purposeError);
     },
 
     async deletePurposeErrors(): Promise<void> {
