@@ -191,6 +191,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
 
+  /tracings/{tracingId}/cancel:
+    post:
+      summary: Cancel previous tracing version and state by tracingId
+      operationId: cancelTracingVersionAndState
+      tags:
+        - Write
+      parameters:
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TracingVersionAndStateCancelRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
   /tracings/{tracingId}/versions/{version}/errors:
     post:
       summary: Save purpose error
@@ -402,6 +442,16 @@ components:
           $ref: "#/components/schemas/TracingState"
       required:
         - state
+    TracingVersionAndStateCancelRequest:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/TracingState"
+        version:
+          type: number
+      required:
+        - state
+        - version
     TracingState:
       type: string
       enum:
@@ -532,6 +582,7 @@ components:
         - tenantId
         - version
         - date
+        - previousState
       properties:
         tracingId:
           type: string
@@ -544,6 +595,8 @@ components:
           format: date
         version:
           type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
     UpdateOnCompleteResponse:
       type: object
       properties:

@@ -82,6 +82,24 @@ export type ApiUpdateTracingStateResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/versions/:version/state"
 >;
 
+export type ApiCancelTracingVersionAndStateParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/cancel"
+>;
+
+export type ApiCancelTracingVersionAndStatePayload = ZodiosBodyByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/cancel"
+>;
+
+export type ApiCancelTracingVersionAndStateResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/cancel"
+>;
+
 export type ApiSavePurposeErrorPayload = ZodiosBodyByPath<
   Api,
   "post",

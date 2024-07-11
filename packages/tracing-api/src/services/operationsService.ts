@@ -13,6 +13,8 @@ import {
   ApiUpdateTracingStateParams,
   ApiSubmitTracingHeaders,
   ApiUpdateTracingStateHeaders,
+  ApiCancelTracingVersionAndStatePayload,
+  ApiCancelTracingVersionAndStateParams,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
@@ -44,6 +46,21 @@ export const operationsServiceBuilder = (
       {
         headers,
         params: { tracingId: params.tracingId, version: params.version },
+      },
+    );
+  },
+
+  async cancelTracingVersionAndState(
+    params: ApiCancelTracingVersionAndStateParams,
+    payload: ApiCancelTracingVersionAndStatePayload,
+  ): Promise<void> {
+    await operationsApiClient.cancelTracingVersionAndState(
+      {
+        state: payload.state,
+        version: payload.version,
+      },
+      {
+        params: { tracingId: params.tracingId },
       },
     );
   },

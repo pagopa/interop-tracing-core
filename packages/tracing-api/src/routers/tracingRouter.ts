@@ -9,6 +9,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { genericError, tracingState } from "pagopa-interop-tracing-models";
 import {
+  cancelTracingVersionAndStateError,
   resolveApiProblem,
   updateTracingStateError,
 } from "../model/domain/errors.js";
@@ -168,19 +169,15 @@ const tracingRouter =
             .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
               await operationsService
-                .updateTracingState(
+                .cancelTracingVersionAndState(
                   {
-                    ...correlationIdToHeader(req.ctx.correlationId),
-                  },
-                  {
-                    version: result.version,
                     tracingId: result.tracingId,
                   },
-                  { state: tracingState.error },
+                  { state: result.previousState, version: result.version - 1 },
                 )
                 .catch((e) => {
-                  throw updateTracingStateError(
-                    `Unable to update tracing state with tracingId: ${result.tracingId}, version: ${result.version}. Details: ${e}`,
+                  throw cancelTracingVersionAndStateError(
+                    `Unable to cancel tracing to previous version with tracingId: ${result.tracingId}. Details: ${e}`,
                   );
                 });
 
