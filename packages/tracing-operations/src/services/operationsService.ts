@@ -21,7 +21,7 @@ import {
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
-import { PurposeError, UpdateTracingState } from "../model/domain/db.js";
+import { PurposeError } from "../model/domain/db.js";
 import { TracingsContentResponse } from "../model/domain/tracing.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
