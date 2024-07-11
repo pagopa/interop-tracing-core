@@ -199,14 +199,14 @@ export function dbServiceBuilder(db: DB) {
         const updateTracingStateQuery = `
           UPDATE tracing.tracings
             SET state = $1
-          WHERE id = $2 
-          RETURNING id`;
+          WHERE id = $2`;
 
-        await db.one(updateTracingStateQuery, [data.state, data.tracing_id]);
+        await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }
     },
+
     async savePurposeError(data: PurposeError): Promise<void> {
       try {
         const upsertTracingQuery = `
