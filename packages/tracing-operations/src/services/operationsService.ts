@@ -34,6 +34,7 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
+import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -81,10 +82,11 @@ export function operationsServiceBuilder(dbService: DBService) {
         throw tracingNotFound(params.tracingId);
       }
 
-      if (!/^(ERROR|MISSING)$/.test(tracing.state)) {
-        throw tracingCannotBeUpdated(
-          `Tracing with Id ${params.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`,
-        );
+      if (
+        tracing.state === tracingState.completed ||
+        tracing.state === tracingState.pending
+      ) {
+        throw tracingCannotBeUpdated(params.tracingId);
       }
 
       await dbService.updateTracingState({
@@ -120,6 +122,10 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
+
+      if (payload.state !== tracingState.pending) {
+        throw tracingCannotBeCancelled(params.tracingId);
+      }
 
       await dbService.updateTracingState({
         tracing_id: params.tracingId,
