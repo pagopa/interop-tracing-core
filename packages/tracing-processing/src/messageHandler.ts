@@ -1,11 +1,17 @@
+import { SQS } from "pagopa-interop-tracing-commons";
 import { ProcessingService } from "./services/processingService.js";
-import { ProducerService } from "./services/producerService.js";
+import { decodeSQSMessage } from "./models/models.js";
+import { errorMapper } from "./utilities/errorMapper.js";
 
 export function processMessage(
-  _producerService: ProducerService,
   processingService: ProcessingService,
-): (message: unknown) => void {
-  return async (message: unknown) => {
-    processingService.processTracing(message);
+): (message: SQS.Message) => void {
+  return async (message: SQS.Message) => {
+    try {
+      const tracing = decodeSQSMessage(message);
+      await processingService.processTracing(tracing);
+    } catch (error) {
+      throw errorMapper(error);
+    }
   };
 }

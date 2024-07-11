@@ -6,7 +6,6 @@ export const UpdateTracingStateDto = z.object({
   state: TracingState,
   version: z.coerce.number(),
 });
-
 export type UpdateTracingStateDto = z.infer<typeof UpdateTracingStateDto>;
 
 export const SavePurposeErrorDto = z.object({
@@ -19,4 +18,14 @@ export const SavePurposeErrorDto = z.object({
   updateTracingState: z.boolean(),
 });
 
+export const TracingFromS3KeyPathDto = z.object({
+  tenantId: z.string(),
+  date: z.string(),
+  version: z.coerce.number(),
+  correlationId: z.string(),
+  tracingId: z.string(),
+});
+
 export type SavePurposeErrorDto = z.infer<typeof SavePurposeErrorDto>;
+
+export type TracingFromS3KeyPathDto = z.infer<typeof TracingFromS3KeyPathDto>;
