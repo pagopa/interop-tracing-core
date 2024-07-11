@@ -17,10 +17,10 @@ export const PurposeSchema = z.object({
 });
 
 export const PurposeErrorSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().brand("PurposeErrorId"),
   tracing_id: z.string().uuid(),
+  purpose_id: z.string().uuid().brand("PurposeId"),
   version: z.number(),
-  purpose_id: z.string().uuid(),
   error_code: z.string(),
   message: z.string(),
   row_number: z.number(),

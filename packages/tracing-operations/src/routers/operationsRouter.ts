@@ -114,7 +114,11 @@ const operationsRouter = (
     "/tracings/:tracingId/versions/:version/errors",
     async (req, res) => {
       try {
-        await operationsService.savePurposeError();
+        await operationsService.savePurposeError(
+          req.params,
+          req.body,
+          logger(req.ctx),
+        );
         return res.status(204).end();
       } catch (error) {
         const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
