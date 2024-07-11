@@ -17,7 +17,9 @@ export const enrichedServiceBuilder = (
           TracingFromCsv.safeParse(message);
 
         if (tracingError) {
-          throw `Tracing message is not valid: ${JSON.stringify(tracingError)}`;
+          throw new Error(
+            `Tracing message is not valid: ${JSON.stringify(tracingError)}`,
+          );
         }
 
         genericLogger.info(`Processing tracing id: ${tracing.tracingId}`);
@@ -28,7 +30,7 @@ export const enrichedServiceBuilder = (
           await bucketService.readObject(s3KeyPath);
 
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
-          throw `No record found for key ${s3KeyPath}`;
+          throw new Error(`No record found for key ${s3KeyPath}`);
         }
 
         const tracingInserted = await dbService.insertTracing(
@@ -43,7 +45,7 @@ export const enrichedServiceBuilder = (
             "COMPLETE",
           );
         } else {
-          throw `Error on inserting tracing ${message.tracingId}`;
+          throw new Error(`Error on inserting tracing ${message.tracingId}`);
         }
       } catch (e) {
         throw insertEnrichedTraceError(

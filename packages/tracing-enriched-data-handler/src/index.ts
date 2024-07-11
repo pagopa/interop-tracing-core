@@ -55,20 +55,21 @@ const enrichedService: EnrichedService = enrichedServiceBuilder(
   producerService,
 );
 
-await SQS.runConsumer(
-  sqsClient,
-  {
-    queueUrl: config.sqsEnrichedUploadEndpoint,
-    consumerPollingTimeout: config.consumerPollingTimeout,
-  },
-  processEnrichedStateMessage(enrichedService),
-);
-
-await SQS.runConsumer(
-  sqsClient,
-  {
-    queueUrl: config.sqsReplacementUploadEndpoint,
-    consumerPollingTimeout: config.consumerPollingTimeout,
-  },
-  processReplacementUploadMessage(replacementService),
-);
+await Promise.all([
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsReplacementUploadEndpoint,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+    },
+    processReplacementUploadMessage(replacementService),
+  ),
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsEnrichedUploadEndpoint,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+    },
+    processEnrichedStateMessage(enrichedService),
+  ),
+]);
