@@ -193,8 +193,8 @@ paths:
 
   /tracings/{tracingId}/cancel:
     post:
-      summary: Cancel previous tracing version and state by tracingId
-      operationId: cancelTracingVersionAndState
+      summary: Cancel previous tracing state and version   by tracingId
+      operationId: cancelTracingStateAndVersion
       tags:
         - Write
       parameters:

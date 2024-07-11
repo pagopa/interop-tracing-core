@@ -11,7 +11,7 @@ import { errorMapper } from "../../utilities/errorMapper.js";
 export const errorCodes = {
   writeObjectS3BucketError: "0001",
   updateTracingStateError: "0002",
-  cancelTracingVersionAndStateError: "0003",
+  cancelTracingStateAndVersionError: "0003",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
@@ -49,11 +49,11 @@ export function updateTracingStateError(
   });
 }
 
-export function cancelTracingVersionAndStateError(
+export function cancelTracingStateAndVersionError(
   detail: unknown,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
-    code: "cancelTracingVersionAndStateError",
+    code: "cancelTracingStateAndVersionError",
   });
 }
