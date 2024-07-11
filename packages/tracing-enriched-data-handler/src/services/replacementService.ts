@@ -15,7 +15,7 @@ export const replacementServiceBuilder = (
         return producerService.sendUpdateState(tracingId, version, "COMPLETE");
       } catch (error) {
         throw deleteTraceError(
-          `Error on inserting tracing ${message.tracingId}`,
+          `Error on deleting tracing ${message.tracingId}, detail: ${error}`,
         );
       }
     },

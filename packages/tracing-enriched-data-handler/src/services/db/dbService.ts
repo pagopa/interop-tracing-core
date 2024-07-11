@@ -61,11 +61,9 @@ export function dbServiceBuilder(db: DB) {
         const queryText = `
           DELETE FROM traces.traces
           WHERE tracing_id = $1
-          RETURNING id;
+          RETURNING id
         `;
-
-        const result = await db.one<{ id: string }>(queryText, [tracingId]);
-        return result;
+        return await db.one(queryText, [tracingId]);
       } catch (error) {
         throw deleteTraceError(`Error deleteTracing: ${error}`);
       }
