@@ -1,6 +1,6 @@
-import { initDB } from "pagopa-interop-tracing-commons";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { processMessage } from "./messageHandler.js";
-import { dbServiceBuilder } from "./services/db/dbService.js";
+import { dbServiceBuilder } from "./services/enricherService.js";
 import {
   ProcessingService,
   processingServiceBuilder,
@@ -10,6 +10,9 @@ import {
   producerServiceBuilder,
 } from "./services/producerService.js";
 import { dbConfig } from "./utilities/dbConfig.js";
+import { config } from "./utilities/config.js";
+import { S3Client } from "@aws-sdk/client-s3";
+
 import {
   bucketServiceBuilder,
   BucketService,
@@ -24,12 +27,27 @@ const dbInstance = initDB({
   useSSL: dbConfig.dbUseSSL,
 });
 
-const bucketService: BucketService = bucketServiceBuilder();
-const producerService: ProducerService = producerServiceBuilder();
+const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+  region: config.awsRegion,
+});
+
+const s3client: S3Client = new S3Client({
+  region: config.awsRegion,
+});
+
+const bucketService: BucketService = bucketServiceBuilder(s3client);
+const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
   dbServiceBuilder(dbInstance),
   bucketService,
   producerService,
 );
 
-processMessage(producerService, processingService);
+await SQS.runConsumer(
+  sqsClient,
+  {
+    queueUrl: config.sqsTracingUploadEndpoint,
+    consumerPollingTimeout: config.consumerPollingTimeout,
+  },
+  processMessage(processingService),
+);

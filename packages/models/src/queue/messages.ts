@@ -20,3 +20,12 @@ export const SavePurposeErrorDto = z.object({
 });
 
 export type SavePurposeErrorDto = z.infer<typeof SavePurposeErrorDto>;
+
+export const TracingFromS3KeyPathDto = z.object({
+  tenantId: z.string(),
+  date: z.string(),
+  version: z.coerce.number(),
+  correlationId: z.string(),
+  tracingId: z.string(),
+});
+export type TracingFromS3KeyPathDto = z.infer<typeof TracingFromS3KeyPathDto>;
