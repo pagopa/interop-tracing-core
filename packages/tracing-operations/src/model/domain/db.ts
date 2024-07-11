@@ -9,7 +9,7 @@ const TenantSchema = z.object({
   deleted: z.boolean(),
 });
 
-const PurposeEnriched = z.object({
+const PurposeSchema = z.object({
   id: z.string().uuid(),
   consumer_id: z.string().uuid(),
   eservice_id: z.string().uuid(),
@@ -35,6 +35,6 @@ export const TracingSchema = z.object({
 });
 
 export type Tenant = z.infer<typeof TenantSchema>;
-export type Purpose = z.infer<typeof PurposeEnriched>;
+export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
 export type Tracing = z.infer<typeof TracingSchema>;
