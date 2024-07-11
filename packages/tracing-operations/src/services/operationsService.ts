@@ -12,6 +12,8 @@ import {
   ApiUpdateTracingStateParams,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
+  ApiTriggerS3CopyParams,
+  ApiTriggerS3CopyHeaders,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -23,8 +25,12 @@ import {
 } from "pagopa-interop-tracing-models";
 import { PurposeError } from "../model/domain/db.js";
 import { TracingsContentResponse } from "../model/domain/tracing.js";
+import { BucketService } from "./bucketService.js";
 
-export function operationsServiceBuilder(dbService: DBService) {
+export function operationsServiceBuilder(
+  dbService: DBService,
+  bucketService: BucketService,
+) {
   return {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
       return await dbService.getTenantByPurposeId(purposeId);
@@ -105,6 +111,25 @@ export function operationsServiceBuilder(dbService: DBService) {
       };
 
       await dbService.savePurposeError(purposeError);
+    },
+
+    async triggerS3Copy(
+      params: ApiTriggerS3CopyParams,
+      payload: ApiTriggerS3CopyParams, // todo ApiTriggerS3CopyParams
+      headers: ApiTriggerS3CopyHeaders, // todo ApiTriggerS3CopyParams
+      logger: Logger,
+    ): Promise<ApiSavePurposeErrorResponse> {
+      logger.info(`Save purpose error for tracingId: ${params.tracingId}`);
+      console.log("HEADERS", headers);
+      console.log("PARAMS", params);
+      console.log("payload", payload);
+      const tracing = await dbService.findTracingById(params.tracingId);
+      console.log("TRACING FOUND", tracing);
+      if (tracing) {
+        await bucketService.copyObject(tracing, headers["X-Correlation-Id"]);
+      } else {
+        throw new Error(`Copy failed for tracing id: ${params.tracingId}`);
+      }
     },
 
     async deletePurposeErrors(): Promise<void> {

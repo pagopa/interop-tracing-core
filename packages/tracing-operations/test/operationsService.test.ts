@@ -46,12 +46,13 @@ import {
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
+import { bucketServiceBuilder } from "../src/services/bucketService.js";
+import { S3Client } from "@aws-sdk/client-s3";
 
 describe("database test", () => {
   let dbInstance: DB;
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
-
   const tenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
@@ -73,7 +74,7 @@ describe("database test", () => {
   beforeAll(async () => {
     startedPostgreSqlContainer = await postgreSQLContainer(config).start();
     config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
-
+    const s3client: S3Client = new S3Client({ region: config.awsRegion });
     dbInstance = initDB({
       username: config.dbUsername,
       password: config.dbPassword,
@@ -84,7 +85,10 @@ describe("database test", () => {
       useSSL: config.dbUseSSL,
     });
 
-    operationsService = operationsServiceBuilder(dbServiceBuilder(dbInstance));
+    operationsService = operationsServiceBuilder(
+      dbServiceBuilder(dbInstance),
+      bucketServiceBuilder(s3client),
+    );
 
     await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
 

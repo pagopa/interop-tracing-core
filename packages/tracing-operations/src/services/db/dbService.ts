@@ -236,6 +236,24 @@ export function dbServiceBuilder(db: DB) {
         );
       }
     },
+    async findTracingById(tracingId: string): Promise<Tracing | null> {
+      try {
+        const findOneTracingQuery = `
+          SELECT id, tenant_id, state, date, version, errors 
+          FROM tracing.tracings
+          WHERE id = $1
+          LIMIT 1;`;
+
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [tracingId],
+        );
+
+        return tracing;
+      } catch (error) {
+        throw dbServiceErrorMapper(error);
+      }
+    },
   };
 }
 
