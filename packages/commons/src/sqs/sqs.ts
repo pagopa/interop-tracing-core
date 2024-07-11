@@ -35,7 +35,7 @@ export const instantiateClient = (config: SQSClientConfig): SQSClient => {
 const processQueue = async (
   sqsClient: SQSClient,
   config: { queueUrl: string; runUntilQueueIsEmpty?: boolean } & ConsumerConfig,
-  consumerHandler: (messagePayload: Message) => void,
+  consumerHandler: (messagePayload: Message) => Promise<void>,
 ): Promise<void> => {
   const command = new ReceiveMessageCommand({
     QueueUrl: config.queueUrl,
@@ -70,7 +70,7 @@ const processQueue = async (
 export const runConsumer = async (
   sqsClient: SQSClient,
   config: { queueUrl: string; runUntilQueueIsEmpty?: boolean } & ConsumerConfig,
-  consumerHandler: (messagePayload: Message) => void,
+  consumerHandler: (messagePayload: Message) => Promise<void>,
 ): Promise<void> => {
   genericLogger.info(`Consumer processing on Queue: ${config.queueUrl}`);
 

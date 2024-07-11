@@ -5,7 +5,7 @@ import { errorMapper } from "./utilities/errorMapper.js";
 
 export function processMessage(
   processingService: ProcessingService,
-): (message: SQS.Message) => void {
+): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message) => {
     try {
       const tracing = decodeSQSMessage(message);

@@ -5,11 +5,10 @@ import {
   genericInternalError,
 } from "pagopa-interop-tracing-models";
 import { match, P } from "ts-pattern";
-import { T } from "vitest/dist/types-198fd1d9.js";
 
 export const dbServiceErrorMapper = (error: unknown) =>
   match<unknown, Problem>(error)
-    .with(P.instanceOf(ApiError<T | CommonErrorCodes>), (error) => {
+    .with(P.instanceOf(ApiError<CommonErrorCodes>), (error) => {
       throw error;
     })
     .otherwise((error: unknown) => {
