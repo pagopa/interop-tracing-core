@@ -34,7 +34,6 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
-import { PurposeError } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
