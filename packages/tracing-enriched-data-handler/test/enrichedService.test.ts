@@ -12,6 +12,10 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "../src/services/producerService.js";
+import {
+  ReplacementService,
+  replacementServiceBuilder,
+} from "../src/services/replacementService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
 import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -21,13 +25,14 @@ import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
-import { insertTraceError } from "../src/models/errors.js";
+import { deleteTraceError, insertTraceError } from "../src/models/errors.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
   let bucketService: BucketService;
   let producerService: ProducerService;
+  let replacementService: ReplacementService;
   let startedPostgreSqlContainer: StartedTestContainer;
 
   const s3client = new S3Client({
@@ -56,6 +61,7 @@ describe("Enriched Service", () => {
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
+    replacementService = replacementServiceBuilder(dbService, producerService);
 
     enrichedService = enrichedServiceBuilder(
       dbService,
@@ -144,12 +150,13 @@ describe("Enriched Service", () => {
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
     });
+
     it("should send update 'COMPLETE' if DB insert succeded", async () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockEnrichedPuposes,
       );
       vi.spyOn(dbService, "insertTracing").mockReturnValue(
-        Promise.resolve([{ id: generateId() }]),
+        Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
       );
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
@@ -161,6 +168,44 @@ describe("Enriched Service", () => {
           mockTracingFromCsv.version,
           "COMPLETE",
         );
+    });
+  });
+  describe("deleteTrace", () => {
+    it("should delete a tracing and send update successfully", async () => {
+      const deleteTracingSpy = vi
+        .spyOn(dbService, "deleteTracing")
+        .mockResolvedValue({ id: generateId() });
+      const sendUpdateStateSpy = vi
+        .spyOn(producerService, "sendUpdateState")
+        .mockResolvedValue();
+
+      await replacementService.deleteTracing(mockTracingFromCsv);
+
+      expect(deleteTracingSpy).toHaveBeenCalledWith(
+        mockTracingFromCsv.tracingId,
+      );
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        mockTracingFromCsv.tracingId,
+        mockTracingFromCsv.version,
+        "COMPLETE",
+      );
+    });
+
+    it("should throw an error if deletion fails", async () => {
+      const deleteTracingSpy = vi
+        .spyOn(dbService, "deleteTracing")
+        .mockRejectedValue(deleteTraceError(``));
+      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+
+      try {
+        await replacementService.deleteTracing(mockTracingFromCsv);
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(deleteTracingSpy).toHaveBeenCalledWith(
+          mockTracingFromCsv.tracingId,
+        );
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
     });
   });
 });

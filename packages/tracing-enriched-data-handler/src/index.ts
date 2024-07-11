@@ -13,7 +13,7 @@ import {
   enrichedServiceBuilder,
 } from "./services/enrichedService.js";
 import {
-  ReplacementServiceBuilder,
+  ReplacementService,
   replacementServiceBuilder,
 } from "./services/replacementService.js";
 import { config } from "./utilities/config.js";
@@ -45,7 +45,7 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
-const replacementService: ReplacementServiceBuilder = replacementServiceBuilder(
+const replacementService: ReplacementService = replacementServiceBuilder(
   dbServiceBuilder(dbInstance),
   producerService,
 );

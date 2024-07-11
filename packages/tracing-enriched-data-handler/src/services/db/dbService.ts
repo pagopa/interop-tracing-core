@@ -56,11 +56,18 @@ export function dbServiceBuilder(db: DB) {
       }
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async deleteTracing(_tracingId: string) {
+    async deleteTracing(tracingId: string) {
       try {
-        return Promise.resolve([{}]);
+        const queryText = `
+          DELETE FROM traces.traces
+          WHERE tracing_id = $1
+          RETURNING id;
+        `;
+
+        const result = await db.one<{ id: string }>(queryText, [tracingId]);
+        return result;
       } catch (error) {
-        throw deleteTraceError(`Error insertTracing: ${error}`);
+        throw deleteTraceError(`Error deleteTracing: ${error}`);
       }
     },
   };

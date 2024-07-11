@@ -19,13 +19,6 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
         throw genericInternalError(`Error getPurposesByTracingId: ${error}`);
       }
     },
-    async sendErrorMessage(obj: unknown) {
-      try {
-        return Promise.resolve({ obj });
-      } catch (error) {
-        throw genericInternalError(`Error getPurposesByTracingId: ${error}`);
-      }
-    },
   };
 };
 

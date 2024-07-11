@@ -1,3 +1,5 @@
+import { deleteTraceError } from "../models/errors.js";
+import { TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 
@@ -6,18 +8,18 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async deleteTracing(_message: unknown): Promise<unknown> {
-      const tracingId = "";
-      const result = await dbService.deleteTracing(tracingId);
-      if (!result) {
-        return producerService.sendErrorMessage({});
+    async deleteTracing(message: TracingFromCsv) {
+      try {
+        const { tracingId, version } = message;
+        await dbService.deleteTracing(tracingId);
+        return producerService.sendUpdateState(tracingId, version, "COMPLETE");
+      } catch (error) {
+        throw deleteTraceError(
+          `Error on inserting tracing ${message.tracingId}`,
+        );
       }
-      return Promise.resolve({});
     },
   };
 };
 
-export type ReplacementServiceBuilder = ReturnType<
-  typeof replacementServiceBuilder
->;
+export type ReplacementService = ReturnType<typeof replacementServiceBuilder>;
