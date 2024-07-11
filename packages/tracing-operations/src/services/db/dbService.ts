@@ -98,16 +98,12 @@ export function dbServiceBuilder(db: DB) {
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
 
-        const tracing: Tracing | null = await db.oneOrNone(
+        const tracing = await db.oneOrNone<Tracing | null>(
           findOneTracingQuery,
           [data.tenant_id, truncatedDate],
         );
 
-        if (
-          tracing?.state === tracingState.completed ||
-          tracing?.state === tracingState.pending ||
-          tracing?.state === tracingState.error
-        ) {
+        if (tracing && tracing.state !== tracingState.missing) {
           throw tracingAlreadyExists(
             `A tracing for the current tenant already exists on this date: ${data.date}`,
           );
@@ -126,7 +122,7 @@ export function dbServiceBuilder(db: DB) {
           [data.tenant_id, data.id],
         );
 
-        if (tracing?.state === tracingState.missing) {
+        if (tracing && tracing.state === tracingState.missing) {
           const updateTracingQuery = `
             UPDATE tracing.tracings 
             SET state = 'PENDING', 
