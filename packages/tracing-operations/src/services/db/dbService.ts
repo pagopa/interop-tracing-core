@@ -151,7 +151,7 @@ export function dbServiceBuilder(db: DB) {
           data.version,
         ]);
 
-        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
+        const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
           findPastTracingErrorsQuery,
           [data.tenant_id, newTracing.id],
         );
