@@ -14,6 +14,7 @@ describe("Consumer processing error queue test", () => {
   const mockOperationsService = {
     savePurposeError: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
+    triggerS3Copy: vi.fn().mockResolvedValue(undefined),
   };
 
   afterAll(() => {
