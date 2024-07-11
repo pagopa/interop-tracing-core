@@ -33,7 +33,7 @@
     "prettier": "3.0.3"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.588.0",
+    "@aws-sdk/client-s3": "3.600.0",
     "@tsconfig/node-lts": "20.1.0",
     "csv-parser": "3.0.0",
     "dotenv-flow": "3.2.0",
