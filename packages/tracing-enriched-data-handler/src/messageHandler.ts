@@ -6,14 +6,14 @@ import { errorMapper } from "./utilities/errorMapper.js";
 
 export function processReplacementUploadMessage(
   replacementService: ReplacementServiceBuilder,
-): (message: unknown) => void {
+): (message: unknown) => Promise<void> {
   return async (message: unknown) => {
     replacementService.deleteTracing(message);
   };
 }
 export function processEnrichedStateMessage(
   enrichedService: EnrichedService,
-): (message: SQS.Message) => void {
+): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message) => {
     try {
       const tracing = decodeSqsMessage(message);
