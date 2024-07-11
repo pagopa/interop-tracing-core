@@ -7,6 +7,7 @@
   "scripts": {
     "start:tracing-api": "turbo start --filter pagopa-interop-tracing-api",
     "start:tracing-operation": "turbo start --filter pagopa-interop-tracing-operations",
+    "start:tracing-processing": "turbo start --filter pagopa-interop-tracing-processing",
     "test": "turbo test",
     "test:it": "turbo test:it",
     "build": "turbo build",

@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS tracing;
 
-CREATE TABLE tracing.tenants (
+CREATE TABLE IF NOT EXISTS tracing.tenants (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     origin VARCHAR(255) NOT NULL,
@@ -8,12 +8,12 @@ CREATE TABLE tracing.tenants (
     deleted BOOLEAN NOT NULL
 );
 
-CREATE TABLE tracing.eservices (
+CREATE TABLE IF NOT EXISTS tracing.eservices (
     eservice_id UUID PRIMARY KEY,
     producer_id UUID NOT NULL
 );
 
-CREATE TABLE tracing.purposes (
+CREATE TABLE IF NOT EXISTS tracing.purposes (
     id UUID PRIMARY KEY,
     consumer_id UUID NOT NULL,
     eservice_id UUID NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE tracing.purposes (
     FOREIGN KEY (eservice_id) REFERENCES tracing.eservices(eservice_id)
 );
 
-CREATE TABLE tracing.tracings (
+CREATE TABLE IF NOT EXISTS tracing.tracings (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
     state VARCHAR(255) NOT NULL CHECK (
@@ -36,7 +36,7 @@ CREATE TABLE tracing.tracings (
     FOREIGN KEY (tenant_id) REFERENCES tracing.tenants(id)
 );
 
-CREATE TABLE tracing.purposes_errors (
+CREATE TABLE IF NOT EXISTS tracing.purposes_errors (
     id UUID PRIMARY KEY,
     tracing_id UUID NOT NULL,
     version INT NOT NULL,
