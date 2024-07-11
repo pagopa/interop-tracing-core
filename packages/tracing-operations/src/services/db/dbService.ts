@@ -126,7 +126,8 @@ export function dbServiceBuilder(db: DB) {
           const updateTracingQuery = `
             UPDATE tracing.tracings 
             SET state = 'PENDING', 
-            errors = false
+                errors = false,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = $1 
             RETURNING id, tenant_id, date, state, version`;
 
@@ -194,7 +195,8 @@ export function dbServiceBuilder(db: DB) {
       try {
         const updateTracingStateQuery = `
           UPDATE tracing.tracings
-            SET state = $1
+            SET state = $1,
+                updated_at = CURRENT_TIMESTAMP
           WHERE id = $2`;
 
         await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
