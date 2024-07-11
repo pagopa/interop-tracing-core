@@ -1,13 +1,13 @@
 import {
   DB,
   ISODateFormat,
+  PurposeErrorCodes,
   initDB,
   logger,
 } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -35,30 +35,34 @@ import {
   addPurpose,
   addTenant,
   addTracing,
+  clearPurposesErrors,
   clearTracings,
+  findTracingById,
 } from "./utils.js";
 import { Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
-import { ApiGetTracingsQuery } from "pagopa-interop-tracing-operations-client";
+import {
+  ApiSavePurposeErrorPayload,
+  ApiUpdateTracingStatePayload,
+  ApiGetTracingsQuery,
+} from "pagopa-interop-tracing-operations-client";
 
 describe("database test", () => {
   let dbInstance: DB;
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
 
-  const tenantId: TenantId = generateId();
-  const purposeId: PurposeId = generateId();
+  const tenantId: TenantId = generateId<TenantId>();
+  const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
   const todayTruncated = ISODateFormat.parse(new Date().toISOString());
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = ISODateFormat.parse(yesterday.toISOString());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.restoreAllMocks();
-  });
-
-  afterEach(async () => {
+    await clearPurposesErrors(dbInstance);
     await clearTracings(dbInstance);
   });
 
@@ -425,6 +429,149 @@ describe("database test", () => {
         expect(result.totalCount).toBe(2);
         expect(result.results.length).toBe(1);
       });
+    });
+  });
+
+  describe("updateTracingState", () => {
+    it("should update a tracing by tracingId with new state 'ERROR' successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      expect(
+        async () =>
+          await operationsService.updateTracingState(
+            {
+              tracingId: tracing.id,
+              version: tracing.version,
+            },
+            updateStateData,
+            logger({}),
+          ),
+      ).not.toThrowError();
+
+      const result = await findTracingById(tracing.id, dbInstance);
+
+      expect(result.id).toBe(tracingData.id);
+      expect(result.state).toBe(tracingState.error);
+    });
+
+    it("should throw an error when attempting to update the state with a tracingId that is not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      try {
+        await operationsService.updateTracingState(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          updateStateData,
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("DB Service error: QueryResultError");
+        expect(error.message).toContain("queryResultErrorCode.noData");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
+
+  describe("savePurposeError", () => {
+    it("should create a new purpose error successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        purposeId: purposeId,
+        errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
+        message: `INVALID_ROW_SCHEMA`,
+        rowNumber: 12,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      expect(
+        async () =>
+          await operationsService.savePurposeError(
+            {
+              tracingId: tracing.id,
+              version: tracing.version,
+            },
+            purposeErrorData,
+            logger({}),
+          ),
+      ).not.toThrowError();
+    });
+
+    it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        purposeId: purposeId,
+        errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
+        message: `INVALID_ROW_SCHEMA`,
+        rowNumber: 12,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      try {
+        await operationsService.savePurposeError(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          purposeErrorData,
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("DB Service error");
+        expect(error.message).toContain("purposes_errors_tracing_id_fkey");
+        expect(error.code).toBe("genericError");
+      }
     });
   });
 });

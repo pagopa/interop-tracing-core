@@ -17,12 +17,13 @@ const PurposeSchema = z.object({
 });
 
 const PurposeErrorSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().brand("PurposeErrorId"),
   tracing_id: z.string().uuid(),
+  purpose_id: z.string().uuid().brand("PurposeId"),
   version: z.number(),
-  purpose_id: z.string().uuid(),
   error_code: z.string(),
   message: z.string(),
+  row_number: z.number(),
 });
 
 export const TracingSchema = z.object({
@@ -34,7 +35,13 @@ export const TracingSchema = z.object({
   errors: z.boolean(),
 });
 
+const UpdateTracingStateSchema = z.object({
+  tracing_id: z.string().uuid(),
+  state: TracingState,
+});
+
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
 export type Tracing = z.infer<typeof TracingSchema>;
+export type UpdateTracingState = z.infer<typeof UpdateTracingStateSchema>;

@@ -7,7 +7,11 @@ import {
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
-import { Tracing } from "../../model/domain/db.js";
+import {
+  PurposeError,
+  Tracing,
+  UpdateTracingState,
+} from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
@@ -75,14 +79,7 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async submitTracing(data: Tracing): Promise<{
-      tracingId: string;
-      tenantId: string;
-      errors: boolean;
-      state: TracingState;
-      date: string;
-      version: number;
-    }> {
+    async submitTracing(data: Tracing): Promise<Tracing> {
       try {
         const truncatedDate: Date = truncatedTo(
           new Date(data.date).toISOString(),
@@ -94,15 +91,12 @@ export function dbServiceBuilder(db: DB) {
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
 
-        const tracing: Tracing | null = await db.oneOrNone(
+        const tracing = await db.oneOrNone<Tracing | null>(
           findOneTracingQuery,
           [data.tenant_id, truncatedDate],
         );
 
-        if (
-          tracing?.state === tracingState.completed ||
-          tracing?.state === tracingState.pending
-        ) {
+        if (tracing && tracing.state !== tracingState.missing) {
           throw tracingAlreadyExists(
             `A tracing for the current tenant already exists on this date: ${data.date}`,
           );
@@ -116,35 +110,31 @@ export function dbServiceBuilder(db: DB) {
             AND tracing.id <> $2
           LIMIT 1`;
 
-        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
-          findPastTracingErrorsQuery,
-          [data.tenant_id, data.id],
-        );
-
-        if (tracing?.state === tracingState.missing) {
+        if (tracing && tracing.state === tracingState.missing) {
           const updateTracingQuery = `
             UPDATE tracing.tracings 
             SET state = 'PENDING', 
-            errors = false
+                errors = false,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = $1 
             RETURNING id, tenant_id, date, state, version`;
 
-          const updatedTracing: Tracing = await db.one(updateTracingQuery, [
+          const updatedTracing = await db.one<Tracing>(updateTracingQuery, [
             tracing.id,
           ]);
 
-          const recheckErrors: boolean | null = await db.oneOrNone(
+          const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
             findPastTracingErrorsQuery,
             [data.tenant_id, data.id],
           );
 
           return {
-            tracingId: updatedTracing.id,
-            tenantId: updatedTracing.tenant_id,
+            id: updatedTracing.id,
+            tenant_id: updatedTracing.tenant_id,
             date: updatedTracing.date,
             state: updatedTracing.state,
             version: updatedTracing.version,
-            errors: !!recheckErrors,
+            errors: !!pastTracingsHasErrors,
           };
         }
 
@@ -153,7 +143,7 @@ export function dbServiceBuilder(db: DB) {
           VALUES ($1, $2, $3, $4, $5)
           RETURNING id, tenant_id, date, state, version`;
 
-        const newTracing: Tracing = await db.one(insertTracingQuery, [
+        const newTracing = await db.one<Tracing>(insertTracingQuery, [
           data.id,
           data.tenant_id,
           data.state,
@@ -161,9 +151,14 @@ export function dbServiceBuilder(db: DB) {
           data.version,
         ]);
 
+        const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
+          findPastTracingErrorsQuery,
+          [data.tenant_id, newTracing.id],
+        );
+
         return {
-          tracingId: newTracing.id,
-          tenantId: newTracing.tenant_id,
+          id: newTracing.id,
+          tenant_id: newTracing.tenant_id,
           version: newTracing.version,
           date: newTracing.date,
           state: newTracing.state,
@@ -189,18 +184,40 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async updateTracingState() {
+    async updateTracingState(data: UpdateTracingState): Promise<void> {
       try {
-        return Promise.resolve();
+        const updateTracingStateQuery = `
+          UPDATE tracing.tracings
+            SET state = $1,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2`;
+
+        await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
-        throw genericInternalError(`Error update state: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
-    async savePurposeError() {
+
+    async savePurposeError(data: PurposeError): Promise<void> {
       try {
-        return Promise.resolve();
+        const upsertTracingQuery = `
+          INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (tracing_id, purpose_id, version, row_number) DO NOTHING
+          RETURNING id;
+        `;
+
+        await db.one(upsertTracingQuery, [
+          data.id,
+          data.tracing_id,
+          data.version,
+          data.purpose_id,
+          data.error_code,
+          data.message,
+          data.row_number,
+        ]);
       } catch (error) {
-        throw genericInternalError(`Error save purpose error: ${error}`);
+        throw dbServiceErrorMapper(error);
       }
     },
     async deletePurposeErrors() {
