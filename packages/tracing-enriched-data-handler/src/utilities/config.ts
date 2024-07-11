@@ -5,7 +5,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
-const tracingCallerConfig = AWSConfig.and(ConsumerConfig)
+const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
   .and(
     z
@@ -23,8 +23,10 @@ const tracingCallerConfig = AWSConfig.and(ConsumerConfig)
       })),
   );
 
-export type TracingCallerConfig = z.infer<typeof tracingCallerConfig>;
+export type TracingEnrichedDataHandlerConfig = z.infer<
+  typeof tracingEnrichedDataHandlerConfig
+>;
 
-export const config: TracingCallerConfig = {
-  ...tracingCallerConfig.parse(process.env),
+export const config: TracingEnrichedDataHandlerConfig = {
+  ...tracingEnrichedDataHandlerConfig.parse(process.env),
 };

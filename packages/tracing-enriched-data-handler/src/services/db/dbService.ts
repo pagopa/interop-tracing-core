@@ -52,7 +52,9 @@ export function dbServiceBuilder(db: DB) {
           return results;
         });
       } catch (error) {
-        throw insertTraceError(`Error insertTracing: ${error}`);
+        throw insertTraceError(
+          `Error inserting trace for tracingId: ${tracingId}: Details: ${error}`,
+        );
       }
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
