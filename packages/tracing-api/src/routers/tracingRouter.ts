@@ -123,7 +123,7 @@ const tracingRouter =
       .get("/tracings/:tracingId/errors", async (req, res) => {
         try {
           const data = await operationsService.getTracingErrors(
-            req.params.tracingId,
+            req.params,
             req.query,
           );
 
