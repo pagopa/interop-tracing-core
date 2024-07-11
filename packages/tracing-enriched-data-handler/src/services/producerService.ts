@@ -4,12 +4,17 @@ import { config } from "../utilities/config.js";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendUpdateState(tracingId: string, version: number, state: string) {
+    async sendUpdateState(
+      tracingId: string,
+      version: number,
+      state: string,
+      isReplacing?: boolean,
+    ) {
       try {
         await SQS.sendMessage(
           sqsClient,
           config.sqsEnricherStateEndpoint,
-          JSON.stringify({ tracingId, version, state }),
+          JSON.stringify({ tracingId, version, state, isReplacing }),
         );
         genericLogger.info(
           `Message sent on enricher-state queue",

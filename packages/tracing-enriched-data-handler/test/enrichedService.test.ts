@@ -188,6 +188,7 @@ describe("Enriched Service", () => {
         mockTracingFromCsv.tracingId,
         mockTracingFromCsv.version,
         "COMPLETE",
+        true,
       );
     });
 
