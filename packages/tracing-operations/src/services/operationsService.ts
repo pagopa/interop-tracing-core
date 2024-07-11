@@ -79,12 +79,10 @@ export function operationsServiceBuilder(dbService: DBService) {
         `Update state for tracingId: ${params.tracingId}, version: ${params.version}`,
       );
 
-      const updateTracingState: UpdateTracingState = {
+      await dbService.updateTracingState({
         tracing_id: params.tracingId,
         state: payload.state,
-      };
-
-      await dbService.updateTracingState(updateTracingState);
+      });
     },
 
     async savePurposeError(
