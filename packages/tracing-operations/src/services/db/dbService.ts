@@ -79,14 +79,7 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async submitTracing(data: Tracing): Promise<{
-      tracingId: string;
-      tenantId: string;
-      errors: boolean;
-      state: TracingState;
-      date: string;
-      version: number;
-    }> {
+    async submitTracing(data: Tracing): Promise<Tracing> {
       try {
         const truncatedDate: Date = truncatedTo(
           new Date(data.date).toISOString(),
@@ -117,11 +110,6 @@ export function dbServiceBuilder(db: DB) {
             AND tracing.id <> $2
           LIMIT 1`;
 
-        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
-          findPastTracingErrorsQuery,
-          [data.tenant_id, data.id],
-        );
-
         if (tracing && tracing.state === tracingState.missing) {
           const updateTracingQuery = `
             UPDATE tracing.tracings 
@@ -131,22 +119,22 @@ export function dbServiceBuilder(db: DB) {
             WHERE id = $1 
             RETURNING id, tenant_id, date, state, version`;
 
-          const updatedTracing: Tracing = await db.one(updateTracingQuery, [
+          const updatedTracing = await db.one<Tracing>(updateTracingQuery, [
             tracing.id,
           ]);
 
-          const recheckErrors: boolean | null = await db.oneOrNone(
+          const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
             findPastTracingErrorsQuery,
             [data.tenant_id, data.id],
           );
 
           return {
-            tracingId: updatedTracing.id,
-            tenantId: updatedTracing.tenant_id,
+            id: updatedTracing.id,
+            tenant_id: updatedTracing.tenant_id,
             date: updatedTracing.date,
             state: updatedTracing.state,
             version: updatedTracing.version,
-            errors: !!recheckErrors,
+            errors: !!pastTracingsHasErrors,
           };
         }
 
@@ -155,7 +143,7 @@ export function dbServiceBuilder(db: DB) {
           VALUES ($1, $2, $3, $4, $5)
           RETURNING id, tenant_id, date, state, version`;
 
-        const newTracing: Tracing = await db.one(insertTracingQuery, [
+        const newTracing = await db.one<Tracing>(insertTracingQuery, [
           data.id,
           data.tenant_id,
           data.state,
@@ -163,9 +151,14 @@ export function dbServiceBuilder(db: DB) {
           data.version,
         ]);
 
+        const pastTracingsHasErrors: boolean | null = await db.oneOrNone(
+          findPastTracingErrorsQuery,
+          [data.tenant_id, newTracing.id],
+        );
+
         return {
-          tracingId: newTracing.id,
-          tenantId: newTracing.tenant_id,
+          id: newTracing.id,
+          tenant_id: newTracing.tenant_id,
           version: newTracing.version,
           date: newTracing.date,
           state: newTracing.state,

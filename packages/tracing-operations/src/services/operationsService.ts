@@ -50,8 +50,8 @@ export function operationsServiceBuilder(dbService: DBService) {
       });
 
       return {
-        tracingId: tracing.tracingId,
-        tenantId: tracing.tenantId,
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
         version: tracing.version,
         date: tracing.date,
         state: tracing.state,
