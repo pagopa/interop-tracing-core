@@ -6,7 +6,7 @@ import { decodeSqsMessage } from "./models/models.js";
 
 export function processReplacementUploadMessage(
   replacementService: ReplacementService,
-): (message: SQS.Message) => void {
+): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message) => {
     try {
       const tracing = decodeSqsMessage(message);
@@ -18,7 +18,7 @@ export function processReplacementUploadMessage(
 }
 export function processEnrichedStateMessage(
   enrichedService: EnrichedService,
-): (message: SQS.Message) => void {
+): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message) => {
     try {
       const tracing = decodeSqsMessage(message);
