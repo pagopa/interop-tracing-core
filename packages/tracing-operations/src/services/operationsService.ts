@@ -34,7 +34,10 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
-import { tracingCannotBeCancelled } from "../model/domain/errors.js";
+import {
+  invalidPreviousTracingState,
+  tracingCannotBeCancelled,
+} from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -123,7 +126,19 @@ export function operationsServiceBuilder(dbService: DBService) {
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
 
-      if (payload.state !== tracingState.pending) {
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      if (
+        payload.state !== tracingState.error &&
+        payload.state !== tracingState.missing
+      ) {
+        throw invalidPreviousTracingState(params.tracingId);
+      }
+
+      if (tracing.state !== tracingState.pending) {
         throw tracingCannotBeCancelled(params.tracingId);
       }
 

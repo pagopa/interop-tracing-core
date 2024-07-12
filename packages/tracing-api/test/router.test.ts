@@ -39,7 +39,6 @@ import {
 import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
 import {
-  cancelTracingStateAndVersionError,
   makeApiProblem,
   writeObjectS3BucketError,
 } from "../src/model/domain/errors.js";
