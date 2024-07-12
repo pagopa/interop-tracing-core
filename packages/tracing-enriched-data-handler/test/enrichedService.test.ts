@@ -127,6 +127,7 @@ describe("Enriched Service", () => {
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
     });
+
     it("should not send update if DB insert fails", async () => {
       const readObjectSpy = vi
         .spyOn(bucketService, "readObject")
@@ -148,6 +149,7 @@ describe("Enriched Service", () => {
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
     });
+
     it("should send update 'COMPLETE' if DB insert succeded", async () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockEnrichedPuposes,
