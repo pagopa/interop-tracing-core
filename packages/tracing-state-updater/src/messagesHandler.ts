@@ -17,8 +17,9 @@ export function processTracingStateMessage(
 
       if (updateTracingStateMessage.isReplacing) {
         await service.triggerS3Copy(updateTracingStateMessage.tracingId);
+      } else {
+        await service.updateTracingState(updateTracingStateMessage);
       }
-      await service.updateTracingState(updateTracingStateMessage);
     } catch (e: unknown) {
       throw errorMapper(e);
     }

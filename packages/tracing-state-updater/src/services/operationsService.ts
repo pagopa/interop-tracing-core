@@ -72,7 +72,9 @@ export const operationsServiceBuilder = (
     async triggerS3Copy(tracingId: string) {
       try {
         await operationsApiClient.triggerCopy(undefined, {
-          headers: { ...correlationIdToHeader(uuidv4()) },
+          headers: {
+            ...correlationIdToHeader("a10473fb-f11e-4a2d-9010-f771c50eb671"),
+          },
           params: { tracingId },
         });
 

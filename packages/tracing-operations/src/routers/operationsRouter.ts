@@ -124,7 +124,6 @@ const operationsRouter = (
       try {
         await operationsService.triggerS3Copy(
           req.params,
-          req.body,
           correlationID,
           logger(req.ctx),
         );

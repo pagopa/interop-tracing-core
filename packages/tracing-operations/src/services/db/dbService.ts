@@ -236,7 +236,7 @@ export function dbServiceBuilder(db: DB) {
         );
       }
     },
-    async findTracingById(tracingId: string): Promise<Tracing | null> {
+    async findTracingById(tracingId: string) {
       try {
         const findOneTracingQuery = `
           SELECT id, tenant_id, state, date, version, errors 
@@ -244,10 +244,7 @@ export function dbServiceBuilder(db: DB) {
           WHERE id = $1
           LIMIT 1;`;
 
-        const tracing = await db.oneOrNone<Tracing | null>(
-          findOneTracingQuery,
-          [tracingId],
-        );
+        const tracing = await db.oneOrNone(findOneTracingQuery, [tracingId]);
 
         return tracing;
       } catch (error) {

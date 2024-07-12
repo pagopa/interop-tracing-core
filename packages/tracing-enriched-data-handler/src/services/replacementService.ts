@@ -1,3 +1,4 @@
+import { tracingState } from "pagopa-interop-tracing-models";
 import { deleteTraceError } from "../models/errors.js";
 import { TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
@@ -15,7 +16,7 @@ export const replacementServiceBuilder = (
         return producerService.sendUpdateState(
           tracingId,
           version,
-          "COMPLETE",
+          tracingState.completed,
           true,
         );
       } catch (error) {
