@@ -1,19 +1,24 @@
 import { SQS, genericLogger } from "pagopa-interop-tracing-commons";
-import { genericInternalError } from "pagopa-interop-tracing-models";
+import {
+  genericInternalError,
+  UpdateTracingStateDto,
+} from "pagopa-interop-tracing-models";
 import { config } from "../utilities/config.js";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendUpdateState(tracingId: string, version: number, state: string) {
+    async sendUpdateState(updateTracingState: UpdateTracingStateDto) {
       try {
+        genericLogger.info(
+          `UpdateTracingState message sent on queue for tracingId: ${
+            updateTracingState.tracingId
+          }. Payload: ${JSON.stringify(updateTracingState)}`,
+        );
+
         await SQS.sendMessage(
           sqsClient,
           config.sqsEnricherStateEndpoint,
-          JSON.stringify({ tracingId, version, state }),
-        );
-        genericLogger.info(
-          `Message sent on enricher-state queue",
-          ${JSON.stringify({ tracingId, version, state })}`,
+          JSON.stringify(updateTracingState),
         );
       } catch (error) {
         throw genericInternalError(`Error getPurposesByTracingId: ${error}`);

@@ -8,15 +8,15 @@ import { readObjectBucketS3Error } from "../models/errors.js";
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
     async readObject(s3KeyFile: string): Promise<TracingEnriched[]> {
-      const params = {
-        Bucket: config.bucketS3Enriched,
-        Key: s3KeyFile,
-      };
       try {
-        const s3Object = await s3Client.send(new GetObjectCommand(params));
+        const params = {
+          Bucket: config.bucketS3Enriched,
+          Key: s3KeyFile,
+        };
 
+        const s3Object = await s3Client.send(new GetObjectCommand(params));
         if (!s3Object.Body) {
-          throw "No data found in S3 object";
+          throw new Error("No data found in S3 object");
         }
 
         const csvData = await parseCSV(s3Object.Body as Readable);

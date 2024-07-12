@@ -74,7 +74,7 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
-        .spyOn(dbService, "insertTracing")
+        .spyOn(dbService, "insertTraces")
         .mockResolvedValue([{ id: generateId() }]);
       const sendUpdateStateSpy = vi
         .spyOn(producerService, "sendUpdateState")
@@ -98,7 +98,7 @@ describe("Enriched Service", () => {
       const invalidMessage = { tracingId: generateId() };
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
-      const insertTracingSpy = vi.spyOn(dbService, "insertTracing");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
         await enrichedService.insertEnrichedTrace(
@@ -116,7 +116,7 @@ describe("Enriched Service", () => {
       const readObjectSpy = vi
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
-      const insertTracingSpy = vi.spyOn(dbService, "insertTracing");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -132,7 +132,7 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
-        .spyOn(dbService, "insertTracing")
+        .spyOn(dbService, "insertTraces")
         .mockRejectedValue(insertTraceError(``));
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
@@ -152,7 +152,7 @@ describe("Enriched Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockEnrichedPuposes,
       );
-      vi.spyOn(dbService, "insertTracing").mockReturnValue(
+      vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: generateId() }]),
       );
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
