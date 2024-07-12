@@ -2,6 +2,7 @@ import { S3Client, CopyObjectCommand } from "@aws-sdk/client-s3";
 import { config } from "../utilities/config.js";
 import { Tracing } from "../model/domain/db.js";
 import { ISODateFormat, genericLogger } from "pagopa-interop-tracing-commons";
+import { copyObjectS3BucketError } from "../model/domain/errors.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
@@ -22,7 +23,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
 
         await s3Client.send(new CopyObjectCommand(params));
       } catch (error: unknown) {
-        throw new Error(
+        throw copyObjectS3BucketError(
           `Error copying object from bucket for tracingId: ${
             tracing.id
           }. Details: ${JSON.stringify(error)}`,

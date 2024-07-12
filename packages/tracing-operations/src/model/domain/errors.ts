@@ -1,9 +1,14 @@
-import { ApiError, makeApiProblemBuilder } from "pagopa-interop-tracing-models";
+import {
+  ApiError,
+  InternalError,
+  makeApiProblemBuilder,
+} from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
   tracingNotFound: "0001",
   tenantNotFound: "0002",
   tracingAlreadyExists: "0003",
+  copyObjectS3BucketError: "0004",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
@@ -15,5 +20,14 @@ export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
     detail: `Tracing by ${tracingId} not found`,
     code: "tracingNotFound",
     title: "Tracing not found",
+  });
+}
+
+export function copyObjectS3BucketError(
+  detail: unknown,
+): InternalError<ErrorCodes> {
+  return new InternalError({
+    detail: `${detail}`,
+    code: "copyObjectS3BucketError",
   });
 }

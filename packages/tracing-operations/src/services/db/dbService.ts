@@ -250,7 +250,7 @@ export function dbServiceBuilder(db: DB) {
           [tracingId],
         );
 
-        return TracingSchema.parse(tracing);
+        return tracing ? TracingSchema.parse(tracing) : null;
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }

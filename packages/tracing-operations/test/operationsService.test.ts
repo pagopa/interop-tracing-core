@@ -51,6 +51,7 @@ import {
   bucketServiceBuilder,
 } from "../src/services/bucketService.js";
 import { S3Client } from "@aws-sdk/client-s3";
+import { tracingNotFound } from "../src/model/domain/errors.js";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -613,20 +614,18 @@ describe("database test", () => {
       );
     });
     it("should throw an error when tracing is not found", async () => {
-      try {
-        await operationsService.triggerS3Copy(
+      const tracingId = generateId();
+      expect(
+        operationsService.triggerS3Copy(
           {
-            tracingId: generateId(),
+            tracingId,
           },
           {
             "X-Correlation-Id": generateId(),
           },
           logger({}),
-        );
-      } catch (e) {
-        const error = e as InternalError<CommonErrorCodes>;
-        expect(error.code).toBe("tracingNotFound");
-      }
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracingId));
     });
   });
 });
