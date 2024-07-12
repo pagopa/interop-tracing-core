@@ -87,11 +87,11 @@ describe("Enriched Service", () => {
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-        mockTracingFromCsv.tracingId,
-        mockTracingFromCsv.version,
-        tracingState.completed,
-      );
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+        tracingId: mockTracingFromCsv.tracingId,
+        version: mockTracingFromCsv.version,
+        state: tracingState.completed,
+      });
     });
 
     it("should throw an error if tracing message is not valid", async () => {
@@ -160,11 +160,11 @@ describe("Enriched Service", () => {
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-          mockTracingFromCsv.tracingId,
-          mockTracingFromCsv.version,
-          tracingState.completed,
-        );
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        });
     });
   });
 });
