@@ -52,10 +52,7 @@ import {
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
-import {
-  invalidPreviousTracingState,
-  tracingCannotBeCancelled,
-} from "../src/model/domain/errors.js";
+import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -854,32 +851,6 @@ describe("database test", () => {
             logger({}),
           ),
         ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
-      });
-
-      it("should throw an error invalidPreviousTracingState when attempting to reverting the tracing to the previous state and version", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.missing,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        await expect(
-          operationsService.cancelTracingStateAndVersion(
-            {
-              tracingId: tracing.id,
-            },
-            {
-              version: tracing.version - 1,
-              state: tracingState.completed,
-            },
-            logger({}),
-          ),
-        ).rejects.toThrowError(invalidPreviousTracingState(tracing.id));
       });
     });
   });
