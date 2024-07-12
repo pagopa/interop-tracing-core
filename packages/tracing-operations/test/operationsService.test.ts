@@ -46,13 +46,17 @@ import {
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
-import { bucketServiceBuilder } from "../src/services/bucketService.js";
+import {
+  BucketService,
+  bucketServiceBuilder,
+} from "../src/services/bucketService.js";
 import { S3Client } from "@aws-sdk/client-s3";
 
 describe("database test", () => {
   let dbInstance: DB;
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
+  let bucketService: BucketService;
   const tenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
@@ -84,6 +88,8 @@ describe("database test", () => {
       schema: config.schemaName,
       useSSL: config.dbUseSSL,
     });
+
+    bucketService = bucketServiceBuilder(s3client);
 
     operationsService = operationsServiceBuilder(
       dbServiceBuilder(dbInstance),
@@ -575,6 +581,51 @@ describe("database test", () => {
         expect(error.message).toContain("DB Service error");
         expect(error.message).toContain("purposes_errors_tracing_id_fkey");
         expect(error.code).toBe("genericError");
+      }
+    });
+  });
+  describe("triggerS3Copy", () => {
+    it("should call trigger s3Copy", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+      vi.spyOn(bucketService, "copyObject").mockResolvedValue();
+      expect(
+        async () =>
+          await operationsService.triggerS3Copy(
+            {
+              tracingId: tracing.id,
+            },
+            {
+              "X-Correlation-Id": generateId(),
+            },
+            logger({}),
+          ),
+      ).not.toThrowError();
+    });
+    it("should throw an error when tracing is not found", async () => {
+      vi.spyOn(bucketService, "copyObject").mockResolvedValue();
+      const tracingId = generateId();
+      try {
+        await operationsService.triggerS3Copy(
+          {
+            tracingId: tracingId,
+          },
+          {
+            "X-Correlation-Id": generateId(),
+          },
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error.code).toBe("tracingNotFound");
       }
     });
   });

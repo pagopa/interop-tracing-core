@@ -30,6 +30,7 @@ import {
 import { PurposeError } from "../model/domain/db.js";
 import { TracingsContentResponse } from "../model/domain/tracing.js";
 import { BucketService } from "./bucketService.js";
+import { tracingNotFound } from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(
   dbService: DBService,
@@ -128,7 +129,9 @@ export function operationsServiceBuilder(
         tracing.date = ISODateFormat.parse(tracing.date.toISOString());
         await bucketService.copyObject(tracing, headers["X-Correlation-Id"]);
       } else {
-        throw new Error(`Copy failed for tracing id: ${params.tracingId}`);
+        throw tracingNotFound(
+          `Tracing not found: ${params.tracingId}, on triggerS3Copy`,
+        );
       }
     },
 
