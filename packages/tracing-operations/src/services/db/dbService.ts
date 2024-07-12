@@ -28,7 +28,7 @@ export function dbServiceBuilder(db: DB) {
         );
         return consumer_id;
       } catch (error) {
-        throw genericInternalError(`Error getTenantByPurposeId: ${error}`);
+        throw dbServiceErrorMapper("getTenantByPurposeId", error);
       }
     },
 
@@ -69,7 +69,7 @@ export function dbServiceBuilder(db: DB) {
           totalCount: total_count,
         };
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("getTracings", error);
       }
     },
 
@@ -111,7 +111,7 @@ export function dbServiceBuilder(db: DB) {
           totalCount: total_count,
         };
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("getTracingErrors", error);
       }
     },
 
@@ -201,7 +201,7 @@ export function dbServiceBuilder(db: DB) {
           errors: !!pastTracingsHasErrors,
         };
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("submitTracing", error);
       }
     },
 
@@ -220,7 +220,7 @@ export function dbServiceBuilder(db: DB) {
 
         return tracing;
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("findTracingById", error);
       }
     },
 
@@ -242,7 +242,7 @@ export function dbServiceBuilder(db: DB) {
 
         await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("updateTracingState", error);
       }
     },
 
@@ -256,7 +256,7 @@ export function dbServiceBuilder(db: DB) {
 
         await db.none(updateTracingStateQuery, [data.tracing_id, data.version]);
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("updateTracingVersion", error);
       }
     },
 
@@ -279,7 +279,7 @@ export function dbServiceBuilder(db: DB) {
           data.row_number,
         ]);
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("savePurposeError", error);
       }
     },
 

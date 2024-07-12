@@ -133,9 +133,8 @@ describe("database test", () => {
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain(
-            "Error getTenantByPurposeId: QueryResultError",
-          );
+          expect(error.message).toContain("Database query failed");
+          expect(error.message).toContain("QueryResultError");
           expect(error.code).toBe("genericError");
         }
       });
@@ -538,7 +537,7 @@ describe("database test", () => {
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain("DB Service error");
+          expect(error.message).toContain("Database query failed");
           expect(error.message).toContain("invalid input syntax for type uuid");
           expect(error.code).toBe("genericError");
         }
