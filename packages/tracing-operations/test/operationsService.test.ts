@@ -58,6 +58,7 @@ describe("database test", () => {
   let operationsService: OperationsService;
   let bucketService: BucketService;
   let dbService: DBService;
+
   const tenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
@@ -80,6 +81,7 @@ describe("database test", () => {
     startedPostgreSqlContainer = await postgreSQLContainer(config).start();
     config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
     const s3client: S3Client = new S3Client({ region: config.awsRegion });
+
     dbInstance = initDB({
       username: config.dbUsername,
       password: config.dbPassword,
@@ -89,13 +91,11 @@ describe("database test", () => {
       schema: config.schemaName,
       useSSL: config.dbUseSSL,
     });
+
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
 
-    operationsService = operationsServiceBuilder(
-      dbServiceBuilder(dbInstance),
-      bucketServiceBuilder(s3client),
-    );
+    operationsService = operationsServiceBuilder(dbService, bucketService);
 
     await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
 
@@ -595,26 +595,25 @@ describe("database test", () => {
         version: 1,
         errors: false,
       };
+      vi.spyOn(bucketService, "copyObject").mockResolvedValueOnce();
+      vi.spyOn(dbService, "findTracingById").mockResolvedValue(tracingData);
 
-      const tracing = await addTracing(tracingData, dbInstance);
-      vi.spyOn(bucketService, "copyObject").mockResolvedValue();
-      expect(
-        async () =>
-          await operationsService.triggerS3Copy(
-            {
-              tracingId: tracing.id,
-            },
-            {
-              "X-Correlation-Id": generateId(),
-            },
-            logger({}),
-          ),
-      ).not.toThrowError();
+      const tracingId = generateId();
+
+      await operationsService.triggerS3Copy(
+        { tracingId },
+        { "X-Correlation-Id": generateId() },
+        logger({}),
+      );
+
+      expect(bucketService.copyObject).toHaveBeenCalled();
+      expect(bucketService.copyObject).toHaveBeenCalledWith(
+        expect.objectContaining(tracingData),
+        expect.any(String),
+      );
     });
     it("should throw an error when tracing is not found", async () => {
       try {
-        vi.spyOn(bucketService, "copyObject").mockResolvedValue();
-        vi.spyOn(dbService, "findTracingById").mockResolvedValue(null);
         await operationsService.triggerS3Copy(
           {
             tracingId: generateId(),

@@ -10,6 +10,7 @@ import { DB } from "pagopa-interop-tracing-commons";
 import {
   PurposeError,
   Tracing,
+  TracingSchema,
   UpdateTracingState,
 } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
@@ -244,9 +245,12 @@ export function dbServiceBuilder(db: DB) {
           WHERE id = $1
           LIMIT 1;`;
 
-        const tracing = await db.oneOrNone(findOneTracingQuery, [tracingId]);
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [tracingId],
+        );
 
-        return tracing;
+        return TracingSchema.parse(tracing);
       } catch (error) {
         throw dbServiceErrorMapper(error);
       }

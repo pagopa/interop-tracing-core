@@ -15,11 +15,7 @@ import {
   ApiTriggerS3CopyParams,
   ApiTriggerS3CopyHeaders,
 } from "pagopa-interop-tracing-operations-client";
-import {
-  ISODateFormat,
-  Logger,
-  genericLogger,
-} from "pagopa-interop-tracing-commons";
+import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
@@ -124,22 +120,19 @@ export function operationsServiceBuilder(
       logger: Logger,
     ): Promise<void> {
       logger.info(`trigger s3 copy for tracingId: ${params.tracingId}`);
+
       const tracing = await dbService.findTracingById(params.tracingId);
-      if (tracing) {
-        tracing.date = ISODateFormat.parse(tracing.date.toISOString());
-        await bucketService.copyObject(tracing, headers["X-Correlation-Id"]);
-      } else {
-        throw tracingNotFound(
-          `Tracing not found: ${params.tracingId}, on triggerS3Copy`,
-        );
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
       }
+
+      return await bucketService.copyObject(
+        tracing,
+        headers["X-Correlation-Id"],
+      );
     },
 
-    async deletePurposeErrors(): Promise<void> {
-      genericLogger.info(`Delete purpose error`);
-      await dbService.deletePurposeErrors();
-      return Promise.resolve();
-    },
+    async deletePurposeErrors(): Promise<void> {},
 
     async saveMissingTracing(): Promise<ApiMissingResponse> {
       genericLogger.info(`Saving missing tracing`);

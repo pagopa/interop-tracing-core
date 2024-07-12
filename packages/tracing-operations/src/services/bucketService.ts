@@ -1,7 +1,7 @@
 import { S3Client, CopyObjectCommand } from "@aws-sdk/client-s3";
 import { config } from "../utilities/config.js";
 import { Tracing } from "../model/domain/db.js";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import { ISODateFormat, genericLogger } from "pagopa-interop-tracing-commons";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
@@ -32,6 +32,10 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
   };
 };
 const buildS3Key = (tracing: Tracing, correlationId: string): string =>
-  `tenantId=${tracing.tenant_id}/date=${tracing.date}/tracingId=${tracing.id}/version=${tracing.version}/correlationId=${correlationId}/${tracing.id}.csv`;
+  `tenantId=${tracing.tenant_id}/date=${ISODateFormat.parse(
+    new Date(tracing.date).toISOString(),
+  )}/tracingId=${tracing.id}/version=${
+    tracing.version
+  }/correlationId=${correlationId}/${tracing.id}.csv`;
 
 export type BucketService = ReturnType<typeof bucketServiceBuilder>;
