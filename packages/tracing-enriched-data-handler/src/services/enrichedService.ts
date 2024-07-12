@@ -4,6 +4,7 @@ import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
+import { tracingState } from "pagopa-interop-tracing-models";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
@@ -42,7 +43,7 @@ export const enrichedServiceBuilder = (
           await producerService.sendUpdateState(
             tracing.tracingId,
             tracing.version,
-            "COMPLETE",
+            tracingState.completed,
           );
         } else {
           throw new Error(`Error on inserting tracing ${message.tracingId}`);

@@ -17,7 +17,11 @@ import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
 import { TracingFromCsv } from "../src/models/messages.js";
-import { InternalError, generateId } from "pagopa-interop-tracing-models";
+import {
+  InternalError,
+  generateId,
+  tracingState,
+} from "pagopa-interop-tracing-models";
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
@@ -86,7 +90,7 @@ describe("Enriched Service", () => {
       expect(sendUpdateStateSpy).toHaveBeenCalledWith(
         mockTracingFromCsv.tracingId,
         mockTracingFromCsv.version,
-        "COMPLETE",
+        tracingState.completed,
       );
     });
 
@@ -159,7 +163,7 @@ describe("Enriched Service", () => {
         expect(sendUpdateStateSpy).toHaveBeenCalledWith(
           mockTracingFromCsv.tracingId,
           mockTracingFromCsv.version,
-          "COMPLETE",
+          tracingState.completed,
         );
     });
   });
