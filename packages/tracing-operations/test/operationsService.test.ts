@@ -19,7 +19,7 @@ import {
   OperationsService,
   operationsServiceBuilder,
 } from "../src/services/operationsService.js";
-import { dbServiceBuilder } from "../src/services/db/dbService.js";
+import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
@@ -57,6 +57,7 @@ describe("database test", () => {
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
   let bucketService: BucketService;
+  let dbService: DBService;
   const tenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
@@ -88,7 +89,7 @@ describe("database test", () => {
       schema: config.schemaName,
       useSSL: config.dbUseSSL,
     });
-
+    dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
 
     operationsService = operationsServiceBuilder(
@@ -611,12 +612,12 @@ describe("database test", () => {
       ).not.toThrowError();
     });
     it("should throw an error when tracing is not found", async () => {
-      vi.spyOn(bucketService, "copyObject").mockResolvedValue();
-      const tracingId = generateId();
       try {
+        vi.spyOn(bucketService, "copyObject").mockResolvedValue();
+        vi.spyOn(dbService, "findTracingById").mockResolvedValue(null);
         await operationsService.triggerS3Copy(
           {
-            tracingId: tracingId,
+            tracingId: generateId(),
           },
           {
             "X-Correlation-Id": generateId(),
