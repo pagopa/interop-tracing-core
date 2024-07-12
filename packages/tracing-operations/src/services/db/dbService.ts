@@ -27,7 +27,7 @@ export function dbServiceBuilder(db: DB) {
         );
         return consumer_id;
       } catch (error) {
-        throw genericInternalError(`Error getTenantByPurposeId: ${error}`);
+        throw dbServiceErrorMapper(`Error getTenantByPurposeId: ${error}`);
       }
     },
 
