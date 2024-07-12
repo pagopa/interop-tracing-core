@@ -18,13 +18,13 @@ import {
   ApicancelTracingStateAndVersionParams,
   ApicancelTracingStateAndVersionPayload,
   ApicancelTracingStateAndVersionResponse,
+  ApiSubmitTracingPayload,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
   PurposeId,
-  TracingId,
   generateId,
   tracingCannotBeUpdated,
   tracingNotFound,
@@ -42,20 +42,17 @@ export function operationsServiceBuilder(dbService: DBService) {
       return await dbService.getTenantByPurposeId(purposeId);
     },
     async submitTracing(
-      data: {
-        tenantId: string;
-        date: string;
-      },
+      payload: ApiSubmitTracingPayload & { tenantId: string },
       logger: Logger,
     ): Promise<ApiSubmitTracingResponse> {
       logger.info(
-        `Submitting tracing with tenantId: ${data.tenantId}, date: ${data.date}`,
+        `Submitting tracing with tenantId: ${payload.tenantId}, date: ${payload.date}`,
       );
 
       const tracing = await dbService.submitTracing({
         id: generateId(),
-        tenant_id: data.tenantId,
-        date: data.date,
+        tenant_id: payload.tenantId,
+        date: payload.date,
         version: 1,
         state: tracingState.pending,
         errors: false,
@@ -222,7 +219,7 @@ export function operationsServiceBuilder(dbService: DBService) {
 
       const data = await dbService.getTracingErrors({
         ...filters,
-        tracing_id: params.tracingId as TracingId,
+        tracing_id: params.tracingId,
       });
 
       const parsedTracingErrors = TracingErrorsContentResponse.safeParse(

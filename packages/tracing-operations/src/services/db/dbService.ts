@@ -1,7 +1,6 @@
 import {
   PurposeId,
   TenantId,
-  TracingId,
   TracingState,
   genericInternalError,
   tracingAlreadyExists,
@@ -76,7 +75,7 @@ export function dbServiceBuilder(db: DB) {
     async getTracingErrors(filters: {
       offset: number;
       limit: number;
-      tracing_id: TracingId;
+      tracing_id: string;
     }): Promise<{ results: PurposeError[]; totalCount: number }> {
       try {
         const { offset, limit, tracing_id } = filters;
