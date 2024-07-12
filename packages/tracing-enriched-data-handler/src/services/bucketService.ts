@@ -19,8 +19,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           throw new Error("No data found in S3 object");
         }
 
-        const csvData = await parseCSV(s3Object.Body as Readable);
-        return csvData;
+        return await parseCSV(s3Object.Body as Readable);
       } catch (error: unknown) {
         throw readObjectBucketS3Error(
           `Error fetching object from bucket with path: ${s3KeyFile}. Details: ${JSON.stringify(
