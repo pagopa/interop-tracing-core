@@ -2,11 +2,8 @@ import helmet from "helmet";
 import express from "express";
 import cors, { CorsOptions } from "cors";
 import {
-  ExpressContext,
-  authenticationMiddleware,
   contextMiddleware,
   loggerMiddleware,
-  zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import tracingRouter from "./routers/tracingRouter.js";
@@ -25,6 +22,8 @@ import { configureMulterEndpoints } from "./routers/config/multer.js";
 import { queryParamsMiddleware } from "./middlewares/query.js";
 import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "./model/types.js";
+import { LocalExpressContext, localZodiosCtx } from "./context/index.js";
+import { authenticationMiddleware } from "./auth/index.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -33,7 +32,7 @@ const operationsService: OperationsService =
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 
-const app: ZodiosApp<ApiExternal, ExpressContext> = zodiosCtx.app();
+const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
 
 // Disable the "X-Powered-By: Express" HTTP header for security reasons.
 // See https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#recommendation_16
@@ -80,7 +79,7 @@ app.use(loggerMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
 
 configureMulterEndpoints(app);
-app.use(tracingRouter(zodiosCtx)(operationsService, bucketService));
+app.use(tracingRouter(localZodiosCtx)(operationsService, bucketService));
 app.use(healthRouter);
 
 export default app;

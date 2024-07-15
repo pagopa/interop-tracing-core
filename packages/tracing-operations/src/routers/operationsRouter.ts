@@ -1,8 +1,6 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
-  ZodiosContext,
-  ExpressContext,
   initDB,
   logger,
 } from "pagopa-interop-tracing-commons";
@@ -13,10 +11,11 @@ import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
 import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
 import { errorMapper } from "../utilities/errorMapper.js";
+import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
 const operationsRouter = (
-  ctx: ZodiosContext,
-): ZodiosRouter<ZodiosEndpointDefinitions, ExpressContext> => {
+  ctx: LocalZodiosContext,
+): ZodiosRouter<ZodiosEndpointDefinitions, LocalExpressContext> => {
   const dbInstance = initDB({
     username: config.dbUsername,
     password: config.dbPassword,
@@ -41,7 +40,7 @@ const operationsRouter = (
         const tracing = await operationsService.submitTracing(
           {
             ...req.body,
-            tenantId: req.ctx.tenantAuthData.tenantId,
+            tenantId: req.ctx.authData.tenantId,
           },
           logger(req.ctx),
         );

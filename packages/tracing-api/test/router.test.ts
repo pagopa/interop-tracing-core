@@ -12,11 +12,9 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
 import {
-  ExpressContext,
   ISODateFormat,
   contextMiddleware,
   logger,
-  zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
@@ -43,6 +41,7 @@ import {
   correlationIdToHeader,
   purposeIdToHeader,
 } from "../src/model/headers.js";
+import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -51,15 +50,15 @@ const operationsService: OperationsService =
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
 const bucketService: BucketService = bucketServiceBuilder(s3client);
 
-const app: ZodiosApp<ApiExternal, ExpressContext> = zodiosCtx.app();
+const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
 app.use(contextMiddleware(config.applicationName));
 configureMulterEndpoints(app);
 
 const mockAppCtx = {
-  requesterAuthData: {
+  correlationId: generateId(),
+  authData: {
     purposeId: generateId(),
   },
-  correlationId: generateId(),
 };
 
 const mockAuthenticationMiddleware = (
@@ -72,13 +71,13 @@ const mockAuthenticationMiddleware = (
 };
 
 app.use(mockAuthenticationMiddleware);
-app.use(tracingRouter(zodiosCtx)(operationsService, bucketService));
+app.use(tracingRouter(localZodiosCtx)(operationsService, bucketService));
 
 const tracingApiClient = supertest(app);
 
 interface RequestWithZodiosCtx extends Request {
   ctx: {
-    requesterAuthData: {
+    authData: {
       purposeId: string;
     };
     correlationId: string;
@@ -152,7 +151,7 @@ describe("Tracing Router", () => {
         {
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.requesterAuthData.purposeId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );

@@ -5,7 +5,12 @@ import {
   ZodiosEndpointDefinition,
   ZodiosPathsByMethod,
 } from "@zodios/core";
-import { AppContext, Middleware, logger } from "pagopa-interop-tracing-commons";
+import {
+  Middleware,
+  ServiceContext,
+  TenantAuthData,
+  logger,
+} from "pagopa-interop-tracing-commons";
 import { getRequesterAuthData } from "./headers.js";
 import { genericInternalError } from "pagopa-interop-tracing-models";
 import { makeApiProblem } from "../model/domain/errors.js";
@@ -21,7 +26,7 @@ const purposeAuthorizerMiddleware =
     Context extends z.ZodObject<any>, // eslint-disable-line @typescript-eslint/no-explicit-any
   >(): Middleware<Api, M, Path, Context> =>
   async (req, res, next) => {
-    const ctx = req.ctx as AppContext;
+    const ctx = req.ctx as ServiceContext<{ authData: TenantAuthData }>;
     const headers = getRequesterAuthData(req as Request);
 
     try {
@@ -38,7 +43,7 @@ const purposeAuthorizerMiddleware =
         );
       }
 
-      ctx.tenantAuthData = { tenantId };
+      ctx.authData = { tenantId };
 
       return next();
     } catch (error: unknown) {

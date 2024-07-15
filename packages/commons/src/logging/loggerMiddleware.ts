@@ -1,17 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as express from "express";
-import { AppContext } from "../context/context.js";
+import { ServiceContext } from "../context/context.js";
 import { LoggerMetadata, logger } from "./index.js";
+import { AuthData } from "../auth/index.js";
 
 export function loggerMiddleware(serviceName: string): express.RequestHandler {
   return (req, res, next): void => {
-    const context = (req as express.Request & { ctx?: AppContext }).ctx;
+    const context = (
+      req as express.Request & {
+        ctx?: ServiceContext<{
+          authData: AuthData;
+        }>;
+      }
+    ).ctx;
 
     const loggerMetadata: LoggerMetadata = {
       serviceName,
       correlationId: context?.correlationId,
-      purposeId: context?.requesterAuthData?.purposeId,
-      tenantId: context?.tenantAuthData?.tenantId,
+      purposeId: context?.authData?.purposeId,
+      tenantId: context?.authData?.tenantId,
     };
 
     const loggerInstance = logger(loggerMetadata);

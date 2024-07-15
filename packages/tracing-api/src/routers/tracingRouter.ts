@@ -1,9 +1,7 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
-  ExpressContext,
   ISODateFormat,
-  ZodiosContext,
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
@@ -22,14 +20,15 @@ import {
 import { BucketService } from "../services/bucketService.js";
 import storage from "../utilities/multer.js";
 import { correlationIdToHeader, purposeIdToHeader } from "../model/headers.js";
+import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
 const tracingRouter =
   (
-    ctx: ZodiosContext,
+    ctx: LocalZodiosContext,
   ): ((
     operationsService: OperationsService,
     bucketService: BucketService,
-  ) => ZodiosRouter<ZodiosEndpointDefinitions, ExpressContext>) =>
+  ) => ZodiosRouter<ZodiosEndpointDefinitions, LocalExpressContext>) =>
   (operationsService: OperationsService, bucketService: BucketService) => {
     const router = ctx.router(api.api, {
       validationErrorHandler: zodiosValidationErrorToApiProblem,
@@ -40,7 +39,7 @@ const tracingRouter =
         try {
           const result = await operationsService.submitTracing(
             {
-              ...purposeIdToHeader(req.ctx.requesterAuthData.purposeId),
+              ...purposeIdToHeader(req.ctx.authData.purposeId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             {
