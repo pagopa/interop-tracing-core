@@ -1,9 +1,6 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
-import {
-  initDB,
-  logger,
-} from "pagopa-interop-tracing-commons";
+import { initDB, logger } from "pagopa-interop-tracing-commons";
 import { api } from "pagopa-interop-tracing-operations-client";
 import { makeApiProblem } from "../model/domain/errors.js";
 import { operationsServiceBuilder } from "../services/operationsService.js";
