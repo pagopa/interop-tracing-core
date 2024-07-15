@@ -755,7 +755,12 @@ describe("database test", () => {
             },
             logger({}),
           ),
-        ).rejects.toThrowError(tracingCannotBeUpdated(tracing.id));
+        ).rejects.toThrowError(
+          tracingCannotBeUpdated(tracing.id, [
+            tracingState.error,
+            tracingState.missing,
+          ]),
+        );
       });
 
       it("should throw an internal DB Service error when attempting recover a tracing", async () => {

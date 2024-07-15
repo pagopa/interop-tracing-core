@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { P, match } from "ts-pattern";
 import { ZodError, z } from "zod";
+import { TracingState } from "./index.js";
 
 export const ProblemError = z.object({
   code: z.string(),
@@ -232,9 +233,17 @@ export function tracingNotFound(tracingId: string): ApiError<CommonErrorCodes> {
 
 export function tracingCannotBeUpdated(
   tracingId: string,
+  acceptedStatus: TracingState[],
 ): ApiError<CommonErrorCodes> {
+  const acceptedStatusString =
+    acceptedStatus.length === 1
+      ? acceptedStatus[0]
+      : acceptedStatus.slice(0, -1).join(", ") +
+        " or " +
+        acceptedStatus[acceptedStatus.length - 1];
+
   return new ApiError({
-    detail: `Tracing with Id ${tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`,
+    detail: `Tracing with Id ${tracingId} cannot be updated. The state of tracing must be either ${acceptedStatusString}.`,
     code: "tracingCannotBeUpdated",
     title: "Tracing cannot be updated",
   });

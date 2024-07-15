@@ -90,7 +90,10 @@ export function operationsServiceBuilder(
         tracing.state === tracingState.completed ||
         tracing.state === tracingState.pending
       ) {
-        throw tracingCannotBeUpdated(params.tracingId);
+        throw tracingCannotBeUpdated(params.tracingId, [
+          tracingState.error,
+          tracingState.missing,
+        ]);
       }
 
       await dbService.updateTracingState({
@@ -123,7 +126,9 @@ export function operationsServiceBuilder(
       }
 
       if (tracing.state !== tracingState.completed) {
-        throw tracingCannotBeUpdated(params.tracingId);
+        throw tracingCannotBeUpdated(params.tracingId, [
+          tracingState.completed,
+        ]);
       }
 
       await dbService.updateTracingState({
