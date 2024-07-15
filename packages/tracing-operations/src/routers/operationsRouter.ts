@@ -14,6 +14,8 @@ import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
 import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
 import { errorMapper } from "../utilities/errorMapper.js";
+import { bucketServiceBuilder } from "../services/bucketService.js";
+import { S3Client } from "@aws-sdk/client-s3";
 
 const operationsRouter = (
   ctx: ZodiosContext,
@@ -30,8 +32,14 @@ const operationsRouter = (
   const operationsRouter = ctx.router(api.api, {
     validationErrorHandler: zodiosValidationErrorToApiProblem,
   });
+
+  const s3client: S3Client = new S3Client({
+    region: config.awsRegion,
+  });
+  const bucketService = bucketServiceBuilder(s3client);
+
   const dbService = dbServiceBuilder(dbInstance);
-  const operationsService = operationsServiceBuilder(dbService);
+  const operationsService = operationsServiceBuilder(dbService, bucketService);
   const { purposeAuthorizerMiddleware } =
     purposeAuthorizerMiddlewareBuilder(dbService);
 
@@ -120,6 +128,26 @@ const operationsRouter = (
         await operationsService.savePurposeError(
           req.params,
           req.body,
+          logger(req.ctx),
+        );
+        return res.status(204).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
+
+  operationsRouter.post(
+    "/tracings/:tracingId/triggerCopy",
+    async (req, res) => {
+      const correlationID = {
+        "X-Correlation-Id": req.header("x-correlation-id") ?? "",
+      };
+      try {
+        await operationsService.triggerS3Copy(
+          req.params,
+          correlationID,
           logger(req.ctx),
         );
         return res.status(204).end();

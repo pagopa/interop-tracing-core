@@ -12,9 +12,14 @@ export function processTracingStateMessage(
 ): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message): Promise<void> => {
     try {
-      await service.updateTracingState(
-        decodeSQSUpdateTracingStateMessage(message),
-      );
+      const updateTracingStateMessage =
+        decodeSQSUpdateTracingStateMessage(message);
+
+      if (updateTracingStateMessage.isReplacing) {
+        await service.triggerS3Copy(updateTracingStateMessage.tracingId);
+      } else {
+        await service.updateTracingState(updateTracingStateMessage);
+      }
     } catch (e: unknown) {
       throw errorMapper(e);
     }

@@ -182,3 +182,24 @@ export type ApiGetTracingErrorsParams = ZodiosPathParamsByPath<
   "get",
   "/tracings/:tracingId/errors"
 >;
+export type ApiTriggerS3CopyParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/triggerCopy"
+>;
+
+export type ApiTriggerS3CopyResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/triggerCopy"
+>;
+export type ApiTriggerS3CopyPayload = ZodiosBodyByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/triggerCopy"
+>;
+export type ApiTriggerS3CopyHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/triggerCopy"
+>;

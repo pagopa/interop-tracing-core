@@ -69,6 +69,22 @@ export const operationsServiceBuilder = (
         );
       }
     },
+    async triggerS3Copy(tracingId: string) {
+      try {
+        await operationsApiClient.triggerCopy(undefined, {
+          headers: {
+            ...correlationIdToHeader("a10473fb-f11e-4a2d-9010-f771c50eb671"),
+          },
+          params: { tracingId },
+        });
+
+        genericLogger.info(`Triggering s3 copy for tracingId: ${tracingId}`);
+      } catch (error: unknown) {
+        throw errorProcessingUpdateTracingState(
+          `Error triggering copy: ${tracingId}. Details: ${error}`,
+        );
+      }
+    },
   };
 };
 

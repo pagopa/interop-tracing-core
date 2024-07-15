@@ -20,6 +20,8 @@ import {
   ApicancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
+  ApiTriggerS3CopyParams,
+  ApiTriggerS3CopyHeaders,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -36,8 +38,12 @@ import {
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
 import { tracingCannotBeCancelled } from "../model/domain/errors.js";
+import { BucketService } from "./bucketService.js";
 
-export function operationsServiceBuilder(dbService: DBService) {
+export function operationsServiceBuilder(
+  dbService: DBService,
+  bucketService: BucketService,
+) {
   return {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
       return await dbService.getTenantByPurposeId(purposeId);
@@ -203,11 +209,25 @@ export function operationsServiceBuilder(dbService: DBService) {
       });
     },
 
-    async deletePurposeErrors(): Promise<void> {
-      genericLogger.info(`Delete purpose error`);
-      await dbService.deletePurposeErrors();
-      return Promise.resolve();
+    async triggerS3Copy(
+      params: ApiTriggerS3CopyParams,
+      headers: ApiTriggerS3CopyHeaders,
+      logger: Logger,
+    ): Promise<void> {
+      logger.info(`trigger s3 copy for tracingId: ${params.tracingId}`);
+
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      return await bucketService.copyObject(
+        tracing,
+        headers["X-Correlation-Id"],
+      );
     },
+
+    async deletePurposeErrors(): Promise<void> {},
 
     async saveMissingTracing(): Promise<ApiMissingResponse> {
       genericLogger.info(`Saving missing tracing`);

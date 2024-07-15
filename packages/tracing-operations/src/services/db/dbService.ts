@@ -10,6 +10,7 @@ import { DB } from "pagopa-interop-tracing-commons";
 import {
   PurposeError,
   Tracing,
+  TracingSchema,
   UpdateTracingState,
   UpdateTracingVersion,
 } from "../../model/domain/db.js";
@@ -204,25 +205,6 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async findTracingById(tracingId: string): Promise<Tracing | null> {
-      try {
-        const findOneTracingQuery = `
-          SELECT id, tenant_id, state, date, version, errors 
-          FROM tracing.tracings
-          WHERE id = $1
-          LIMIT 1;`;
-
-        const tracing = await db.oneOrNone<Tracing | null>(
-          findOneTracingQuery,
-          [tracingId],
-        );
-
-        return tracing;
-      } catch (error) {
-        throw dbServiceErrorMapper("findTracingById", error);
-      }
-    },
-
     async replaceTracing() {
       try {
         return Promise.resolve();
@@ -297,6 +279,24 @@ export function dbServiceBuilder(db: DB) {
         throw genericInternalError(
           `Error save missing tracing error: ${error}`,
         );
+      }
+    },
+    async findTracingById(tracingId: string): Promise<Tracing | null> {
+      try {
+        const findOneTracingQuery = `
+          SELECT id, tenant_id, state, date, version, errors 
+          FROM tracing.tracings
+          WHERE id = $1
+          LIMIT 1;`;
+
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [tracingId],
+        );
+
+        return tracing ? TracingSchema.parse(tracing) : null;
+      } catch (error) {
+        throw dbServiceErrorMapper("findTracingById", error);
       }
     },
   };

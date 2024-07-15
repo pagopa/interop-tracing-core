@@ -19,7 +19,7 @@ import {
   OperationsService,
   operationsServiceBuilder,
 } from "../src/services/operationsService.js";
-import { dbServiceBuilder } from "../src/services/db/dbService.js";
+import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
@@ -53,11 +53,18 @@ import {
   ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
+import {
+  BucketService,
+  bucketServiceBuilder,
+} from "../src/services/bucketService.js";
+import { S3Client } from "@aws-sdk/client-s3";
 
 describe("database test", () => {
   let dbInstance: DB;
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
+  let bucketService: BucketService;
+  let dbService: DBService;
 
   const tenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
@@ -80,6 +87,7 @@ describe("database test", () => {
   beforeAll(async () => {
     startedPostgreSqlContainer = await postgreSQLContainer(config).start();
     config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    const s3client: S3Client = new S3Client({ region: config.awsRegion });
 
     dbInstance = initDB({
       username: config.dbUsername,
@@ -91,7 +99,10 @@ describe("database test", () => {
       useSSL: config.dbUseSSL,
     });
 
-    operationsService = operationsServiceBuilder(dbServiceBuilder(dbInstance));
+    dbService = dbServiceBuilder(dbInstance);
+    bucketService = bucketServiceBuilder(s3client);
+
+    operationsService = operationsServiceBuilder(dbService, bucketService);
 
     await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
 
@@ -851,6 +862,48 @@ describe("database test", () => {
           ),
         ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
       });
+    });
+  });
+  describe("triggerS3Copy", () => {
+    it("should call trigger s3Copy", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+      vi.spyOn(bucketService, "copyObject").mockResolvedValueOnce();
+      vi.spyOn(dbService, "findTracingById").mockResolvedValue(tracingData);
+
+      const tracingId = generateId();
+
+      await operationsService.triggerS3Copy(
+        { tracingId },
+        { "X-Correlation-Id": generateId() },
+        logger({}),
+      );
+
+      expect(bucketService.copyObject).toHaveBeenCalled();
+      expect(bucketService.copyObject).toHaveBeenCalledWith(
+        expect.objectContaining(tracingData),
+        expect.any(String),
+      );
+    });
+    it("should throw an error when tracing is not found", async () => {
+      const tracingId = generateId();
+      expect(
+        operationsService.triggerS3Copy(
+          {
+            tracingId,
+          },
+          {
+            "X-Correlation-Id": generateId(),
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracingId));
     });
   });
 });

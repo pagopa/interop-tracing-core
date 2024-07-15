@@ -1,6 +1,10 @@
+import { genericLogger } from "pagopa-interop-tracing-commons";
+import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
+import { insertEnrichedTraceError } from "../models/errors.js";
+import { tracingState } from "pagopa-interop-tracing-models";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
@@ -8,18 +12,52 @@ export const enrichedServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async insertTracing(message: string): Promise<unknown> {
-      const s3KeyPath = message;
-      const tracingId = "";
-      const records = await bucketService.readObject(s3KeyPath);
-      const result = await dbService.insertTracing(tracingId, records);
-      if (!records || !result) {
-        return await producerService.sendErrorMessage({ error: "" });
-      } else {
-        return Promise.resolve({});
+    async insertEnrichedTrace(message: TracingFromCsv) {
+      try {
+        const { data: tracing, error: tracingError } =
+          TracingFromCsv.safeParse(message);
+
+        if (tracingError) {
+          throw new Error(
+            `Tracing message is not valid: ${JSON.stringify(tracingError)}`,
+          );
+        }
+
+        genericLogger.info(`Processing tracing id: ${tracing.tracingId}`);
+
+        const s3KeyPath = createS3Path(tracing);
+
+        const enrichedTracingRecords: TracingEnriched[] =
+          await bucketService.readObject(s3KeyPath);
+
+        if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
+          throw new Error(`No record found for key ${s3KeyPath}`);
+        }
+
+        const tracingInserted = await dbService.insertTracing(
+          tracing.tracingId,
+          enrichedTracingRecords,
+        );
+
+        if (tracingInserted.length > 0) {
+          await producerService.sendUpdateState(
+            tracing.tracingId,
+            tracing.version,
+            tracingState.completed,
+          );
+        } else {
+          throw new Error(`Error on inserting tracing ${message.tracingId}`);
+        }
+      } catch (e) {
+        throw insertEnrichedTraceError(
+          `Error on inserting tracing ${message.tracingId}, Detail: ${e}`,
+        );
       }
     },
   };
 };
+export function createS3Path(message: TracingFromCsv) {
+  return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
+}
 
 export type EnrichedService = ReturnType<typeof enrichedServiceBuilder>;

@@ -35,7 +35,7 @@ export const processingServiceBuilder = (
 
         const tracingRecords = await bucketService.readObject(s3KeyPath);
         if (!tracingRecords || tracingRecords.length === 0) {
-          throw `No record found for key ${s3KeyPath}`;
+          throw new Error(`No record found for key ${s3KeyPath}`);
         }
 
         const hasSemiColonSeparator = tracingRecords.some((trace) => {
@@ -43,7 +43,7 @@ export const processingServiceBuilder = (
         });
 
         if (hasSemiColonSeparator) {
-          throw `Invalid delimiter found on csv at ${s3KeyPath}`;
+          throw new Error(`Invalid delimiter found on csv at ${s3KeyPath}`);
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
