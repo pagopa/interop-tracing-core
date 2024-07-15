@@ -119,7 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateOnCompleteResponse"
+                $ref: "#/components/schemas/ReplaceTracingResponse"
         "400":
           description: The provided input data is invalid
           content:
@@ -594,8 +594,14 @@ components:
           type: number
         previousState:
           $ref: "#/components/schemas/TracingState"
-    UpdateOnCompleteResponse:
+    ReplaceTracingResponse:
       type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
+        - previousState
       properties:
         tracingId:
           type: string
@@ -603,8 +609,13 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
     Problem:
       properties:
         type:

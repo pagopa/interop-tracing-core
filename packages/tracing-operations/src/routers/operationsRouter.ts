@@ -85,8 +85,11 @@ const operationsRouter = (
 
   operationsRouter.post("/tracings/:tracingId/replace", async (req, res) => {
     try {
-      await operationsService.replaceTracing();
-      return res.status(200).json().end();
+      const tracing = await operationsService.replaceTracing(
+        req.params,
+        logger(req.ctx),
+      );
+      return res.status(200).json(tracing).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();

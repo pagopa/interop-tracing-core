@@ -17,6 +17,7 @@ import {
   ApicancelTracingStateAndVersionParams,
   ApiRecoverTracingParams,
   ApiGetTracingErrorsParams,
+  ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
@@ -93,9 +94,11 @@ export const operationsServiceBuilder = (
     });
   },
 
-  async replaceTracing(tracingId: string): Promise<ApiReplaceTracingResponse> {
+  async replaceTracing(
+    params: ApiReplaceTracingParams,
+  ): Promise<ApiReplaceTracingResponse> {
     return await operationsApiClient.replaceTracing(undefined, {
-      params: { tracingId },
+      params: { tracingId: params.tracingId },
     });
   },
 });

@@ -19,6 +19,7 @@ import {
   ApicancelTracingStateAndVersionPayload,
   ApicancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
+  ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -104,11 +105,38 @@ export function operationsServiceBuilder(dbService: DBService) {
         previousState: tracing.state,
       };
     },
+    async replaceTracing(
+      params: ApiReplaceTracingParams,
+      logger: Logger,
+    ): Promise<ApiReplaceTracingResponse> {
+      logger.info(`Recover data for tracingId: ${params.tracingId}`);
 
-    async replaceTracing(): Promise<ApiReplaceTracingResponse> {
-      genericLogger.info(`Replacing tracing`);
-      await dbService.replaceTracing();
-      return Promise.resolve({});
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.state !== tracingState.completed) {
+        throw tracingCannotBeUpdated(params.tracingId);
+      }
+
+      await dbService.updateTracingState({
+        tracing_id: params.tracingId,
+        state: tracingState.pending,
+      });
+
+      await dbService.updateTracingVersion({
+        tracing_id: params.tracingId,
+        version: tracing.version + 1,
+      });
+
+      return {
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
+        version: tracing.version + 1,
+        date: tracing.date,
+        previousState: tracing.state,
+      };
     },
 
     async cancelTracingStateAndVersion(

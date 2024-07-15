@@ -46,6 +46,11 @@ export type ApiRecoverTracingResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/recover"
 >;
 
+export type ApiReplaceTracingParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/replace"
+>;
 export type ApiReplaceTracingPayload = ZodiosBodyByPath<
   Api,
   "post",
