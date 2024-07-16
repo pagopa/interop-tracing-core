@@ -48,7 +48,7 @@ export const processingServiceBuilder = (
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
 
-        writeEnrichedTracingOrSendPurposeErrors(
+        await writeEnrichedTracingOrSendPurposeErrors(
           bucketService,
           producerService,
           dbService,
