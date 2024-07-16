@@ -116,6 +116,8 @@ const errorCodes = {
   unauthorizedError: "9004",
   jwtDecodingError: "9005",
   tracingAlreadyExists: "9006",
+  tracingNotFound: "9007",
+  tracingCannotBeUpdated: "9008",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -217,5 +219,23 @@ export function tracingAlreadyExists(
     detail: details,
     code: "tracingAlreadyExists",
     title: "Bad Request",
+  });
+}
+
+export function tracingNotFound(tracingId: string): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Tracing by ${tracingId} not found.`,
+    code: "tracingNotFound",
+    title: "Tracing not found",
+  });
+}
+
+export function tracingCannotBeUpdated(
+  tracingId: string,
+): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Tracing with Id ${tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`,
+    code: "tracingCannotBeUpdated",
+    title: "Tracing cannot be updated",
   });
 }

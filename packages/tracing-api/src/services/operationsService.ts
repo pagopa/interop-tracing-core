@@ -13,6 +13,10 @@ import {
   ApiUpdateTracingStateParams,
   ApiSubmitTracingHeaders,
   ApiUpdateTracingStateHeaders,
+  ApicancelTracingStateAndVersionPayload,
+  ApicancelTracingStateAndVersionParams,
+  ApiRecoverTracingParams,
+  ApiGetTracingErrorsParams,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
@@ -48,6 +52,21 @@ export const operationsServiceBuilder = (
     );
   },
 
+  async cancelTracingStateAndVersion(
+    params: ApicancelTracingStateAndVersionParams,
+    payload: ApicancelTracingStateAndVersionPayload,
+  ): Promise<void> {
+    await operationsApiClient.cancelTracingStateAndVersion(
+      {
+        state: payload.state,
+        version: payload.version,
+      },
+      {
+        params: { tracingId: params.tracingId },
+      },
+    );
+  },
+
   async getTracings(
     filters: ApiGetTracingsQuery,
   ): Promise<ApiGetTracingsResponse> {
@@ -57,18 +76,20 @@ export const operationsServiceBuilder = (
   },
 
   async getTracingErrors(
-    tracingId: string,
+    params: ApiGetTracingErrorsParams,
     filters: ApiGetTracingErrorsQuery,
   ): Promise<ApiGetTracingErrorsResponse> {
     return await operationsApiClient.getTracingErrors({
       queries: filters,
-      params: { tracingId },
+      params: { tracingId: params.tracingId },
     });
   },
 
-  async recoverTracing(tracingId: string): Promise<ApiRecoverTracingResponse> {
+  async recoverTracing(
+    params: ApiRecoverTracingParams,
+  ): Promise<ApiRecoverTracingResponse> {
     return await operationsApiClient.recoverTracing(undefined, {
-      params: { tracingId },
+      params: { tracingId: params.tracingId },
     });
   },
 

@@ -1,17 +1,25 @@
+import { SQS } from "pagopa-interop-tracing-commons";
+import { decodeSqsMessage } from "./models/models.js";
 import { EnrichedService } from "./services/enrichedService.js";
 import { ReplacementServiceBuilder } from "./services/replacementService.js";
+import { errorMapper } from "./utilities/errorMapper.js";
 
-export function processMessage(
-  enrichedService: EnrichedService,
+export function processReplacementUploadMessage(
   replacementService: ReplacementServiceBuilder,
-): (message: string) => void {
-  return async (message: string) => {
-    const actionType = message;
-    if (actionType === "INSERT_TRACING") {
-      enrichedService.insertTracing(message);
-    }
-    if (actionType === "DELETE_TRACING") {
-      replacementService.deleteTracing(message);
+): (message: unknown) => Promise<void> {
+  return async (message: unknown) => {
+    replacementService.deleteTracing(message);
+  };
+}
+export function processEnrichedStateMessage(
+  enrichedService: EnrichedService,
+): (message: SQS.Message) => Promise<void> {
+  return async (message: SQS.Message) => {
+    try {
+      const tracing = decodeSqsMessage(message);
+      await enrichedService.insertEnrichedTrace(tracing);
+    } catch (e) {
+      throw errorMapper(e);
     }
   };
 }
