@@ -13,7 +13,12 @@ import {
   producerServiceBuilder,
 } from "../src/services/producerService.js";
 import { dbConfig } from "../src/utilities/dbConfig.js";
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  SQS,
+  WithSQSMessageId,
+  initDB,
+} from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
 import { TracingFromCsv } from "../src/models/messages.js";
@@ -33,6 +38,12 @@ describe("Enriched Service", () => {
   let bucketService: BucketService;
   let producerService: ProducerService;
   let startedPostgreSqlContainer: StartedTestContainer;
+
+  const mockAppCtx: WithSQSMessageId<AppContext> = {
+    serviceName: config.applicationName,
+    messageId: "12345",
+    correlationId: mockTracingFromCsv.correlationId,
+  };
 
   const s3client = new S3Client({
     region: config.awsRegion,
@@ -80,18 +91,22 @@ describe("Enriched Service", () => {
         .spyOn(producerService, "sendUpdateState")
         .mockResolvedValue();
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
       expect(readObjectSpy).toHaveBeenCalledWith(expect.any(String));
+
       expect(insertTracingSpy).toHaveBeenCalledWith(
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-        tracingId: mockTracingFromCsv.tracingId,
-        version: mockTracingFromCsv.version,
-        state: tracingState.completed,
-      });
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
 
     it("should throw an error if tracing message is not valid", async () => {
@@ -103,6 +118,7 @@ describe("Enriched Service", () => {
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
+          mockAppCtx,
         );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
@@ -119,7 +135,10 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -138,7 +157,10 @@ describe("Enriched Service", () => {
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -159,14 +181,17 @@ describe("Enriched Service", () => {
       );
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        });
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+          {
+            tracingId: mockTracingFromCsv.tracingId,
+            version: mockTracingFromCsv.version,
+            state: tracingState.completed,
+          },
+          mockAppCtx,
+        );
     });
   });
 });

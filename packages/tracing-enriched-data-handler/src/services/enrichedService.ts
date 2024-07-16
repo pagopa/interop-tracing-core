@@ -1,7 +1,6 @@
 import {
   AppContext,
   WithSQSMessageId,
-  genericLogger,
   logger,
 } from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
