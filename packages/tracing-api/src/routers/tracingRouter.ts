@@ -9,6 +9,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { genericError, tracingState } from "pagopa-interop-tracing-models";
 import {
+  cancelTracingStateAndVersionError,
   resolveApiProblem,
   updateTracingStateError,
 } from "../model/domain/errors.js";
@@ -152,11 +153,41 @@ const tracingRouter =
       })
       .put("/tracings/:tracingId/recover", async (req, res) => {
         try {
-          const result = await operationsService.recoverTracing(
-            req.params.tracingId,
+          const result = await operationsService.recoverTracing(req.params);
+
+          const bucketS3Key = buildS3Key(
+            result.tenantId,
+            result.date,
+            result.tracingId,
+            result.version,
+            req.ctx.correlationId,
           );
 
-          return res.status(200).json(result).end();
+          await bucketService
+            .writeObject(req.body.file, bucketS3Key)
+            .catch(async (error) => {
+              await operationsService
+                .cancelTracingStateAndVersion(
+                  {
+                    tracingId: result.tracingId,
+                  },
+                  { state: result.previousState, version: result.version - 1 },
+                )
+                .catch((e) => {
+                  throw cancelTracingStateAndVersionError(
+                    `Unable to cancel tracing to previous version with tracingId: ${result.tracingId}. Details: ${e}`,
+                  );
+                });
+
+              throw error;
+            });
+
+          return res
+            .status(200)
+            .json({
+              tracingId: result.tracingId,
+            })
+            .end();
         } catch (error) {
           const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();

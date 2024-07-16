@@ -65,7 +65,7 @@ paths:
 
   /tracings/{tracingId}/recover:
     post:
-      summary: Update tracing with state error by tracingId
+      summary: Update data of existing tracing with state error by tracingId
       operationId: recoverTracing
       tags:
         - Write
@@ -81,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateOnErrorResponse"
+                $ref: "#/components/schemas/RecoverTracingResponse"
         "400":
           description: The provided input data is invalid
           content:
@@ -169,6 +169,46 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/TracingStateUpdateRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/cancel:
+    post:
+      summary: Cancel previous tracing state and version   by tracingId
+      operationId: cancelTracingStateAndVersion
+      tags:
+        - Write
+      parameters:
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TracingVersionAndStateCancelRequest"
       responses:
         "204":
           description: No content
@@ -442,6 +482,16 @@ components:
           $ref: "#/components/schemas/TracingState"
       required:
         - state
+    TracingVersionAndStateCancelRequest:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/TracingState"
+        version:
+          type: number
+      required:
+        - state
+        - version
     TracingState:
       type: string
       enum:
@@ -562,8 +612,14 @@ components:
           $ref: "#/components/schemas/TracingState"
         errors:
           type: boolean
-    UpdateOnErrorResponse:
+    RecoverTracingResponse:
       type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
+        - previousState
       properties:
         tracingId:
           type: string
@@ -571,8 +627,13 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
     UpdateOnCompleteResponse:
       type: object
       properties:

@@ -1,7 +1,6 @@
 import {
   PurposeId,
   TenantId,
-  TracingId,
   TracingState,
   genericInternalError,
   tracingAlreadyExists,
@@ -11,8 +10,8 @@ import { DB } from "pagopa-interop-tracing-commons";
 import {
   PurposeError,
   Tracing,
-  TracingSchema,
   UpdateTracingState,
+  UpdateTracingStateAndVersionSchema,
 } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
@@ -76,7 +75,7 @@ export function dbServiceBuilder(db: DB) {
     async getTracingErrors(filters: {
       offset: number;
       limit: number;
-      tracing_id: TracingId;
+      tracing_id: string;
     }): Promise<{ results: PurposeError[]; totalCount: number }> {
       try {
         const { offset, limit, tracing_id } = filters;
@@ -205,13 +204,25 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async recoverTracing() {
+    async findTracingById(tracingId: string): Promise<Tracing | null> {
       try {
-        return Promise.resolve();
+        const findOneTracingQuery = `
+          SELECT id, tenant_id, state, date, version, errors 
+          FROM tracing.tracings
+          WHERE id = $1
+          LIMIT 1;`;
+
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [tracingId],
+        );
+
+        return tracing;
       } catch (error) {
-        throw genericInternalError(`Error updateTracingOnError: ${error}`);
+        throw dbServiceErrorMapper("findTracingById", error);
       }
     },
+
     async replaceTracing() {
       try {
         return Promise.resolve();
@@ -231,6 +242,27 @@ export function dbServiceBuilder(db: DB) {
         await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
         throw dbServiceErrorMapper("updateTracingState", error);
+      }
+    },
+
+    async updateTracingStateAndVersion(
+      data: UpdateTracingStateAndVersionSchema,
+    ): Promise<void> {
+      try {
+        const updateTracingStateQuery = `
+          UPDATE tracing.tracings
+            SET version = $2,
+              state = $3,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1`;
+
+        await db.none(updateTracingStateQuery, [
+          data.tracing_id,
+          data.version,
+          data.state,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("updateTracingStateAndVersion", error);
       }
     },
 
@@ -256,6 +288,7 @@ export function dbServiceBuilder(db: DB) {
         throw dbServiceErrorMapper("savePurposeError", error);
       }
     },
+
     async deletePurposeErrors() {
       try {
         return Promise.resolve();
@@ -263,6 +296,7 @@ export function dbServiceBuilder(db: DB) {
         throw genericInternalError(`Error delete purpose error: ${error}`);
       }
     },
+
     async saveMissingTracing() {
       try {
         return Promise.resolve();
@@ -270,24 +304,6 @@ export function dbServiceBuilder(db: DB) {
         throw genericInternalError(
           `Error save missing tracing error: ${error}`,
         );
-      }
-    },
-    async findTracingById(tracingId: string) {
-      try {
-        const findOneTracingQuery = `
-          SELECT id, tenant_id, state, date, version, errors 
-          FROM tracing.tracings
-          WHERE id = $1
-          LIMIT 1;`;
-
-        const tracing = await db.oneOrNone<Tracing | null>(
-          findOneTracingQuery,
-          [tracingId],
-        );
-
-        return tracing ? TracingSchema.parse(tracing) : null;
-      } catch (error) {
-        throw dbServiceErrorMapper("findTracingById", error);
       }
     },
   };

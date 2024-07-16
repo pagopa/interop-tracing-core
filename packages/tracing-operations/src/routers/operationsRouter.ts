@@ -66,8 +66,25 @@ const operationsRouter = (
 
   operationsRouter.post("/tracings/:tracingId/recover", async (req, res) => {
     try {
-      await operationsService.recoverTracing();
-      return res.status(200).json().end();
+      const tracing = await operationsService.recoverTracing(
+        req.params,
+        logger(req.ctx),
+      );
+      return res.status(200).json(tracing).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.post("/tracings/:tracingId/cancel", async (req, res) => {
+    try {
+      await operationsService.cancelTracingStateAndVersion(
+        req.params,
+        req.body,
+        logger(req.ctx),
+      );
+      return res.status(204).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();

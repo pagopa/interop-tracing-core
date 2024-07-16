@@ -1,5 +1,4 @@
 import {
-  ApiError,
   InternalError,
   makeApiProblemBuilder,
 } from "pagopa-interop-tracing-models";
@@ -9,17 +8,19 @@ export const errorCodes = {
   tenantNotFound: "0002",
   tracingAlreadyExists: "0003",
   copyObjectS3BucketError: "0004",
+  tracingCannotBeCancelled: "1000",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
 
 export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
-export function tracingNotFound(tracingId: string): ApiError<ErrorCodes> {
-  return new ApiError({
-    detail: `Tracing by ${tracingId} not found`,
-    code: "tracingNotFound",
-    title: "Tracing not found",
+export function tracingCannotBeCancelled(
+  tracingId: string,
+): InternalError<ErrorCodes> {
+  return new InternalError({
+    detail: `Tracing with Id ${tracingId} cannot be cancelled. The state of tracing must be PENDING.`,
+    code: "tracingCannotBeCancelled",
   });
 }
 

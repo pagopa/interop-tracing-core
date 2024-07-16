@@ -1,6 +1,7 @@
 import {
   ApiGetTracingErrorsResponse,
   ApiGetTracingsResponse,
+  ApiRecoverTracingResponse,
   ApiSubmitTracingResponse,
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
@@ -8,7 +9,10 @@ import {
   PurposeId,
   TracingId,
   generateId,
+  genericInternalError,
   tracingAlreadyExists,
+  tracingCannotBeUpdated,
+  tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,7 +38,10 @@ import {
 } from "../src/services/operationsService.js";
 import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
-import { makeApiProblem } from "../src/model/domain/errors.js";
+import {
+  makeApiProblem,
+  writeObjectS3BucketError,
+} from "../src/model/domain/errors.js";
 import { errorMapper } from "../src/utilities/errorMapper.js";
 import { ZodiosApp } from "@zodios/express";
 import {
@@ -174,14 +181,14 @@ describe("Tracing Router", () => {
       };
 
       const errorMessage = `A tracing for the current tenant already exists on this date: ${mockSubmitTracingResponse.date}`;
-      const errorApiMock = makeApiProblem(
+      const apiErrorMock = makeApiProblem(
         tracingAlreadyExists(errorMessage),
         errorMapper,
         logger({}),
       );
 
       const operationsApiClientError =
-        mockOperationsApiClientError(errorApiMock);
+        mockOperationsApiClientError(apiErrorMock);
 
       vi.spyOn(operationsApiClient, "submitTracing").mockRejectedValue(
         operationsApiClientError,
@@ -375,6 +382,272 @@ describe("Tracing Router", () => {
         .query({});
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe("recoverTracing", () => {
+    it("should upload to bucket a revisited tracing file, update relative db existing tracing version and state to 'PENDING'", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "MISSING",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockRecoverTracingResponse.tenantId,
+        mockRecoverTracingResponse.date,
+        mockRecoverTracingResponse.tracingId,
+        mockRecoverTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockResolvedValueOnce(
+        mockRecoverTracingResponse,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce();
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracingId).toBe(
+        mockRecoverTracingResponse.tracingId,
+      );
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+      );
+
+      expect(operationsApiClient.recoverTracing).toHaveBeenCalledWith(
+        undefined,
+        {
+          params: { tracingId: mockRecoverTracingResponse.tracingId },
+        },
+      );
+    });
+
+    it("should return a 409 status error if the tracing to update does not have a state ERROR or MISSING", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "MISSING",
+      };
+
+      const errorMessage = `Tracing with Id ${mockRecoverTracingResponse.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`;
+      const apiErrorMock = makeApiProblem(
+        tracingCannotBeUpdated(errorMessage),
+        errorMapper,
+        logger({}),
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockRejectedValueOnce(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(apiErrorMock.detail);
+      expect(response.status).toBe(409);
+    });
+
+    it("should return a 404 status error if the tracing cannot be found", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const apiErrorMock = makeApiProblem(
+        tracingNotFound(mockRecoverTracingResponse.tracingId),
+        errorMapper,
+        logger({}),
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockRejectedValueOnce(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(apiErrorMock.detail);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return a 500 status error if the tracing upload to the bucket fails, then call cancelTracingStateAndVersion API with 204 response status", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockRecoverTracingResponse.tenantId,
+        mockRecoverTracingResponse.date,
+        mockRecoverTracingResponse.tracingId,
+        mockRecoverTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockResolvedValueOnce(
+        mockRecoverTracingResponse,
+      );
+
+      const mockSQSError =
+        "The SQS service is currently unavailable. Please try again later.";
+
+      const writeObjectS3BucketErrorMock = writeObjectS3BucketError(
+        `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+        writeObjectS3BucketErrorMock,
+      );
+
+      vi.spyOn(
+        operationsApiClient,
+        "cancelTracingStateAndVersion",
+      ).mockResolvedValueOnce();
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+      );
+
+      expect(
+        operationsApiClient.cancelTracingStateAndVersion,
+      ).toHaveBeenCalledWith(
+        {
+          state: mockRecoverTracingResponse.previousState,
+          version: mockRecoverTracingResponse.version - 1,
+        },
+        {
+          params: {
+            tracingId: mockRecoverTracingResponse.tracingId,
+          },
+        },
+      );
+
+      expect(response.text).contains("Unexpected error");
+      expect(response.status).toBe(500);
+    });
+
+    it("should return a 500 status error if the tracing upload to the bucket fails, then call cancelTracingStateAndVersion API with 500 response status", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockRecoverTracingResponse.tenantId,
+        mockRecoverTracingResponse.date,
+        mockRecoverTracingResponse.tracingId,
+        mockRecoverTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "recoverTracing").mockResolvedValueOnce(
+        mockRecoverTracingResponse,
+      );
+
+      const mockSQSError =
+        "The SQS service is currently unavailable. Please try again later.";
+
+      const writeObjectS3BucketErrorMock = writeObjectS3BucketError(
+        `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+        writeObjectS3BucketErrorMock,
+      );
+
+      const errorMessage = `Tracing with Id ${mockRecoverTracingResponse.tracingId} cannot be cancelled. The state of tracing must be PENDING.`;
+      const apiErrorMock = makeApiProblem(
+        genericInternalError(errorMessage),
+        errorMapper,
+        logger({}),
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(
+        operationsApiClient,
+        "cancelTracingStateAndVersion",
+      ).mockRejectedValueOnce(operationsApiClientError);
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+      );
+
+      expect(
+        operationsApiClient.cancelTracingStateAndVersion,
+      ).toHaveBeenCalledWith(
+        {
+          state: mockRecoverTracingResponse.previousState,
+          version: mockRecoverTracingResponse.version - 1,
+        },
+        {
+          params: {
+            tracingId: mockRecoverTracingResponse.tracingId,
+          },
+        },
+      );
+
+      expect(response.text).contains("Unexpected error");
+      expect(response.status).toBe(500);
     });
   });
 });
