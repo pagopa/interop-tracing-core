@@ -4,8 +4,9 @@ import { LoggerConfig } from "../config/loggerConfig.js";
 
 export type LoggerMetadata = {
   serviceName?: string;
-  correlationId?: string | null;
-  purposeId?: string | null;
+  correlationId?: string;
+  messageId?: string;
+  purposeId?: string;
   tenantId?: string;
 };
 
