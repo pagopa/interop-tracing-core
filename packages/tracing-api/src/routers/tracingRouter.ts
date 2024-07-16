@@ -6,8 +6,8 @@ import {
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
 import { genericError, tracingState } from "pagopa-interop-tracing-models";
-import { z } from "zod";
 import {
+  cancelTracingStateAndVersionError,
   resolveApiProblem,
   updateTracingStateError,
 } from "../model/domain/errors.js";
@@ -123,29 +123,26 @@ const tracingRouter =
       .get("/tracings/:tracingId/errors", async (req, res) => {
         try {
           const data = await operationsService.getTracingErrors(
-            req.params.tracingId,
+            req.params,
             req.query,
           );
 
-          const result = z
-            .array(ApiTracingErrorsContent)
-            .safeParse(data.errors);
-
+          const result = ApiTracingErrorsContent.safeParse(data);
           if (!result.success) {
             logger(req.ctx).error(
-              `Unable to parse tracing errors items: result ${JSON.stringify(
+              `Unable to parse tracing errors content items: result ${JSON.stringify(
                 result,
-              )} - data ${JSON.stringify(data.errors)} `,
+              )} - data ${JSON.stringify(data.results)} `,
             );
 
-            throw genericError("Unable to parse tracing errors items");
+            throw genericError("Unable to parse tracing errors content items");
           }
 
           return res
             .status(200)
             .json({
-              errors: result.data,
-              totalCount: data.totalCount,
+              results: result.data.results,
+              totalCount: result.data.totalCount,
             })
             .end();
         } catch (error) {
@@ -155,11 +152,41 @@ const tracingRouter =
       })
       .put("/tracings/:tracingId/recover", async (req, res) => {
         try {
-          const result = await operationsService.recoverTracing(
-            req.params.tracingId,
+          const result = await operationsService.recoverTracing(req.params);
+
+          const bucketS3Key = buildS3Key(
+            result.tenantId,
+            result.date,
+            result.tracingId,
+            result.version,
+            req.ctx.correlationId,
           );
 
-          return res.status(200).json(result).end();
+          await bucketService
+            .writeObject(req.body.file, bucketS3Key)
+            .catch(async (error) => {
+              await operationsService
+                .cancelTracingStateAndVersion(
+                  {
+                    tracingId: result.tracingId,
+                  },
+                  { state: result.previousState, version: result.version - 1 },
+                )
+                .catch((e) => {
+                  throw cancelTracingStateAndVersionError(
+                    `Unable to cancel tracing to previous version with tracingId: ${result.tracingId}. Details: ${e}`,
+                  );
+                });
+
+              throw error;
+            });
+
+          return res
+            .status(200)
+            .json({
+              tracingId: result.tracingId,
+            })
+            .end();
         } catch (error) {
           const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();
