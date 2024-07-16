@@ -2,17 +2,17 @@ import { z } from "zod";
 import http from "http";
 
 export const TracingRecordSchema = z.object({
-  date: z.string(),
+  date: z.coerce.string(),
   purpose_id: z.string().uuid(),
   status: z.coerce
     .number()
     .refine(
       (value) => Object.keys(http.STATUS_CODES).map(Number).includes(value),
       {
-        message: "Invalid HTTP status code",
+        message: `Invalid HTTP status code`,
       },
     ),
-  requests_count: z.string(),
+  requests_count: z.coerce.number(),
   rowNumber: z.number(),
 });
 
