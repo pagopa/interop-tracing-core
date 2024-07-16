@@ -11,7 +11,7 @@ import {
   PurposeError,
   Tracing,
   UpdateTracingState,
-  UpdateTracingVersion,
+  UpdateTracingStateAndVersionSchema,
 } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { DateUnit, truncatedTo } from "../../utilities/date.js";
@@ -245,17 +245,24 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async updateTracingVersion(data: UpdateTracingVersion): Promise<void> {
+    async updateTracingStateAndVersion(
+      data: UpdateTracingStateAndVersionSchema,
+    ): Promise<void> {
       try {
         const updateTracingStateQuery = `
           UPDATE tracing.tracings
             SET version = $2,
+              state = $3,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = $1`;
 
-        await db.none(updateTracingStateQuery, [data.tracing_id, data.version]);
+        await db.none(updateTracingStateQuery, [
+          data.tracing_id,
+          data.version,
+          data.state,
+        ]);
       } catch (error) {
-        throw dbServiceErrorMapper("updateTracingVersion", error);
+        throw dbServiceErrorMapper("updateTracingStateAndVersion", error);
       }
     },
 

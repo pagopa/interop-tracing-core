@@ -40,9 +40,10 @@ const UpdateTracingStateSchema = z.object({
   state: TracingState,
 });
 
-const UpdateTracingVersionSchema = z.object({
+const UpdateTracingStateAndVersionSchema = z.object({
   tracing_id: z.string().uuid(),
   version: z.number(),
+  state: TracingState,
 });
 
 export type Tenant = z.infer<typeof TenantSchema>;
@@ -50,4 +51,6 @@ export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
 export type Tracing = z.infer<typeof TracingSchema>;
 export type UpdateTracingState = z.infer<typeof UpdateTracingStateSchema>;
-export type UpdateTracingVersion = z.infer<typeof UpdateTracingVersionSchema>;
+export type UpdateTracingStateAndVersionSchema = z.infer<
+  typeof UpdateTracingStateAndVersionSchema
+>;
