@@ -5,7 +5,7 @@ import { LoggerConfig } from "../config/loggerConfig.js";
 export type LoggerMetadata = {
   serviceName?: string;
   correlationId?: string;
-  messageId?: string;
+  messageId?: string | null | undefined;
   purposeId?: string;
   tenantId?: string;
 };
@@ -28,10 +28,11 @@ const logFormat = (
   msg: string,
   timestamp: string,
   level: string,
-  { serviceName, tenantId, correlationId }: LoggerMetadata,
+  { serviceName, tenantId, correlationId, messageId }: LoggerMetadata,
 ) => {
   const serviceLogPart = serviceName ? `[${serviceName}]` : undefined;
   const tenantLogPart = tenantId ? `[TID=${tenantId}]` : undefined;
+  const messageLogPart = messageId ? `[MID=${messageId}]` : undefined;
   const correlationLogPart = correlationId
     ? `[CID=${correlationId}]`
     : undefined;
@@ -40,7 +41,7 @@ const logFormat = (
     .filter((e) => e !== undefined)
     .join(" ");
 
-  const secondPart = [tenantLogPart, correlationLogPart]
+  const secondPart = [tenantLogPart, correlationLogPart, messageLogPart]
     .filter((e) => e !== undefined)
     .join(" ");
 

@@ -42,6 +42,7 @@ const processQueue = async (
     QueueUrl: config.queueUrl,
     WaitTimeSeconds: config.consumerPollingTimeout,
     MaxNumberOfMessages: 10,
+    MessageAttributeNames: ["All"],
   });
 
   let keepProcessingQueue: boolean = true;

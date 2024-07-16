@@ -6,11 +6,11 @@ import {
 export const correlationIdToHeader = (
   correlationId: string,
 ): CorrelationIdHeader => ({
-  "X-Correlation-Id": correlationId,
+  "x-correlation-id": correlationId,
 });
 
 export const purposeIdToHeader = (
   purposeId: string,
 ): RequesterPurposeIdHeader => ({
-  "X-Requester-Purpose-Id": purposeId,
+  "x-requester-purpose-id": purposeId,
 });
