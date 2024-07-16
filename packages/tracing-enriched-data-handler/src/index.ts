@@ -1,5 +1,3 @@
-import { initDB } from "pagopa-interop-tracing-commons";
-import { processMessage } from "./messageHandler.js";
 import { dbServiceBuilder } from "./services/db/dbService.js";
 import {
   ProducerService,
@@ -18,6 +16,14 @@ import {
   ReplacementServiceBuilder,
   replacementServiceBuilder,
 } from "./services/replacementService.js";
+import { config } from "./utilities/config.js";
+import {
+  processReplacementUploadMessage,
+  processEnrichedStateMessage,
+} from "./messageHandler.js";
+import { S3Client } from "@aws-sdk/client-s3";
+import { SQS, initDB } from "pagopa-interop-tracing-commons";
+
 const dbInstance = initDB({
   username: dbConfig.dbUsername,
   password: dbConfig.dbPassword,
@@ -25,11 +31,20 @@ const dbInstance = initDB({
   port: dbConfig.dbPort,
   database: dbConfig.dbName,
   schema: dbConfig.dbSchemaName,
-  useSSL: dbConfig.dbUseSSL,
+  useSSL: false,
 });
 
-const bucketService: BucketService = bucketServiceBuilder();
-const producerService: ProducerService = producerServiceBuilder();
+const s3client: S3Client = new S3Client({
+  region: config.awsRegion,
+});
+
+const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+  region: config.awsRegion,
+});
+
+const bucketService: BucketService = bucketServiceBuilder(s3client);
+const producerService: ProducerService = producerServiceBuilder(sqsClient);
+
 const replacementService: ReplacementServiceBuilder = replacementServiceBuilder(
   dbServiceBuilder(dbInstance),
   producerService,
@@ -40,4 +55,21 @@ const enrichedService: EnrichedService = enrichedServiceBuilder(
   producerService,
 );
 
-processMessage(enrichedService, replacementService);
+await Promise.all([
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsReplacementUploadEndpoint,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+    },
+    processReplacementUploadMessage(replacementService),
+  ),
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsEnrichedUploadEndpoint,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+    },
+    processEnrichedStateMessage(enrichedService),
+  ),
+]);
