@@ -148,7 +148,6 @@ export async function checkRecords(
 
 function parseErrorMessage(errorObj: string) {
   const error = JSON.parse(errorObj);
-  genericLogger.info(`ERROR, ${JSON.stringify(error)}`);
   const {
     path,
     message,
