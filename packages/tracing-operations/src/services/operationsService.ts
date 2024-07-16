@@ -14,17 +14,23 @@ import {
   ApiGetTracingsQuery,
   ApiTriggerS3CopyParams,
   ApiTriggerS3CopyHeaders,
+  ApiGetTracingErrorsParams,
+  ApiGetTracingErrorsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
   PurposeId,
+  TracingId,
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
+import {
+  TracingErrorsContentResponse,
+  TracingsContentResponse,
+} from "../model/domain/tracing.js";
 import { PurposeError } from "../model/domain/db.js";
-import { TracingsContentResponse } from "../model/domain/tracing.js";
 import { BucketService } from "./bucketService.js";
 import { tracingNotFound } from "../model/domain/errors.js";
 
@@ -147,6 +153,7 @@ export function operationsServiceBuilder(
       logger.info(`Get tracings`);
 
       const data = await dbService.getTracings(filters);
+
       const parsedTracings = TracingsContentResponse.safeParse(data.results);
       if (!parsedTracings.success) {
         throw new Error(
@@ -162,13 +169,33 @@ export function operationsServiceBuilder(
       };
     },
 
-    async getTracingErrors(): Promise<ApiGetTracingErrorsResponse> {
-      genericLogger.info(`Get error detail`);
-      await dbService.getTracingErrors();
-      return Promise.resolve({
-        errors: [],
-        totalCount: 0,
+    async getTracingErrors(
+      filters: ApiGetTracingErrorsQuery,
+      params: ApiGetTracingErrorsParams,
+      logger: Logger,
+    ): Promise<ApiGetTracingErrorsResponse> {
+      logger.info(`Get purposes errors for tracingId: ${params.tracingId}`);
+
+      const data = await dbService.getTracingErrors({
+        ...filters,
+        tracing_id: params.tracingId as TracingId,
       });
+
+      const parsedTracingErrors = TracingErrorsContentResponse.safeParse(
+        data.results,
+      );
+      if (!parsedTracingErrors.success) {
+        throw new Error(
+          `Unable to parse tracing purposes errors items: result ${JSON.stringify(
+            parsedTracingErrors,
+          )} - data ${JSON.stringify(data.results)}`,
+        );
+      }
+
+      return {
+        results: parsedTracingErrors.data,
+        totalCount: data.totalCount,
+      };
     },
   };
 }

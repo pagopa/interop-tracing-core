@@ -13,6 +13,7 @@ export function decodeSqsMessage(
     if (!message.Body) {
       throw new Error("Message body is undefined");
     }
+
     const s3Body: S3BodySchema = JSON.parse(message.Body);
 
     if (!s3Body.Records.length) {
@@ -31,7 +32,7 @@ export function decodeSqsMessage(
     }
   } catch (error: unknown) {
     throw decodeSqsMessageError(
-      `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Error details: ${error}`,
+      `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
     );
   }
 }

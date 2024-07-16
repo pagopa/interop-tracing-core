@@ -23,6 +23,7 @@ import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
+  PurposeErrorId,
   PurposeId,
   TenantId,
   TracingId,
@@ -33,15 +34,18 @@ import { StartedTestContainer } from "testcontainers";
 import {
   addEservice,
   addPurpose,
+  addPurposeError,
   addTenant,
   addTracing,
   clearPurposesErrors,
   clearTracings,
   findTracingById,
 } from "./utils.js";
-import { Tracing } from "../src/model/domain/db.js";
+import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
 import {
+  ApiGetTracingErrorsParams,
+  ApiGetTracingErrorsQuery,
   ApiSavePurposeErrorPayload,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
@@ -138,9 +142,8 @@ describe("database test", () => {
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain(
-            "Error getTenantByPurposeId: QueryResultError",
-          );
+          expect(error.message).toContain("Database query failed");
+          expect(error.message).toContain("QueryResultError");
           expect(error.code).toBe("genericError");
         }
       });
@@ -442,6 +445,113 @@ describe("database test", () => {
         expect(result.results.length).toBe(1);
       });
     });
+
+    describe("getTracingErrors", () => {
+      it("searching should return an empty list of tracing errors", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          logger({}),
+        );
+
+        expect(result.results).toStrictEqual([]);
+        expect(result.totalCount).toBe(0);
+      });
+
+      it("searching with 'limit' parameter value to 1, should return only 1 record with an INVALID_STATUS_CODE errorCode and totalCount 2", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 1,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: tracingData.version,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            row_number: 2,
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          logger({}),
+        );
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(1);
+        expect(result.results[0].errorCode).toBe(
+          PurposeErrorCodes.INVALID_STATUS_CODE,
+        );
+      });
+
+      it("searching with invalid 'tracingId' parameter value should throw an error", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: "invalid_uuid",
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        try {
+          await operationsService.getTracingErrors(query, params, logger({}));
+        } catch (e) {
+          const error = e as InternalError<CommonErrorCodes>;
+          expect(error).toBeInstanceOf(Error);
+          expect(error.message).toContain("Database query failed");
+          expect(error.message).toContain("invalid input syntax for type uuid");
+          expect(error.code).toBe("genericError");
+        }
+      });
+    });
   });
 
   describe("updateTracingState", () => {
@@ -507,7 +617,7 @@ describe("database test", () => {
       } catch (e) {
         const error = e as InternalError<CommonErrorCodes>;
         expect(error).toBeInstanceOf(Error);
-        expect(error.message).toContain("DB Service error: QueryResultError");
+        expect(error.message).toContain("Database query failed");
         expect(error.message).toContain("queryResultErrorCode.noData");
         expect(error.code).toBe("genericError");
       }
@@ -580,7 +690,7 @@ describe("database test", () => {
       } catch (e) {
         const error = e as InternalError<CommonErrorCodes>;
         expect(error).toBeInstanceOf(Error);
-        expect(error.message).toContain("DB Service error");
+        expect(error.message).toContain("Database query failed");
         expect(error.message).toContain("purposes_errors_tracing_id_fkey");
         expect(error.code).toBe("genericError");
       }

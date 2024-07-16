@@ -1,6 +1,7 @@
 import {
   PurposeId,
   TenantId,
+  TracingId,
   TracingState,
   genericInternalError,
   tracingAlreadyExists,
@@ -21,13 +22,13 @@ export function dbServiceBuilder(db: DB) {
   return {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<TenantId> {
       try {
-        const result: { consumer_id: TenantId } = await db.one(
+        const { consumer_id } = await db.one<{ consumer_id: TenantId }>(
           "SELECT consumer_id FROM tracing.purposes WHERE id = $1",
           [purposeId],
         );
-        return result.consumer_id;
+        return consumer_id;
       } catch (error) {
-        throw genericInternalError(`Error getTenantByPurposeId: ${error}`);
+        throw dbServiceErrorMapper("getTenantByPurposeId", error);
       }
     },
 
@@ -45,7 +46,7 @@ export function dbServiceBuilder(db: DB) {
            WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
         `;
 
-        const { total_count }: { total_count: number } = await db.one(
+        const { total_count } = await db.one<{ total_count: number }>(
           getTracingsTotalCountQuery,
           [states],
         );
@@ -57,7 +58,7 @@ export function dbServiceBuilder(db: DB) {
           OFFSET $2 LIMIT $3
         `;
 
-        const tracings: Tracing[] = await db.any(getTracingsQuery, [
+        const tracings = await db.any<Tracing>(getTracingsQuery, [
           states,
           offset,
           limit,
@@ -68,15 +69,49 @@ export function dbServiceBuilder(db: DB) {
           totalCount: total_count,
         };
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("getTracings", error);
       }
     },
 
-    async getTracingErrors() {
+    async getTracingErrors(filters: {
+      offset: number;
+      limit: number;
+      tracing_id: TracingId;
+    }): Promise<{ results: PurposeError[]; totalCount: number }> {
       try {
-        return Promise.resolve();
+        const { offset, limit, tracing_id } = filters;
+
+        const getTracingErrorsTotalCountQuery = `
+          SELECT COUNT(*)::integer as total_count
+          FROM tracing.purposes_errors pe 
+            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $1
+        `;
+
+        const { total_count } = await db.one<{ total_count: number }>(
+          getTracingErrorsTotalCountQuery,
+          [tracing_id],
+        );
+
+        const getTracingErrorsQuery = `
+          SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.error_code, pe.message, pe.row_number
+          FROM tracing.purposes_errors pe 
+            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $3
+          OFFSET $1 LIMIT $2
+        `;
+
+        const tracingErrors = await db.any<PurposeError>(
+          getTracingErrorsQuery,
+          [offset, limit, tracing_id],
+        );
+
+        return {
+          results: tracingErrors,
+          totalCount: total_count,
+        };
       } catch (error) {
-        throw genericInternalError(`Error getTracingErrors: ${error}`);
+        throw dbServiceErrorMapper("getTracingErrors", error);
       }
     },
 
@@ -166,7 +201,7 @@ export function dbServiceBuilder(db: DB) {
           errors: !!pastTracingsHasErrors,
         };
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("submitTracing", error);
       }
     },
 
@@ -195,7 +230,7 @@ export function dbServiceBuilder(db: DB) {
 
         await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("updateTracingState", error);
       }
     },
 
@@ -218,7 +253,7 @@ export function dbServiceBuilder(db: DB) {
           data.row_number,
         ]);
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("savePurposeError", error);
       }
     },
     async deletePurposeErrors() {
@@ -252,7 +287,7 @@ export function dbServiceBuilder(db: DB) {
 
         return tracing ? TracingSchema.parse(tracing) : null;
       } catch (error) {
-        throw dbServiceErrorMapper(error);
+        throw dbServiceErrorMapper("findTracingById", error);
       }
     },
   };

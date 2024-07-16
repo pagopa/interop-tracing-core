@@ -1,9 +1,11 @@
 import {
+  ApiGetTracingErrorsResponse,
   ApiGetTracingsResponse,
   ApiSubmitTracingResponse,
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
 import {
+  PurposeId,
   TracingId,
   generateId,
   tracingAlreadyExists,
@@ -16,6 +18,7 @@ import {
   ISODateFormat,
   contextMiddleware,
   logger,
+  PurposeErrorCodes,
   zodiosCtx,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
@@ -36,6 +39,8 @@ import { errorMapper } from "../src/utilities/errorMapper.js";
 import { ZodiosApp } from "@zodios/express";
 import {
   ApiExternal,
+  ApiExternalGetTracingErrorsParams,
+  ApiExternalGetTracingErrorsQuery,
   ApiExternalGetTracingsQuery,
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
@@ -274,6 +279,100 @@ describe("Tracing Router", () => {
         .get(`/tracings`)
         .set("Content-Type", "application/json")
         .query(searchQuery);
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe("getTracingErrors", () => {
+    it("retrieve non-empty list of tracing errors", async () => {
+      const searchParams: ApiExternalGetTracingErrorsParams = {
+        tracingId: generateId<TracingId>(),
+      };
+
+      const searchQuery: ApiExternalGetTracingErrorsQuery = {
+        offset: 0,
+        limit: 10,
+      };
+
+      const result: ApiGetTracingErrorsResponse = {
+        results: [
+          {
+            purposeId: generateId<PurposeId>(),
+            errorCode: PurposeErrorCodes.INVALID_STATUS_CODE,
+            message: "INVALID_STATUS_CODE",
+            rowNumber: 2,
+          },
+        ],
+        totalCount: 2,
+      };
+
+      vi.spyOn(operationsApiClient, "getTracingErrors").mockResolvedValue(
+        result,
+      );
+
+      const response = await tracingApiClient
+        .get(`/tracings/${searchParams.tracingId}/errors`)
+        .set("Content-Type", "application/json")
+        .query(searchQuery);
+
+      expect(response.status).toBe(200);
+    });
+
+    it("retrieve empty list of tracing errors", async () => {
+      const searchParams: ApiExternalGetTracingErrorsParams = {
+        tracingId: generateId<TracingId>(),
+      };
+
+      const searchQuery: ApiExternalGetTracingErrorsQuery = {
+        offset: 0,
+        limit: 10,
+      };
+
+      const result: ApiGetTracingErrorsResponse = {
+        results: [],
+        totalCount: 0,
+      };
+
+      vi.spyOn(operationsApiClient, "getTracingErrors").mockResolvedValue(
+        result,
+      );
+
+      const response = await tracingApiClient
+        .get(`/tracings/${searchParams.tracingId}/errors`)
+        .set("Content-Type", "application/json")
+        .query(searchQuery);
+
+      expect(response.status).toBe(200);
+    });
+
+    it("throw bad request status when invalid 'tracingId' parameter is provided", async () => {
+      const searchParams: ApiExternalGetTracingErrorsParams = {
+        tracingId: "invalid_uuid",
+      };
+
+      const searchQuery: ApiExternalGetTracingErrorsQuery = {
+        offset: 0,
+        limit: 10,
+      };
+
+      const response = await tracingApiClient
+        .get(`/tracings/${searchParams.tracingId}/errors`)
+        .set("Content-Type", "application/json")
+        .query(searchQuery);
+
+      expect(response.status).toBe(400);
+    });
+
+    it("throw bad request status when no offset/limit parameter is provided", async () => {
+      const searchParams = {
+        tracingId: generateId<TracingId>(),
+      };
+
+      const response = await tracingApiClient
+        .get(`/tracings/${searchParams.tracingId}/errors`)
+        .set("Content-Type", "application/json")
+        .query({});
 
       expect(response.status).toBe(400);
     });

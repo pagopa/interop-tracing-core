@@ -23,7 +23,9 @@ export const enrichedServiceBuilder = (
           );
         }
 
-        genericLogger.info(`Processing tracing id: ${tracing.tracingId}`);
+        genericLogger.info(
+          `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
+        );
 
         const s3KeyPath = createS3Path(tracing);
 
@@ -34,23 +36,23 @@ export const enrichedServiceBuilder = (
           throw new Error(`No record found for key ${s3KeyPath}`);
         }
 
-        const tracingInserted = await dbService.insertTracing(
+        const tracesInserted = await dbService.insertTraces(
           tracing.tracingId,
           enrichedTracingRecords,
         );
 
-        if (tracingInserted.length > 0) {
-          await producerService.sendUpdateState(
-            tracing.tracingId,
-            tracing.version,
-            tracingState.completed,
-          );
+        if (tracesInserted.length > 0) {
+          await producerService.sendUpdateState({
+            tracingId: tracing.tracingId,
+            version: tracing.version,
+            state: tracingState.completed,
+          });
         } else {
-          throw new Error(`Error on inserting tracing ${message.tracingId}`);
+          throw new Error("No traces were inserted");
         }
       } catch (e) {
         throw insertEnrichedTraceError(
-          `Error on inserting tracing ${message.tracingId}, Detail: ${e}`,
+          `Error inserting traces with tracingId: ${message.tracingId}`,
         );
       }
     },

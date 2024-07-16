@@ -13,12 +13,12 @@ export const replacementServiceBuilder = (
       try {
         const { tracingId, version } = message;
         await dbService.deleteTracing(tracingId);
-        return producerService.sendUpdateState(
+        return producerService.sendUpdateState({
           tracingId,
           version,
-          tracingState.completed,
-          true,
-        );
+          state: tracingState.completed,
+          isReplacing: true,
+        });
       } catch (error) {
         throw deleteTraceError(
           `Error on deleting tracing ${message.tracingId}, detail: ${error}`,
