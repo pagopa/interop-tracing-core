@@ -26,9 +26,9 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
           JSON.stringify(purposeError),
           ctx.correlationId,
         );
-      } catch (err) {
+      } catch (error: unknown) {
         throw sendMessagePurposeError(
-          `Error sending purpose message error for tracingId: ${purposeError.tracingId}, Details: ${err}`,
+          `Error sending purpose message error for tracingId: ${purposeError.tracingId}. Details: ${error}`,
         );
       }
     },

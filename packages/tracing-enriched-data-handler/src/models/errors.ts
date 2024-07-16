@@ -1,21 +1,22 @@
 import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  decodeSqsMessageError: "0601",
+  decodeSQSMessageError: "0601",
   readObjectBucketS3Error: "0602",
   insertEnrichedTraceError: "0603",
   insertTraceError: "0604",
   deleteTraceError: "0605",
+  sendUpdateStateError: "0606",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;
 
-export function decodeSqsMessageError(
+export function decodeSQSMessageError(
   detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
-    code: "decodeSqsMessageError",
+    code: "decodeSQSMessageError",
   });
 }
 
@@ -34,6 +35,15 @@ export function insertEnrichedTraceError(
   return new InternalError({
     detail: `${detail}`,
     code: "insertEnrichedTraceError",
+  });
+}
+
+export function sendUpdateStateError(
+  detail: string,
+): InternalError<ErrorCodes> {
+  return new InternalError({
+    detail: `${detail}`,
+    code: "sendUpdateStateError",
   });
 }
 

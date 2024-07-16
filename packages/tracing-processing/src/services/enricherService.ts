@@ -120,7 +120,7 @@ export function dbServiceBuilder(db: DB) {
               );
             } catch (error) {
               throw getEnrichedPurposeError(
-                `Error fetching record for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}: Details: ${error}`,
+                `Error getEnrichedPurpose for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}: Details: ${error}`,
               );
             }
           },
@@ -129,9 +129,9 @@ export function dbServiceBuilder(db: DB) {
         const enrichedPurposes = await Promise.all(fullRecordPromises);
 
         return enrichedPurposes;
-      } catch (error) {
+      } catch (error: unknown) {
         throw getEnrichedPurposeError(
-          `Error in getEnrichedPurpose function: ${error}`,
+          `Error fetching record for tracingId: ${tracing.tracingId}. Details: ${error}`,
         );
       }
     },

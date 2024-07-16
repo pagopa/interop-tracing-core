@@ -66,7 +66,7 @@ export const processingServiceBuilder = (
             ctx,
           );
         }
-      } catch (error) {
+      } catch (error: unknown) {
         throw errorMapper(error, logger(ctx));
       }
     },

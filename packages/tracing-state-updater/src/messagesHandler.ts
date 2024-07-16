@@ -30,8 +30,8 @@ export function processTracingStateMessage(
         decodeSQSUpdateTracingStateMessage(message),
         ctx,
       );
-    } catch (e: unknown) {
-      throw errorMapper(e, logger(ctx));
+    } catch (error: unknown) {
+      throw errorMapper(error, logger(ctx));
     }
   };
 }
@@ -61,8 +61,8 @@ export function processPurposeErrorMessage(
           ctx,
         );
       }
-    } catch (e: unknown) {
-      throw errorMapper(e, logger(ctx));
+    } catch (error: unknown) {
+      throw errorMapper(error, logger(ctx));
     }
   };
 }
