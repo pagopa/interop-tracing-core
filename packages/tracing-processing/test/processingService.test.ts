@@ -31,9 +31,12 @@ import {
 import { config } from "../src/utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
 import {
+  AppContext,
   DB,
   PurposeErrorCodes,
   SQS,
+  WithSQSMessageId,
+  genericLogger,
   initDB,
 } from "pagopa-interop-tracing-commons";
 import {
@@ -91,6 +94,18 @@ describe("Processing Service", () => {
   let processingService: ProcessingService;
   let dbService: DBService;
   let dbInstance: DB;
+
+  const sqsMessage: SQS.Message = {
+    MessageId: "12345",
+    ReceiptHandle: "receipt_handle_id",
+    Body: JSON.stringify(SqsMockMessageForS3.Body),
+  };
+
+  const mockAppCtx: WithSQSMessageId<AppContext> = {
+    serviceName: config.applicationName,
+    messageId: SqsMockMessageForS3.MessageId,
+    correlationId: decodeSQSMessage(sqsMessage).correlationId,
+  };
 
   afterAll(async () => {
     startedPostgreSqlContainer.stop();
@@ -156,7 +171,7 @@ describe("Processing Service", () => {
       vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
       const decoded = decodeSQSMessage(sqsMessage);
-      await processingService.processTracing(decoded);
+      await processingService.processTracing(decoded, mockAppCtx);
       expect(processingService.processTracing).toBeCalledWith(decoded);
       expect(decoded).toMatchObject({
         tenantId: expect.any(String),
@@ -244,6 +259,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
+        genericLogger,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -257,7 +273,7 @@ describe("Processing Service", () => {
         purposeErrorsFiltered,
       );
 
-      await processingService.processTracing(mockMessage);
+      await processingService.processTracing(mockMessage, mockAppCtx);
 
       expect(purposeErrors?.length).toBeGreaterThan(0);
 
@@ -282,9 +298,10 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
+        genericLogger,
       );
 
-      await processingService.processTracing(mockMessage);
+      await processingService.processTracing(mockMessage, mockAppCtx);
 
       expect(bucketService.writeObject).toHaveBeenCalledWith(
         enrichedPurposes,
@@ -348,6 +365,7 @@ describe("Processing Service", () => {
         mockTracingRecords,
         "s3KeyPath",
         mockMessage,
+        mockAppCtx,
       );
 
       expect(producerService.sendErrorMessage).toBeCalledTimes(
@@ -376,6 +394,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
         mockMessage,
+        genericLogger,
       );
 
       const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
@@ -386,6 +405,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         errorPurposesWithInvalidPurposeId,
         mockMessage,
+        genericLogger,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -409,6 +429,7 @@ describe("Processing Service", () => {
         await dbService.getEnrichedPurpose(
           errorPurposesWithInvalidEserviceId,
           mockMessage,
+          genericLogger,
         );
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
@@ -421,10 +442,14 @@ describe("Processing Service", () => {
     it("should return getEnrichedPurposeError if consumer is not found", async () => {
       try {
         const invalidConsumer = generateId();
-        await dbService.getEnrichedPurpose(validPurpose, {
-          ...mockMessage,
-          ...{ tenantId: invalidConsumer },
-        });
+        await dbService.getEnrichedPurpose(
+          validPurpose,
+          {
+            ...mockMessage,
+            ...{ tenantId: invalidConsumer },
+          },
+          genericLogger,
+        );
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
@@ -444,6 +469,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
+        genericLogger,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {

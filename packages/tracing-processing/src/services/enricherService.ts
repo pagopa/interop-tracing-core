@@ -1,8 +1,4 @@
-import {
-  DB,
-  genericLogger,
-  PurposeErrorCodes,
-} from "pagopa-interop-tracing-commons";
+import { DB, Logger, PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import { getEnrichedPurposeError } from "../models/errors.js";
 import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
@@ -15,12 +11,13 @@ export function dbServiceBuilder(db: DB) {
     async getEnrichedPurpose(
       records: TracingRecordSchema[],
       tracing: TracingFromS3KeyPathDto,
+      logger: Logger,
     ): Promise<EnrichedPurposeResult> {
       try {
         const fullRecordPromises = records.map(
           async (record: TracingRecordSchema) => {
             try {
-              genericLogger.info(
+              logger.info(
                 `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
               );
 

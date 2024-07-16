@@ -7,8 +7,10 @@ import { BucketService } from "./bucketService.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
+  AppContext,
   PurposeErrorCodes,
-  genericLogger,
+  WithSQSMessageId,
+  logger,
 } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
 import { errorMapper } from "../utilities/errorMapper.js";
@@ -25,9 +27,12 @@ export const processingServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async processTracing(tracing: TracingFromS3KeyPathDto) {
+    async processTracing(
+      tracing: TracingFromS3KeyPathDto,
+      ctx: WithSQSMessageId<AppContext>,
+    ) {
       try {
-        genericLogger.info(
+        logger(ctx).info(
           `Reading and processing file for tracingId: ${tracing.tracingId}`,
         );
 
@@ -49,34 +54,36 @@ export const processingServiceBuilder = (
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
 
         if (formalErrorsRecords.length) {
-          sendFormalErrors(formalErrorsRecords, producerService);
+          await sendFormalErrors(formalErrorsRecords, producerService, ctx);
         } else {
-          writeEnrichedTracingOrSendPurposeErrors(
+          await writeEnrichedTracingOrSendPurposeErrors(
             bucketService,
             producerService,
             dbService,
             tracingRecords,
             s3KeyPath,
             tracing,
+            ctx,
           );
         }
       } catch (error) {
-        throw errorMapper(error);
+        throw errorMapper(error, logger(ctx));
       }
     },
   };
 };
 
-function sendFormalErrors(
+async function sendFormalErrors(
   formalErrorsRecords: SavePurposeErrorDto[],
   producerService: ProducerService,
+  ctx: WithSQSMessageId<AppContext>,
 ) {
   for (const [index, purposeError] of formalErrorsRecords.entries()) {
     const isLast = index === formalErrorsRecords.length - 1;
     if (isLast) {
       purposeError.updateTracingState = true;
     }
-    producerService.sendErrorMessage(purposeError);
+    await producerService.sendErrorMessage(purposeError, ctx);
   }
 }
 
@@ -87,10 +94,12 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   tracingRecords: TracingRecordSchema[],
   s3KeyPath: string,
   tracing: TracingFromS3KeyPathDto,
+  ctx: WithSQSMessageId<AppContext>,
 ) {
   const enrichedPurposes = await dbService.getEnrichedPurpose(
     tracingRecords,
     tracing,
+    logger(ctx),
   );
 
   const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
@@ -106,7 +115,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   );
 
   if (purposeErrors && purposeErrors.length > 0) {
-    await sendPurposeErrors(purposeErrors, tracing, producerService);
+    await sendPurposeErrors(purposeErrors, tracing, producerService, ctx);
   } else {
     const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
 
@@ -121,6 +130,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
         purposeEnriched.data,
         s3KeyPath,
         tracing.tenantId,
+        logger(ctx),
       );
     }
   }
@@ -186,6 +196,7 @@ async function sendPurposeErrors(
   purposeErrors: PurposeErrorMessage[],
   tracing: TracingFromS3KeyPathDto,
   producerService: ProducerService,
+  ctx: WithSQSMessageId<AppContext>,
 ) {
   const errorMessagePromises = purposeErrors.map((record, index) => {
     const purposeError = {
@@ -197,7 +208,7 @@ async function sendPurposeErrors(
       rowNumber: record.rowNumber,
       updateTracingState: index === purposeErrors.length - 1,
     };
-    return producerService.sendErrorMessage(purposeError);
+    return producerService.sendErrorMessage(purposeError, ctx);
   });
   await Promise.all(errorMessagePromises);
 }
