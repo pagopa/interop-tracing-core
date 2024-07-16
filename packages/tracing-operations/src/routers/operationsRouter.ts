@@ -5,6 +5,7 @@ import {
   ExpressContext,
   initDB,
   logger,
+  zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
 import { api } from "pagopa-interop-tracing-operations-client";
 import { makeApiProblem } from "../model/domain/errors.js";
@@ -26,8 +27,9 @@ const operationsRouter = (
     schema: config.schemaName,
     useSSL: config.dbUseSSL,
   });
-
-  const operationsRouter = ctx.router(api.api);
+  const operationsRouter = ctx.router(api.api, {
+    validationErrorHandler: zodiosValidationErrorToApiProblem,
+  });
   const dbService = dbServiceBuilder(dbInstance);
   const operationsService = operationsServiceBuilder(dbService);
   const { purposeAuthorizerMiddleware } =
@@ -149,8 +151,19 @@ const operationsRouter = (
 
   operationsRouter.get("/tracings/:tracingId/errors", async (req, res) => {
     try {
-      await operationsService.getTracingErrors();
-      return res.status(204).json({ errors: [], totalCount: 0 }).end();
+      const tracingErrors = await operationsService.getTracingErrors(
+        req.query,
+        req.params,
+        logger(req.ctx),
+      );
+
+      return res
+        .status(200)
+        .json({
+          results: tracingErrors.results,
+          totalCount: tracingErrors.totalCount,
+        })
+        .end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();

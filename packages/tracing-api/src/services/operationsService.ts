@@ -13,6 +13,7 @@ import {
   ApiUpdateTracingStateParams,
   ApiSubmitTracingHeaders,
   ApiUpdateTracingStateHeaders,
+  ApiGetTracingErrorsParams,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
@@ -57,12 +58,12 @@ export const operationsServiceBuilder = (
   },
 
   async getTracingErrors(
-    tracingId: string,
+    params: ApiGetTracingErrorsParams,
     filters: ApiGetTracingErrorsQuery,
   ): Promise<ApiGetTracingErrorsResponse> {
     return await operationsApiClient.getTracingErrors({
       queries: filters,
-      params: { tracingId },
+      params: { tracingId: params.tracingId },
     });
   },
 
