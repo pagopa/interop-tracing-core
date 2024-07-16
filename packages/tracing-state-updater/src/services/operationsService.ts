@@ -4,13 +4,16 @@ import {
   ApiSavePurposeErrorResponse,
   ApiUpdateTracingStateResponse,
 } from "pagopa-interop-tracing-operations-client";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  WithSQSMessageId,
+  logger,
+} from "pagopa-interop-tracing-commons";
 import {
   errorProcessingSavePurposeError,
   errorProcessingUpdateTracingState,
 } from "../model/domain/errors.js";
 import { correlationIdToHeader } from "../model/headers.js";
-import { v4 as uuidv4 } from "uuid";
 import {
   SavePurposeErrorDto,
   UpdateTracingStateDto,
@@ -22,6 +25,7 @@ export const operationsServiceBuilder = (
   return {
     async updateTracingState(
       data: UpdateTracingStateDto,
+      ctx: WithSQSMessageId<AppContext>,
     ): Promise<ApiSavePurposeErrorResponse> {
       try {
         await operationsApiClient.updateTracingState(
@@ -29,12 +33,12 @@ export const operationsServiceBuilder = (
             state: data.state,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(ctx.correlationId) },
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
 
-        genericLogger.info(
+        logger(ctx).info(
           `Updating tracing state to "${data.state}" for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {
@@ -45,6 +49,7 @@ export const operationsServiceBuilder = (
     },
     async savePurposeError(
       data: SavePurposeErrorDto,
+      ctx: WithSQSMessageId<AppContext>,
     ): Promise<ApiUpdateTracingStateResponse> {
       try {
         await operationsApiClient.savePurposeError(
@@ -55,12 +60,12 @@ export const operationsServiceBuilder = (
             rowNumber: data.rowNumber,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(ctx.correlationId) },
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
 
-        genericLogger.info(
+        logger(ctx).info(
           `Saving purpose error with purposeId ${data.purposeId} rowNumber ${data.rowNumber} for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {

@@ -9,6 +9,7 @@ import { mockApiClientError } from "./utils.js";
 import { sqsMessages } from "./sqsMessages.js";
 import { SQS } from "../../commons/dist/sqs/index.js";
 import {
+  decodeSQSMessageCorrelationId,
   decodeSQSPurposeErrorMessage,
   decodeSQSUpdateTracingStateMessage,
 } from "../src/model/models.js";
@@ -18,6 +19,8 @@ import {
   errorProcessingSavePurposeError,
   errorProcessingUpdateTracingState,
 } from "../src/model/domain/errors.js";
+import { v4 as uuidv4 } from "uuid";
+import { AppContext, WithSQSMessageId } from "pagopa-interop-tracing-commons";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -25,20 +28,35 @@ describe("Operations service test", () => {
   const operationsService: OperationsService =
     operationsServiceBuilder(apiClient);
 
+  const correlationIdMessageAttribute = {
+    correlationId: {
+      DataType: "String",
+      StringValue: uuidv4(),
+    },
+  };
+
   describe("savePurposeError", () => {
     it("save a new purpose error should return a successfully response", async () => {
       const validMessage: SQS.Message = {
         MessageId: "12345",
         ReceiptHandle: "receipt_handle_id",
         Body: JSON.stringify(sqsMessages.savePurposeError.valid),
+        MessageAttributes: correlationIdMessageAttribute,
       };
 
       const decodedMessage = decodeSQSPurposeErrorMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
 
       vi.spyOn(apiClient, "savePurposeError").mockResolvedValueOnce(undefined);
 
       expect(
-        async () => await operationsService.savePurposeError(decodedMessage),
+        async () =>
+          await operationsService.savePurposeError(decodedMessage, ctx),
       ).not.toThrowError();
     });
 
@@ -47,9 +65,16 @@ describe("Operations service test", () => {
         MessageId: "12345",
         ReceiptHandle: "receipt_handle_id",
         Body: JSON.stringify(sqsMessages.savePurposeError.valid),
+        MessageAttributes: correlationIdMessageAttribute,
       };
 
       const decodedMessage = decodeSQSPurposeErrorMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
 
       const apiClientError = mockApiClientError(500, "Internal server error");
       errorProcessingSavePurposeError(
@@ -61,7 +86,7 @@ describe("Operations service test", () => {
       );
 
       try {
-        await operationsService.savePurposeError(decodedMessage);
+        await operationsService.savePurposeError(decodedMessage, ctx);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
@@ -77,16 +102,24 @@ describe("Operations service test", () => {
         MessageId: "12345",
         ReceiptHandle: "receipt_handle_id",
         Body: JSON.stringify(sqsMessages.updateTracingState.valid),
+        MessageAttributes: correlationIdMessageAttribute,
       };
 
       const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
 
       vi.spyOn(apiClient, "updateTracingState").mockResolvedValueOnce(
         undefined,
       );
 
       expect(
-        async () => await operationsService.updateTracingState(decodedMessage),
+        async () =>
+          await operationsService.updateTracingState(decodedMessage, ctx),
       ).not.toThrowError();
     });
 
@@ -95,9 +128,16 @@ describe("Operations service test", () => {
         MessageId: "12345",
         ReceiptHandle: "receipt_handle_id",
         Body: JSON.stringify(sqsMessages.updateTracingState.valid),
+        MessageAttributes: correlationIdMessageAttribute,
       };
 
       const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
 
       const apiClientError = mockApiClientError(500, "Internal server error");
       errorProcessingUpdateTracingState(
@@ -109,7 +149,7 @@ describe("Operations service test", () => {
       );
 
       try {
-        await operationsService.updateTracingState(decodedMessage);
+        await operationsService.updateTracingState(decodedMessage, ctx);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(

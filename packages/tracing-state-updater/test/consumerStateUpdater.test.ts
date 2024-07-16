@@ -1,15 +1,31 @@
 import { describe, expect, it, vi, afterAll } from "vitest";
 import { sqsMessages } from "./sqsMessages.js";
 import { processTracingStateMessage } from "../src/messagesHandler.js";
-import { SQS } from "pagopa-interop-tracing-commons";
-import { decodeSQSUpdateTracingStateMessage } from "../src/model/models.js";
+import {
+  AppContext,
+  SQS,
+  WithSQSMessageId,
+} from "pagopa-interop-tracing-commons";
+import {
+  decodeSQSMessageCorrelationId,
+  decodeSQSUpdateTracingStateMessage,
+} from "../src/model/models.js";
 import { InternalError } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
+import { v4 as uuidv4 } from "uuid";
+import { config } from "../src/utilities/config.js";
 
 describe("Consumer state updater queue test", () => {
   const mockOperationsService = {
     savePurposeError: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
+  };
+
+  const correlationIdMessageAttribute = {
+    correlationId: {
+      DataType: "String",
+      StringValue: uuidv4(),
+    },
   };
 
   afterAll(() => {
@@ -21,6 +37,14 @@ describe("Consumer state updater queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.updateTracingState.valid),
+      MessageAttributes: correlationIdMessageAttribute,
+    };
+
+    const attributes = decodeSQSMessageCorrelationId(validMessage);
+    const ctx: WithSQSMessageId<AppContext> = {
+      serviceName: config.applicationName,
+      correlationId: attributes.correlationId,
+      messageId: validMessage.MessageId,
     };
 
     expect(async () => {
@@ -29,6 +53,7 @@ describe("Consumer state updater queue test", () => {
 
     expect(mockOperationsService.updateTracingState).toHaveBeenCalledWith(
       decodeSQSUpdateTracingStateMessage(validMessage),
+      ctx,
     );
   });
 
@@ -40,7 +65,7 @@ describe("Consumer state updater queue test", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(InternalError);
       expect((error as InternalError<ErrorCodes>).code).toBe(
-        "decodeSQSMessageError",
+        "decodeSQSMessageCorrelationIdError",
       );
     }
   });
@@ -50,6 +75,7 @@ describe("Consumer state updater queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.updateTracingState.empty),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
@@ -68,6 +94,7 @@ describe("Consumer state updater queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.updateTracingState.missingTracingId),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
@@ -88,6 +115,7 @@ describe("Consumer state updater queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.updateTracingState.badFormatted),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
