@@ -20,7 +20,7 @@ export type ZodiosContext = NonNullable<typeof zodiosCtx>;
 export type ExpressContext = NonNullable<typeof zodiosCtx.context>;
 
 export type WithLogger<T> = T & { logger: Logger };
-export type WithSQSMessageId<T> = T & { messageId?: string };
+export type WithSQSMessageId<T> = T & { messageId?: string | null | undefined };
 
 export const contextMiddleware =
   (
