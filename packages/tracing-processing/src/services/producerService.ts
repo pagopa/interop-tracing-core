@@ -10,7 +10,7 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
         genericLogger.info(
           `PurposeError message sent on queue for tracingId: ${
             purposeError.tracingId
-          }, Payload: ${JSON.stringify(purposeError)}`,
+          }. Payload: ${JSON.stringify(purposeError)}`,
         );
         await SQS.sendMessage(
           sqsClient,
