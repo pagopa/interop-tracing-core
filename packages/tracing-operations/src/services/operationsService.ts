@@ -80,8 +80,8 @@ export function operationsServiceBuilder(dbService: DBService) {
       }
 
       if (
-        tracing.state === tracingState.completed ||
-        tracing.state === tracingState.pending
+        tracing.state !== tracingState.missing &&
+        tracing.state !== tracingState.error
       ) {
         throw tracingCannotBeUpdated(params.tracingId);
       }
