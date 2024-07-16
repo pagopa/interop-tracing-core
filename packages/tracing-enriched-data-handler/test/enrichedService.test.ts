@@ -80,7 +80,7 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
-        .spyOn(dbService, "insertTracing")
+        .spyOn(dbService, "insertTraces")
         .mockResolvedValue([{ id: generateId() }]);
       const sendUpdateStateSpy = vi
         .spyOn(producerService, "sendUpdateState")
@@ -93,18 +93,18 @@ describe("Enriched Service", () => {
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-        mockTracingFromCsv.tracingId,
-        mockTracingFromCsv.version,
-        tracingState.completed,
-      );
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+        tracingId: mockTracingFromCsv.tracingId,
+        version: mockTracingFromCsv.version,
+        state: tracingState.completed,
+      });
     });
 
     it("should throw an error if tracing message is not valid", async () => {
       const invalidMessage = { tracingId: generateId() };
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
-      const insertTracingSpy = vi.spyOn(dbService, "insertTracing");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
         await enrichedService.insertEnrichedTrace(
@@ -122,7 +122,7 @@ describe("Enriched Service", () => {
       const readObjectSpy = vi
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
-      const insertTracingSpy = vi.spyOn(dbService, "insertTracing");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -138,7 +138,7 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
-        .spyOn(dbService, "insertTracing")
+        .spyOn(dbService, "insertTraces")
         .mockRejectedValue(insertTraceError(``));
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
 
@@ -159,7 +159,7 @@ describe("Enriched Service", () => {
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockEnrichedPuposes,
       );
-      vi.spyOn(dbService, "insertTracing").mockReturnValue(
+      vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
       );
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
@@ -167,11 +167,11 @@ describe("Enriched Service", () => {
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-          mockTracingFromCsv.tracingId,
-          mockTracingFromCsv.version,
-          "COMPLETED",
-        );
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        });
     });
   });
   describe("deleteTrace", () => {
@@ -188,12 +188,12 @@ describe("Enriched Service", () => {
       expect(deleteTracingSpy).toHaveBeenCalledWith(
         mockTracingFromCsv.tracingId,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-        mockTracingFromCsv.tracingId,
-        mockTracingFromCsv.version,
-        tracingState.completed,
-        true,
-      );
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+        tracingId: mockTracingFromCsv.tracingId,
+        version: mockTracingFromCsv.version,
+        state: tracingState.completed,
+        isReplacing: true,
+      });
     });
 
     it("should throw an error if deletion fails", async () => {
@@ -211,6 +211,81 @@ describe("Enriched Service", () => {
         );
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
+    });
+
+    it("should throw an error if tracing message is not valid", async () => {
+      const invalidMessage = { tracingId: generateId() };
+
+      const readObjectSpy = vi.spyOn(bucketService, "readObject");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      try {
+        await enrichedService.insertEnrichedTrace(
+          invalidMessage as unknown as TracingFromCsv,
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).not.toHaveBeenCalled();
+        expect(insertTracingSpy).not.toHaveBeenCalled();
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should throw an error if no record found in the bucket", async () => {
+      const readObjectSpy = vi
+        .spyOn(bucketService, "readObject")
+        .mockResolvedValue([]);
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      try {
+        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).toHaveBeenCalled();
+        expect(insertTracingSpy).not.toHaveBeenCalled();
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should not send update if DB insert fails", async () => {
+      const readObjectSpy = vi
+        .spyOn(bucketService, "readObject")
+        .mockResolvedValue(mockEnrichedPuposes);
+      const insertTracingSpy = vi
+        .spyOn(dbService, "insertTraces")
+        .mockRejectedValue(insertTraceError(``));
+      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+
+      try {
+        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).toHaveBeenCalled();
+        expect(insertTracingSpy).toHaveBeenCalledWith(
+          mockTracingFromCsv.tracingId,
+          mockEnrichedPuposes,
+        );
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should send update 'COMPLETE' if DB insert succeded", async () => {
+      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+        mockEnrichedPuposes,
+      );
+      vi.spyOn(dbService, "insertTraces").mockReturnValue(
+        Promise.resolve([{ id: generateId() }]),
+      );
+      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      mockTracingFromCsv.tracingId,
+        mockEnrichedPuposes,
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        });
     });
   });
 });

@@ -96,13 +96,9 @@ export function operationsServiceBuilder(
         ]);
       }
 
-      await dbService.updateTracingState({
+      await dbService.updateTracingStateAndVersion({
         tracing_id: params.tracingId,
         state: tracingState.pending,
-      });
-
-      await dbService.updateTracingVersion({
-        tracing_id: params.tracingId,
         version: tracing.version + 1,
       });
 
@@ -131,13 +127,9 @@ export function operationsServiceBuilder(
         ]);
       }
 
-      await dbService.updateTracingState({
+      await dbService.updateTracingStateAndVersion({
         tracing_id: params.tracingId,
         state: tracingState.pending,
-      });
-
-      await dbService.updateTracingVersion({
-        tracing_id: params.tracingId,
         version: tracing.version + 1,
       });
 
@@ -168,13 +160,9 @@ export function operationsServiceBuilder(
         throw tracingCannotBeCancelled(params.tracingId);
       }
 
-      await dbService.updateTracingState({
+      await dbService.updateTracingStateAndVersion({
         tracing_id: params.tracingId,
-        state: payload.state,
-      });
-
-      await dbService.updateTracingVersion({
-        tracing_id: params.tracingId,
+        state: tracingState.pending,
         version: payload.version,
       });
     },

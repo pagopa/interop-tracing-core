@@ -6,9 +6,10 @@
   },
   "scripts": {
     "start:tracing-api": "turbo start --filter pagopa-interop-tracing-api",
-    "start:tracing-operation": "turbo start --filter pagopa-interop-tracing-operations",
+    "start:tracing-operations": "turbo start --filter pagopa-interop-tracing-operations",
     "start:tracing-state-updater": "turbo start --filter pagopa-interop-tracing-state-updater",
     "start:tracing-processing": "turbo start --filter pagopa-interop-tracing-processing",
+    "start:tracing-enriched-data-handler": "turbo start --filter pagopa-interop-tracing-enriched-data-handler",
     "test": "turbo test",
     "test:it": "turbo test:it",
     "build": "turbo build",

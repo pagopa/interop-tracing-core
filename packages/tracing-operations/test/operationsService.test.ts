@@ -554,319 +554,319 @@ describe("database test", () => {
         }
       });
     });
+  });
 
-    describe("updateTracingState", () => {
-      it("should update a tracing by tracingId with new state 'ERROR' successfully", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
+  describe("updateTracingState", () => {
+    it("should update a tracing by tracingId with new state 'ERROR' successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
 
-        const updateStateData: ApiUpdateTracingStatePayload = {
-          state: tracingState.error,
-        };
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
 
-        const tracing = await addTracing(tracingData, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
-          async () =>
-            await operationsService.updateTracingState(
-              {
-                tracingId: tracing.id,
-                version: tracing.version,
-              },
-              updateStateData,
-              logger({}),
-            ),
-        ).not.toThrowError();
-
-        const result = await findTracingById(tracing.id, dbInstance);
-
-        expect(result.id).toBe(tracingData.id);
-        expect(result.state).toBe(tracingState.error);
-      });
-
-      it("should throw an error when attempting to update the state with a tracingId that is not found", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const updateStateData: ApiUpdateTracingStatePayload = {
-          state: tracingState.error,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        try {
+      expect(
+        async () =>
           await operationsService.updateTracingState(
             {
-              tracingId: generateId<TracingId>(),
+              tracingId: tracing.id,
               version: tracing.version,
             },
             updateStateData,
             logger({}),
-          );
-        } catch (e) {
-          const error = e as InternalError<CommonErrorCodes>;
-          expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain("Database query failed");
-          expect(error.message).toContain("queryResultErrorCode.noData");
-          expect(error.code).toBe("genericError");
-        }
-      });
+          ),
+      ).not.toThrowError();
+
+      const result = await findTracingById(tracing.id, dbInstance);
+
+      expect(result.id).toBe(tracingData.id);
+      expect(result.state).toBe(tracingState.error);
     });
 
-    describe("savePurposeError", () => {
-      it("should create a new purpose error successfully", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
+    it("should throw an error when attempting to update the state with a tracingId that is not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
 
-        const purposeErrorData: ApiSavePurposeErrorPayload = {
-          version: tracingData.version,
-          purposeId: purposeId,
-          errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-          message: `INVALID_ROW_SCHEMA`,
-          rowNumber: 12,
-        };
+      const updateStateData: ApiUpdateTracingStatePayload = {
+        state: tracingState.error,
+      };
 
-        const tracing = await addTracing(tracingData, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
-          async () =>
-            await operationsService.savePurposeError(
-              {
-                tracingId: tracing.id,
-                version: tracing.version,
-              },
-              purposeErrorData,
-              logger({}),
-            ),
-        ).not.toThrowError();
-      });
+      try {
+        await operationsService.updateTracingState(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          updateStateData,
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("Database query failed");
+        expect(error.message).toContain("queryResultErrorCode.noData");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
 
-      it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
+  describe("savePurposeError", () => {
+    it("should create a new purpose error successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
 
-        const purposeErrorData: ApiSavePurposeErrorPayload = {
-          version: tracingData.version,
-          purposeId: purposeId,
-          errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-          message: `INVALID_ROW_SCHEMA`,
-          rowNumber: 12,
-        };
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        purposeId: purposeId,
+        errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
+        message: `INVALID_ROW_SCHEMA`,
+        rowNumber: 12,
+      };
 
-        const tracing = await addTracing(tracingData, dbInstance);
+      const tracing = await addTracing(tracingData, dbInstance);
 
-        try {
+      expect(
+        async () =>
           await operationsService.savePurposeError(
             {
-              tracingId: generateId<TracingId>(),
+              tracingId: tracing.id,
               version: tracing.version,
             },
             purposeErrorData,
             logger({}),
-          );
-        } catch (e) {
-          const error = e as InternalError<CommonErrorCodes>;
-          expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain("Database query failed");
-          expect(error.message).toContain("purposes_errors_tracing_id_fkey");
-          expect(error.code).toBe("genericError");
-        }
-      });
+          ),
+      ).not.toThrowError();
     });
 
-    describe("replaceTracing", () => {
-      it("should update an existing tracing from state 'ERROR/MISSING' to state 'PENDING' and new version successfully", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.error,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
+    it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
 
-        const tracing = await addTracing(tracingData, dbInstance);
-        const result = await operationsService.recoverTracing(
+      const purposeErrorData: ApiSavePurposeErrorPayload = {
+        version: tracingData.version,
+        purposeId: purposeId,
+        errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
+        message: `INVALID_ROW_SCHEMA`,
+        rowNumber: 12,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      try {
+        await operationsService.savePurposeError(
+          {
+            tracingId: generateId<TracingId>(),
+            version: tracing.version,
+          },
+          purposeErrorData,
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("Database query failed");
+        expect(error.message).toContain("purposes_errors_tracing_id_fkey");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
+
+  describe("replaceTracing", () => {
+    it("should update an existing tracing from state 'ERROR/MISSING' to state 'PENDING' and new version successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.error,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+      const result = await operationsService.recoverTracing(
+        {
+          tracingId: tracing.id,
+        },
+        logger({}),
+      );
+
+      expect(result.tracingId).toBe(tracingData.id);
+      expect(result.tenantId).toBe(tenantId);
+      expect(result.previousState).toBe(tracingData.state);
+      expect(result.version).toBe(tracingData.version + 1);
+    });
+
+    it("should throw an error tracingNotFound when attempting recover a tracing", async () => {
+      const tracindId = generateId<TracingId>();
+
+      expect(
+        operationsService.recoverTracing(
+          {
+            tracingId: tracindId,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracindId));
+    });
+
+    it("should throw an error tracingCannotBeUpdated when attempting recover a tracing", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.completed,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      expect(
+        operationsService.recoverTracing(
           {
             tracingId: tracing.id,
           },
           logger({}),
-        );
-
-        expect(result.tracingId).toBe(tracingData.id);
-        expect(result.tenantId).toBe(tenantId);
-        expect(result.previousState).toBe(tracingData.state);
-        expect(result.version).toBe(tracingData.version + 1);
-      });
-
-      it("should throw an error tracingNotFound when attempting recover a tracing", async () => {
-        const tracindId = generateId<TracingId>();
-
-        expect(
-          operationsService.recoverTracing(
-            {
-              tracingId: tracindId,
-            },
-            logger({}),
-          ),
-        ).rejects.toThrowError(tracingNotFound(tracindId));
-      });
-
-      it("should throw an error tracingCannotBeUpdated when attempting recover a tracing", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.completed,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        expect(
-          operationsService.recoverTracing(
-            {
-              tracingId: tracing.id,
-            },
-            logger({}),
-          ),
-        ).rejects.toThrowError(
-          tracingCannotBeUpdated(tracing.id, [
-            tracingState.error,
-            tracingState.missing,
-          ]),
-        );
-      });
-
-      it("should throw an internal DB Service error when attempting recover a tracing", async () => {
-        try {
-          await operationsService.recoverTracing(
-            {
-              tracingId: "invalid_uuid",
-            },
-            logger({}),
-          );
-        } catch (e) {
-          const error = e as InternalError<CommonErrorCodes>;
-          expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain("Database query failed");
-          expect(error.code).toBe("genericError");
-        }
-      });
+        ),
+      ).rejects.toThrowError(
+        tracingCannotBeUpdated(tracing.id, [
+          tracingState.error,
+          tracingState.missing,
+        ]),
+      );
     });
 
-    describe("cancelTracingStateAndVersion", () => {
-      it("should cancel the update of an existing tracing, reverting to the previous state and version", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.error,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-        const recoverTracing = await operationsService.recoverTracing(
+    it("should throw an internal DB Service error when attempting recover a tracing", async () => {
+      try {
+        await operationsService.recoverTracing(
           {
-            tracingId: tracing.id,
+            tracingId: "invalid_uuid",
           },
           logger({}),
         );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("Database query failed");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
 
-        expect(recoverTracing.tracingId).toBe(tracingData.id);
-        expect(recoverTracing.tenantId).toBe(tenantId);
-        expect(recoverTracing.previousState).toBe(tracingData.state);
-        expect(recoverTracing.version).toBe(tracingData.version + 1);
-        expect(
-          async () =>
-            await operationsService.cancelTracingStateAndVersion(
-              {
-                tracingId: recoverTracing.tracingId,
-              },
-              {
-                version: recoverTracing.version - 1,
-                state: recoverTracing.previousState,
-              },
-              logger({}),
-            ),
-        ).not.toThrowError();
-      });
+  describe("cancelTracingStateAndVersion", () => {
+    it("should cancel the update of an existing tracing, reverting to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.error,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
 
-      it("should throw an error tracingNotFound when attempting to reverting the tracing to the previous state and version", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.missing,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
+      const tracing = await addTracing(tracingData, dbInstance);
+      const recoverTracing = await operationsService.recoverTracing(
+        {
+          tracingId: tracing.id,
+        },
+        logger({}),
+      );
 
-        await expect(
-          operationsService.cancelTracingStateAndVersion(
+      expect(recoverTracing.tracingId).toBe(tracingData.id);
+      expect(recoverTracing.tenantId).toBe(tenantId);
+      expect(recoverTracing.previousState).toBe(tracingData.state);
+      expect(recoverTracing.version).toBe(tracingData.version + 1);
+      expect(
+        async () =>
+          await operationsService.cancelTracingStateAndVersion(
             {
-              tracingId: tracingData.id,
+              tracingId: recoverTracing.tracingId,
             },
             {
-              version: tracingData.version - 1,
-              state: tracingData.state,
-            },
-            logger({}),
-          ),
-        ).rejects.toThrowError(tracingNotFound(tracingData.id));
-      });
-
-      it("should throw an error tracingCannotBeCancelled when attempting to reverting the tracing to the previous state and version", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.missing,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        await expect(
-          operationsService.cancelTracingStateAndVersion(
-            {
-              tracingId: tracing.id,
-            },
-            {
-              version: tracing.version - 1,
-              state: tracing.state,
+              version: recoverTracing.version - 1,
+              state: recoverTracing.previousState,
             },
             logger({}),
           ),
-        ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
-      });
+      ).not.toThrowError();
+    });
+
+    it("should throw an error tracingNotFound when attempting to reverting the tracing to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.missing,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      await expect(
+        operationsService.cancelTracingStateAndVersion(
+          {
+            tracingId: tracingData.id,
+          },
+          {
+            version: tracingData.version - 1,
+            state: tracingData.state,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracingData.id));
+    });
+
+    it("should throw an error tracingCannotBeCancelled when attempting to reverting the tracing to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.missing,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      await expect(
+        operationsService.cancelTracingStateAndVersion(
+          {
+            tracingId: tracing.id,
+          },
+          {
+            version: tracing.version - 1,
+            state: tracing.state,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
     });
   });
   describe("triggerS3Copy", () => {
@@ -909,6 +909,177 @@ describe("database test", () => {
           logger({}),
         ),
       ).rejects.toThrowError(tracingNotFound(tracingId));
+    });
+  });
+
+  describe("recoverTracing", () => {
+    it("should update an existing tracing from state 'ERROR/MISSING' to state 'PENDING' and new version successfully", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.error,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+      const result = await operationsService.recoverTracing(
+        {
+          tracingId: tracing.id,
+        },
+        logger({}),
+      );
+
+      expect(result.tracingId).toBe(tracingData.id);
+      expect(result.tenantId).toBe(tenantId);
+      expect(result.previousState).toBe(tracingData.state);
+      expect(result.version).toBe(tracingData.version + 1);
+    });
+
+    it("should throw an error tracingNotFound when attempting recover a tracing", async () => {
+      const tracindId = generateId<TracingId>();
+
+      expect(
+        operationsService.recoverTracing(
+          {
+            tracingId: tracindId,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracindId));
+    });
+
+    it("should throw an error tracingCannotBeUpdated when attempting recover a tracing", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.completed,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      expect(
+        operationsService.recoverTracing(
+          {
+            tracingId: tracing.id,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(
+        tracingCannotBeUpdated(tracing.id, [
+          tracingState.error,
+          tracingState.missing,
+        ]),
+      );
+    });
+
+    it("should throw an internal DB Service error when attempting recover a tracing", async () => {
+      try {
+        await operationsService.recoverTracing(
+          {
+            tracingId: "invalid_uuid",
+          },
+          logger({}),
+        );
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toContain("Database query failed");
+        expect(error.code).toBe("genericError");
+      }
+    });
+  });
+
+  describe("cancelTracingStateAndVersion", () => {
+    it("should cancel the update of an existing tracing, reverting to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.error,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+      const recoverTracing = await operationsService.recoverTracing(
+        {
+          tracingId: tracing.id,
+        },
+        logger({}),
+      );
+
+      expect(recoverTracing.tracingId).toBe(tracingData.id);
+      expect(recoverTracing.tenantId).toBe(tenantId);
+      expect(recoverTracing.previousState).toBe(tracingData.state);
+      expect(recoverTracing.version).toBe(tracingData.version + 1);
+      expect(
+        async () =>
+          await operationsService.cancelTracingStateAndVersion(
+            {
+              tracingId: recoverTracing.tracingId,
+            },
+            {
+              version: recoverTracing.version - 1,
+              state: recoverTracing.previousState,
+            },
+            logger({}),
+          ),
+      ).not.toThrowError();
+    });
+
+    it("should throw an error tracingNotFound when attempting to reverting the tracing to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.missing,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      await expect(
+        operationsService.cancelTracingStateAndVersion(
+          {
+            tracingId: tracingData.id,
+          },
+          {
+            version: tracingData.version - 1,
+            state: tracingData.state,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracingData.id));
+    });
+
+    it("should throw an error tracingCannotBeCancelled when attempting to reverting the tracing to the previous state and version", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.missing,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+
+      const tracing = await addTracing(tracingData, dbInstance);
+
+      await expect(
+        operationsService.cancelTracingStateAndVersion(
+          {
+            tracingId: tracing.id,
+          },
+          {
+            version: tracing.version - 1,
+            state: tracing.state,
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
     });
   });
 });

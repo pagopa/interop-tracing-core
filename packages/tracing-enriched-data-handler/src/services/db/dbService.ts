@@ -4,7 +4,7 @@ import { TracingEnriched } from "../../models/messages.js";
 import { insertTraceError, deleteTraceError } from "../../models/errors.js";
 export function dbServiceBuilder(db: DB) {
   return {
-    async insertTracing(tracingId: string, records: TracingEnriched[]) {
+    async insertTraces(tracingId: string, records: TracingEnriched[]) {
       try {
         const queryText = `
           INSERT INTO traces.traces (

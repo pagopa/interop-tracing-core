@@ -13,8 +13,8 @@ export function decodeSqsMessage(
     if (!message.Body) {
       throw new Error("Message body is undefined");
     }
-    const s3Body: S3BodySchema = JSON.parse(message.Body);
 
+    const s3Body: S3BodySchema = JSON.parse(message.Body);
     if (!s3Body.Records.length) {
       throw new Error("S3Body doesn't contain records");
     }
