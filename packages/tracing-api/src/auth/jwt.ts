@@ -1,13 +1,12 @@
 import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
-import {
-  RequesterAuthData,
-  AuthToken,
-  getAuthDataFromToken,
-} from "./authData.js";
-import { Logger } from "../logging/index.js";
-import { JWTConfig } from "../index.js";
+import { AuthToken } from "./authData.js";
 import { invalidClaim, jwtDecodingError } from "pagopa-interop-tracing-models";
+import {
+  JWTConfig,
+  Logger,
+  RequesterAuthData,
+} from "pagopa-interop-tracing-commons";
 
 const decodeJwtToken = (jwtToken: string): JwtPayload | null => {
   try {
@@ -20,13 +19,12 @@ const decodeJwtToken = (jwtToken: string): JwtPayload | null => {
 export const readAuthDataFromJwtToken = (
   jwtToken: string,
 ): RequesterAuthData => {
-  const decoded = decodeJwtToken(jwtToken);
-  const token = AuthToken.safeParse(decoded);
-  if (token.success === false) {
+  const token = AuthToken.safeParse(decodeJwtToken(jwtToken));
+  if (token.error) {
     throw invalidClaim(token.error);
-  } else {
-    return getAuthDataFromToken(token.data);
   }
+
+  return RequesterAuthData.parse(token.data);
 };
 
 const getKey =
@@ -55,7 +53,7 @@ export const verifyJwtToken = (
   logger: Logger,
 ): Promise<boolean> => {
   const config = JWTConfig.parse(process.env);
-  const clients = config.wellKnownUrls.map((url) => {
+  const clients = config.wellKnownUrls.map((url: string) => {
     return jwksClient({
       jwksUri: url,
     });
@@ -67,7 +65,7 @@ export const verifyJwtToken = (
       {
         audience: config.acceptedAudiences,
       },
-      function (err) {
+      function (err: unknown) {
         if (err) {
           logger.warn(`Token verification failed: ${err}`);
           return resolve(false);
