@@ -1,8 +1,6 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
-  ZodiosContext,
-  ExpressContext,
   initDB,
   logger,
   zodiosValidationErrorToApiProblem,
@@ -16,10 +14,11 @@ import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMid
 import { errorMapper } from "../utilities/errorMapper.js";
 import { bucketServiceBuilder } from "../services/bucketService.js";
 import { S3Client } from "@aws-sdk/client-s3";
+import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
 const operationsRouter = (
-  ctx: ZodiosContext,
-): ZodiosRouter<ZodiosEndpointDefinitions, ExpressContext> => {
+  ctx: LocalZodiosContext,
+): ZodiosRouter<ZodiosEndpointDefinitions, LocalExpressContext> => {
   const dbInstance = initDB({
     username: config.dbUsername,
     password: config.dbPassword,
@@ -51,7 +50,7 @@ const operationsRouter = (
         const tracing = await operationsService.submitTracing(
           {
             ...req.body,
-            tenantId: req.ctx.tenantAuthData.tenantId,
+            tenantId: req.ctx.authData.tenantId,
           },
           logger(req.ctx),
         );

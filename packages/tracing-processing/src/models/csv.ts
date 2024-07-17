@@ -18,7 +18,7 @@ export const EnrichedPurpose = z.object({
   date: z.string(),
   purposeId: z.string().uuid(),
   status: z.coerce.number(),
-  requestsCount: z.string(),
+  requestsCount: z.coerce.number(),
   rowNumber: z.number(),
   eserviceId: z.string(),
   producerId: z.string(),
@@ -40,3 +40,4 @@ export type EnrichedPurpose = z.infer<typeof EnrichedPurpose>;
 export type Eservice = z.infer<typeof Eservice>;
 
 export type PurposeErrorMessage = z.infer<typeof PurposeErrorMessage>;
+export type PurposeErrorMessageArray = z.infer<typeof PurposeErrorMessageArray>;

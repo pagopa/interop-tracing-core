@@ -46,6 +46,5 @@ CREATE TABLE IF NOT EXISTS tracing.purposes_errors (
     row_number INT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tracing_id) REFERENCES tracing.tracings(id),
-    FOREIGN KEY (purpose_id) REFERENCES tracing.purposes(id),
-    UNIQUE (tracing_id, purpose_id, version, row_number)
+    FOREIGN KEY (purpose_id) REFERENCES tracing.purposes(id)
 );

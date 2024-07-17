@@ -7,10 +7,10 @@ import {
   unauthorizedError,
 } from "pagopa-interop-tracing-models";
 import { P, match } from "ts-pattern";
-import { ExpressContext } from "../index.js";
 import { readAuthDataFromJwtToken, verifyJwtToken } from "./jwt.js";
-import { Logger, logger } from "../logging/index.js";
 import { z } from "zod";
+import { Logger, logger } from "pagopa-interop-tracing-commons";
+import { LocalExpressContext } from "../context/index.js";
 
 const makeApiProblem = makeApiProblemBuilder({});
 
@@ -21,7 +21,7 @@ export const Headers = z.object({
 export type Headers = z.infer<typeof Headers>;
 
 export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
-  ExpressContext
+  LocalExpressContext
 > = async (req, res, next): Promise<unknown> => {
   const addCtxAuthData = async (
     authHeader: string,
@@ -42,7 +42,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
     if (!valid) {
       throw unauthorizedError("Invalid token");
     }
-    req.ctx.requesterAuthData = readAuthDataFromJwtToken(jwtToken);
+    req.ctx.authData = readAuthDataFromJwtToken(jwtToken);
     next();
   };
 
