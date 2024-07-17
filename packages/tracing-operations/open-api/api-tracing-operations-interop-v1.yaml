@@ -18,18 +18,14 @@ paths:
       parameters:
         - in: header
           name: x-correlation-id
-          description: Correlation ID for tracking requests
           required: true
           schema:
-            type: string
-            format: uuid
+            $ref: "#/components/schemas/CorrelationId"
         - in: header
           name: x-requester-purpose-id
-          description: Purpose ID for specifying the requester's purpose
           required: true
           schema:
-            type: string
-            format: uuid
+            $ref: "#/components/schemas/RequesterPurposeId"
       requestBody:
         required: true
         content:
@@ -70,6 +66,16 @@ paths:
       tags:
         - Write
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-requester-purpose-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
         - name: tracingId
           in: path
           required: true
@@ -108,6 +114,16 @@ paths:
       tags:
         - Write
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-requester-purpose-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
         - name: tracingId
           in: path
           required: true
@@ -146,6 +162,11 @@ paths:
       tags:
         - Write
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
         - name: tracingId
           in: path
           required: true
@@ -156,13 +177,6 @@ paths:
           required: true
           schema:
             type: integer
-        - in: header
-          name: x-correlation-id
-          description: Correlation ID for tracking requests
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -198,6 +212,16 @@ paths:
       tags:
         - Write
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-requester-purpose-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
         - name: tracingId
           in: path
           required: true
@@ -238,6 +262,11 @@ paths:
       tags:
         - Write
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
         - name: tracingId
           in: path
           required: true
@@ -302,6 +331,16 @@ paths:
       tags:
         - Read
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-requester-purpose-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
         - in: query
           name: offset
           required: true
@@ -386,6 +425,16 @@ paths:
       tags:
         - Read
       parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-requester-purpose-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
         - name: tracingId
           in: path
           required: true
@@ -435,6 +484,14 @@ paths:
                 $ref: "#/components/schemas/Problem"
 components:
   schemas:
+    CorrelationId:
+      type: string
+      format: uuid
+      description: Correlation ID for tracking requests
+    RequesterPurposeId:
+      type: string
+      format: uuid
+      description: Purpose ID for specifying the requester's purpose
     TracingStateUpdateRequest:
       type: object
       properties:
