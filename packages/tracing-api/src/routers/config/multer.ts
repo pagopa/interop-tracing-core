@@ -6,8 +6,8 @@ import fs from "fs";
 import util from "util";
 import { ZodiosApp } from "@zodios/express";
 import { api } from "../../model/generated/api.js";
-import { ExpressContext } from "pagopa-interop-tracing-commons";
 import { ApiExternal } from "../../model/types.js";
+import { LocalExpressContext } from "../../context/index.js";
 
 /**
  * Middleware function to handle file uploads.
@@ -52,10 +52,10 @@ const apiWithFormData = api.api.filter(
  * @param app - The Zodios application instance to configure.
  */
 export const configureMulterEndpoints = (
-  app: ZodiosApp<ApiExternal, ExpressContext>,
+  app: ZodiosApp<ApiExternal, LocalExpressContext>,
 ) => {
   for (const endpoint of apiWithFormData) {
-    app[endpoint.method as keyof ZodiosApp<ApiExternal, ExpressContext>](
+    app[endpoint.method as keyof ZodiosApp<ApiExternal, LocalExpressContext>](
       endpoint.path,
       upload.single("file"),
       attachFileInstance,

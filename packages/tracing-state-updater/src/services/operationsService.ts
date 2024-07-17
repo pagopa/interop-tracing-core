@@ -13,10 +13,10 @@ import {
   errorProcessingSavePurposeError,
   errorProcessingUpdateTracingState,
 } from "../model/domain/errors.js";
-import { correlationIdToHeader } from "../model/headers.js";
 import {
   SavePurposeErrorDto,
   UpdateTracingStateDto,
+  correlationIdToHeader,
 } from "pagopa-interop-tracing-models";
 
 export const operationsServiceBuilder = (

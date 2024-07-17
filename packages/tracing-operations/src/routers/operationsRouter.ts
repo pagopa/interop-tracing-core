@@ -55,42 +55,54 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.post("/tracings/:tracingId/recover", async (req, res) => {
-    try {
-      const tracing = await operationsService.recoverTracing(
-        req.params,
-        logger(req.ctx),
-      );
-      return res.status(200).json(tracing).end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+  operationsRouter.post(
+    "/tracings/:tracingId/recover",
+    purposeAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        const tracing = await operationsService.recoverTracing(
+          req.params,
+          logger(req.ctx),
+        );
+        return res.status(200).json(tracing).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
-  operationsRouter.post("/tracings/:tracingId/cancel", async (req, res) => {
-    try {
-      await operationsService.cancelTracingStateAndVersion(
-        req.params,
-        req.body,
-        logger(req.ctx),
-      );
-      return res.status(204).end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+  operationsRouter.post(
+    "/tracings/:tracingId/cancel",
+    purposeAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        await operationsService.cancelTracingStateAndVersion(
+          req.params,
+          req.body,
+          logger(req.ctx),
+        );
+        return res.status(204).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
-  operationsRouter.post("/tracings/:tracingId/replace", async (req, res) => {
-    try {
-      await operationsService.replaceTracing();
-      return res.status(200).json().end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+  operationsRouter.post(
+    "/tracings/:tracingId/replace",
+    purposeAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        await operationsService.replaceTracing();
+        return res.status(200).json().end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
   operationsRouter.post(
     "/tracings/:tracingId/versions/:version/state",
@@ -149,42 +161,50 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.get("/tracings", async (req, res) => {
-    try {
-      const tracings = await operationsService.getTracings(
-        req.query,
-        logger(req.ctx),
-      );
-      return res
-        .status(200)
-        .json({ results: tracings.results, totalCount: tracings.totalCount })
-        .end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+  operationsRouter.get(
+    "/tracings",
+    purposeAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        const tracings = await operationsService.getTracings(
+          req.query,
+          logger(req.ctx),
+        );
+        return res
+          .status(200)
+          .json({ results: tracings.results, totalCount: tracings.totalCount })
+          .end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
-  operationsRouter.get("/tracings/:tracingId/errors", async (req, res) => {
-    try {
-      const tracingErrors = await operationsService.getTracingErrors(
-        req.query,
-        req.params,
-        logger(req.ctx),
-      );
+  operationsRouter.get(
+    "/tracings/:tracingId/errors",
+    purposeAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        const tracingErrors = await operationsService.getTracingErrors(
+          req.query,
+          req.params,
+          logger(req.ctx),
+        );
 
-      return res
-        .status(200)
-        .json({
-          results: tracingErrors.results,
-          totalCount: tracingErrors.totalCount,
-        })
-        .end();
-    } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+        return res
+          .status(200)
+          .json({
+            results: tracingErrors.results,
+            totalCount: tracingErrors.totalCount,
+          })
+          .end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
   return operationsRouter;
 };

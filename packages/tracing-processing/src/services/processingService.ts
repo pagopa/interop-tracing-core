@@ -52,7 +52,6 @@ export const processingServiceBuilder = (
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
-
         if (formalErrorsRecords.length) {
           await sendFormalErrors(formalErrorsRecords, producerService, ctx);
         } else {

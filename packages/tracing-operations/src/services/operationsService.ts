@@ -15,9 +15,9 @@ import {
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
-  ApicancelTracingStateAndVersionParams,
-  ApicancelTracingStateAndVersionPayload,
-  ApicancelTracingStateAndVersionResponse,
+  ApiCancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionPayload,
+  ApiCancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
@@ -108,10 +108,10 @@ export function operationsServiceBuilder(dbService: DBService) {
     },
 
     async cancelTracingStateAndVersion(
-      params: ApicancelTracingStateAndVersionParams,
-      payload: ApicancelTracingStateAndVersionPayload,
+      params: ApiCancelTracingStateAndVersionParams,
+      payload: ApiCancelTracingStateAndVersionPayload,
       logger: Logger,
-    ): Promise<ApicancelTracingStateAndVersionResponse> {
+    ): Promise<ApiCancelTracingStateAndVersionResponse> {
       logger.info(
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
