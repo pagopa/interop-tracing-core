@@ -13,13 +13,13 @@ import {
   logger,
 } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
-import { errorMapper } from "../utilities/errorMapper.js";
 import { TracingRecordSchema } from "../models/db.js";
 import {
   EnrichedPurposeArray,
   PurposeErrorMessage,
   PurposeErrorMessageArray,
 } from "../models/csv.js";
+import { processTracingError } from "../models/errors.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -40,7 +40,7 @@ export const processingServiceBuilder = (
 
         const tracingRecords = await bucketService.readObject(s3KeyPath);
         if (!tracingRecords || tracingRecords.length === 0) {
-          throw `No record found for key ${s3KeyPath}`;
+          throw new Error(`No record found for key ${s3KeyPath}`);
         }
 
         const hasSemiColonSeparator = tracingRecords.some((trace) => {
@@ -48,7 +48,7 @@ export const processingServiceBuilder = (
         });
 
         if (hasSemiColonSeparator) {
-          throw `Invalid delimiter found on csv at ${s3KeyPath}`;
+          throw new Error(`Invalid delimiter found on csv at ${s3KeyPath}`);
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
@@ -66,7 +66,9 @@ export const processingServiceBuilder = (
           );
         }
       } catch (error: unknown) {
-        throw errorMapper(error, logger(ctx));
+        throw processTracingError(
+          `Error processing tracing for tracingId: ${tracing.tracingId}. Details: ${error}`,
+        );
       }
     },
   };
@@ -98,7 +100,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   const enrichedPurposes = await dbService.getEnrichedPurpose(
     tracingRecords,
     tracing,
-    logger(ctx),
+    ctx,
   );
 
   const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
@@ -129,7 +131,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
         purposeEnriched.data,
         s3KeyPath,
         tracing.tenantId,
-        logger(ctx),
+        ctx,
       );
     }
   }

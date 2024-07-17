@@ -18,20 +18,28 @@ export function processTracingStateMessage(
   service: OperationsService,
 ): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message): Promise<void> => {
-    const attributes = decodeSQSMessageCorrelationId(message);
-    const ctx: WithSQSMessageId<AppContext> = {
-      serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
-      messageId: message.MessageId,
-    };
+    const decodedAttributeMessage = decodeSQSMessageCorrelationId(message);
 
     try {
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: decodedAttributeMessage.correlationId,
+        messageId: message.MessageId,
+      };
+
       await service.updateTracingState(
         decodeSQSUpdateTracingStateMessage(message),
         ctx,
       );
     } catch (error: unknown) {
-      throw errorMapper(error, logger(ctx));
+      throw errorMapper(
+        error,
+        logger({
+          serviceName: config.applicationName,
+          correlationId: decodedAttributeMessage?.correlationId,
+          messageId: message.MessageId,
+        }),
+      );
     }
   };
 }

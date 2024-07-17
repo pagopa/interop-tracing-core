@@ -428,6 +428,10 @@ describe("Tracing Router", () => {
         undefined,
         {
           params: { tracingId: mockRecoverTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
         },
       );
     });
@@ -562,6 +566,10 @@ describe("Tracing Router", () => {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
           },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
         },
       );
 
@@ -639,6 +647,10 @@ describe("Tracing Router", () => {
         {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
+          },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );

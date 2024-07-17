@@ -180,12 +180,14 @@ export function operationsServiceBuilder(dbService: DBService) {
     },
 
     async getTracings(
-      filters: ApiGetTracingsQuery,
+      filters: ApiGetTracingsQuery & { tenantId: string },
       logger: Logger,
     ): Promise<ApiGetTracingsResponse> {
-      logger.info(`Get tracings`);
+      logger.info(`Get tracings by tenantId: ${filters.tenantId}`);
 
-      const data = await dbService.getTracings(filters);
+      const data = await dbService.getTracings({
+        ...filters,
+      });
 
       const parsedTracings = TracingsContentResponse.safeParse(data.results);
       if (!parsedTracings.success) {

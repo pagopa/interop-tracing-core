@@ -36,7 +36,6 @@ import {
   PurposeErrorCodes,
   SQS,
   WithSQSMessageId,
-  genericLogger,
   initDB,
 } from "pagopa-interop-tracing-commons";
 import {
@@ -49,7 +48,7 @@ import {
 
 import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
-import { decodeSQSMessage } from "../src/models/models.js";
+import { decodeSQSEventMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { generateCSV } from "../src/utilities/csvHandler.js";
@@ -104,7 +103,7 @@ describe("Processing Service", () => {
   const mockAppCtx: WithSQSMessageId<AppContext> = {
     serviceName: config.applicationName,
     messageId: SqsMockMessageForS3.MessageId,
-    correlationId: decodeSQSMessage(sqsMessage).correlationId,
+    correlationId: decodeSQSEventMessage(sqsMessage).correlationId,
   };
 
   afterAll(async () => {
@@ -143,7 +142,7 @@ describe("Processing Service", () => {
     await addPurpose(purposeDataWithWrongEservice, dbInstance);
   });
 
-  describe("decodeSQSMessage", () => {
+  describe("decodeSQSEventMessage", () => {
     it("should throw error when message is wrong or empty", async () => {
       const emptyMessage: SQS.Message = {
         MessageId: "12345",
@@ -152,11 +151,11 @@ describe("Processing Service", () => {
       };
 
       try {
-        await decodeSQSMessage(emptyMessage);
+        await decodeSQSEventMessage(emptyMessage);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
-          "decodeSQSMessageError",
+          "decodeSQSEventMessageError",
         );
       }
     });
@@ -170,9 +169,12 @@ describe("Processing Service", () => {
 
       vi.spyOn(processingService, "processTracing").mockResolvedValueOnce();
 
-      const decoded = decodeSQSMessage(sqsMessage);
+      const decoded = decodeSQSEventMessage(sqsMessage);
       await processingService.processTracing(decoded, mockAppCtx);
-      expect(processingService.processTracing).toBeCalledWith(decoded);
+      expect(processingService.processTracing).toBeCalledWith(
+        decoded,
+        mockAppCtx,
+      );
       expect(decoded).toMatchObject({
         tenantId: expect.any(String),
         date: expect.any(String),
@@ -259,7 +261,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
-        genericLogger,
+        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -298,7 +300,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
-        genericLogger,
+        mockAppCtx,
       );
 
       await processingService.processTracing(mockMessage, mockAppCtx);
@@ -307,6 +309,7 @@ describe("Processing Service", () => {
         enrichedPurposes,
         createS3Path(mockMessage),
         mockMessage.tenantId,
+        mockAppCtx,
       );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
@@ -349,9 +352,10 @@ describe("Processing Service", () => {
     it("only last message should have updateTracingState true", async () => {
       const producerService = producerServiceBuilder(sqsClient);
       const errorPurposes = mockEnrichedPurposesWithErrors;
-      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
-        undefined,
-      );
+
+      const sendErrorMessageSpy = vi
+        .spyOn(producerService, "sendErrorMessage")
+        .mockResolvedValue(undefined);
 
       vi.spyOn(processingService, "processTracing");
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValueOnce(
@@ -373,19 +377,13 @@ describe("Processing Service", () => {
       );
 
       for (let i = 1; i < errorPurposes.length - 1; i++) {
-        expect(producerService.sendErrorMessage).nthCalledWith(
-          i,
-          expect.objectContaining({
-            updateTracingState: false,
-          }),
-        );
+        const [firstArg] = sendErrorMessageSpy.mock.calls[i];
+        expect(firstArg.updateTracingState).toBe(false);
       }
 
-      expect(producerService.sendErrorMessage).lastCalledWith(
-        expect.objectContaining({
-          updateTracingState: true,
-        }),
-      );
+      const [firstArg] =
+        sendErrorMessageSpy.mock.calls[errorPurposes.length - 1];
+      expect(firstArg.updateTracingState).toBe(true);
     });
   });
 
@@ -394,7 +392,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
         mockMessage,
-        genericLogger,
+        mockAppCtx,
       );
 
       const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
@@ -405,7 +403,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         errorPurposesWithInvalidPurposeId,
         mockMessage,
-        genericLogger,
+        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -429,7 +427,7 @@ describe("Processing Service", () => {
         await dbService.getEnrichedPurpose(
           errorPurposesWithInvalidEserviceId,
           mockMessage,
-          genericLogger,
+          mockAppCtx,
         );
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
@@ -448,7 +446,7 @@ describe("Processing Service", () => {
             ...mockMessage,
             ...{ tenantId: invalidConsumer },
           },
-          genericLogger,
+          mockAppCtx,
         );
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
@@ -469,7 +467,7 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
-        genericLogger,
+        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {

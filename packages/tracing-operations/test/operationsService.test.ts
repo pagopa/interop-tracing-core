@@ -87,7 +87,7 @@ describe("database test", () => {
       host: config.dbHost,
       port: config.dbPort,
       database: config.dbName,
-      schema: config.schemaName,
+      schema: config.dbSchemaName,
       useSSL: config.dbUseSSL,
     });
 
@@ -260,10 +260,11 @@ describe("database test", () => {
 
     describe("getTracings", () => {
       it("searching with 'states' parameter 'ERROR' should return an empty list of tracings", async () => {
-        const filters: ApiGetTracingsQuery = {
+        const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error],
           offset: 0,
           limit: 10,
+          tenantId,
         };
 
         const tracingData: Tracing = {
@@ -284,10 +285,11 @@ describe("database test", () => {
       });
 
       it("searching with 'states' parameter 'ERROR' should return only 1 record with 'ERROR' state", async () => {
-        const filters: ApiGetTracingsQuery = {
+        const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error],
           offset: 0,
           limit: 10,
+          tenantId,
         };
 
         const tracingErrorData: Tracing = {
@@ -319,10 +321,11 @@ describe("database test", () => {
       });
 
       it("searching with 'states' parameter 'ERROR' & 'MISSING' should return 2 records with both states", async () => {
-        const filters: ApiGetTracingsQuery = {
+        const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error, tracingState.missing],
           offset: 0,
           limit: 10,
+          tenantId,
         };
 
         const tracingErrorData: Tracing = {
@@ -361,9 +364,10 @@ describe("database test", () => {
       });
 
       it("searching without 'states' parameter should return 3 records", async () => {
-        const filters: ApiGetTracingsQuery = {
+        const filters: ApiGetTracingsQuery & { tenantId: string } = {
           offset: 0,
           limit: 10,
+          tenantId,
         };
 
         const tracingErrorData: Tracing = {
@@ -404,9 +408,10 @@ describe("database test", () => {
       });
 
       it("searching with 'limit' parameter value to 1, should return 1 records with totalCount 2", async () => {
-        const filters = {
+        const filters: ApiGetTracingsQuery & { tenantId: string } = {
           offset: 0,
           limit: 1,
+          tenantId,
         };
 
         const tracingErrorData: Tracing = {

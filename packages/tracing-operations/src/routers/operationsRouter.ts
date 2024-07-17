@@ -23,7 +23,7 @@ const operationsRouter = (
     host: config.dbHost,
     port: config.dbPort,
     database: config.dbName,
-    schema: config.schemaName,
+    schema: config.dbSchemaName,
     useSSL: config.dbUseSSL,
   });
   const operationsRouter = ctx.router(api.api, {
@@ -167,7 +167,10 @@ const operationsRouter = (
     async (req, res) => {
       try {
         const tracings = await operationsService.getTracings(
-          req.query,
+          {
+            ...req.query,
+            tenantId: req.ctx.authData.tenantId,
+          },
           logger(req.ctx),
         );
         return res

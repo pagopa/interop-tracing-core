@@ -35,30 +35,32 @@ export function dbServiceBuilder(db: DB) {
       offset: number;
       limit: number;
       states?: TracingState[];
+      tenantId: string;
     }): Promise<{ results: Tracing[]; totalCount: number }> {
       try {
-        const { offset, limit, states = [] } = filters;
+        const { offset, limit, states = [], tenantId } = filters;
 
         const getTracingsTotalCountQuery = `
           SELECT COUNT(*)::integer as total_count
           FROM tracing.tracings
-           WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
+          WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
         `;
 
         const { total_count } = await db.one<{ total_count: number }>(
           getTracingsTotalCountQuery,
-          [states],
+          [states, tenantId],
         );
 
         const getTracingsQuery = `
           SELECT *
           FROM tracing.tracings
-          WHERE (COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[])
-          OFFSET $2 LIMIT $3
+          WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
+          OFFSET $3 LIMIT $4
         `;
 
         const tracings = await db.any<Tracing>(getTracingsQuery, [
           states,
+          tenantId,
           offset,
           limit,
         ]);
