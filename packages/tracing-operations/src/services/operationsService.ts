@@ -12,6 +12,8 @@ import {
   ApiUpdateTracingStateParams,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
+  ApiTriggerS3CopyParams,
+  ApiTriggerS3CopyHeaders,
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
@@ -20,8 +22,6 @@ import {
   ApicancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
-  ApiTriggerS3CopyParams,
-  ApiTriggerS3CopyHeaders,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -37,8 +37,8 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
-import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 import { BucketService } from "./bucketService.js";
+import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(
   dbService: DBService,

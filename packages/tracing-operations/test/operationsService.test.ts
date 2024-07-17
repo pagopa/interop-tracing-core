@@ -52,12 +52,12 @@ import {
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
-import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 import {
   BucketService,
   bucketServiceBuilder,
 } from "../src/services/bucketService.js";
 import { S3Client } from "@aws-sdk/client-s3";
+import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
 describe("database test", () => {
   let dbInstance: DB;
@@ -869,48 +869,6 @@ describe("database test", () => {
       ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
     });
   });
-  describe("triggerS3Copy", () => {
-    it("should call trigger s3Copy", async () => {
-      const tracingData: Tracing = {
-        id: generateId<TracingId>(),
-        tenant_id: tenantId,
-        state: tracingState.pending,
-        date: yesterdayTruncated,
-        version: 1,
-        errors: false,
-      };
-      vi.spyOn(bucketService, "copyObject").mockResolvedValueOnce();
-      vi.spyOn(dbService, "findTracingById").mockResolvedValue(tracingData);
-
-      const tracingId = generateId();
-
-      await operationsService.triggerS3Copy(
-        { tracingId },
-        { "X-Correlation-Id": generateId() },
-        logger({}),
-      );
-
-      expect(bucketService.copyObject).toHaveBeenCalled();
-      expect(bucketService.copyObject).toHaveBeenCalledWith(
-        expect.objectContaining(tracingData),
-        expect.any(String),
-      );
-    });
-    it("should throw an error when tracing is not found", async () => {
-      const tracingId = generateId();
-      expect(
-        operationsService.triggerS3Copy(
-          {
-            tracingId,
-          },
-          {
-            "X-Correlation-Id": generateId(),
-          },
-          logger({}),
-        ),
-      ).rejects.toThrowError(tracingNotFound(tracingId));
-    });
-  });
 
   describe("recoverTracing", () => {
     it("should update an existing tracing from state 'ERROR/MISSING' to state 'PENDING' and new version successfully", async () => {
@@ -1080,6 +1038,48 @@ describe("database test", () => {
           logger({}),
         ),
       ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
+    });
+  });
+  describe("triggerS3Copy", () => {
+    it("should call trigger s3Copy", async () => {
+      const tracingData: Tracing = {
+        id: generateId<TracingId>(),
+        tenant_id: tenantId,
+        state: tracingState.pending,
+        date: yesterdayTruncated,
+        version: 1,
+        errors: false,
+      };
+      vi.spyOn(bucketService, "copyObject").mockResolvedValueOnce();
+      vi.spyOn(dbService, "findTracingById").mockResolvedValue(tracingData);
+
+      const tracingId = generateId();
+
+      await operationsService.triggerS3Copy(
+        { tracingId },
+        { "X-Correlation-Id": generateId() },
+        logger({}),
+      );
+
+      expect(bucketService.copyObject).toHaveBeenCalled();
+      expect(bucketService.copyObject).toHaveBeenCalledWith(
+        expect.objectContaining(tracingData),
+        expect.any(String),
+      );
+    });
+    it("should throw an error when tracing is not found", async () => {
+      const tracingId = generateId();
+      expect(
+        operationsService.triggerS3Copy(
+          {
+            tracingId,
+          },
+          {
+            "X-Correlation-Id": generateId(),
+          },
+          logger({}),
+        ),
+      ).rejects.toThrowError(tracingNotFound(tracingId));
     });
   });
 });

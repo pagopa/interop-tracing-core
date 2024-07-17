@@ -65,7 +65,7 @@ export function dbServiceBuilder(db: DB) {
           WHERE tracing_id = $1
           RETURNING id
         `;
-        return await db.one(queryText, [tracingId]);
+        return await db.many(queryText, [tracingId]);
       } catch (error) {
         throw deleteTraceError(`Error deleteTracing: ${error}`);
       }

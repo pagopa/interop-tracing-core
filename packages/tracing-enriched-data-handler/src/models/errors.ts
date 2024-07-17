@@ -36,14 +36,12 @@ export function insertEnrichedTraceError(
     code: "insertEnrichedTraceError",
   });
 }
-
 export function insertTraceError(detail: string): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
     code: "insertTraceError",
   });
 }
-
 export function deleteTraceError(detail: string): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
