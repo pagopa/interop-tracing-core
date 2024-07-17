@@ -373,13 +373,14 @@ describe("Processing Service", () => {
         mockFormalErrors.length,
       );
 
-      for (let i = 1; i < errorPurposes.length - 1; i++) {
+      for (let i = 1; i < mockFormalErrors.length - 1; i++) {
         const [firstArg] = sendErrorMessageSpy.mock.calls[i];
         expect(firstArg.updateTracingState).toBe(false);
       }
 
       const [firstArg] =
-        sendErrorMessageSpy.mock.calls[errorPurposes.length - 1];
+        sendErrorMessageSpy.mock.calls[mockFormalErrors.length - 1];
+
       expect(firstArg.updateTracingState).toBe(true);
     });
   });
