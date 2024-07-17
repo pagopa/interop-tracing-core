@@ -9,10 +9,10 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async deleteTracing(message: TracingFromCsv) {
+    async deleteTraces(message: TracingFromCsv) {
       try {
         const { tracingId, version } = message;
-        await dbService.deleteTracing(tracingId);
+        await dbService.deleteTraces(tracingId);
         return producerService.sendUpdateState({
           tracingId,
           version,

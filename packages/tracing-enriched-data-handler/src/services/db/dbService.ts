@@ -53,21 +53,23 @@ export function dbServiceBuilder(db: DB) {
         });
       } catch (error) {
         throw insertTraceError(
-          `Error inserting trace for tracingId: ${tracingId}: Details: ${error}`,
+          `Error inserting traces for tracingId: ${tracingId}. Details: ${error}`,
         );
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async deleteTracing(tracingId: string) {
+
+    async deleteTraces(tracingId: string) {
       try {
-        const queryText = `
+        const deleteTracesQuery = `
           DELETE FROM traces.traces
           WHERE tracing_id = $1
           RETURNING id
         `;
-        return await db.many(queryText, [tracingId]);
+        return await db.many(deleteTracesQuery, [tracingId]);
       } catch (error) {
-        throw deleteTraceError(`Error deleteTracing: ${error}`);
+        throw deleteTraceError(
+          `Error deleting traces for tracingId: ${tracingId}. Details: ${error}`,
+        );
       }
     },
   };

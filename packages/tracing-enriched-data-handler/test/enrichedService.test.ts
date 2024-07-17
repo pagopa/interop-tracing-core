@@ -188,7 +188,7 @@ describe("Enriched Service", () => {
         .spyOn(producerService, "sendUpdateState")
         .mockResolvedValue();
 
-      await replacementService.deleteTracing(mockTracingFromCsv);
+      await replacementService.deleteTraces(mockTracingFromCsv);
       expect(sendUpdateStateSpy).toHaveBeenCalledWith({
         tracingId: mockTracingFromCsv.tracingId,
         version: mockTracingFromCsv.version,
@@ -200,7 +200,7 @@ describe("Enriched Service", () => {
     it("should throw an error if deletion fails", async () => {
       const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
       try {
-        await replacementService.deleteTracing({
+        await replacementService.deleteTraces({
           ...mockTracingFromCsv,
           tracingId: generateId(),
         });
