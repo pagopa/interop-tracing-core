@@ -8,8 +8,10 @@ import {
 import {
   PurposeId,
   TracingId,
+  correlationIdToHeader,
   generateId,
   genericInternalError,
+  purposeIdToHeader,
   tracingAlreadyExists,
   tracingCannotBeUpdated,
   tracingNotFound,
@@ -49,10 +51,6 @@ import {
   ApiExternalGetTracingsQuery,
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
-import {
-  correlationIdToHeader,
-  purposeIdToHeader,
-} from "../src/model/headers.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);

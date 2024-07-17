@@ -20,11 +20,11 @@ export const getRequesterAuthData = (
     return match(headers)
       .with(
         {
-          "X-Requester-Purpose-Id": P.string,
+          "x-requester-purpose-id": P.string,
         },
         (headers) => {
           return {
-            purposeId: headers["X-Requester-Purpose-Id"] as PurposeId,
+            purposeId: headers["x-requester-purpose-id"] as PurposeId,
           };
         },
       )

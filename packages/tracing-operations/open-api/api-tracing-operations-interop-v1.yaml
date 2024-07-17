@@ -17,14 +17,14 @@ paths:
         - Write
       parameters:
         - in: header
-          name: X-Correlation-Id
+          name: x-correlation-id
           description: Correlation ID for tracking requests
           required: true
           schema:
             type: string
             format: uuid
         - in: header
-          name: X-Requester-Purpose-Id
+          name: x-requester-purpose-id
           description: Purpose ID for specifying the requester's purpose
           required: true
           schema:
@@ -157,7 +157,7 @@ paths:
           schema:
             type: integer
         - in: header
-          name: X-Correlation-Id
+          name: x-correlation-id
           description: Correlation ID for tracking requests
           required: true
           schema:
@@ -446,7 +446,7 @@ paths:
           schema:
             type: string
         - in: header
-          name: X-Correlation-Id
+          name: x-correlation-id
           description: Correlation ID for tracking requests
           required: true
           schema:
