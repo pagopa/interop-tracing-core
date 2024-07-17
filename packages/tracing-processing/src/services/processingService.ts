@@ -52,19 +52,17 @@ export const processingServiceBuilder = (
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
-        if (formalErrorsRecords.length) {
-          await sendFormalErrors(formalErrorsRecords, producerService, ctx);
-        } else {
-          await writeEnrichedTracingOrSendPurposeErrors(
-            bucketService,
-            producerService,
-            dbService,
-            tracingRecords,
-            s3KeyPath,
-            tracing,
-            ctx,
-          );
-        }
+
+        await writeEnrichedTracingOrSendPurposeErrors(
+          bucketService,
+          producerService,
+          dbService,
+          tracingRecords,
+          s3KeyPath,
+          tracing,
+          formalErrorsRecords,
+          ctx,
+        );
       } catch (error: unknown) {
         throw processTracingError(
           `Error processing tracing for tracingId: ${tracing.tracingId}. Details: ${error}`,
@@ -74,20 +72,6 @@ export const processingServiceBuilder = (
   };
 };
 
-async function sendFormalErrors(
-  formalErrorsRecords: SavePurposeErrorDto[],
-  producerService: ProducerService,
-  ctx: WithSQSMessageId<AppContext>,
-) {
-  for (const [index, purposeError] of formalErrorsRecords.entries()) {
-    const isLast = index === formalErrorsRecords.length - 1;
-    if (isLast) {
-      purposeError.updateTracingState = true;
-    }
-    await producerService.sendErrorMessage(purposeError, ctx);
-  }
-}
-
 export async function writeEnrichedTracingOrSendPurposeErrors(
   bucketService: BucketService,
   producerService: ProducerService,
@@ -95,6 +79,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   tracingRecords: TracingRecordSchema[],
   s3KeyPath: string,
   tracing: TracingFromS3KeyPathDto,
+  formalErrors: PurposeErrorMessage[],
   ctx: WithSQSMessageId<AppContext>,
 ) {
   const enrichedPurposes = await dbService.getEnrichedPurpose(
@@ -103,17 +88,14 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     ctx,
   );
 
-  const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
-    if (PurposeErrorMessage.safeParse(item).success) {
-      return item;
-    } else {
-      return null;
+  const purposeErrors: PurposeErrorMessageArray = formalErrors;
+
+  enrichedPurposes.forEach((item) => {
+    const purposeError = PurposeErrorMessageArray.safeParse(item).data;
+    if (purposeError) {
+      purposeErrors.push(...purposeError);
     }
   });
-
-  const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-    purposeErrorsFiltered,
-  );
 
   if (purposeErrors && purposeErrors.length > 0) {
     await sendPurposeErrors(purposeErrors, tracing, producerService, ctx);
@@ -157,11 +139,9 @@ export async function checkRecords(
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
-
-      continue;
     }
 
-    if (result.data?.date !== tracing.date) {
+    if (result.data && result.data.date !== tracing.date) {
       errorsRecord.push({
         tracingId: tracing.tracingId,
         version: tracing.version,
@@ -181,8 +161,8 @@ function parseErrorMessage(errorObj: string) {
   const error = JSON.parse(errorObj);
   const {
     path,
-    received,
-  }: { path: (keyof TracingRecordSchema)[]; received: string } = error[0];
+    message,
+  }: { path: (keyof TracingRecordSchema)[]; message: string } = error[0];
   const errorCode = match(path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
@@ -190,7 +170,7 @@ function parseErrorMessage(errorObj: string) {
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
 
-  return { message: `{ ${path}: ${received} } is not valid`, errorCode };
+  return { message: `${path}: ${message}`, errorCode };
 }
 
 async function sendPurposeErrors(
@@ -199,7 +179,11 @@ async function sendPurposeErrors(
   producerService: ProducerService,
   ctx: WithSQSMessageId<AppContext>,
 ) {
-  const errorMessagePromises = purposeErrors.map((record, index) => {
+  const sortedPurposeErrors = purposeErrors.sort(
+    (a, b) => a.rowNumber - b.rowNumber,
+  );
+
+  const errorMessagePromises = sortedPurposeErrors.map((record, index) => {
     const purposeError = {
       tracingId: tracing.tracingId,
       version: tracing.version,

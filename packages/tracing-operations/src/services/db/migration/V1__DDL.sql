@@ -47,5 +47,4 @@ CREATE TABLE tracing.purposes_errors (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tracing_id) REFERENCES tracing.tracings(id),
     FOREIGN KEY (purpose_id) REFERENCES tracing.purposes(id),
-    UNIQUE (tracing_id, purpose_id, version, row_number)
 );

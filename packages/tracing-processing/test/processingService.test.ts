@@ -69,6 +69,7 @@ import {
   validPurposeNotAssociated,
   validEnrichedPurpose,
   eServiceDataNotAssociated,
+  mockFormalErrors,
 } from "./costants.js";
 import {
   EnrichedPurposeArray,
@@ -246,9 +247,9 @@ describe("Processing Service", () => {
     });
 
     it("should get errors on enriched purposes when purposes are not found and call producerService", async () => {
-      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
+      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue([
         mockEnrichedPurposesWithErrors,
-      );
+      ]);
 
       vi.spyOn(bucketService, "readObject").mockResolvedValue(
         mockTracingRecords,
@@ -264,20 +265,16 @@ describe("Processing Service", () => {
         mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
-        if (PurposeErrorMessage.safeParse(item).success) {
+        if (PurposeErrorMessageArray.safeParse(item).success) {
           return item;
         } else {
           return null;
         }
       });
 
-      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-        purposeErrorsFiltered,
-      );
-
       await processingService.processTracing(mockMessage, mockAppCtx);
 
-      expect(purposeErrors?.length).toBeGreaterThan(0);
+      expect(purposeErrorsFiltered?.length).toBeGreaterThan(0);
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(3);
 
@@ -351,8 +348,7 @@ describe("Processing Service", () => {
 
     it("only last message should have updateTracingState true", async () => {
       const producerService = producerServiceBuilder(sqsClient);
-      const errorPurposes = mockEnrichedPurposesWithErrors;
-
+      const errorPurposes = [mockEnrichedPurposesWithErrors];
       const sendErrorMessageSpy = vi
         .spyOn(producerService, "sendErrorMessage")
         .mockResolvedValue(undefined);
@@ -369,11 +365,12 @@ describe("Processing Service", () => {
         mockTracingRecords,
         "s3KeyPath",
         mockMessage,
+        mockFormalErrors,
         mockAppCtx,
       );
 
       expect(producerService.sendErrorMessage).toBeCalledTimes(
-        errorPurposes.length,
+        mockFormalErrors.length,
       );
 
       for (let i = 1; i < errorPurposes.length - 1; i++) {

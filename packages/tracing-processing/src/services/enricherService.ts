@@ -10,7 +10,7 @@ import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
 import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
 
-type EnrichedPurposeResult = (PurposeErrorMessage | EnrichedPurpose)[];
+type EnrichedPurposeResult = (PurposeErrorMessage[] | EnrichedPurpose)[];
 
 export function dbServiceBuilder(db: DB) {
   return {
@@ -20,6 +20,7 @@ export function dbServiceBuilder(db: DB) {
       ctx: WithSQSMessageId<AppContext>,
     ): Promise<EnrichedPurposeResult> {
       try {
+        const purposeErrorMessages: PurposeErrorMessage[] = [];
         const fullRecordPromises = records.map(
           async (record: TracingRecordSchema) => {
             try {
@@ -28,13 +29,12 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (isPurposeAndStatusNotUnique(record, records)) {
-                return {
+                purposeErrorMessages.push({
                   purposeId: record.purpose_id,
-                  status: record.status,
                   errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
                   message: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
                   rowNumber: record.rowNumber,
-                };
+                });
               }
 
               const consumer = await db.oneOrNone<{
@@ -62,68 +62,68 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!fullPurpose) {
-                return {
+                purposeErrorMessages.push({
                   purposeId: record.purpose_id,
-                  status: record.status,
                   errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
                   message: PurposeErrorCodes.PURPOSE_NOT_FOUND,
                   rowNumber: record.rowNumber,
-                };
-              }
+                });
+                return purposeErrorMessages;
+              } else {
+                const eService = await db.oneOrNone<EserviceSchema>(
+                  `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
+                  [fullPurpose.eservice_id],
+                );
 
-              const eService = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
-                [fullPurpose.eservice_id],
-              );
+                if (!eService) {
+                  throw getEnrichedPurposeError(
+                    `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                  );
+                }
 
-              if (!eService) {
-                throw getEnrichedPurposeError(
-                  `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                const tenantEservice = await db.oneOrNone<EserviceSchema>(
+                  `SELECT * FROM tracing.eservices WHERE producer_id = $1 AND eservice_id = $2`,
+                  [tracing.tenantId, eService.eservice_id],
+                );
+
+                if (
+                  !tenantEservice &&
+                  fullPurpose.consumer_id !== tracing.tenantId
+                ) {
+                  purposeErrorMessages.push({
+                    purposeId: record.purpose_id,
+                    errorCode:
+                      PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+                    message:
+                      PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+                    rowNumber: record.rowNumber,
+                  });
+                  return purposeErrorMessages;
+                }
+                const producer = await db.oneOrNone<{
+                  name: string;
+                  origin: string;
+                  external_id: string;
+                }>(
+                  `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
+                  [eService.producer_id],
+                );
+
+                if (!producer) {
+                  throw getEnrichedPurposeError(
+                    `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+                  );
+                }
+
+                return enrichSuccessfulPurpose(
+                  record,
+                  tracing,
+                  eService,
+                  fullPurpose,
+                  consumer,
+                  producer,
                 );
               }
-
-              const tenantEservice = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE producer_id = $1 AND eservice_id = $2`,
-                [tracing.tenantId, eService.eservice_id],
-              );
-
-              if (
-                !tenantEservice &&
-                fullPurpose.consumer_id !== tracing.tenantId
-              ) {
-                return {
-                  purposeId: record.purpose_id,
-                  status: record.status,
-                  errorCode:
-                    PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
-                  message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
-                  rowNumber: record.rowNumber,
-                };
-              }
-
-              const producer = await db.oneOrNone<{
-                name: string;
-                origin: string;
-                external_id: string;
-              }>(
-                `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
-                [eService.producer_id],
-              );
-
-              if (!producer) {
-                throw getEnrichedPurposeError(
-                  `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
-                );
-              }
-
-              return enrichSuccessfulPurpose(
-                record,
-                tracing,
-                eService,
-                fullPurpose,
-                consumer,
-                producer,
-              );
             } catch (error) {
               throw getEnrichedPurposeError(
                 `Error getEnrichedPurpose for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}: Details: ${error}`,
