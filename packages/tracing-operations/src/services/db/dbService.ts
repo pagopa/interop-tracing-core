@@ -271,7 +271,6 @@ export function dbServiceBuilder(db: DB) {
         const upsertTracingQuery = `
           INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
-          ON CONFLICT (tracing_id, purpose_id, version, row_number) DO NOTHING
           RETURNING id;
         `;
 
