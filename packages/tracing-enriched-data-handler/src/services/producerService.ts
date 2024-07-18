@@ -7,7 +7,7 @@ import { config } from "../utilities/config.js";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
-    async sendUpdateState(updateTracingState: UpdateTracingStateDto) {
+    async sendTracingUpdateState(updateTracingState: UpdateTracingStateDto) {
       try {
         genericLogger.info(
           `UpdateTracingState message sent on queue for tracingId: ${
@@ -24,7 +24,7 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
         throw genericInternalError(`Error getPurposesByTracingId: ${error}`);
       }
     },
-    async sendErrorMessage(obj: unknown) {
+    async sendPurposeError(obj: unknown) {
       try {
         return Promise.resolve({ obj });
       } catch (error) {
