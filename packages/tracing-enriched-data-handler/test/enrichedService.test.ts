@@ -86,7 +86,7 @@ describe("Enriched Service", () => {
         mockEnrichedPuposes,
       );
       const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendTracingUpdateState")
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -109,7 +109,7 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
       try {
         await enrichedService.insertEnrichedTrace(
@@ -130,7 +130,7 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -150,7 +150,7 @@ describe("Enriched Service", () => {
         .mockRejectedValue(insertTraceError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
 
       try {
@@ -175,7 +175,7 @@ describe("Enriched Service", () => {
       );
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -197,7 +197,7 @@ describe("Enriched Service", () => {
       );
 
       const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendTracingUpdateState")
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
       await replacementService.deleteTraces(mockTracingFromCsv);
@@ -212,7 +212,7 @@ describe("Enriched Service", () => {
     it("should throw an error if deletion fails", async () => {
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
       try {
         await replacementService.deleteTraces({
@@ -232,7 +232,7 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
       try {
         await enrichedService.insertEnrichedTrace(
@@ -253,7 +253,7 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -274,7 +274,7 @@ describe("Enriched Service", () => {
         .mockRejectedValue(insertTraceError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
 
       try {
@@ -299,7 +299,7 @@ describe("Enriched Service", () => {
       );
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
-        "sendTracingUpdateState",
+        "sendTracingUpdateStateMessage",
       );
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);

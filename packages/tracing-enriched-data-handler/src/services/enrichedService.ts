@@ -42,7 +42,7 @@ export const enrichedServiceBuilder = (
         );
 
         if (tracesInserted.length > 0) {
-          await producerService.sendTracingUpdateState({
+          await producerService.sendTracingUpdateStateMessage({
             tracingId: tracing.tracingId,
             version: tracing.version,
             state: tracingState.completed,
