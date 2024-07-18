@@ -9,6 +9,3 @@ export const ConsumerConfig = z
   }));
 
 export type ConsumerConfig = z.infer<typeof ConsumerConfig>;
-
-export const consumerConfig: () => ConsumerConfig = () =>
-  ConsumerConfig.parse(process.env);

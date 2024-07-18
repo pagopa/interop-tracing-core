@@ -10,7 +10,5 @@ export const HTTPServerConfig = z
     host: c.HOST,
     port: c.PORT,
   }));
-export type HTTPServerConfig = z.infer<typeof HTTPServerConfig>;
 
-export const httpServerConfig: () => HTTPServerConfig = () =>
-  HTTPServerConfig.parse(process.env);
+export type HTTPServerConfig = z.infer<typeof HTTPServerConfig>;

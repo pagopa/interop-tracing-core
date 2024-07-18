@@ -1,6 +1,5 @@
 import { decodeSQSEventMessageError } from "./errors.js";
 import { SQS } from "pagopa-interop-tracing-commons";
-
 import {
   TracingFromS3KeyPathDto,
   S3BodySchema,
@@ -31,7 +30,7 @@ export function decodeSQSEventMessage(
     }
   } catch (error: unknown) {
     throw decodeSQSEventMessageError(
-      `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
+      `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
     );
   }
 }

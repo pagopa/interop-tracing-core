@@ -17,4 +17,5 @@ export const JWTConfig = z
     wellKnownUrls: c.WELL_KNOWN_URLS,
     acceptedAudiences: c.ACCEPTED_AUDIENCES,
   }));
+
 export type JWTConfig = z.infer<typeof JWTConfig>;

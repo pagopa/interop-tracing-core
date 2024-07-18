@@ -74,6 +74,20 @@ export const operationsServiceBuilder = (
         );
       }
     },
+    async triggerS3Copy(tracingId: string, ctx: WithSQSMessageId<AppContext>) {
+      try {
+        await operationsApiClient.triggerCopy(undefined, {
+          headers: { ...correlationIdToHeader(ctx.correlationId) },
+          params: { tracingId },
+        });
+
+        logger(ctx).info(`Triggering S3 copy for tracingId: ${tracingId}`);
+      } catch (error: unknown) {
+        throw errorProcessingUpdateTracingState(
+          `Error triggering copy: ${tracingId}. Details: ${error}`,
+        );
+      }
+    },
   };
 };
 

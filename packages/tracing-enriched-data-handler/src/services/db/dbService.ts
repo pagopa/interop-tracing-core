@@ -2,6 +2,7 @@ import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../../models/messages.js";
 import { insertTracesError, deleteTracesError } from "../../models/errors.js";
+
 export function dbServiceBuilder(db: DB) {
   return {
     async insertTraces(tracingId: string, records: TracingEnriched[]) {
@@ -53,16 +54,23 @@ export function dbServiceBuilder(db: DB) {
         });
       } catch (error) {
         throw insertTracesError(
-          `Error inserting trace for tracingId: ${tracingId}: Details: ${error}`,
+          `Error inserting traces for tracingId: ${tracingId}. Details: ${error}`,
         );
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async deleteTracing(_tracingId: string) {
+
+    async deleteTraces(tracingId: string) {
       try {
-        return Promise.resolve([{}]);
+        const deleteTracesQuery = `
+          DELETE FROM traces.traces
+          WHERE tracing_id = $1
+          RETURNING id
+        `;
+        return await db.many(deleteTracesQuery, [tracingId]);
       } catch (error) {
-        throw deleteTracesError(`Error insertTracing: ${error}`);
+        throw deleteTracesError(
+          `Error deleting traces for tracingId: ${tracingId}. Details: ${error}`,
+        );
       }
     },
   };

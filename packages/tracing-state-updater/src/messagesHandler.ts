@@ -27,10 +27,17 @@ export function processTracingStateMessage(
         messageId: message.MessageId,
       };
 
-      await service.updateTracingState(
-        decodeSQSUpdateTracingStateMessage(message),
-        ctx,
-      );
+      const updateTracingStateMessage =
+        decodeSQSUpdateTracingStateMessage(message);
+
+      if (updateTracingStateMessage.isReplacing) {
+        await service.triggerS3Copy(updateTracingStateMessage.tracingId, ctx);
+      } else {
+        await service.updateTracingState(
+          decodeSQSUpdateTracingStateMessage(message),
+          ctx,
+        );
+      }
     } catch (error: unknown) {
       throw errorMapper(
         error,
@@ -48,10 +55,10 @@ export function processPurposeErrorMessage(
   service: OperationsService,
 ): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message): Promise<void> => {
-    const attributes = decodeSQSMessageCorrelationId(message);
+    const decodedAttributeMessage = decodeSQSMessageCorrelationId(message);
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
+      correlationId: decodedAttributeMessage.correlationId,
       messageId: message.MessageId,
     };
 
@@ -70,7 +77,14 @@ export function processPurposeErrorMessage(
         );
       }
     } catch (error: unknown) {
-      throw errorMapper(error, logger(ctx));
+      throw errorMapper(
+        error,
+        logger({
+          serviceName: config.applicationName,
+          correlationId: decodedAttributeMessage?.correlationId,
+          messageId: message.MessageId,
+        }),
+      );
     }
   };
 }

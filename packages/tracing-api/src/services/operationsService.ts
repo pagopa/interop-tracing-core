@@ -18,11 +18,11 @@ import {
   ApiCancelTracingStateAndVersionHeaders,
   ApiRecoverTracingParams,
   ApiGetTracingErrorsParams,
-  ApiGetTracingErrorsHeaders,
   ApiGetTracingsHeaders,
   ApiRecoverTracingHeaders,
-  ApiReplaceTracingParams,
   ApiReplaceTracingHeaders,
+  ApiReplaceTracingParams,
+  ApiGetTracingErrorsHeaders,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (

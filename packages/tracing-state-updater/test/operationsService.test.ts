@@ -158,4 +158,58 @@ describe("Operations service test", () => {
       }
     });
   });
+
+  describe("triggerCopy", () => {
+    it("it should return a succesfully response", () => {
+      const validMessage: SQS.Message = {
+        MessageId: "12345",
+        ReceiptHandle: "receipt_handle_id",
+        Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
+        MessageAttributes: correlationIdMessageAttribute,
+      };
+
+      const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
+
+      vi.spyOn(apiClient, "triggerCopy").mockResolvedValueOnce(undefined);
+
+      expect(
+        async () =>
+          await operationsService.triggerS3Copy(decodedMessage.tracingId, ctx),
+      ).not.toThrowError();
+    });
+
+    it("it should return an exception errorProcessingUpdateTracingState", async () => {
+      const validMessage: SQS.Message = {
+        MessageId: "12345",
+        ReceiptHandle: "receipt_handle_id",
+        Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
+        MessageAttributes: correlationIdMessageAttribute,
+      };
+
+      const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+      const attributes = decodeSQSMessageCorrelationId(validMessage);
+      const ctx: WithSQSMessageId<AppContext> = {
+        serviceName: config.applicationName,
+        correlationId: attributes.correlationId,
+        messageId: validMessage.MessageId,
+      };
+
+      vi.spyOn(apiClient, "triggerCopy").mockRejectedValue(undefined);
+
+      try {
+        await operationsService.triggerS3Copy(decodedMessage.tracingId, ctx);
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "errorProcessingUpdateTracingState",
+        );
+      }
+    });
+  });
 });

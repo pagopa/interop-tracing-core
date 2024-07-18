@@ -9,22 +9,21 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "./services/producerService.js";
-import { dbConfig } from "./utilities/dbConfig.js";
 import { config } from "./utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
-
 import {
   bucketServiceBuilder,
   BucketService,
 } from "./services/bucketService.js";
+
 const dbInstance = initDB({
-  username: dbConfig.dbUsername,
-  password: dbConfig.dbPassword,
-  host: dbConfig.dbHost,
-  port: dbConfig.dbPort,
-  database: dbConfig.dbName,
-  schema: dbConfig.dbSchemaName,
-  useSSL: dbConfig.dbUseSSL,
+  username: config.dbUsername,
+  password: config.dbPassword,
+  host: config.dbHost,
+  port: config.dbPort,
+  database: config.dbName,
+  schema: config.dbSchemaName,
+  useSSL: config.dbUseSSL,
 });
 
 const sqsClient: SQS.SQSClient = await SQS.instantiateClient({

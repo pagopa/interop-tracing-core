@@ -19,7 +19,6 @@ import {
   DBService,
   dbServiceBuilder,
 } from "../src/services/enricherService.js";
-import { dbConfig } from "../src/utilities/dbConfig.js";
 import {
   BucketService,
   bucketServiceBuilder,
@@ -112,17 +111,17 @@ describe("Processing Service", () => {
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(dbConfig).start();
-    dbConfig.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
 
     dbInstance = initDB({
-      username: dbConfig.dbUsername,
-      password: dbConfig.dbPassword,
-      host: dbConfig.dbHost,
-      port: dbConfig.dbPort,
-      database: dbConfig.dbName,
-      schema: dbConfig.dbSchemaName,
-      useSSL: false,
+      username: config.dbUsername,
+      password: config.dbPassword,
+      host: config.dbHost,
+      port: config.dbPort,
+      database: config.dbName,
+      schema: config.dbSchemaName,
+      useSSL: config.dbUseSSL,
     });
 
     dbService = dbServiceBuilder(dbInstance);

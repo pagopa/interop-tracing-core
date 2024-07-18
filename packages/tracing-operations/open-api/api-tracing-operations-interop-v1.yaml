@@ -135,7 +135,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateOnCompleteResponse"
+                $ref: "#/components/schemas/ReplaceTracingResponse"
         "400":
           description: The provided input data is invalid
           content:
@@ -482,6 +482,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /tracings/{tracingId}/triggerCopy:
+    post:
+      summary: Trigger a copy of the csv by tracingId
+      operationId: triggerCopy
+      tags:
+        - Write
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: path
+          name: tracingId
+          required: true
+          schema:
+            type: string
+         
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
 components:
   schemas:
     CorrelationId:
@@ -651,8 +690,14 @@ components:
           type: number
         previousState:
           $ref: "#/components/schemas/TracingState"
-    UpdateOnCompleteResponse:
+    ReplaceTracingResponse:
       type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
+        - previousState
       properties:
         tracingId:
           type: string
@@ -660,8 +705,13 @@ components:
         tenantId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
         version:
           type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
     Problem:
       properties:
         type:
