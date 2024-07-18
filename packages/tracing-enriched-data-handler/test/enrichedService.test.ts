@@ -61,7 +61,7 @@ describe("Enriched Service", () => {
       port: dbConfig.dbPort,
       database: dbConfig.dbName,
       schema: dbConfig.dbSchemaName,
-      useSSL: false,
+      useSSL: dbConfig.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);

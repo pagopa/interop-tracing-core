@@ -31,7 +31,7 @@ const dbInstance = initDB({
   port: dbConfig.dbPort,
   database: dbConfig.dbName,
   schema: dbConfig.dbSchemaName,
-  useSSL: false,
+  useSSL: dbConfig.dbUseSSL,
 });
 
 const s3client: S3Client = new S3Client({

@@ -8,7 +8,9 @@ export const DbConfig = z
     DB_PASSWORD: z.string(),
     DB_PORT: z.coerce.number().min(1001),
     SCHEMA_NAME: z.string(),
-    DB_USE_SSL: z.coerce.boolean(),
+    DB_USE_SSL: z
+      .enum(["true", "false"])
+      .transform((value) => value === "true"),
   })
   .transform((c) => ({
     dbHost: c.DB_HOST,
