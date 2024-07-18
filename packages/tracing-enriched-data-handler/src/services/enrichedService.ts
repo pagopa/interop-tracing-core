@@ -49,7 +49,7 @@ export const enrichedServiceBuilder = (
         );
 
         if (tracesInserted.length > 0) {
-          await producerService.sendUpdateState(
+          await producerService.sendTracingUpdateStateMessage(
             {
               tracingId: tracing.tracingId,
               version: tracing.version,

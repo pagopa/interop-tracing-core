@@ -87,8 +87,8 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
         .mockResolvedValue([{ id: generateId() }]);
-      const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendUpdateState")
+      const sendTracingUpdateStateMessageSpy = vi
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
@@ -99,7 +99,7 @@ describe("Enriched Service", () => {
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+      expect(sendTracingUpdateStateMessageSpy).toHaveBeenCalledWith(
         {
           tracingId: mockTracingFromCsv.tracingId,
           version: mockTracingFromCsv.version,
@@ -114,7 +114,10 @@ describe("Enriched Service", () => {
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendTracingUpdateStateMessageSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
@@ -124,7 +127,7 @@ describe("Enriched Service", () => {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).not.toHaveBeenCalled();
         expect(insertTracingSpy).not.toHaveBeenCalled();
-        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+        expect(sendTracingUpdateStateMessageSpy).not.toHaveBeenCalled();
       }
     });
 
@@ -133,7 +136,10 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendTracingUpdateStateMessageSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(
           mockTracingFromCsv,
@@ -143,7 +149,7 @@ describe("Enriched Service", () => {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
         expect(insertTracingSpy).not.toHaveBeenCalled();
-        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+        expect(sendTracingUpdateStateMessageSpy).not.toHaveBeenCalled();
       }
     });
 
@@ -154,7 +160,10 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
         .mockRejectedValue(insertTraceError(``));
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendTracingUpdateStateMessageSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       try {
         await enrichedService.insertEnrichedTrace(
@@ -168,7 +177,7 @@ describe("Enriched Service", () => {
           mockTracingFromCsv.tracingId,
           mockEnrichedPuposes,
         );
-        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+        expect(sendTracingUpdateStateMessageSpy).not.toHaveBeenCalled();
       }
     });
 
@@ -179,12 +188,15 @@ describe("Enriched Service", () => {
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: generateId() }]),
       );
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendTracingUpdateStateMessageSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        expect(sendTracingUpdateStateMessageSpy).toHaveBeenCalledWith(
           {
             tracingId: mockTracingFromCsv.tracingId,
             version: mockTracingFromCsv.version,

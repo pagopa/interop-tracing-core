@@ -6,7 +6,7 @@ export const errorCodes = {
   insertEnrichedTraceError: "0603",
   insertTraceError: "0604",
   deleteTraceError: "0605",
-  sendUpdateStateError: "0606",
+  sendTracingUpdateStateMessageError: "0606",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;
@@ -38,12 +38,12 @@ export function insertEnrichedTraceError(
   });
 }
 
-export function sendUpdateStateError(
+export function sendTracingUpdateStateMessageError(
   detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
-    code: "sendUpdateStateError",
+    code: "sendTracingUpdateStateMessageError",
   });
 }
 
