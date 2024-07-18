@@ -31,7 +31,7 @@ export function decodeSQSMessage(
     }
   } catch (error: unknown) {
     throw decodeSQSMessageError(
-      `Failed to decode SQS s3 event message with MessageId: ${message.MessageId}. Error details: ${error}`,
+      `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
     );
   }
 }
