@@ -16,7 +16,6 @@ import {
   ReplacementService,
   replacementServiceBuilder,
 } from "../src/services/replacementService.js";
-import { dbConfig } from "../src/utilities/dbConfig.js";
 import { DB, SQS, initDB } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
@@ -40,6 +39,7 @@ describe("Enriched Service", () => {
   let replacementService: ReplacementService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
+
   const s3client = new S3Client({
     region: config.awsRegion,
   });
@@ -52,16 +52,16 @@ describe("Enriched Service", () => {
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(dbConfig).start();
-    dbConfig.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
     dbInstance = initDB({
-      username: dbConfig.dbUsername,
-      password: dbConfig.dbPassword,
-      host: dbConfig.dbHost,
-      port: dbConfig.dbPort,
-      database: dbConfig.dbName,
-      schema: dbConfig.dbSchemaName,
-      useSSL: dbConfig.dbUseSSL,
+      username: config.dbUsername,
+      password: config.dbPassword,
+      host: config.dbHost,
+      port: config.dbPort,
+      database: config.dbName,
+      schema: config.dbSchemaName,
+      useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);

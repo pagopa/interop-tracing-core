@@ -1,12 +1,14 @@
 import {
   AWSConfig,
   ConsumerConfig,
+  DbConfig,
   LoggerConfig,
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
+  .and(DbConfig)
   .and(
     z
       .object({

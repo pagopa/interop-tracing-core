@@ -109,7 +109,7 @@ describe("database test", () => {
       host: config.dbHost,
       port: config.dbPort,
       database: config.dbName,
-      schema: config.schemaName,
+      schema: config.dbSchemaName,
       useSSL: config.dbUseSSL,
     });
 
