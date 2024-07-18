@@ -29,7 +29,7 @@ import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
-import { addTrace } from "./utils.js";
+import { addTraces } from "./utils.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
@@ -191,7 +191,7 @@ describe("Enriched Service", () => {
   });
   describe("deleteTrace", () => {
     it("should delete a tracing and send update successfully", async () => {
-      await addTrace(
+      await addTraces(
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
         dbInstance,
