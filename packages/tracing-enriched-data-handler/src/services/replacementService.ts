@@ -1,5 +1,5 @@
 import { tracingState } from "pagopa-interop-tracing-models";
-import { deleteTraceError } from "../models/errors.js";
+import { deleteTracesError } from "../models/errors.js";
 import { TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
@@ -20,7 +20,7 @@ export const replacementServiceBuilder = (
           isReplacing: true,
         });
       } catch (error) {
-        throw deleteTraceError(
+        throw deleteTracesError(
           `Error on deleting tracing ${message.tracingId}, detail: ${error}`,
         );
       }

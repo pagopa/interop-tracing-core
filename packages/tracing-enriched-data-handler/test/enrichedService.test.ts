@@ -29,7 +29,7 @@ import {
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
-import { insertTraceError } from "../src/models/errors.js";
+import { insertTracesError } from "../src/models/errors.js";
 import { addTrace } from "./utils.js";
 
 describe("Enriched Service", () => {
@@ -147,7 +147,7 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
-        .mockRejectedValue(insertTraceError(``));
+        .mockRejectedValue(insertTracesError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",
@@ -271,7 +271,7 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
-        .mockRejectedValue(insertTraceError(``));
+        .mockRejectedValue(insertTracesError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",
