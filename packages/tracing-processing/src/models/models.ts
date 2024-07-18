@@ -1,6 +1,5 @@
 import { decodeSQSMessageError } from "./errors.js";
 import { SQS } from "pagopa-interop-tracing-commons";
-
 import {
   TracingFromS3KeyPathDto,
   S3BodySchema,

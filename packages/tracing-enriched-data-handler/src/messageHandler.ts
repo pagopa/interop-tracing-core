@@ -1,8 +1,8 @@
 import { SQS } from "pagopa-interop-tracing-commons";
 import { ReplacementService } from "./services/replacementService.js";
 import { decodeSQSMessage } from "./models/models.js";
-import { EnrichedService } from "./services/enrichedService.js";
 import { errorMapper } from "./utilities/errorMapper.js";
+import { EnrichedService } from "./services/enrichedService.js";
 
 export function processReplacementUploadMessage(
   replacementService: ReplacementService,
