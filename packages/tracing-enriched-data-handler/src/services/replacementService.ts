@@ -9,19 +9,18 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async deleteTraces(message: TracingFromCsv) {
+    async deleteTraces(tracing: TracingFromCsv) {
       try {
-        const { tracingId, version } = message;
-        await dbService.deleteTraces(tracingId);
+        await dbService.deleteTraces(tracing.tracingId);
         return producerService.sendTracingUpdateStateMessage({
-          tracingId,
-          version,
+          tracingId: tracing.tracingId,
+          version: tracing.version,
           state: tracingState.completed,
           isReplacing: true,
         });
       } catch (error) {
         throw deleteTracesError(
-          `Error on deleting tracing ${message.tracingId}, detail: ${error}`,
+          `Error deleting traces ${tracing.tracingId}. Details: ${error}`,
         );
       }
     },
