@@ -9,11 +9,11 @@ import {
   errorProcessingSavePurposeError,
   errorProcessingUpdateTracingState,
 } from "../model/domain/errors.js";
-import { correlationIdToHeader } from "../model/headers.js";
 import { v4 as uuidv4 } from "uuid";
 import {
   SavePurposeErrorDto,
   UpdateTracingStateDto,
+  correlationIdToHeader,
 } from "pagopa-interop-tracing-models";
 
 export const operationsServiceBuilder = (
@@ -29,7 +29,7 @@ export const operationsServiceBuilder = (
             state: data.state,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(uuidv4()) }, // Temporary value to valorize with correlationId implementation
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
@@ -55,7 +55,7 @@ export const operationsServiceBuilder = (
             rowNumber: data.rowNumber,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(uuidv4()) }, // Temporary value to valorize with correlationId implementation
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
@@ -73,7 +73,7 @@ export const operationsServiceBuilder = (
       try {
         await operationsApiClient.triggerCopy(undefined, {
           headers: {
-            ...correlationIdToHeader("a10473fb-f11e-4a2d-9010-f771c50eb671"),
+            ...correlationIdToHeader(uuidv4()), // Temporary value to valorize with correlationId implementation
           },
           params: { tracingId },
         });

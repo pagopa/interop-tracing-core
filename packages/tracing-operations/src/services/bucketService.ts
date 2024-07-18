@@ -1,42 +1,34 @@
 import { S3Client, CopyObjectCommand } from "@aws-sdk/client-s3";
 import { config } from "../utilities/config.js";
-import { Tracing } from "../model/domain/db.js";
-import { ISODateFormat, genericLogger } from "pagopa-interop-tracing-commons";
+import { Logger } from "pagopa-interop-tracing-commons";
 import { copyObjectS3BucketError } from "../model/domain/errors.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
-    async copyObject(tracing: Tracing, correlationId: string) {
+    async copyObject(bucketS3Key: string, logger: Logger) {
       try {
-        const sourceBucket = config.bucketReplacementS3Name;
-        const destinationBucket = config.bucketS3Name;
-        const s3KeyFile = buildS3Key(tracing, correlationId);
-        genericLogger.info(
-          `Triggering copy for tracingId: ${tracing.id}, from path ${s3KeyFile}`,
+        logger.info(
+          `Copying file bucketS3Key ${bucketS3Key} from sourceBucket: ${config.bucketReplacementS3Name} to destinationBucket: ${config.bucketS3Name}`,
         );
-        const copySource = `${sourceBucket}/${s3KeyFile}`;
+
         const params = {
-          Bucket: destinationBucket,
-          Key: s3KeyFile,
-          CopySource: copySource,
+          Bucket: config.bucketReplacementS3Name,
+          Key: bucketS3Key,
+          CopySource: `${config.bucketReplacementS3Name}/${bucketS3Key}`,
         };
 
         await s3Client.send(new CopyObjectCommand(params));
       } catch (error: unknown) {
         throw copyObjectS3BucketError(
-          `Error copying object from bucket for tracingId: ${
-            tracing.id
+          `Error copying file bucketS3Key ${bucketS3Key} from sourceBucket: ${
+            config.bucketReplacementS3Name
+          } to destinationBucket: ${
+            config.bucketS3Name
           }. Details: ${JSON.stringify(error)}`,
         );
       }
     },
   };
 };
-const buildS3Key = (tracing: Tracing, correlationId: string): string =>
-  `tenantId=${tracing.tenant_id}/date=${ISODateFormat.parse(
-    new Date(tracing.date).toISOString(),
-  )}/tracingId=${tracing.id}/version=${
-    tracing.version
-  }/correlationId=${correlationId}/${tracing.id}.csv`;
 
 export type BucketService = ReturnType<typeof bucketServiceBuilder>;

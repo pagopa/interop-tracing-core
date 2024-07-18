@@ -15,6 +15,7 @@ import { errorMapper } from "../utilities/errorMapper.js";
 import { bucketServiceBuilder } from "../services/bucketService.js";
 import { S3Client } from "@aws-sdk/client-s3";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
+import { correlationIdToHeader } from "pagopa-interop-tracing-models";
 
 const operationsRouter = (
   ctx: LocalZodiosContext,
@@ -25,7 +26,7 @@ const operationsRouter = (
     host: config.dbHost,
     port: config.dbPort,
     database: config.dbName,
-    schema: config.schemaName,
+    schema: config.dbSchemaName,
     useSSL: config.dbUseSSL,
   });
   const operationsRouter = ctx.router(api.api, {
@@ -140,13 +141,12 @@ const operationsRouter = (
   operationsRouter.post(
     "/tracings/:tracingId/triggerCopy",
     async (req, res) => {
-      const correlationID = {
-        "X-Correlation-Id": req.header("x-correlation-id") ?? "",
-      };
       try {
         await operationsService.triggerS3Copy(
+          {
+            ...correlationIdToHeader(req.ctx.correlationId),
+          },
           req.params,
-          correlationID,
           logger(req.ctx),
         );
         return res.status(204).end();

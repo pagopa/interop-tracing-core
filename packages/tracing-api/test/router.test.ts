@@ -9,10 +9,13 @@ import {
 import {
   PurposeId,
   TracingId,
+  correlationIdToHeader,
   generateId,
   genericInternalError,
+  purposeIdToHeader,
   tracingAlreadyExists,
-  tracingCannotBeUpdated,
+  tracingRecoverCannotBeUpdated,
+  tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -21,8 +24,8 @@ import { config } from "../src/utilities/config.js";
 import {
   ISODateFormat,
   contextMiddleware,
-  logger,
   PurposeErrorCodes,
+  genericLogger,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
@@ -50,10 +53,6 @@ import {
   ApiExternalGetTracingsQuery,
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
-import {
-  correlationIdToHeader,
-  purposeIdToHeader,
-} from "../src/model/headers.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
@@ -184,7 +183,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         tracingAlreadyExists(errorMessage),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -445,14 +444,10 @@ describe("Tracing Router", () => {
         previousState: "MISSING",
       };
 
-      const errorMessage = `Tracing with Id ${mockRecoverTracingResponse.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`;
       const apiErrorMock = makeApiProblem(
-        tracingCannotBeUpdated(errorMessage, [
-          tracingState.error,
-          tracingState.missing,
-        ]),
+        tracingRecoverCannotBeUpdated(mockRecoverTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -486,7 +481,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         tracingNotFound(mockRecoverTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -612,7 +607,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         genericInternalError(errorMessage),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -653,6 +648,7 @@ describe("Tracing Router", () => {
       expect(response.status).toBe(500);
     });
   });
+
   describe("replaceTracing", () => {
     it("should upload to bucket a revisited tracing file, update relative db existing tracing version and state to 'PENDING'", async () => {
       const mockFile = Buffer.from("test file content");
@@ -713,11 +709,10 @@ describe("Tracing Router", () => {
         previousState: "COMPLETED",
       };
 
-      const errorMessage = `Tracing with Id ${mockReplaceTracingResponse.tracingId} cannot be updated. The state of tracing must be either COMPLETED.`;
       const apiErrorMock = makeApiProblem(
-        tracingCannotBeUpdated(errorMessage, [tracingState.completed]),
+        tracingReplaceCannotBeUpdated(mockReplaceTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -751,7 +746,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         tracingNotFound(mockReplaceTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -878,7 +873,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         genericInternalError(errorMessage),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =

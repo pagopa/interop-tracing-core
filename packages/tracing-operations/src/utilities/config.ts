@@ -1,12 +1,12 @@
 import {
   AWSConfig,
+  DbConfig,
   HTTPServerConfig,
   LoggerConfig,
 } from "pagopa-interop-tracing-commons";
-import { DbConfig } from "./dbConfig.js";
 import { z } from "zod";
 
-const eServiceOperationsConfig = AWSConfig.and(HTTPServerConfig)
+const tracingOperationsConfig = AWSConfig.and(HTTPServerConfig)
   .and(LoggerConfig)
   .and(DbConfig)
   .and(
@@ -23,8 +23,8 @@ const eServiceOperationsConfig = AWSConfig.and(HTTPServerConfig)
       })),
   );
 
-export type EServiceOperationsConfig = z.infer<typeof eServiceOperationsConfig>;
+export type TracingOperationsConfig = z.infer<typeof tracingOperationsConfig>;
 
-export const config: EServiceOperationsConfig = {
-  ...eServiceOperationsConfig.parse(process.env),
+export const config: TracingOperationsConfig = {
+  ...tracingOperationsConfig.parse(process.env),
 };

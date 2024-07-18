@@ -1,5 +1,5 @@
+import { DbConfig } from "pagopa-interop-tracing-commons";
 import { resolve } from "path";
-import { DbConfig } from "../src/utilities/dbConfig.js";
 import { GenericContainer } from "testcontainers";
 
 export const TEST_POSTGRES_DB_PORT = 5432;

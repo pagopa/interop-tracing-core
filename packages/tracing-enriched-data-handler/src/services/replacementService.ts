@@ -1,5 +1,5 @@
 import { tracingState } from "pagopa-interop-tracing-models";
-import { deleteTraceError } from "../models/errors.js";
+import { deleteTracesError } from "../models/errors.js";
 import { TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
@@ -9,19 +9,18 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async deleteTracing(message: TracingFromCsv) {
+    async deleteTraces(tracing: TracingFromCsv) {
       try {
-        const { tracingId, version } = message;
-        await dbService.deleteTracing(tracingId);
-        return producerService.sendUpdateState({
-          tracingId,
-          version,
+        await dbService.deleteTraces(tracing.tracingId);
+        return producerService.sendTracingUpdateStateMessage({
+          tracingId: tracing.tracingId,
+          version: tracing.version,
           state: tracingState.completed,
           isReplacing: true,
         });
       } catch (error) {
-        throw deleteTraceError(
-          `Error on deleting tracing ${message.tracingId}, detail: ${error}`,
+        throw deleteTracesError(
+          `Error deleting traces ${tracing.tracingId}. Details: ${error}`,
         );
       }
     },

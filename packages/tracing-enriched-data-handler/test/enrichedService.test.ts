@@ -16,7 +16,6 @@ import {
   ReplacementService,
   replacementServiceBuilder,
 } from "../src/services/replacementService.js";
-import { dbConfig } from "../src/utilities/dbConfig.js";
 import { DB, SQS, initDB } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
@@ -29,7 +28,7 @@ import {
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
-import { insertTraceError } from "../src/models/errors.js";
+import { insertTracesError } from "../src/models/errors.js";
 import { addTrace } from "./utils.js";
 
 describe("Enriched Service", () => {
@@ -40,6 +39,7 @@ describe("Enriched Service", () => {
   let replacementService: ReplacementService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
+
   const s3client = new S3Client({
     region: config.awsRegion,
   });
@@ -52,16 +52,16 @@ describe("Enriched Service", () => {
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(dbConfig).start();
-    dbConfig.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
     dbInstance = initDB({
-      username: dbConfig.dbUsername,
-      password: dbConfig.dbPassword,
-      host: dbConfig.dbHost,
-      port: dbConfig.dbPort,
-      database: dbConfig.dbName,
-      schema: dbConfig.dbSchemaName,
-      useSSL: false,
+      username: config.dbUsername,
+      password: config.dbPassword,
+      host: config.dbHost,
+      port: config.dbPort,
+      database: config.dbName,
+      schema: config.dbSchemaName,
+      useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
@@ -87,7 +87,7 @@ describe("Enriched Service", () => {
         mockEnrichedPuposes,
       );
       const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendUpdateState")
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -108,7 +108,10 @@ describe("Enriched Service", () => {
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
@@ -126,7 +129,10 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       } catch (e) {
@@ -142,8 +148,11 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
-        .mockRejectedValue(insertTraceError(``));
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+        .mockRejectedValue(insertTracesError(``));
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -165,7 +174,10 @@ describe("Enriched Service", () => {
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
       );
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       mockTracingFromCsv.tracingId,
@@ -186,10 +198,10 @@ describe("Enriched Service", () => {
       );
 
       const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendUpdateState")
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
-      await replacementService.deleteTracing(mockTracingFromCsv);
+      await replacementService.deleteTraces(mockTracingFromCsv);
       expect(sendUpdateStateSpy).toHaveBeenCalledWith({
         tracingId: mockTracingFromCsv.tracingId,
         version: mockTracingFromCsv.version,
@@ -199,9 +211,12 @@ describe("Enriched Service", () => {
     });
 
     it("should throw an error if deletion fails", async () => {
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
-        await replacementService.deleteTracing({
+        await replacementService.deleteTraces({
           ...mockTracingFromCsv,
           tracingId: generateId(),
         });
@@ -216,7 +231,10 @@ describe("Enriched Service", () => {
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
@@ -234,7 +252,10 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       } catch (e) {
@@ -251,8 +272,11 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
-        .mockRejectedValue(insertTraceError(``));
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+        .mockRejectedValue(insertTracesError(``));
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       try {
         await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
@@ -274,7 +298,10 @@ describe("Enriched Service", () => {
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: generateId() }]),
       );
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
       mockTracingFromCsv.tracingId,

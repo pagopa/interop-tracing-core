@@ -10,7 +10,7 @@ export function processReplacementUploadMessage(
   return async (message: SQS.Message) => {
     try {
       const tracing = decodeSqsMessage(message);
-      await replacementService.deleteTracing(tracing);
+      await replacementService.deleteTraces(tracing);
     } catch (e) {
       throw errorMapper(e);
     }

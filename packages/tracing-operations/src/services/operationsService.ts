@@ -23,13 +23,18 @@ import {
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
-import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  ISODateFormat,
+  Logger,
+  genericLogger,
+} from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
   PurposeId,
   generateId,
-  tracingCannotBeUpdated,
+  tracingRecoverCannotBeUpdated,
+  tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -90,10 +95,7 @@ export function operationsServiceBuilder(
         tracing.state === tracingState.completed ||
         tracing.state === tracingState.pending
       ) {
-        throw tracingCannotBeUpdated(params.tracingId, [
-          tracingState.error,
-          tracingState.missing,
-        ]);
+        throw tracingRecoverCannotBeUpdated(params.tracingId);
       }
 
       await dbService.updateTracingStateAndVersion({
@@ -122,9 +124,7 @@ export function operationsServiceBuilder(
       }
 
       if (tracing.state !== tracingState.completed) {
-        throw tracingCannotBeUpdated(params.tracingId, [
-          tracingState.completed,
-        ]);
+        throw tracingReplaceCannotBeUpdated(params.tracingId);
       }
 
       await dbService.updateTracingStateAndVersion({
@@ -203,21 +203,26 @@ export function operationsServiceBuilder(
     },
 
     async triggerS3Copy(
-      params: ApiTriggerS3CopyParams,
       headers: ApiTriggerS3CopyHeaders,
+      params: ApiTriggerS3CopyParams,
       logger: Logger,
     ): Promise<void> {
-      logger.info(`trigger s3 copy for tracingId: ${params.tracingId}`);
+      logger.info(`Trigger S3 copy for tracingId: ${params.tracingId}`);
 
       const tracing = await dbService.findTracingById(params.tracingId);
       if (!tracing) {
         throw tracingNotFound(params.tracingId);
       }
 
-      return await bucketService.copyObject(
-        tracing,
-        headers["X-Correlation-Id"],
+      const bucketS3Key = buildS3Key(
+        tracing.tenant_id,
+        tracing.date,
+        tracing.id,
+        tracing.version,
+        headers["x-correlation-id"],
       );
+
+      return await bucketService.copyObject(bucketS3Key, logger);
     },
 
     async deletePurposeErrors(): Promise<void> {},
@@ -281,5 +286,16 @@ export function operationsServiceBuilder(
     },
   };
 }
+
+const buildS3Key = (
+  tenantId: string,
+  date: string,
+  tracingId: string,
+  version: number,
+  correlationId: string,
+): string =>
+  `tenantId=${tenantId}/date=${ISODateFormat.parse(
+    date,
+  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export type OperationsService = ReturnType<typeof operationsServiceBuilder>;

@@ -5,7 +5,12 @@ import {
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
-import { genericError, tracingState } from "pagopa-interop-tracing-models";
+import {
+  correlationIdToHeader,
+  genericError,
+  purposeIdToHeader,
+  tracingState,
+} from "pagopa-interop-tracing-models";
 import {
   cancelTracingStateAndVersionError,
   resolveApiProblem,
@@ -19,7 +24,6 @@ import {
 } from "../model/tracing.js";
 import { BucketService } from "../services/bucketService.js";
 import storage from "../utilities/multer.js";
-import { correlationIdToHeader, purposeIdToHeader } from "../model/headers.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
 const tracingRouter =

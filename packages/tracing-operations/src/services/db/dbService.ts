@@ -217,7 +217,12 @@ export function dbServiceBuilder(db: DB) {
           [tracingId],
         );
 
-        return tracing;
+        return tracing
+          ? {
+              ...tracing,
+              date: new Date(tracing.date).toISOString(),
+            }
+          : null;
       } catch (error) {
         throw dbServiceErrorMapper("findTracingById", error);
       }
