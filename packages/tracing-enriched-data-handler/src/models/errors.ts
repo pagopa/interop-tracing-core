@@ -4,7 +4,7 @@ export const errorCodes = {
   decodeSQSEventMessageError: "0601",
   readObjectBucketS3Error: "0602",
   insertEnrichedTraceError: "0603",
-  insertTraceError: "0604",
+  insertTracesError: "0604",
   deleteTraceError: "0605",
   sendTracingUpdateStateMessageError: "0606",
 } as const;
@@ -47,10 +47,10 @@ export function sendTracingUpdateStateMessageError(
   });
 }
 
-export function insertTraceError(detail: string): InternalError<ErrorCodes> {
+export function insertTracesError(detail: string): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
-    code: "insertTraceError",
+    code: "insertTracesError",
   });
 }
 
