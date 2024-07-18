@@ -1,7 +1,7 @@
 import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../../models/messages.js";
-import { insertTracesError, deleteTraceError } from "../../models/errors.js";
+import { insertTracesError, deleteTracesError } from "../../models/errors.js";
 export function dbServiceBuilder(db: DB) {
   return {
     async insertTraces(tracingId: string, records: TracingEnriched[]) {
@@ -62,7 +62,7 @@ export function dbServiceBuilder(db: DB) {
       try {
         return Promise.resolve([{}]);
       } catch (error) {
-        throw deleteTraceError(`Error insertTracing: ${error}`);
+        throw deleteTracesError(`Error insertTracing: ${error}`);
       }
     },
   };
