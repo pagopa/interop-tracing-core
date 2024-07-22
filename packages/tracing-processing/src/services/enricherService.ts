@@ -27,11 +27,12 @@ export function dbServiceBuilder(db: DB) {
               `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
             );
 
-            if (isPurposeAndStatusNotUnique(record, records)) {
+            const duplicateRecords = getDuplicatedPurposesRow(record, records);
+            if (duplicateRecords) {
               purposeErrorMessages.push({
                 purposeId: record.purpose_id,
                 errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
-                message: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
+                message: `Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
                 rowNumber: record.rowNumber,
               });
             }
@@ -166,15 +167,17 @@ function enrichSuccessfulPurpose(
   };
 }
 
-function isPurposeAndStatusNotUnique(
+function getDuplicatedPurposesRow(
   record: TracingRecordSchema,
   records: TracingRecordSchema[],
-): boolean {
-  const duplicateRecords = records.filter(
-    (r) => r.purpose_id === record.purpose_id && r.status === record.status,
-  );
+): string | null {
+  const duplicateRecords = records
+    .filter(
+      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+    )
+    .map((el) => el.rowNumber);
 
-  return duplicateRecords.length > 1;
+  return duplicateRecords.length > 1 ? `${duplicateRecords.join(",")}` : null;
 }
 
 export type DBService = ReturnType<typeof dbServiceBuilder>;
