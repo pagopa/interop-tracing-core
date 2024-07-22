@@ -40,7 +40,7 @@ CREATE TABLE tracing.purposes_errors (
     id UUID PRIMARY KEY,
     tracing_id UUID NOT NULL,
     version INT NOT NULL,
-    purpose_id VARCHAR(255),
+    purpose_id VARCHAR(255) NOT NULL,
     error_code VARCHAR(255) NOT NULL,
     message VARCHAR(2048) NOT NULL,
     row_number INT NOT NULL,

@@ -19,7 +19,7 @@ export const PurposeSchema = z.object({
 export const PurposeErrorSchema = z.object({
   id: z.string().uuid().brand("PurposeErrorId"),
   tracing_id: z.string().uuid(),
-  purpose_id: z.string().nullish(),
+  purpose_id: z.string(),
   version: z.number(),
   error_code: z.string(),
   message: z.string(),

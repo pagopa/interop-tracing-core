@@ -99,6 +99,7 @@ export function dbServiceBuilder(db: DB) {
           FROM tracing.purposes_errors pe 
             JOIN tracing.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $3
+          ORDER BY pe.row_number
           OFFSET $1 LIMIT $2
         `;
 

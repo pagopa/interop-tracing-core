@@ -31,7 +31,7 @@ export const TracingsContentResponse = z
 export type TracingsContentResponse = z.infer<typeof TracingsContentResponse>;
 
 export const TracingPurposeErrorContent = z.object({
-  purposeId: z.string().nullish(),
+  purposeId: z.string(),
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.number(),
