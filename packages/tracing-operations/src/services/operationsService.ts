@@ -195,7 +195,7 @@ export function operationsServiceBuilder(
         id: generateId<PurposeErrorId>(),
         tracing_id: params.tracingId,
         version: params.version,
-        purpose_id: payload.purposeId as PurposeId,
+        purpose_id: payload.purposeId,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,

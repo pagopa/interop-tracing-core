@@ -499,7 +499,6 @@ paths:
           required: true
           schema:
             type: string
-         
       responses:
         "204":
           description: No content
@@ -569,7 +568,9 @@ components:
       type: object
       properties:
         purposeId:
-          type: string
+          type:
+            - string
+            - "null"
         errorCode:
           type: string
         message:
@@ -577,7 +578,6 @@ components:
         rowNumber:
           type: integer
       required:
-        - purposeId
         - errorCode
         - message
         - rowNumber
@@ -601,8 +601,9 @@ components:
             type: object
             properties:
               purposeId:
-                type: string
-                format: uuid
+                type:
+                  - string
+                  - "null"
               errorCode:
                 type: string
               message:
@@ -612,7 +613,6 @@ components:
                 format: int32
                 minimum: 0
             required:
-              - purposeId
               - errorCode
               - message
               - rowNumber

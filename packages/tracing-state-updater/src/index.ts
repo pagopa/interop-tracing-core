@@ -29,7 +29,6 @@ await Promise.all([
     },
     processPurposeErrorMessage(OperationsService),
   ),
-
   SQS.runConsumer(
     sqsClient,
     {

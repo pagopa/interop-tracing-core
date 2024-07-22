@@ -353,8 +353,9 @@ components:
             type: object
             properties:
               purposeId:
-                type: string
-                format: uuid
+                type:
+                  - string
+                  - "null"
               errorCode:
                 type: string
               message:
@@ -364,7 +365,6 @@ components:
                 format: int32
                 minimum: 0
             required:
-              - purposeId
               - errorCode
               - message
               - rowNumber
