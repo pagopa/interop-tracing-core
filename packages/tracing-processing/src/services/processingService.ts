@@ -20,6 +20,7 @@ import {
   PurposeErrorMessageArray,
 } from "../models/csv.js";
 import { processTracingError } from "../models/errors.js";
+import { ZodIssue } from "zod";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -136,26 +137,27 @@ export async function checkRecords(
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
     if (result.error) {
-      const parsedError = parseErrorMessage(result.error.message);
-
-      errorsRecord.push({
-        tracingId: tracing.tracingId,
-        version: tracing.version,
-        errorCode: parsedError.errorCode,
-        purposeId: record.purpose_id,
-        message: parsedError.message,
-        rowNumber: record.rowNumber,
-        updateTracingState: false,
-      });
+      for (let issue of result.error.issues) {
+        const parsedError = parseErrorMessage(issue);
+        errorsRecord.push({
+          tracingId: tracing.tracingId,
+          version: tracing.version,
+          errorCode: parsedError.errorCode,
+          purposeId: record.purpose_id,
+          message: parsedError.message,
+          rowNumber: record.rowNumber,
+          updateTracingState: false,
+        });
+      }
     }
 
-    if (result.data && result.data.date !== tracing.date) {
+    if (record.date !== tracing.date) {
       errorsRecord.push({
         tracingId: tracing.tracingId,
         version: tracing.version,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
-        message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
+        message: `Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
@@ -165,20 +167,15 @@ export async function checkRecords(
   return errorsRecord;
 }
 
-function parseErrorMessage(errorObj: string) {
-  const error = JSON.parse(errorObj);
-  const {
-    path,
-    message,
-  }: { path: (keyof TracingRecordSchema)[]; message: string } = error[0];
-  const errorCode = match(path[0])
+function parseErrorMessage(issue: ZodIssue) {
+  const errorCode = match(issue.path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
     .with("date", () => PurposeErrorCodes.INVALID_DATE)
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
 
-  return { message: `${path}: ${message}`, errorCode };
+  return { message: `${issue.path[0]}: ${issue.message}`, errorCode };
 }
 
 async function sendPurposeErrors(
