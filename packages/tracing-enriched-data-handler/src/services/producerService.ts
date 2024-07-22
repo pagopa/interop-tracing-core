@@ -13,7 +13,7 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
     async sendTracingUpdateStateMessage(
       updateTracingState: UpdateTracingStateDto,
       ctx: WithSQSMessageId<AppContext>,
-    ) {
+    ): Promise<void> {
       try {
         logger(ctx).info(
           `UpdateTracingState message sent on queue for tracingId: ${

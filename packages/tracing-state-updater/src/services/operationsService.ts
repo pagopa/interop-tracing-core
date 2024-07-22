@@ -70,7 +70,9 @@ export const operationsServiceBuilder = (
         );
       } catch (error: unknown) {
         throw errorProcessingSavePurposeError(
-          `Error saving purpose error for tracingId: ${data.tracingId}. Details: ${error}`,
+          `Error saving purpose error for tracingId: ${
+            data.tracingId
+          }. Data: ${JSON.stringify(data)}. Details: ${error}`,
         );
       }
     },
