@@ -82,8 +82,16 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   formalErrors: PurposeErrorMessage[],
   ctx: WithSQSMessageId<AppContext>,
 ) {
-  const enrichedPurposes = await dbService.getEnrichedPurpose(
-    tracingRecords,
+  let enrichedPurposes = [];
+  enrichedPurposes = await dbService.getEnrichedPurpose(
+    tracingRecords.filter(
+      (el) =>
+        !formalErrors.find(
+          (purpose) =>
+            el.rowNumber === purpose.rowNumber &&
+            purpose.errorCode === PurposeErrorCodes.INVALID_PURPOSE,
+        ),
+    ),
     tracing,
     ctx,
   );
