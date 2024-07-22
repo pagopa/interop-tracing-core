@@ -55,6 +55,7 @@ export function dbServiceBuilder(db: DB) {
           SELECT *
           FROM tracing.tracings
           WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
+          ORDER BY date
           OFFSET $3 LIMIT $4
         `;
 
