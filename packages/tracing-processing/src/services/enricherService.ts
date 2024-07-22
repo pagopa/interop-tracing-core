@@ -20,22 +20,11 @@ export function dbServiceBuilder(db: DB) {
       ctx: WithSQSMessageId<AppContext>,
     ): Promise<EnrichedPurposeResult> {
       try {
-        const purposeErrorMessages: PurposeErrorMessage[] = [];
         const fullRecordPromises = records.map(
           async (record: TracingRecordSchema) => {
             logger(ctx).info(
               `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
             );
-
-            const duplicateRecords = getDuplicatedPurposesRow(record, records);
-            if (duplicateRecords) {
-              purposeErrorMessages.push({
-                purposeId: record.purpose_id,
-                errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
-                message: `Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
-                rowNumber: record.rowNumber,
-              });
-            }
 
             const consumer = await db.oneOrNone<{
               name: string;
@@ -62,13 +51,14 @@ export function dbServiceBuilder(db: DB) {
             );
 
             if (!fullPurpose) {
-              purposeErrorMessages.push({
-                purposeId: record.purpose_id,
-                errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
-                message: PurposeErrorCodes.PURPOSE_NOT_FOUND,
-                rowNumber: record.rowNumber,
-              });
-              return purposeErrorMessages;
+              return [
+                {
+                  purposeId: record.purpose_id,
+                  errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
+                  message: `purpose_id: Invalid purpose id ${record.purpose_id}.`,
+                  rowNumber: record.rowNumber,
+                },
+              ];
             } else {
               const eService = await db.oneOrNone<EserviceSchema>(
                 `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
@@ -90,15 +80,17 @@ export function dbServiceBuilder(db: DB) {
                 !tenantEservice &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
-                purposeErrorMessages.push({
-                  purposeId: record.purpose_id,
-                  errorCode:
-                    PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
-                  message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
-                  rowNumber: record.rowNumber,
-                });
-                return purposeErrorMessages;
+                return [
+                  {
+                    purposeId: record.purpose_id,
+                    errorCode:
+                      PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+                    message: `purpose_id: Invalid purpose id ${record.purpose_id}.`,
+                    rowNumber: record.rowNumber,
+                  },
+                ];
               }
+
               const producer = await db.oneOrNone<{
                 name: string;
                 origin: string;
@@ -126,9 +118,7 @@ export function dbServiceBuilder(db: DB) {
           },
         );
 
-        const enrichedPurposes = await Promise.all(fullRecordPromises);
-
-        return enrichedPurposes;
+        return await Promise.all(fullRecordPromises);
       } catch (error: unknown) {
         throw error;
       }
@@ -165,19 +155,6 @@ function enrichSuccessfulPurpose(
     producerOrigin: producer.origin,
     producerExternalId: producer.external_id,
   };
-}
-
-function getDuplicatedPurposesRow(
-  record: TracingRecordSchema,
-  records: TracingRecordSchema[],
-): string | null {
-  const duplicateRecords = records
-    .filter(
-      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
-    )
-    .map((el) => el.rowNumber);
-
-  return duplicateRecords.length > 1 ? `${duplicateRecords.join(",")}` : null;
 }
 
 export type DBService = ReturnType<typeof dbServiceBuilder>;

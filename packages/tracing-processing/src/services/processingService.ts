@@ -157,7 +157,20 @@ export async function checkRecords(
         version: tracing.version,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
-        message: `Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
+        message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
+        rowNumber: record.rowNumber,
+        updateTracingState: false,
+      });
+    }
+
+    const duplicateRecords = getDuplicatePurposesRow(record, records);
+    if (duplicateRecords) {
+      errorsRecord.push({
+        tracingId: tracing.tracingId,
+        version: tracing.version,
+        purposeId: record.purpose_id,
+        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
+        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
@@ -205,6 +218,19 @@ async function sendPurposeErrors(
 
 export function createS3Path(message: TracingFromS3KeyPathDto) {
   return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
+}
+
+function getDuplicatePurposesRow(
+  record: TracingRecordSchema,
+  records: TracingRecordSchema[],
+): string | null {
+  const duplicateRecords = records
+    .filter(
+      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+    )
+    .map((el) => el.rowNumber);
+
+  return duplicateRecords.length > 1 ? `${duplicateRecords.join(",")}` : null;
 }
 
 export type ProcessingService = ReturnType<typeof processingServiceBuilder>;
