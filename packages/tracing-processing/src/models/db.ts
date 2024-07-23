@@ -12,7 +12,7 @@ export const TracingRecordSchema = z.object({
         message: `Invalid HTTP status code`,
       },
     ),
-  requests_count: z.coerce.number().positive(),
+  requests_count: z.coerce.number().nonnegative(),
   rowNumber: z.number(),
 });
 
