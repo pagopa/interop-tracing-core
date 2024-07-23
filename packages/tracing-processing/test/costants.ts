@@ -24,9 +24,9 @@ export const mockTracingRecords: TracingRecordSchema[] = [
   {
     date: "2024-12-12",
     purpose_id: "223e4567-e89b-12d3-a456-426614174001",
-    status: 204,
-    requests_count: 5,
-    rowNumber: 2,
+    status: 404,
+    requests_count: 50,
+    rowNumber: 3,
   },
 ];
 
