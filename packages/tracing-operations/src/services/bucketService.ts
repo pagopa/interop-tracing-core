@@ -5,17 +5,19 @@ import { copyObjectS3BucketError } from "../model/domain/errors.js";
 
 export const bucketServiceBuilder = (s3Client: S3Client) => {
   return {
-    async copyObject(bucketS3Key: string, logger: Logger) {
+    async copyObject(bucketS3Key: string, logger: Logger): Promise<void> {
       try {
-        logger.info(
-          `Copying file bucketS3Key ${bucketS3Key} from sourceBucket: ${config.bucketReplacementS3Name} to destinationBucket: ${config.bucketS3Name}`,
-        );
-
         const params = {
-          Bucket: config.bucketReplacementS3Name,
+          Bucket: config.bucketS3Name,
           Key: bucketS3Key,
           CopySource: `${config.bucketReplacementS3Name}/${bucketS3Key}`,
         };
+
+        logger.info(
+          `Copy tracing file to bucket ${
+            config.bucketS3Name
+          }. Params: ${JSON.stringify(params)}`,
+        );
 
         await s3Client.send(new CopyObjectCommand(params));
       } catch (error: unknown) {
