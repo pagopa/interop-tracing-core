@@ -36,7 +36,7 @@ export function dbServiceBuilder(db: DB) {
             );
 
             if (!consumer) {
-              throw getEnrichedPurposeError(
+              throw new Error(
                 `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
               );
             }
@@ -66,7 +66,7 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!eService) {
-                throw getEnrichedPurposeError(
+                throw new Error(
                   `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
                 );
               }
@@ -101,7 +101,7 @@ export function dbServiceBuilder(db: DB) {
               );
 
               if (!producer) {
-                throw getEnrichedPurposeError(
+                throw new Error(
                   `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
                 );
               }
@@ -120,7 +120,7 @@ export function dbServiceBuilder(db: DB) {
 
         return await Promise.all(fullRecordPromises);
       } catch (error: unknown) {
-        throw error;
+        throw getEnrichedPurposeError(`${error}`);
       }
     },
   };

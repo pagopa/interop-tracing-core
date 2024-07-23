@@ -137,7 +137,7 @@ export async function checkRecords(
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
     if (result.error) {
-      for (let issue of result.error.issues) {
+      for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);
         errorsRecord.push({
           tracingId: tracing.tracingId,
