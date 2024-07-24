@@ -10,6 +10,7 @@ import {
 } from "@aws-sdk/client-sqs";
 import { genericLogger } from "../logging/index.js";
 import { ConsumerConfig } from "../config/consumerConfig.js";
+import { logger } from "../logging/index.js";
 
 const serializeError = (error: unknown): string => {
   try {
@@ -41,6 +42,7 @@ const processQueue = async (
     QueueUrl: config.queueUrl,
     WaitTimeSeconds: config.consumerPollingTimeout,
     MaxNumberOfMessages: 10,
+    MessageAttributeNames: ["All"],
   });
 
   let keepProcessingQueue: boolean = true;
@@ -69,15 +71,21 @@ const processQueue = async (
 
 export const runConsumer = async (
   sqsClient: SQSClient,
-  config: { queueUrl: string; runUntilQueueIsEmpty?: boolean } & ConsumerConfig,
+  config: {
+    serviceName: string;
+    queueUrl: string;
+    runUntilQueueIsEmpty?: boolean;
+  } & ConsumerConfig,
   consumerHandler: (messagePayload: Message) => Promise<void>,
 ): Promise<void> => {
-  genericLogger.info(`Consumer processing on Queue: ${config.queueUrl}`);
+  logger({ serviceName: config.serviceName }).info(
+    `Consumer processing on Queue: ${config.queueUrl}`,
+  );
 
   try {
     await processQueue(sqsClient, config, consumerHandler);
   } catch (e) {
-    genericLogger.error(
+    logger({ serviceName: config.serviceName }).error(
       `Generic error occurs processing Queue: ${
         config.queueUrl
       }. Details: ${serializeError(e)}`,
@@ -85,7 +93,7 @@ export const runConsumer = async (
     await processExit();
   }
 
-  genericLogger.info(
+  logger({ serviceName: config.serviceName }).info(
     `Queue processing Completed for Queue: ${config.queueUrl}`,
   );
 };
@@ -94,6 +102,7 @@ export const sendMessage = async (
   sqsClient: SQSClient,
   queueUrl: string,
   messageBody: string,
+  correlationId: string,
   messageGroupId?: string,
 ): Promise<void> => {
   const messageCommandInput: SendMessageCommandInput = {
@@ -104,6 +113,13 @@ export const sendMessage = async (
   if (messageGroupId) {
     messageCommandInput.MessageGroupId = messageGroupId;
   }
+
+  messageCommandInput.MessageAttributes = {
+    correlationId: {
+      DataType: "String",
+      StringValue: correlationId,
+    },
+  };
 
   const command = new SendMessageCommand(messageCommandInput);
 

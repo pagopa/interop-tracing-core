@@ -25,15 +25,16 @@ await Promise.all([
     {
       queueUrl: config.sqsEndpointProcessingErrorQueue,
       consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
     },
     processPurposeErrorMessage(OperationsService),
   ),
-
   SQS.runConsumer(
     sqsClient,
     {
       queueUrl: config.sqsEndpointEnricherStateQueue,
       consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
     },
     processTracingStateMessage(OperationsService),
   ),

@@ -17,9 +17,9 @@ import {
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
-  ApicancelTracingStateAndVersionParams,
-  ApicancelTracingStateAndVersionPayload,
-  ApicancelTracingStateAndVersionResponse,
+  ApiCancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionPayload,
+  ApiCancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
@@ -143,10 +143,10 @@ export function operationsServiceBuilder(
     },
 
     async cancelTracingStateAndVersion(
-      params: ApicancelTracingStateAndVersionParams,
-      payload: ApicancelTracingStateAndVersionPayload,
+      params: ApiCancelTracingStateAndVersionParams,
+      payload: ApiCancelTracingStateAndVersionPayload,
       logger: Logger,
-    ): Promise<ApicancelTracingStateAndVersionResponse> {
+    ): Promise<ApiCancelTracingStateAndVersionResponse> {
       logger.info(
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
@@ -195,7 +195,7 @@ export function operationsServiceBuilder(
         id: generateId<PurposeErrorId>(),
         tracing_id: params.tracingId,
         version: params.version,
-        purpose_id: payload.purposeId as PurposeId,
+        purpose_id: payload.purposeId,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,
@@ -234,12 +234,14 @@ export function operationsServiceBuilder(
     },
 
     async getTracings(
-      filters: ApiGetTracingsQuery,
+      filters: ApiGetTracingsQuery & { tenantId: string },
       logger: Logger,
     ): Promise<ApiGetTracingsResponse> {
-      logger.info(`Get tracings`);
+      logger.info(`Get tracings by tenantId: ${filters.tenantId}`);
 
-      const data = await dbService.getTracings(filters);
+      const data = await dbService.getTracings({
+        ...filters,
+      });
 
       const parsedTracings = TracingsContentResponse.safeParse(data.results);
       if (!parsedTracings.success) {

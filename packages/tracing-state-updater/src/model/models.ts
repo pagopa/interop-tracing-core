@@ -1,10 +1,14 @@
 import { z } from "zod";
 import {
   SavePurposeErrorDto,
+  TracingCorrelationIdDto,
   UpdateTracingStateDto,
 } from "pagopa-interop-tracing-models";
 import { SQS } from "pagopa-interop-tracing-commons";
-import { decodeSQSMessageError } from "./domain/errors.js";
+import {
+  decodeSQSMessageCorrelationIdError,
+  decodeSQSMessageError,
+} from "./domain/errors.js";
 
 const ProcessingErrorMessageSchema = z.object({
   value: z.preprocess(
@@ -26,6 +30,7 @@ export function decodeSQSPurposeErrorMessage(
   const parsed = ProcessingErrorMessageSchema.safeParse({
     value: message.Body,
   });
+
   if (!parsed.success) {
     throw decodeSQSMessageError(
       `Failed to decode SQS ProcessingError message with MessageId: ${
@@ -52,4 +57,31 @@ export function decodeSQSUpdateTracingStateMessage(
   }
 
   return parsed.data.value;
+}
+
+const CorrelationIdAttributeSchema = z.object({
+  value: z.preprocess(
+    (v) => (v ? { correlationId: v.toString() } : null),
+    TracingCorrelationIdDto,
+  ),
+});
+
+export function decodeSQSMessageCorrelationId(
+  message: SQS.Message,
+): TracingCorrelationIdDto {
+  const parsed = CorrelationIdAttributeSchema.safeParse({
+    value: message.MessageAttributes?.correlationId.StringValue,
+  });
+
+  if (!parsed.success) {
+    throw decodeSQSMessageCorrelationIdError(
+      `Failed to decode SQS correlationId attribute message with MessageId: ${
+        message.MessageId
+      }. Error details: ${JSON.stringify(parsed.error)}`,
+    );
+  }
+
+  return {
+    correlationId: parsed.data.value.correlationId,
+  };
 }

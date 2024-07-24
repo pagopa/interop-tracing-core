@@ -411,7 +411,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -430,6 +430,10 @@ describe("Tracing Router", () => {
         undefined,
         {
           params: { tracingId: mockRecoverTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
         },
       );
     });
@@ -459,7 +463,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -493,7 +497,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -542,7 +546,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -562,6 +566,10 @@ describe("Tracing Router", () => {
         {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
+          },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );
@@ -620,7 +628,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -640,6 +648,10 @@ describe("Tracing Router", () => {
         {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
+          },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );
@@ -676,7 +688,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -695,6 +707,10 @@ describe("Tracing Router", () => {
         undefined,
         {
           params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
         },
       );
     });
@@ -724,7 +740,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -758,7 +774,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -807,7 +823,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -826,8 +842,10 @@ describe("Tracing Router", () => {
           version: mockReplaceTracingResponse.version - 1,
         },
         {
-          params: {
-            tracingId: mockReplaceTracingResponse.tracingId,
+          params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );
@@ -886,7 +904,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -905,8 +923,10 @@ describe("Tracing Router", () => {
           version: mockReplaceTracingResponse.version - 1,
         },
         {
-          params: {
-            tracingId: mockReplaceTracingResponse.tracingId,
+          params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );

@@ -1,20 +1,36 @@
 import { describe, expect, it, vi, afterAll } from "vitest";
 import { sqsMessages } from "./sqsMessages.js";
 import { processPurposeErrorMessage } from "../src/messagesHandler.js";
-import { SQS } from "pagopa-interop-tracing-commons";
-import { decodeSQSPurposeErrorMessage } from "../src/model/models.js";
+import {
+  AppContext,
+  SQS,
+  WithSQSMessageId,
+} from "pagopa-interop-tracing-commons";
+import {
+  decodeSQSMessageCorrelationId,
+  decodeSQSPurposeErrorMessage,
+} from "../src/model/models.js";
 import {
   InternalError,
   UpdateTracingStateDto,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
+import { v4 as uuidv4 } from "uuid";
+import { config } from "../src/utilities/config.js";
 
 describe("Consumer processing error queue test", () => {
   const mockOperationsService = {
     savePurposeError: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
     triggerS3Copy: vi.fn().mockResolvedValue(undefined),
+  };
+
+  const correlationIdMessageAttribute = {
+    correlationId: {
+      DataType: "String",
+      StringValue: uuidv4(),
+    },
   };
 
   afterAll(() => {
@@ -26,6 +42,14 @@ describe("Consumer processing error queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.savePurposeError.valid),
+      MessageAttributes: correlationIdMessageAttribute,
+    };
+
+    const attributes = decodeSQSMessageCorrelationId(validMessage);
+    const ctx: WithSQSMessageId<AppContext> = {
+      serviceName: config.applicationName,
+      correlationId: attributes.correlationId,
+      messageId: validMessage.MessageId,
     };
 
     expect(async () => {
@@ -34,6 +58,7 @@ describe("Consumer processing error queue test", () => {
 
     expect(mockOperationsService.savePurposeError).toHaveBeenCalledWith(
       decodeSQSPurposeErrorMessage(validMessage),
+      ctx,
     );
   });
 
@@ -44,6 +69,16 @@ describe("Consumer processing error queue test", () => {
       Body: JSON.stringify(
         sqsMessages.savePurposeError.validWithTacingUpdateStateTrue,
       ),
+      MessageAttributes: correlationIdMessageAttribute,
+    };
+
+    const attributes = decodeSQSMessageCorrelationId(
+      purposeErrorWithTracingUpdateState,
+    );
+    const ctx: WithSQSMessageId<AppContext> = {
+      serviceName: config.applicationName,
+      correlationId: attributes.correlationId,
+      messageId: purposeErrorWithTracingUpdateState.MessageId,
     };
 
     const purposeErrorPayload = decodeSQSPurposeErrorMessage(
@@ -62,10 +97,12 @@ describe("Consumer processing error queue test", () => {
 
     expect(mockOperationsService.savePurposeError).toHaveBeenCalledWith(
       purposeErrorPayload,
+      ctx,
     );
 
     expect(mockOperationsService.updateTracingState).toHaveBeenCalledWith(
       updateTracingStatePayload,
+      ctx,
     );
 
     expect(async () => {
@@ -83,7 +120,7 @@ describe("Consumer processing error queue test", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(InternalError);
       expect((error as InternalError<ErrorCodes>).code).toBe(
-        "decodeSQSMessageError",
+        "decodeSQSMessageCorrelationIdError",
       );
     }
   });
@@ -93,6 +130,7 @@ describe("Consumer processing error queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.savePurposeError.empty),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
@@ -111,6 +149,7 @@ describe("Consumer processing error queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.savePurposeError.missingTracingId),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
@@ -131,6 +170,7 @@ describe("Consumer processing error queue test", () => {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(sqsMessages.savePurposeError.badFormatted),
+      MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
