@@ -26,6 +26,7 @@ import {
   ApiSaveMissingTracingParams,
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
+  ApiDeletePurposesErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { ISODateFormat, Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -225,7 +226,13 @@ export function operationsServiceBuilder(
       return await bucketService.copyObject(bucketS3Key, logger);
     },
 
-    async deletePurposeErrors(): Promise<void> {},
+    async deletePurposeErrors(
+      logger: Logger,
+    ): Promise<ApiDeletePurposesErrorsResponse> {
+      logger.info(`Delete purposes errors with old version`);
+
+      await dbService.deletePurposeErrors();
+    },
 
     async saveMissingTracing(
       params: ApiSaveMissingTracingParams,

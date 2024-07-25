@@ -296,11 +296,18 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async deletePurposeErrors() {
+    async deletePurposeErrors(): Promise<void> {
       try {
-        return Promise.resolve();
+        const deletePurposesErrorsQuery = `
+          DELETE FROM tracing.purposes_errors pe
+          USING tracing.tracings t
+          WHERE pe.tracing_id = t.id
+          AND ((t.state = 'COMPLETED') 
+            OR (t.state = 'ERROR' AND pe.version < t.version));`;
+
+        await db.none(deletePurposesErrorsQuery);
       } catch (error) {
-        throw genericInternalError(`Error delete purpose error: ${error}`);
+        throw dbServiceErrorMapper("deletePurposeErrors", error);
       }
     },
 

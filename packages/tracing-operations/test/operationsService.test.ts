@@ -42,6 +42,7 @@ import {
   addTracing,
   clearPurposesErrors,
   clearTracings,
+  findPurposeErrors,
   findTracingById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
@@ -1156,6 +1157,92 @@ describe("database test", () => {
         expect(new Date(tracing.date)).toContain(
           new Date(saveMissingTracingData.date),
         );
+      });
+    });
+
+    describe("deletePurposeErrors", () => {
+      it("should delete purposes errors with version below the related tracing version with state ERROR, and return 1 record with version 3", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: "2024-08-01",
+          version: 3,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: 1,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 2,
+          },
+          dbInstance,
+        );
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 3,
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposeErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+
+        expect(purposesErrors.length).toBe(1);
+        expect(purposesErrors[0].version).toBe(tracingData.version);
+      });
+
+      it("should delete purposes errors with related tracing in state COMPLETED, and return 0 records", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.completed,
+          date: "2024-08-01",
+          version: 1,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: 1,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposeErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+
+        expect(purposesErrors.length).toBe(0);
       });
     });
   });

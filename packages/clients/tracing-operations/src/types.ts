@@ -141,16 +141,16 @@ export type ApiSavePurposeErrorParams = ZodiosPathParamsByPath<
   "/tracings/:tracingId/versions/:version/errors"
 >;
 
-export type ApiDeleteErrorsPayload = ZodiosBodyByPath<
+export type ApiDeletePurposesErrorsHeaders = ZodiosHeaderParamsByPath<
   Api,
   "delete",
-  "/tracings/:tracingId/versions/:version/errors"
+  "/tracings/errors"
 >;
 
-export type ApiDeleteErrorsResponse = ZodiosResponseByPath<
+export type ApiDeletePurposesErrorsResponse = ZodiosResponseByPath<
   Api,
   "delete",
-  "/tracings/:tracingId/versions/:version/errors"
+  "/tracings/errors"
 >;
 
 export type ApiGetTracingsPayload = ZodiosQueryParamsByPath<
