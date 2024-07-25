@@ -10,6 +10,7 @@
     "start:tracing-state-updater": "turbo start --filter pagopa-interop-tracing-state-updater",
     "start:tracing-processing": "turbo start --filter pagopa-interop-tracing-processing",
     "start:tracing-enriched-data-handler": "turbo start --filter pagopa-interop-tracing-enriched-data-handler",
+    "start:tracing-clean-up": "turbo start --filter pagopa-interop-tracing-clean-up",
     "test": "turbo test",
     "test:it": "turbo test:it",
     "build": "turbo build",
