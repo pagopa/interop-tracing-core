@@ -1,11 +1,10 @@
-import { DB } from "pagopa-interop-tracing-commons";
+import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
   Purpose,
   PurposeError,
   Tenant,
   Tracing,
 } from "../src/model/domain/db.js";
-import { DateUnit, truncatedTo } from "../src/utilities/date.js";
 
 export async function addPurpose(purposeValues: Purpose, db: DB) {
   const insertPurposeQuery = `
@@ -45,7 +44,7 @@ export async function addTracing(
   db: DB,
 ): Promise<Tracing> {
   const truncatedDate: Date = truncatedTo(
-    new Date(tracingValues.date).toISOString(),
+    new Date(tracingValues.date),
     DateUnit.DAYS,
   );
   const insertTracingQuery = `

@@ -141,18 +141,6 @@ export type ApiSavePurposeErrorParams = ZodiosPathParamsByPath<
   "/tracings/:tracingId/versions/:version/errors"
 >;
 
-export type ApiMissingPayload = ZodiosBodyByPath<
-  Api,
-  "post",
-  "/tenants/:tenantId/missing"
->;
-
-export type ApiMissingResponse = ZodiosResponseByPath<
-  Api,
-  "post",
-  "/tenants/:tenantId/missing"
->;
-
 export type ApiDeleteErrorsPayload = ZodiosBodyByPath<
   Api,
   "delete",
@@ -235,4 +223,46 @@ export type ApiTriggerS3CopyHeaders = ZodiosHeaderParamsByPath<
   Api,
   "post",
   "/tracings/:tracingId/triggerCopy"
+>;
+
+export type ApiGetTenantsWithMissingTracingsHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "get",
+  "/tenants/tracings/missing"
+>;
+
+export type ApiGetTenantsWithMissingTracingsQuery = ZodiosQueryParamsByPath<
+  Api,
+  "get",
+  "/tenants/tracings/missing"
+>;
+
+export type ApiGetTenantsWithMissingTracingsResponse = ZodiosResponseByPath<
+  Api,
+  "get",
+  "/tenants/tracings/missing"
+>;
+
+export type ApiSaveMissingTracingHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/tenants/:tenantId/tracings/missing"
+>;
+
+export type ApiSaveMissingTracingResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/tenants/:tenantId/tracings/missing"
+>;
+
+export type ApiSaveMissingTracingPayload = ZodiosBodyByPath<
+  Api,
+  "post",
+  "/tenants/:tenantId/tracings/missing"
+>;
+
+export type ApiSaveMissingTracingParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tenants/:tenantId/tracings/missing"
 >;

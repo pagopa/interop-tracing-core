@@ -323,7 +323,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-
+  
   /tracings:
     get:
       summary: Get all tracings of a tenant
@@ -377,47 +377,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-
-  /tenants/{tenantId}/missing:
-    post:
-      summary: Save missing tracing
-      operationId: saveMissingTracing
-      parameters:
-        - in: path
-          name: tenantId
-          required: true
-          schema:
-            type: string
-      tags:
-        - Write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SaveMissingTracingRequest"
-      responses:
-        "204":
-          description: No content
-        "400":
-          description: The provided input data is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "404":
-          description: The requested resource could not be found on the server
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "500":
-          description: A managed error has occurred during the request elaboration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-
+  
   /tracings/{tracingId}/errors:
     get:
       summary: Get errors details by tracingId
@@ -482,6 +442,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  
   /tracings/{tracingId}/triggerCopy:
     post:
       summary: Trigger a copy of the csv by tracingId
@@ -520,6 +481,99 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  
+  /tenants/tracings/missing:
+    get:
+      summary: Get all tenants with missing tracings by date
+      operationId: getTenantsWithMissingTracings
+      tags:
+        - Tenants
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 10000
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTenantsWithMissingTracings"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tenants/{tenantId}/tracings/missing:
+    post:
+      summary: Save missing tracing
+      operationId: saveMissingTracing
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveMissingTracingRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
 components:
   schemas:
     CorrelationId:
@@ -588,6 +642,19 @@ components:
           format: date
       required:
         - date
+    GetTenantsWithMissingTracings:
+      type: object
+      required:
+        - results
+        - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            type: string
+        totalCount:
+          type: integer
+          format: int64
     GetTracingErrorsResponse:
       type: object
       required:
