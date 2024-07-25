@@ -226,12 +226,12 @@ export function operationsServiceBuilder(
       return await bucketService.copyObject(bucketS3Key, logger);
     },
 
-    async deletePurposeErrors(
+    async deletePurposesErrors(
       logger: Logger,
     ): Promise<ApiDeletePurposesErrorsResponse> {
       logger.info(`Delete purposes errors with old version`);
 
-      await dbService.deletePurposeErrors();
+      await dbService.deletePurposesErrors();
     },
 
     async saveMissingTracing(

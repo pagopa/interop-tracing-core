@@ -296,7 +296,7 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async deletePurposeErrors(): Promise<void> {
+    async deletePurposesErrors(): Promise<void> {
       try {
         const deletePurposesErrorsQuery = `
           DELETE FROM tracing.purposes_errors pe
@@ -307,7 +307,7 @@ export function dbServiceBuilder(db: DB) {
 
         await db.none(deletePurposesErrorsQuery);
       } catch (error) {
-        throw dbServiceErrorMapper("deletePurposeErrors", error);
+        throw dbServiceErrorMapper("deletePurposesErrors", error);
       }
     },
 

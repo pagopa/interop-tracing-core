@@ -200,7 +200,7 @@ const operationsRouter = (
 
   operationsRouter.delete("/tracings/errors", async (req, res) => {
     try {
-      await operationsService.deletePurposeErrors(logger(req.ctx));
+      await operationsService.deletePurposesErrors(logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));

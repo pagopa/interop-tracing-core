@@ -1160,7 +1160,7 @@ describe("database test", () => {
       });
     });
 
-    describe("deletePurposeErrors", () => {
+    describe("deletePurposesErrors", () => {
       it("should delete purposes errors with version below the related tracing version with state ERROR, and return 1 record with version 3", async () => {
         const tracingData: Tracing = {
           id: generateId<TracingId>(),
@@ -1200,7 +1200,7 @@ describe("database test", () => {
           dbInstance,
         );
 
-        await operationsService.deletePurposeErrors(genericLogger);
+        await operationsService.deletePurposesErrors(genericLogger);
 
         const purposesErrors = await findPurposeErrors(dbInstance);
 
@@ -1238,7 +1238,7 @@ describe("database test", () => {
           dbInstance,
         );
 
-        await operationsService.deletePurposeErrors(genericLogger);
+        await operationsService.deletePurposesErrors(genericLogger);
 
         const purposesErrors = await findPurposeErrors(dbInstance);
 
