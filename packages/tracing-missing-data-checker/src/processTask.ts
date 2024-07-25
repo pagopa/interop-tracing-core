@@ -15,7 +15,9 @@ export async function processTask(service: OperationsService): Promise<void> {
   let batchCorrelationId: string = uuidv4();
 
   const date = changeDateFormat(
-    new Date(new Date().getTime() - 5 * 24 * 3600 * 1000),
+    new Date(
+      new Date().getTime() - config.daysOffsetFromNow * 24 * 3600 * 1000,
+    ),
     TimeFormat.YY_MM_DD,
   );
 
