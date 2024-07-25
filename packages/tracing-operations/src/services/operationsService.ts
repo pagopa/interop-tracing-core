@@ -236,7 +236,6 @@ export function operationsServiceBuilder(
       payload: ApiSaveMissingTracingPayload,
       logger: Logger,
     ): Promise<ApiSaveMissingTracingResponse> {
-      genericLogger.info(`Saving missing tracing`);
       logger.info(
         `Saving missing tracing for tenantId: ${params.tenantId}, date: ${payload.date}`,
       );
