@@ -27,11 +27,7 @@ import {
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
 } from "pagopa-interop-tracing-operations-client";
-import {
-  ISODateFormat,
-  Logger,
-  genericLogger,
-} from "pagopa-interop-tracing-commons";
+import { ISODateFormat, Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
