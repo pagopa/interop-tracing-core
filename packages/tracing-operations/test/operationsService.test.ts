@@ -53,6 +53,7 @@ import {
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
   ApiTriggerS3CopyHeaders,
+  ApiGetTenantsWithMissingTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 import {
@@ -80,6 +81,7 @@ describe("database test", () => {
   let dbService: DBService;
 
   const tenantId: TenantId = generateId<TenantId>();
+  const secondTenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
   const todayTruncated = ISODateFormat.parse(new Date().toISOString());
@@ -123,6 +125,17 @@ describe("database test", () => {
         id: tenantId,
         name: "pagoPa",
         origin: "external",
+        externalId: generateId(),
+        deleted: false,
+      },
+      dbInstance,
+    );
+
+    await addTenant(
+      {
+        id: secondTenantId,
+        name: "pagoPa 2",
+        origin: "external 2",
         externalId: generateId(),
         deleted: false,
       },
@@ -1030,6 +1043,82 @@ describe("database test", () => {
             genericLogger,
           ),
         ).rejects.toThrowError(tracingNotFound(tracingId));
+      });
+    });
+
+    describe("getTenantsWithMissingTracings", () => {
+      it("searching with 'date' parameter '2024-08-01' should return an empty list of tenants, since tracing already exists", async () => {
+        const date: string = "2024-08-01";
+        const filters: ApiGetTenantsWithMissingTracingsQuery = {
+          date,
+          offset: 0,
+          limit: 50,
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTenantsWithMissingTracings(
+          filters,
+          genericLogger,
+        );
+
+        expect(result.results).toStrictEqual([]);
+        expect(result.totalCount).toBe(0);
+      });
+
+      it("searching with 'date' parameter '2024-08-01' should return 2 tenants, since tracings doesn't exists and must be created", async () => {
+        const date: string = "2024-08-01";
+        const filters: ApiGetTenantsWithMissingTracingsQuery = {
+          date,
+          offset: 0,
+          limit: 50,
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: "2024-07-01",
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTenantsWithMissingTracings(
+          filters,
+          genericLogger,
+        );
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(2);
+        expect(result.results).toContain(tenantId);
+        expect(result.results).toContain(secondTenantId);
       });
     });
   });
