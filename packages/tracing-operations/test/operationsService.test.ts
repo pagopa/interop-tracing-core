@@ -54,6 +54,7 @@ import {
   ApiGetTracingsQuery,
   ApiTriggerS3CopyHeaders,
   ApiGetTenantsWithMissingTracingsQuery,
+  ApiSaveMissingTracingPayload,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 import {
@@ -1119,6 +1120,42 @@ describe("database test", () => {
         expect(result.results.length).toBe(2);
         expect(result.results).toContain(tenantId);
         expect(result.results).toContain(secondTenantId);
+      });
+    });
+
+    describe("saveMissingTracing", () => {
+      it("should create a missing tracing successfully for date '2024-08-01'", async () => {
+        const saveMissingTracingData: ApiSaveMissingTracingPayload = {
+          date: "2024-08-01",
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: saveMissingTracingData.date,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        expect(
+          async () =>
+            await operationsService.saveMissingTracing(
+              { tenantId },
+              {
+                date: saveMissingTracingData.date,
+              },
+              genericLogger,
+            ),
+        ).not.toThrowError();
+
+        const tracing = await findTracingById(tracingData.id, dbInstance);
+
+        expect(new Date(tracing.date)).toContain(
+          new Date(saveMissingTracingData.date),
+        );
       });
     });
   });
