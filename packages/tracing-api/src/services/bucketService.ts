@@ -10,14 +10,14 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
     async writeObject(
       file: ExpressMulterFile,
       bucketS3Key: string,
-      isReplacing?: boolean,
+      useReplacementBucket?: boolean,
     ): Promise<void> {
       try {
         const filePath = path.resolve(file.path);
         const fileData = await fs.promises.readFile(filePath);
 
         const putObjectParams = {
-          Bucket: isReplacing
+          Bucket: useReplacementBucket
             ? config.bucketS3ReplacementName
             : config.bucketS3Name,
           Key: bucketS3Key,
