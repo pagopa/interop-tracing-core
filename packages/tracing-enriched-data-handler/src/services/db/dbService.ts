@@ -58,14 +58,13 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async deleteTraces(tracingId: string) {
+    async deleteTraces(tracingId: string): Promise<void> {
       try {
         const deleteTracesQuery = `
           DELETE FROM traces.traces
           WHERE tracing_id = $1
-          RETURNING id
         `;
-        return await db.many(deleteTracesQuery, [tracingId]);
+        await db.manyOrNone(deleteTracesQuery, [tracingId]);
       } catch (error) {
         throw deleteTracesError(
           `Error deleting traces for tracingId: ${tracingId}. Details: ${error}`,
