@@ -1106,7 +1106,24 @@ describe("database test", () => {
           {
             ...tracingData,
             id: generateId<TracingId>(),
+            date: "2024-07-02",
+          },
+          dbInstance,
+        );
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
             tenant_id: secondTenantId,
+          },
+          dbInstance,
+        );
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+            date: "2024-07-02",
           },
           dbInstance,
         );
