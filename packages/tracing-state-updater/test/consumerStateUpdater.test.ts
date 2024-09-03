@@ -10,6 +10,7 @@ describe("Consumer state updater queue test", () => {
   const mockOperationsService = {
     savePurposeError: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
+    triggerS3Copy: vi.fn().mockResolvedValue(undefined),
   };
 
   afterAll(() => {
@@ -101,5 +102,20 @@ describe("Consumer state updater queue test", () => {
       );
       expect(mockOperationsService.updateTracingState).not.toBeCalled();
     }
+  });
+
+  it("when message has isReplacing: true, triggerS3Copy should be called", async () => {
+    const validMessage: SQS.Message = {
+      MessageId: "12345",
+      ReceiptHandle: "receipt_handle_id",
+      Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
+    };
+
+    expect(async () => {
+      await processTracingStateMessage(mockOperationsService)(validMessage);
+    }).not.toThrowError();
+
+    expect(mockOperationsService.triggerS3Copy).toHaveBeenCalled();
+    expect(mockOperationsService.updateTracingState).not.toHaveBeenCalled();
   });
 });

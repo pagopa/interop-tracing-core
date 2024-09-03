@@ -12,7 +12,7 @@ import {
   decodeSQSPurposeErrorMessage,
   decodeSQSUpdateTracingStateMessage,
 } from "../src/model/models.js";
-import { InternalError } from "pagopa-interop-tracing-models";
+import { CommonErrorCodes, InternalError } from "pagopa-interop-tracing-models";
 import {
   ErrorCodes,
   errorProcessingSavePurposeError,
@@ -115,6 +115,41 @@ describe("Operations service test", () => {
         expect((error as InternalError<ErrorCodes>).code).toBe(
           "errorProcessingUpdateTracingState",
         );
+      }
+    });
+  });
+  describe("triggerCopy", () => {
+    it("it should return a succesfully response", () => {
+      const validMessage: SQS.Message = {
+        MessageId: "12345",
+        ReceiptHandle: "receipt_handle_id",
+        Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
+      };
+
+      const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+
+      vi.spyOn(apiClient, "triggerCopy").mockResolvedValueOnce(undefined);
+
+      expect(
+        async () =>
+          await operationsService.triggerS3Copy(decodedMessage.tracingId),
+      ).not.toThrowError();
+    });
+    it("it should return an exception errorProcessingUpdateTracingState", async () => {
+      const validMessage: SQS.Message = {
+        MessageId: "12345",
+        ReceiptHandle: "receipt_handle_id",
+        Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
+      };
+
+      const decodedMessage = decodeSQSUpdateTracingStateMessage(validMessage);
+
+      vi.spyOn(apiClient, "triggerCopy").mockRejectedValue(undefined);
+      try {
+        await operationsService.triggerS3Copy(decodedMessage.tracingId);
+      } catch (e) {
+        const error = e as InternalError<CommonErrorCodes>;
+        expect(error.code).toBe("errorProcessingUpdateTracingState");
       }
     });
   });

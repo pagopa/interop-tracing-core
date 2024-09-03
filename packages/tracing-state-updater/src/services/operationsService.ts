@@ -9,11 +9,11 @@ import {
   errorProcessingSavePurposeError,
   errorProcessingUpdateTracingState,
 } from "../model/domain/errors.js";
-import { correlationIdToHeader } from "../model/headers.js";
 import { v4 as uuidv4 } from "uuid";
 import {
   SavePurposeErrorDto,
   UpdateTracingStateDto,
+  correlationIdToHeader,
 } from "pagopa-interop-tracing-models";
 
 export const operationsServiceBuilder = (
@@ -29,7 +29,7 @@ export const operationsServiceBuilder = (
             state: data.state,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(uuidv4()) }, // Temporary value to valorize with correlationId implementation
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
@@ -55,7 +55,7 @@ export const operationsServiceBuilder = (
             rowNumber: data.rowNumber,
           },
           {
-            headers: { ...correlationIdToHeader(uuidv4()) },
+            headers: { ...correlationIdToHeader(uuidv4()) }, // Temporary value to valorize with correlationId implementation
             params: { tracingId: data.tracingId, version: data.version },
           },
         );
@@ -66,6 +66,22 @@ export const operationsServiceBuilder = (
       } catch (error: unknown) {
         throw errorProcessingSavePurposeError(
           `Error saving purpose error for tracingId: ${data.tracingId}. Details: ${error}`,
+        );
+      }
+    },
+    async triggerS3Copy(tracingId: string) {
+      try {
+        await operationsApiClient.triggerCopy(undefined, {
+          headers: {
+            ...correlationIdToHeader(uuidv4()), // Temporary value to valorize with correlationId implementation
+          },
+          params: { tracingId },
+        });
+
+        genericLogger.info(`Triggering s3 copy for tracingId: ${tracingId}`);
+      } catch (error: unknown) {
+        throw errorProcessingUpdateTracingState(
+          `Error triggering copy: ${tracingId}. Details: ${error}`,
         );
       }
     },

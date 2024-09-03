@@ -1,3 +1,6 @@
+import { tracingState } from "pagopa-interop-tracing-models";
+import { deleteTracesError } from "../models/errors.js";
+import { TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 
@@ -6,18 +9,22 @@ export const replacementServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async deleteTracing(_message: unknown): Promise<unknown> {
-      const tracingId = "";
-      const result = await dbService.deleteTracing(tracingId);
-      if (!result) {
-        return producerService.sendErrorMessage({});
+    async deleteTraces(tracing: TracingFromCsv) {
+      try {
+        await dbService.deleteTraces(tracing.tracingId);
+        return producerService.sendTracingUpdateStateMessage({
+          tracingId: tracing.tracingId,
+          version: tracing.version,
+          state: tracingState.completed,
+          isReplacing: true,
+        });
+      } catch (error) {
+        throw deleteTracesError(
+          `Error deleting traces ${tracing.tracingId}. Details: ${error}`,
+        );
       }
-      return Promise.resolve({});
     },
   };
 };
 
-export type ReplacementServiceBuilder = ReturnType<
-  typeof replacementServiceBuilder
->;
+export type ReplacementService = ReturnType<typeof replacementServiceBuilder>;

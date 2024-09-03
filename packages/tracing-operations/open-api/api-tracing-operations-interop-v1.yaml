@@ -17,14 +17,14 @@ paths:
         - Write
       parameters:
         - in: header
-          name: X-Correlation-Id
+          name: x-correlation-id
           description: Correlation ID for tracking requests
           required: true
           schema:
             type: string
             format: uuid
         - in: header
-          name: X-Requester-Purpose-Id
+          name: x-requester-purpose-id
           description: Purpose ID for specifying the requester's purpose
           required: true
           schema:
@@ -157,7 +157,7 @@ paths:
           schema:
             type: integer
         - in: header
-          name: X-Correlation-Id
+          name: x-correlation-id
           description: Correlation ID for tracking requests
           required: true
           schema:
@@ -415,6 +415,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetTracingErrorsResponse"
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /tracings/{tracingId}/triggerCopy:
+    post:
+      summary: Trigger a copy of the csv by tracingId
+      operationId: triggerCopy
+      tags:
+        - Write
+      parameters:
+        - in: path
+          name: tracingId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-correlation-id
+          description: Correlation ID for tracking requests
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: No content
         "400":
           description: The provided input data is invalid
           content:

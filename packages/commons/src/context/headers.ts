@@ -4,7 +4,7 @@ import { P, match } from "ts-pattern";
 export const readCorrelationIdHeader = (req: Request): string | undefined =>
   match(req.headers)
     .with(
-      { "X-Correlation-Id": P.string },
-      (headers) => headers["X-Correlation-Id"],
+      { "x-correlation-id": P.string },
+      (headers) => headers["x-correlation-id"],
     )
     .otherwise(() => undefined);
