@@ -41,7 +41,7 @@ export const operationsServiceBuilder = (
         );
       } catch (error: unknown) {
         throw errorSaveMissingTracing(
-          `Error saving missing tracing for date: ${data.date}, tenantId: ${data.tenantId}. Details: ${error}`,
+          `Error saving missing tracing for date: ${data.date}, tenantId: ${params.tenantId}. Details: ${error}`,
         );
       }
     },
