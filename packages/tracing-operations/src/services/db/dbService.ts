@@ -341,7 +341,12 @@ export function dbServiceBuilder(db: DB) {
           LEFT JOIN tracing.tracings t2 
           ON t1.tenant_id = t2.tenant_id 
           AND t2.date >= $1 AND t2.date < $1::date + interval '1 day'
-          WHERE t2.tenant_id IS NULL;
+          WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM tracing.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 1;
         `;
 
         const { total_count } = await db.one<{ total_count: number }>(
@@ -356,6 +361,11 @@ export function dbServiceBuilder(db: DB) {
           ON t1.tenant_id = t2.tenant_id 
           AND t2.date >= $3 AND t2.date < $3::date + interval '1 day'
           WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM tracing.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 1
           OFFSET $1 LIMIT $2;
         `;
 
