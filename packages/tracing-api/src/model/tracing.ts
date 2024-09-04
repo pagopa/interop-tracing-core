@@ -2,7 +2,7 @@ import { TracingState } from "pagopa-interop-tracing-models";
 import z from "zod";
 
 const PurposeError = z.object({
-  purposeId: z.string().uuid(),
+  purposeId: z.string(),
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.number(),

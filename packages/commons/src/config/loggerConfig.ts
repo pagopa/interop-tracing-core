@@ -9,6 +9,3 @@ export const LoggerConfig = z
   }));
 
 export type LoggerConfig = z.infer<typeof LoggerConfig>;
-
-export const loggerConfig: () => LoggerConfig = () =>
-  LoggerConfig.parse(process.env);

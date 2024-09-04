@@ -12,21 +12,29 @@ import {
   ApiUpdateTracingStateParams,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
+  ApiTriggerS3CopyParams,
+  ApiTriggerS3CopyHeaders,
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
-  ApicancelTracingStateAndVersionParams,
-  ApicancelTracingStateAndVersionPayload,
-  ApicancelTracingStateAndVersionResponse,
+  ApiCancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionPayload,
+  ApiCancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
+  ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
-import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  ISODateFormat,
+  Logger,
+  genericLogger,
+} from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
   PurposeId,
   generateId,
-  tracingCannotBeUpdated,
+  tracingRecoverCannotBeUpdated,
+  tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -34,9 +42,13 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
+import { BucketService } from "./bucketService.js";
 import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
-export function operationsServiceBuilder(dbService: DBService) {
+export function operationsServiceBuilder(
+  dbService: DBService,
+  bucketService: BucketService,
+) {
   return {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
       return await dbService.getTenantByPurposeId(purposeId);
@@ -83,7 +95,36 @@ export function operationsServiceBuilder(dbService: DBService) {
         tracing.state !== tracingState.missing &&
         tracing.state !== tracingState.error
       ) {
-        throw tracingCannotBeUpdated(params.tracingId);
+        throw tracingRecoverCannotBeUpdated(params.tracingId);
+      }
+
+      await dbService.updateTracingStateAndVersion({
+        tracing_id: params.tracingId,
+        state: tracingState.pending,
+        version: tracing.version + 1,
+      });
+
+      return {
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
+        version: tracing.version + 1,
+        date: tracing.date,
+        previousState: tracing.state,
+      };
+    },
+    async replaceTracing(
+      params: ApiReplaceTracingParams,
+      logger: Logger,
+    ): Promise<ApiReplaceTracingResponse> {
+      logger.info(`Recover data for tracingId: ${params.tracingId}`);
+
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.state !== tracingState.completed) {
+        throw tracingReplaceCannotBeUpdated(params.tracingId);
       }
 
       await dbService.updateTracingStateAndVersion({
@@ -101,17 +142,11 @@ export function operationsServiceBuilder(dbService: DBService) {
       };
     },
 
-    async replaceTracing(): Promise<ApiReplaceTracingResponse> {
-      genericLogger.info(`Replacing tracing`);
-      await dbService.replaceTracing();
-      return Promise.resolve({});
-    },
-
     async cancelTracingStateAndVersion(
-      params: ApicancelTracingStateAndVersionParams,
-      payload: ApicancelTracingStateAndVersionPayload,
+      params: ApiCancelTracingStateAndVersionParams,
+      payload: ApiCancelTracingStateAndVersionPayload,
       logger: Logger,
-    ): Promise<ApicancelTracingStateAndVersionResponse> {
+    ): Promise<ApiCancelTracingStateAndVersionResponse> {
       logger.info(
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
@@ -160,18 +195,37 @@ export function operationsServiceBuilder(dbService: DBService) {
         id: generateId<PurposeErrorId>(),
         tracing_id: params.tracingId,
         version: params.version,
-        purpose_id: payload.purposeId as PurposeId,
+        purpose_id: payload.purposeId,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,
       });
     },
 
-    async deletePurposeErrors(): Promise<void> {
-      genericLogger.info(`Delete purpose error`);
-      await dbService.deletePurposeErrors();
-      return Promise.resolve();
+    async triggerS3Copy(
+      headers: ApiTriggerS3CopyHeaders,
+      params: ApiTriggerS3CopyParams,
+      logger: Logger,
+    ): Promise<void> {
+      logger.info(`Trigger S3 copy for tracingId: ${params.tracingId}`);
+
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      const bucketS3Key = buildS3Key(
+        tracing.tenant_id,
+        tracing.date,
+        tracing.id,
+        tracing.version,
+        headers["x-correlation-id"],
+      );
+
+      return await bucketService.copyObject(bucketS3Key, logger);
     },
+
+    async deletePurposeErrors(): Promise<void> {},
 
     async saveMissingTracing(): Promise<ApiMissingResponse> {
       genericLogger.info(`Saving missing tracing`);
@@ -180,12 +234,14 @@ export function operationsServiceBuilder(dbService: DBService) {
     },
 
     async getTracings(
-      filters: ApiGetTracingsQuery,
+      filters: ApiGetTracingsQuery & { tenantId: string },
       logger: Logger,
     ): Promise<ApiGetTracingsResponse> {
-      logger.info(`Get tracings`);
+      logger.info(`Get tracings by tenantId: ${filters.tenantId}`);
 
-      const data = await dbService.getTracings(filters);
+      const data = await dbService.getTracings({
+        ...filters,
+      });
 
       const parsedTracings = TracingsContentResponse.safeParse(data.results);
       if (!parsedTracings.success) {
@@ -232,5 +288,16 @@ export function operationsServiceBuilder(dbService: DBService) {
     },
   };
 }
+
+const buildS3Key = (
+  tenantId: string,
+  date: string,
+  tracingId: string,
+  version: number,
+  correlationId: string,
+): string =>
+  `tenantId=${tenantId}/date=${ISODateFormat.parse(
+    date,
+  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export type OperationsService = ReturnType<typeof operationsServiceBuilder>;

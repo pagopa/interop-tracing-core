@@ -52,24 +52,24 @@ export type ApiExternalGetTracingErrorsParams = ZodiosPathParamsByPath<
 
 export type ApiExternalRecoverTracingPayload = ZodiosBodyByPath<
   ApiExternal,
-  "put",
+  "post",
   "/tracings/:tracingId/recover"
 >;
 
 export type ApiExternalRecoverTracingResponse = ZodiosResponseByPath<
   ApiExternal,
-  "put",
+  "post",
   "/tracings/:tracingId/recover"
 >;
 
 export type ApiExternalReplaceTracingPayload = ZodiosBodyByPath<
   ApiExternal,
-  "put",
+  "post",
   "/tracings/:tracingId/replace"
 >;
 
 export type ApiExternalReplaceTracingResponse = ZodiosResponseByPath<
   ApiExternal,
-  "put",
+  "post",
   "/tracings/:tracingId/replace"
 >;

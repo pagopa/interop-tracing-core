@@ -4,6 +4,10 @@ import {
 } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
+  tracingNotFound: "0001",
+  tenantNotFound: "0002",
+  tracingAlreadyExists: "0003",
+  copyObjectS3BucketError: "0004",
   tracingCannotBeCancelled: "1000",
 };
 
@@ -17,5 +21,14 @@ export function tracingCannotBeCancelled(
   return new InternalError({
     detail: `Tracing with Id ${tracingId} cannot be cancelled. The state of tracing must be PENDING.`,
     code: "tracingCannotBeCancelled",
+  });
+}
+
+export function copyObjectS3BucketError(
+  detail: unknown,
+): InternalError<ErrorCodes> {
+  return new InternalError({
+    detail: `${detail}`,
+    code: "copyObjectS3BucketError",
   });
 }

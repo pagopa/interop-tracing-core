@@ -12,8 +12,17 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "../src/services/producerService.js";
-import { dbConfig } from "../src/utilities/dbConfig.js";
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  ReplacementService,
+  replacementServiceBuilder,
+} from "../src/services/replacementService.js";
+import {
+  AppContext,
+  DB,
+  SQS,
+  WithSQSMessageId,
+  initDB,
+} from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
 import { TracingFromCsv } from "../src/models/messages.js";
@@ -25,14 +34,23 @@ import {
 import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
-import { insertTraceError } from "../src/models/errors.js";
+import { insertTracesError } from "../src/models/errors.js";
+import { addTraces } from "./utils.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
   let bucketService: BucketService;
   let producerService: ProducerService;
+  let replacementService: ReplacementService;
   let startedPostgreSqlContainer: StartedTestContainer;
+  let dbInstance: DB;
+
+  const mockAppCtx: WithSQSMessageId<AppContext> = {
+    serviceName: config.applicationName,
+    messageId: "12345",
+    correlationId: mockTracingFromCsv.correlationId,
+  };
 
   const s3client = new S3Client({
     region: config.awsRegion,
@@ -46,26 +64,29 @@ describe("Enriched Service", () => {
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(dbConfig).start();
-    dbConfig.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
-    const dbInstance = initDB({
-      username: dbConfig.dbUsername,
-      password: dbConfig.dbPassword,
-      host: dbConfig.dbHost,
-      port: dbConfig.dbPort,
-      database: dbConfig.dbName,
-      schema: dbConfig.dbSchemaName,
-      useSSL: dbConfig.dbUseSSL,
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    dbInstance = initDB({
+      username: config.dbUsername,
+      password: config.dbPassword,
+      host: config.dbHost,
+      port: config.dbPort,
+      database: config.dbName,
+      schema: config.dbSchemaName,
+      useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
+    replacementService = replacementServiceBuilder(dbService, producerService);
 
     enrichedService = enrichedServiceBuilder(
       dbService,
       bucketService,
       producerService,
     );
+
+    replacementService = replacementServiceBuilder(dbService, producerService);
   });
 
   describe("insertEnrichedTrace", () => {
@@ -73,25 +94,28 @@ describe("Enriched Service", () => {
       const readObjectSpy = vi
         .spyOn(bucketService, "readObject")
         .mockResolvedValue(mockEnrichedPuposes);
-      const insertTracingSpy = vi
-        .spyOn(dbService, "insertTraces")
-        .mockResolvedValue([{ id: generateId() }]);
-      const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendUpdateState")
-        .mockResolvedValue();
-
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
-
-      expect(readObjectSpy).toHaveBeenCalledWith(expect.any(String));
-      expect(insertTracingSpy).toHaveBeenCalledWith(
+      const tracesInserted = await dbService.insertTraces(
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
       );
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-        tracingId: mockTracingFromCsv.tracingId,
-        version: mockTracingFromCsv.version,
-        state: tracingState.completed,
-      });
+      const sendUpdateStateSpy = vi
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
+        .mockResolvedValue();
+
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
+      expect(readObjectSpy).toHaveBeenCalledWith(expect.any(String));
+
+      expect(tracesInserted).toHaveLength(mockEnrichedPuposes.length);
+
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
 
     it("should throw an error if tracing message is not valid", async () => {
@@ -99,10 +123,14 @@ describe("Enriched Service", () => {
 
       const readObjectSpy = vi.spyOn(bucketService, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
+          mockAppCtx,
         );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
@@ -117,9 +145,155 @@ describe("Enriched Service", () => {
         .spyOn(bucketService, "readObject")
         .mockResolvedValue([]);
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).toHaveBeenCalled();
+        expect(insertTracingSpy).not.toHaveBeenCalled();
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+    it("should not send update if DB insert fails", async () => {
+      const readObjectSpy = vi
+        .spyOn(bucketService, "readObject")
+        .mockResolvedValue(mockEnrichedPuposes);
+      const insertTracingSpy = vi
+        .spyOn(dbService, "insertTraces")
+        .mockRejectedValue(insertTracesError(``));
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+
+      try {
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).toHaveBeenCalled();
+        expect(insertTracingSpy).toHaveBeenCalledWith(
+          mockTracingFromCsv.tracingId,
+          mockEnrichedPuposes,
+        );
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should send update 'COMPLETED' if DB insert succeded", async () => {
+      vi.spyOn(bucketService, "readObject").mockResolvedValue(
+        mockEnrichedPuposes,
+      );
+      vi.spyOn(dbService, "insertTraces").mockReturnValue(
+        Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
+      );
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
+      mockTracingFromCsv.tracingId,
+        mockEnrichedPuposes,
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+          {
+            tracingId: mockTracingFromCsv.tracingId,
+            version: mockTracingFromCsv.version,
+            state: tracingState.completed,
+          },
+          mockAppCtx,
+        );
+    });
+  });
+  describe("deleteTrace", () => {
+    it("should delete a tracing and send update successfully", async () => {
+      await addTraces(
+        mockTracingFromCsv.tracingId,
+        mockEnrichedPuposes,
+        dbInstance,
+      );
+
+      const sendUpdateStateSpy = vi
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
+        .mockResolvedValue();
+
+      await replacementService.deleteTraces(mockTracingFromCsv, mockAppCtx);
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+          useReplacementBucket: true,
+        },
+        mockAppCtx,
+      );
+    });
+
+    it("should throw an error if deletion fails", async () => {
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+      try {
+        await replacementService.deleteTraces(
+          {
+            ...mockTracingFromCsv,
+            tracingId: generateId(),
+          },
+          mockAppCtx,
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should throw an error if tracing message is not valid", async () => {
+      const invalidMessage = { tracingId: generateId() };
+
+      const readObjectSpy = vi.spyOn(bucketService, "readObject");
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+      try {
+        await enrichedService.insertEnrichedTrace(
+          invalidMessage as unknown as TracingFromCsv,
+          mockAppCtx,
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(InternalError);
+        expect(readObjectSpy).not.toHaveBeenCalled();
+        expect(insertTracingSpy).not.toHaveBeenCalled();
+        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should throw an error if no record found in the bucket", async () => {
+      const readObjectSpy = vi
+        .spyOn(bucketService, "readObject")
+        .mockResolvedValue([]);
+      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+      try {
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -134,11 +308,17 @@ describe("Enriched Service", () => {
         .mockResolvedValue(mockEnrichedPuposes);
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
-        .mockRejectedValue(insertTraceError(``));
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+        .mockRejectedValue(insertTracesError(``));
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -157,16 +337,23 @@ describe("Enriched Service", () => {
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: generateId() }]),
       );
-      const sendUpdateStateSpy = vi.spyOn(producerService, "sendUpdateState");
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        });
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+          {
+            tracingId: mockTracingFromCsv.tracingId,
+            version: mockTracingFromCsv.version,
+            state: tracingState.completed,
+          },
+          mockAppCtx,
+        );
     });
   });
 });

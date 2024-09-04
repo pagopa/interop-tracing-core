@@ -11,13 +11,3 @@ export const TracingState = z.enum([
   ...Object.values(tracingState).slice(1),
 ]);
 export type TracingState = z.infer<typeof TracingState>;
-
-export const RequesterPurposeIdHeader = z.object({
-  "X-Requester-Purpose-Id": z.string(),
-});
-export type RequesterPurposeIdHeader = z.infer<typeof RequesterPurposeIdHeader>;
-
-export const CorrelationIdHeader = z.object({
-  "X-Correlation-Id": z.string(),
-});
-export type CorrelationIdHeader = z.infer<typeof CorrelationIdHeader>;
