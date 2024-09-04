@@ -7,17 +7,20 @@ import { BucketService } from "./bucketService.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
+  AppContext,
   PurposeErrorCodes,
-  genericLogger,
+  WithSQSMessageId,
+  logger,
 } from "pagopa-interop-tracing-commons";
 import { match } from "ts-pattern";
-import { errorMapper } from "../utilities/errorMapper.js";
 import { TracingRecordSchema } from "../models/db.js";
 import {
   EnrichedPurposeArray,
   PurposeErrorMessage,
   PurposeErrorMessageArray,
 } from "../models/csv.js";
+import { processTracingError } from "../models/errors.js";
+import { ZodIssue } from "zod";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -25,9 +28,12 @@ export const processingServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async processTracing(tracing: TracingFromS3KeyPathDto) {
+    async processTracing(
+      tracing: TracingFromS3KeyPathDto,
+      ctx: WithSQSMessageId<AppContext>,
+    ) {
       try {
-        genericLogger.info(
+        logger(ctx).info(
           `Reading and processing file for tracingId: ${tracing.tracingId}`,
         );
 
@@ -56,9 +62,12 @@ export const processingServiceBuilder = (
           s3KeyPath,
           tracing,
           formalErrorsRecords,
+          ctx,
         );
-      } catch (error) {
-        throw errorMapper(error);
+      } catch (error: unknown) {
+        throw processTracingError(
+          `Error processing tracing for tracingId: ${tracing.tracingId}. Details: ${error}`,
+        );
       }
     },
   };
@@ -72,10 +81,20 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   s3KeyPath: string,
   tracing: TracingFromS3KeyPathDto,
   formalErrors: PurposeErrorMessage[],
+  ctx: WithSQSMessageId<AppContext>,
 ) {
-  const enrichedPurposes = await dbService.getEnrichedPurpose(
-    tracingRecords,
+  let enrichedPurposes = [];
+  enrichedPurposes = await dbService.getEnrichedPurpose(
+    tracingRecords.filter(
+      (el) =>
+        !formalErrors.find(
+          (purpose) =>
+            el.rowNumber === purpose.rowNumber &&
+            purpose.errorCode === PurposeErrorCodes.INVALID_PURPOSE,
+        ),
+    ),
     tracing,
+    ctx,
   );
 
   const purposeErrors: PurposeErrorMessageArray = formalErrors;
@@ -88,7 +107,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   });
 
   if (purposeErrors && purposeErrors.length > 0) {
-    await sendPurposeErrors(purposeErrors, tracing, producerService);
+    await sendPurposeErrors(purposeErrors, tracing, producerService, ctx);
   } else {
     const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
 
@@ -103,6 +122,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
         purposeEnriched.data,
         s3KeyPath,
         tracing.tenantId,
+        ctx,
       );
     }
   }
@@ -117,26 +137,40 @@ export async function checkRecords(
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
     if (result.error) {
-      const parsedError = parseErrorMessage(result.error.message);
-
-      errorsRecord.push({
-        tracingId: tracing.tracingId,
-        version: tracing.version,
-        errorCode: parsedError.errorCode,
-        purposeId: record.purpose_id,
-        message: parsedError.message,
-        rowNumber: record.rowNumber,
-        updateTracingState: false,
-      });
+      for (const issue of result.error.issues) {
+        const parsedError = parseErrorMessage(issue);
+        errorsRecord.push({
+          tracingId: tracing.tracingId,
+          version: tracing.version,
+          errorCode: parsedError.errorCode,
+          purposeId: record.purpose_id,
+          message: parsedError.message,
+          rowNumber: record.rowNumber,
+          updateTracingState: false,
+        });
+      }
     }
 
-    if (result.data && result.data.date !== tracing.date) {
+    if (record.date !== tracing.date) {
       errorsRecord.push({
         tracingId: tracing.tracingId,
         version: tracing.version,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
-        message: `Date ${result.data?.date} on csv is different from tracing date ${tracing.date}`,
+        message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
+        rowNumber: record.rowNumber,
+        updateTracingState: false,
+      });
+    }
+
+    const duplicateRecords = getDuplicatePurposesRow(record, records);
+    if (duplicateRecords) {
+      errorsRecord.push({
+        tracingId: tracing.tracingId,
+        version: tracing.version,
+        purposeId: record.purpose_id,
+        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
+        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
@@ -146,26 +180,22 @@ export async function checkRecords(
   return errorsRecord;
 }
 
-function parseErrorMessage(errorObj: string) {
-  const error = JSON.parse(errorObj);
-  const {
-    path,
-    message,
-  }: { path: (keyof TracingRecordSchema)[]; message: string } = error[0];
-  const errorCode = match(path[0])
+function parseErrorMessage(issue: ZodIssue) {
+  const errorCode = match(issue.path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
     .with("date", () => PurposeErrorCodes.INVALID_DATE)
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
 
-  return { message: `${path}: ${message}`, errorCode };
+  return { message: `${issue.path[0]}: ${issue.message}`, errorCode };
 }
 
 async function sendPurposeErrors(
   purposeErrors: PurposeErrorMessage[],
   tracing: TracingFromS3KeyPathDto,
   producerService: ProducerService,
+  ctx: WithSQSMessageId<AppContext>,
 ) {
   const sortedPurposeErrors = purposeErrors.sort(
     (a, b) => a.rowNumber - b.rowNumber,
@@ -181,13 +211,26 @@ async function sendPurposeErrors(
       rowNumber: record.rowNumber,
       updateTracingState: index === purposeErrors.length - 1,
     };
-    return producerService.sendErrorMessage(purposeError);
+    return producerService.sendErrorMessage(purposeError, ctx);
   });
   await Promise.all(errorMessagePromises);
 }
 
 export function createS3Path(message: TracingFromS3KeyPathDto) {
   return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
+}
+
+function getDuplicatePurposesRow(
+  record: TracingRecordSchema,
+  records: TracingRecordSchema[],
+): string | null {
+  const duplicateRecords = records
+    .filter(
+      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+    )
+    .map((el) => el.rowNumber);
+
+  return duplicateRecords.length > 1 ? `${duplicateRecords.join(",")}` : null;
 }
 
 export type ProcessingService = ReturnType<typeof processingServiceBuilder>;

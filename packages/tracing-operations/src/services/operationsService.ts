@@ -17,10 +17,11 @@ import {
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
-  ApicancelTracingStateAndVersionParams,
-  ApicancelTracingStateAndVersionPayload,
-  ApicancelTracingStateAndVersionResponse,
+  ApiCancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionPayload,
+  ApiCancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
+  ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
 import {
   ISODateFormat,
@@ -32,7 +33,8 @@ import {
   PurposeErrorId,
   PurposeId,
   generateId,
-  tracingCannotBeUpdated,
+  tracingRecoverCannotBeUpdated,
+  tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -93,7 +95,36 @@ export function operationsServiceBuilder(
         tracing.state !== tracingState.missing &&
         tracing.state !== tracingState.error
       ) {
-        throw tracingCannotBeUpdated(params.tracingId);
+        throw tracingRecoverCannotBeUpdated(params.tracingId);
+      }
+
+      await dbService.updateTracingStateAndVersion({
+        tracing_id: params.tracingId,
+        state: tracingState.pending,
+        version: tracing.version + 1,
+      });
+
+      return {
+        tracingId: tracing.id,
+        tenantId: tracing.tenant_id,
+        version: tracing.version + 1,
+        date: tracing.date,
+        previousState: tracing.state,
+      };
+    },
+    async replaceTracing(
+      params: ApiReplaceTracingParams,
+      logger: Logger,
+    ): Promise<ApiReplaceTracingResponse> {
+      logger.info(`Recover data for tracingId: ${params.tracingId}`);
+
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.state !== tracingState.completed) {
+        throw tracingReplaceCannotBeUpdated(params.tracingId);
       }
 
       await dbService.updateTracingStateAndVersion({
@@ -111,17 +142,11 @@ export function operationsServiceBuilder(
       };
     },
 
-    async replaceTracing(): Promise<ApiReplaceTracingResponse> {
-      genericLogger.info(`Replacing tracing`);
-      await dbService.replaceTracing();
-      return Promise.resolve({});
-    },
-
     async cancelTracingStateAndVersion(
-      params: ApicancelTracingStateAndVersionParams,
-      payload: ApicancelTracingStateAndVersionPayload,
+      params: ApiCancelTracingStateAndVersionParams,
+      payload: ApiCancelTracingStateAndVersionPayload,
       logger: Logger,
-    ): Promise<ApicancelTracingStateAndVersionResponse> {
+    ): Promise<ApiCancelTracingStateAndVersionResponse> {
       logger.info(
         `Cancel tracing to previous version with tracingId: ${params.tracingId}`,
       );
@@ -170,7 +195,7 @@ export function operationsServiceBuilder(
         id: generateId<PurposeErrorId>(),
         tracing_id: params.tracingId,
         version: params.version,
-        purpose_id: payload.purposeId as PurposeId,
+        purpose_id: payload.purposeId,
         error_code: payload.errorCode,
         message: payload.message,
         row_number: payload.rowNumber,
@@ -209,12 +234,14 @@ export function operationsServiceBuilder(
     },
 
     async getTracings(
-      filters: ApiGetTracingsQuery,
+      filters: ApiGetTracingsQuery & { tenantId: string },
       logger: Logger,
     ): Promise<ApiGetTracingsResponse> {
-      logger.info(`Get tracings`);
+      logger.info(`Get tracings by tenantId: ${filters.tenantId}`);
 
-      const data = await dbService.getTracings(filters);
+      const data = await dbService.getTracings({
+        ...filters,
+      });
 
       const parsedTracings = TracingsContentResponse.safeParse(data.results);
       if (!parsedTracings.success) {

@@ -1,4 +1,8 @@
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  WithSQSMessageId,
+  logger,
+} from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
@@ -12,7 +16,10 @@ export const enrichedServiceBuilder = (
   producerService: ProducerService,
 ) => {
   return {
-    async insertEnrichedTrace(message: TracingFromCsv) {
+    async insertEnrichedTrace(
+      message: TracingFromCsv,
+      ctx: WithSQSMessageId<AppContext>,
+    ) {
       try {
         const { data: tracing, error: tracingError } =
           TracingFromCsv.safeParse(message);
@@ -23,7 +30,7 @@ export const enrichedServiceBuilder = (
           );
         }
 
-        genericLogger.info(
+        logger(ctx).info(
           `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
         );
 
@@ -42,17 +49,20 @@ export const enrichedServiceBuilder = (
         );
 
         if (tracesInserted.length > 0) {
-          await producerService.sendTracingUpdateStateMessage({
-            tracingId: tracing.tracingId,
-            version: tracing.version,
-            state: tracingState.completed,
-          });
+          await producerService.sendTracingUpdateStateMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              state: tracingState.completed,
+            },
+            ctx,
+          );
         } else {
           throw new Error("No traces were inserted");
         }
-      } catch (e) {
+      } catch (error: unknown) {
         throw insertEnrichedTraceError(
-          `Error inserting traces with tracingId: ${message.tracingId}`,
+          `Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,
         );
       }
     },

@@ -2,6 +2,7 @@ import {
   ApiGetTracingErrorsResponse,
   ApiGetTracingsResponse,
   ApiRecoverTracingResponse,
+  ApiReplaceTracingResponse,
   ApiSubmitTracingResponse,
   createApiClient,
 } from "pagopa-interop-tracing-operations-client";
@@ -13,7 +14,8 @@ import {
   genericInternalError,
   purposeIdToHeader,
   tracingAlreadyExists,
-  tracingCannotBeUpdated,
+  tracingRecoverCannotBeUpdated,
+  tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
 } from "pagopa-interop-tracing-models";
@@ -22,8 +24,8 @@ import { config } from "../src/utilities/config.js";
 import {
   ISODateFormat,
   contextMiddleware,
-  logger,
   PurposeErrorCodes,
+  genericLogger,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
@@ -181,7 +183,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         tracingAlreadyExists(errorMessage),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -409,7 +411,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -428,6 +430,10 @@ describe("Tracing Router", () => {
         undefined,
         {
           params: { tracingId: mockRecoverTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
         },
       );
     });
@@ -442,11 +448,10 @@ describe("Tracing Router", () => {
         previousState: "MISSING",
       };
 
-      const errorMessage = `Tracing with Id ${mockRecoverTracingResponse.tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`;
       const apiErrorMock = makeApiProblem(
-        tracingCannotBeUpdated(errorMessage),
+        tracingRecoverCannotBeUpdated(mockRecoverTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -458,7 +463,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -480,7 +485,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         tracingNotFound(mockRecoverTracingResponse.tracingId),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -492,7 +497,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -541,7 +546,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -561,6 +566,10 @@ describe("Tracing Router", () => {
         {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
+          },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );
@@ -606,7 +615,7 @@ describe("Tracing Router", () => {
       const apiErrorMock = makeApiProblem(
         genericInternalError(errorMessage),
         errorMapper,
-        logger({}),
+        genericLogger,
       );
 
       const operationsApiClientError =
@@ -619,7 +628,7 @@ describe("Tracing Router", () => {
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
-        .put(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
+        .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
         .attach("file", mockFile, originalFilename)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -639,6 +648,285 @@ describe("Tracing Router", () => {
         {
           params: {
             tracingId: mockRecoverTracingResponse.tracingId,
+          },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
+        },
+      );
+
+      expect(response.text).contains("Unexpected error");
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("replaceTracing", () => {
+    it("should upload to bucket a revisited tracing file, update relative db existing tracing version and state to 'PENDING'", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockReplaceTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "COMPLETED",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockReplaceTracingResponse.tenantId,
+        mockReplaceTracingResponse.date,
+        mockReplaceTracingResponse.tracingId,
+        mockReplaceTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "replaceTracing").mockResolvedValueOnce(
+        mockReplaceTracingResponse,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce();
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracingId).toBe(
+        mockReplaceTracingResponse.tracingId,
+      );
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+        true,
+      );
+
+      expect(operationsApiClient.replaceTracing).toHaveBeenCalledWith(
+        undefined,
+        {
+          params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
+        },
+      );
+    });
+
+    it("should return a 409 status error if the tracing to update does not have a state COMPLETED", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockReplaceTracingResponse: ApiRecoverTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "COMPLETED",
+      };
+
+      const apiErrorMock = makeApiProblem(
+        tracingReplaceCannotBeUpdated(mockReplaceTracingResponse.tracingId),
+        errorMapper,
+        genericLogger,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "replaceTracing").mockRejectedValueOnce(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(apiErrorMock.detail);
+      expect(response.status).toBe(409);
+    });
+
+    it("should return a 404 status error if the tracing cannot be found", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockReplaceTracingResponse: ApiReplaceTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const apiErrorMock = makeApiProblem(
+        tracingNotFound(mockReplaceTracingResponse.tracingId),
+        errorMapper,
+        genericLogger,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "replaceTracing").mockRejectedValueOnce(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(apiErrorMock.detail);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return a 500 status error if the tracing upload to the bucket fails, then call cancelTracingStateAndVersion API with 204 response status", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockReplaceTracingResponse: ApiReplaceTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockReplaceTracingResponse.tenantId,
+        mockReplaceTracingResponse.date,
+        mockReplaceTracingResponse.tracingId,
+        mockReplaceTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "replaceTracing").mockResolvedValueOnce(
+        mockReplaceTracingResponse,
+      );
+
+      const mockSQSError =
+        "The SQS service is currently unavailable. Please try again later.";
+
+      const writeObjectS3BucketErrorMock = writeObjectS3BucketError(
+        `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+        writeObjectS3BucketErrorMock,
+      );
+
+      vi.spyOn(
+        operationsApiClient,
+        "cancelTracingStateAndVersion",
+      ).mockResolvedValueOnce();
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+        true,
+      );
+
+      expect(
+        operationsApiClient.cancelTracingStateAndVersion,
+      ).toHaveBeenCalledWith(
+        {
+          state: mockReplaceTracingResponse.previousState,
+          version: mockReplaceTracingResponse.version - 1,
+        },
+        {
+          params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+          },
+        },
+      );
+
+      expect(response.text).contains("Unexpected error");
+      expect(response.status).toBe(500);
+    });
+
+    it("should return a 500 status error if the tracing upload to the bucket fails, then call cancelTracingStateAndVersion API with 500 response status", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockReplaceTracingResponse: ApiReplaceTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 2,
+        previousState: "ERROR",
+      };
+
+      const bucketS3Key = buildS3Key(
+        mockReplaceTracingResponse.tenantId,
+        mockReplaceTracingResponse.date,
+        mockReplaceTracingResponse.tracingId,
+        mockReplaceTracingResponse.version,
+        mockAppCtx.correlationId,
+      );
+
+      vi.spyOn(operationsApiClient, "replaceTracing").mockResolvedValueOnce(
+        mockReplaceTracingResponse,
+      );
+
+      const mockSQSError =
+        "The SQS service is currently unavailable. Please try again later.";
+
+      const writeObjectS3BucketErrorMock = writeObjectS3BucketError(
+        `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
+      );
+
+      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+        writeObjectS3BucketErrorMock,
+      );
+
+      const errorMessage = `Tracing with Id ${mockReplaceTracingResponse.tracingId} cannot be cancelled. The state of tracing must be PENDING.`;
+      const apiErrorMock = makeApiProblem(
+        genericInternalError(errorMessage),
+        errorMapper,
+        genericLogger,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(
+        operationsApiClient,
+        "cancelTracingStateAndVersion",
+      ).mockRejectedValueOnce(operationsApiClientError);
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
+        .attach("file", mockFile, originalFilename)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(bucketService.writeObject).toHaveBeenCalledWith(
+        expect.objectContaining({ originalname: originalFilename }),
+        bucketS3Key,
+        true,
+      );
+
+      expect(
+        operationsApiClient.cancelTracingStateAndVersion,
+      ).toHaveBeenCalledWith(
+        {
+          state: mockReplaceTracingResponse.previousState,
+          version: mockReplaceTracingResponse.version - 1,
+        },
+        {
+          params: { tracingId: mockReplaceTracingResponse.tracingId },
+          headers: {
+            ...correlationIdToHeader(mockAppCtx.correlationId),
+            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
           },
         },
       );

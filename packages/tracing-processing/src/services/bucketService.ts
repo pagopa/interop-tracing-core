@@ -5,7 +5,11 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import { genericLogger } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  WithSQSMessageId,
+  logger,
+} from "pagopa-interop-tracing-commons";
 import {
   readObjectBucketS3Error,
   writeObjectBucketS3Error,
@@ -20,6 +24,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
       records: EnrichedPurpose[],
       s3KeyPath: string,
       tenantId: string,
+      ctx: WithSQSMessageId<AppContext>,
     ) {
       try {
         const csvData = generateCSV(records, tenantId);
@@ -30,9 +35,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
           ContentType: "text/csv",
         };
         await s3Client.send(new PutObjectCommand(params));
-        genericLogger.info(
-          `File uploaded successfully with path: ${s3KeyPath}`,
-        );
+        logger(ctx).info(`File uploaded successfully with path: ${s3KeyPath}`);
       } catch (error: unknown) {
         throw writeObjectBucketS3Error(
           `Error writing object with path: ${s3KeyPath}. Details: ${error}`,

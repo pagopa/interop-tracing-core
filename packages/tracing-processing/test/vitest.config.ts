@@ -1,15 +1,15 @@
-import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
+import { defineConfig } from "vitest/config";
+import { resolve } from "path";
 
 export default defineConfig({
-  root: '.',
+  root: ".",
   test: {
     clearMocks: true,
     globals: true,
-    setupFiles: ['dotenv/config'],
-    hookTimeout: 20000
+    setupFiles: ["dotenv/config"],
+    hookTimeout: 20000,
   },
   resolve: {
-    alias: [{ find: '~', replacement: resolve(__dirname, 'src') }],
+    alias: [{ find: "~", replacement: resolve(__dirname, "src") }],
   },
 });

@@ -23,7 +23,7 @@ import {
   ApiTracingsContent,
 } from "../model/tracing.js";
 import { BucketService } from "../services/bucketService.js";
-import storage from "../utilities/multer.js";
+import storage from "../routers/config/multer.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
 const tracingRouter =
@@ -100,7 +100,13 @@ const tracingRouter =
       })
       .get("/tracings", async (req, res) => {
         try {
-          const data = await operationsService.getTracings(req.query);
+          const data = await operationsService.getTracings(
+            {
+              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...correlationIdToHeader(req.ctx.correlationId),
+            },
+            req.query,
+          );
           const result = ApiTracingsContent.safeParse(data);
           if (!result.success) {
             logger(req.ctx).error(
@@ -127,6 +133,10 @@ const tracingRouter =
       .get("/tracings/:tracingId/errors", async (req, res) => {
         try {
           const data = await operationsService.getTracingErrors(
+            {
+              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...correlationIdToHeader(req.ctx.correlationId),
+            },
             req.params,
             req.query,
           );
@@ -154,9 +164,15 @@ const tracingRouter =
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
-      .put("/tracings/:tracingId/recover", async (req, res) => {
+      .post("/tracings/:tracingId/recover", async (req, res) => {
         try {
-          const result = await operationsService.recoverTracing(req.params);
+          const result = await operationsService.recoverTracing(
+            {
+              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...correlationIdToHeader(req.ctx.correlationId),
+            },
+            req.params,
+          );
 
           const bucketS3Key = buildS3Key(
             result.tenantId,
@@ -171,6 +187,10 @@ const tracingRouter =
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(
+                  {
+                    ...purposeIdToHeader(req.ctx.authData.purposeId),
+                    ...correlationIdToHeader(req.ctx.correlationId),
+                  },
                   {
                     tracingId: result.tracingId,
                   },
@@ -196,13 +216,53 @@ const tracingRouter =
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
-      .put("/tracings/:tracingId/replace", async (req, res) => {
+      .post("/tracings/:tracingId/replace", async (req, res) => {
         try {
           const result = await operationsService.replaceTracing(
-            req.params.tracingId,
+            {
+              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...correlationIdToHeader(req.ctx.correlationId),
+            },
+            req.params,
           );
 
-          return res.status(200).json(result).end();
+          const bucketS3Key = buildS3Key(
+            result.tenantId,
+            result.date,
+            result.tracingId,
+            result.version,
+            req.ctx.correlationId,
+          );
+
+          await bucketService
+            .writeObject(req.body.file, bucketS3Key, true)
+            .catch(async (error) => {
+              await operationsService
+                .cancelTracingStateAndVersion(
+                  {
+                    ...purposeIdToHeader(req.ctx.authData.purposeId),
+                    ...correlationIdToHeader(req.ctx.correlationId),
+                  },
+                  {
+                    tracingId: result.tracingId,
+                  },
+                  { state: result.previousState, version: result.version - 1 },
+                )
+                .catch((e) => {
+                  throw cancelTracingStateAndVersionError(
+                    `Unable to cancel tracing to previous version with tracingId: ${result.tracingId}. Details: ${e}`,
+                  );
+                });
+
+              throw error;
+            });
+
+          return res
+            .status(200)
+            .json({
+              tracingId: result.tracingId,
+            })
+            .end();
         } catch (error) {
           const errorRes = resolveApiProblem(error, logger(req.ctx));
           return res.status(errorRes.status).json(errorRes).end();

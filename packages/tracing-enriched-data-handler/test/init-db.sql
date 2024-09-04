@@ -4,7 +4,7 @@ CREATE TABLE traces.traces (
     id UUID PRIMARY KEY,
     tracing_id UUID,
     submitter_id UUID,
-    date DATE,
+    date TIMESTAMP NOT NULL,
     purpose_id UUID,
     purpose_name VARCHAR(255),
     status INTEGER,
@@ -18,5 +18,5 @@ CREATE TABLE traces.traces (
     producer_name VARCHAR(255),
     producer_origin VARCHAR(255),
     producer_external_id UUID,
-    created_at DATE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

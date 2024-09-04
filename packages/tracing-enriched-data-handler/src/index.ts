@@ -60,6 +60,7 @@ await Promise.all([
     {
       queueUrl: config.sqsReplacementUploadEndpoint,
       consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
     },
     processReplacementUploadMessage(replacementService),
   ),
@@ -68,6 +69,7 @@ await Promise.all([
     {
       queueUrl: config.sqsEnrichedUploadEndpoint,
       consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
     },
     processEnrichedStateMessage(enrichedService),
   ),

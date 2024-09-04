@@ -16,7 +16,13 @@ import {
   ReplacementService,
   replacementServiceBuilder,
 } from "../src/services/replacementService.js";
-import { DB, SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  DB,
+  SQS,
+  WithSQSMessageId,
+  initDB,
+} from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
 import { TracingFromCsv } from "../src/models/messages.js";
@@ -29,7 +35,7 @@ import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
-import { addTrace } from "./utils.js";
+import { addTraces } from "./utils.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
@@ -39,6 +45,12 @@ describe("Enriched Service", () => {
   let replacementService: ReplacementService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
+
+  const mockAppCtx: WithSQSMessageId<AppContext> = {
+    serviceName: config.applicationName,
+    messageId: "12345",
+    correlationId: mockTracingFromCsv.correlationId,
+  };
 
   const s3client = new S3Client({
     region: config.awsRegion,
@@ -66,6 +78,7 @@ describe("Enriched Service", () => {
     dbService = dbServiceBuilder(dbInstance);
     bucketService = bucketServiceBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
+    replacementService = replacementServiceBuilder(dbService, producerService);
 
     enrichedService = enrichedServiceBuilder(
       dbService,
@@ -89,17 +102,20 @@ describe("Enriched Service", () => {
         .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
       expect(readObjectSpy).toHaveBeenCalledWith(expect.any(String));
 
       expect(tracesInserted).toHaveLength(mockEnrichedPuposes.length);
 
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-        tracingId: mockTracingFromCsv.tracingId,
-        version: mockTracingFromCsv.version,
-        state: tracingState.completed,
-      });
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
 
     it("should throw an error if tracing message is not valid", async () => {
@@ -114,6 +130,7 @@ describe("Enriched Service", () => {
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
+          mockAppCtx,
         );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
@@ -133,7 +150,10 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -154,7 +174,10 @@ describe("Enriched Service", () => {
       );
 
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -178,19 +201,23 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        });
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+          {
+            tracingId: mockTracingFromCsv.tracingId,
+            version: mockTracingFromCsv.version,
+            state: tracingState.completed,
+          },
+          mockAppCtx,
+        );
     });
   });
   describe("deleteTrace", () => {
     it("should delete a tracing and send update successfully", async () => {
-      await addTrace(
+      await addTraces(
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
         dbInstance,
@@ -200,13 +227,16 @@ describe("Enriched Service", () => {
         .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
 
-      await replacementService.deleteTraces(mockTracingFromCsv);
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-        tracingId: mockTracingFromCsv.tracingId,
-        version: mockTracingFromCsv.version,
-        state: tracingState.completed,
-        isReplacing: true,
-      });
+      await replacementService.deleteTraces(mockTracingFromCsv, mockAppCtx);
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+          useReplacementBucket: true,
+        },
+        mockAppCtx,
+      );
     });
 
     it("should throw an error if deletion fails", async () => {
@@ -215,10 +245,13 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
       try {
-        await replacementService.deleteTraces({
-          ...mockTracingFromCsv,
-          tracingId: generateId(),
-        });
+        await replacementService.deleteTraces(
+          {
+            ...mockTracingFromCsv,
+            tracingId: generateId(),
+          },
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
@@ -237,6 +270,7 @@ describe("Enriched Service", () => {
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
+          mockAppCtx,
         );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
@@ -256,7 +290,10 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -278,7 +315,10 @@ describe("Enriched Service", () => {
       );
 
       try {
-        await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+        await enrichedService.insertEnrichedTrace(
+          mockTracingFromCsv,
+          mockAppCtx,
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).toHaveBeenCalled();
@@ -302,14 +342,18 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
 
-      await enrichedService.insertEnrichedTrace(mockTracingFromCsv);
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
       mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith({
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        });
+        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+          {
+            tracingId: mockTracingFromCsv.tracingId,
+            version: mockTracingFromCsv.version,
+            state: tracingState.completed,
+          },
+          mockAppCtx,
+        );
     });
   });
 });

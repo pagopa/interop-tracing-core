@@ -34,6 +34,12 @@ export type ApiRecoverTracingParams = ZodiosPathParamsByPath<
   "/tracings/:tracingId/recover"
 >;
 
+export type ApiRecoverTracingHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/recover"
+>;
+
 export type ApiRecoverTracingPayload = ZodiosBodyByPath<
   Api,
   "post",
@@ -46,6 +52,11 @@ export type ApiRecoverTracingResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/recover"
 >;
 
+export type ApiReplaceTracingParams = ZodiosPathParamsByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/replace"
+>;
 export type ApiReplaceTracingPayload = ZodiosBodyByPath<
   Api,
   "post",
@@ -53,6 +64,12 @@ export type ApiReplaceTracingPayload = ZodiosBodyByPath<
 >;
 
 export type ApiReplaceTracingResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/replace"
+>;
+
+export type ApiReplaceTracingHeaders = ZodiosHeaderParamsByPath<
   Api,
   "post",
   "/tracings/:tracingId/replace"
@@ -82,19 +99,25 @@ export type ApiUpdateTracingStateResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/versions/:version/state"
 >;
 
-export type ApicancelTracingStateAndVersionParams = ZodiosPathParamsByPath<
+export type ApiCancelTracingStateAndVersionParams = ZodiosPathParamsByPath<
   Api,
   "post",
   "/tracings/:tracingId/cancel"
 >;
 
-export type ApicancelTracingStateAndVersionPayload = ZodiosBodyByPath<
+export type ApiCancelTracingStateAndVersionHeaders = ZodiosHeaderParamsByPath<
   Api,
   "post",
   "/tracings/:tracingId/cancel"
 >;
 
-export type ApicancelTracingStateAndVersionResponse = ZodiosResponseByPath<
+export type ApiCancelTracingStateAndVersionPayload = ZodiosBodyByPath<
+  Api,
+  "post",
+  "/tracings/:tracingId/cancel"
+>;
+
+export type ApiCancelTracingStateAndVersionResponse = ZodiosResponseByPath<
   Api,
   "post",
   "/tracings/:tracingId/cancel"
@@ -160,6 +183,12 @@ export type ApiGetTracingsQuery = ZodiosQueryParamsByPath<
   "/tracings"
 >;
 
+export type ApiGetTracingsHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "get",
+  "/tracings"
+>;
+
 export type ApiGetTracingErrorsQuery = ZodiosQueryParamsByPath<
   Api,
   "get",
@@ -177,6 +206,13 @@ export type ApiGetTracingErrorsParams = ZodiosPathParamsByPath<
   "get",
   "/tracings/:tracingId/errors"
 >;
+
+export type ApiGetTracingErrorsHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "get",
+  "/tracings/:tracingId/errors"
+>;
+
 export type ApiTriggerS3CopyParams = ZodiosPathParamsByPath<
   Api,
   "post",
@@ -188,11 +224,13 @@ export type ApiTriggerS3CopyResponse = ZodiosResponseByPath<
   "post",
   "/tracings/:tracingId/triggerCopy"
 >;
+
 export type ApiTriggerS3CopyPayload = ZodiosBodyByPath<
   Api,
   "post",
   "/tracings/:tracingId/triggerCopy"
 >;
+
 export type ApiTriggerS3CopyHeaders = ZodiosHeaderParamsByPath<
   Api,
   "post",

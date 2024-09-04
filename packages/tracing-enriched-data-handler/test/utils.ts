@@ -2,7 +2,7 @@ import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../src/models/messages.js";
 import { generateId } from "pagopa-interop-tracing-models";
 
-export async function addTrace(
+export async function addTraces(
   tracingId: string,
   records: TracingEnriched[],
   db: DB,
