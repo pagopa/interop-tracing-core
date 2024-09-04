@@ -233,7 +233,7 @@ describe("Enriched Service", () => {
           tracingId: mockTracingFromCsv.tracingId,
           version: mockTracingFromCsv.version,
           state: tracingState.completed,
-          isReplacing: true,
+          useReplacementBucket: true,
         },
         mockAppCtx,
       );

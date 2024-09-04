@@ -132,7 +132,7 @@ describe("Consumer state updater queue test", () => {
     }
   });
 
-  it("when message has isReplacing: true, triggerS3Copy should be called", async () => {
+  it("when message has useReplacementBucket: true, triggerS3Copy should be called", async () => {
     const validMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",

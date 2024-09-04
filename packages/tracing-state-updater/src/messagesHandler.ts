@@ -30,7 +30,7 @@ export function processTracingStateMessage(
       const updateTracingStateMessage =
         decodeSQSUpdateTracingStateMessage(message);
 
-      if (updateTracingStateMessage.isReplacing) {
+      if (updateTracingStateMessage.useReplacementBucket) {
         await service.triggerS3Copy(updateTracingStateMessage.tracingId, ctx);
       } else {
         await service.updateTracingState(
