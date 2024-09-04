@@ -22,7 +22,7 @@ export const replacementServiceBuilder = (
             tracingId: tracing.tracingId,
             version: tracing.version,
             state: tracingState.completed,
-            isReplacing: true,
+            useReplacementBucket: true,
           },
           ctx,
         );

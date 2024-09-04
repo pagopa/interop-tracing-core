@@ -323,7 +323,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  
+
   /tracings:
     get:
       summary: Get all tracings of a tenant
@@ -377,7 +377,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  
+
   /tracings/{tracingId}/errors:
     get:
       summary: Get errors details by tracingId
@@ -442,7 +442,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  
+
   /tracings/{tracingId}/triggerCopy:
     post:
       summary: Trigger a copy of the csv by tracingId
@@ -481,7 +481,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  
+
   /tenants/tracings/missing:
     get:
       summary: Get all tenants with missing tracings by date
