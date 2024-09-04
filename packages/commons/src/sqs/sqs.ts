@@ -8,10 +8,9 @@ import {
   SQSClientConfig,
   SendMessageCommandInput,
 } from "@aws-sdk/client-sqs";
-import { genericLogger } from "../logging/index.js";
+import { genericLogger, logger } from "../logging/index.js";
 import { ConsumerConfig } from "../config/consumerConfig.js";
 import { InternalError } from "pagopa-interop-tracing-models";
-import { logger } from "../logging/index.js";
 
 const serializeError = (error: unknown): string => {
   try {
