@@ -230,11 +230,21 @@ export function tracingNotFound(tracingId: string): ApiError<CommonErrorCodes> {
   });
 }
 
-export function tracingCannotBeUpdated(
+export function tracingRecoverCannotBeUpdated(
   tracingId: string,
 ): ApiError<CommonErrorCodes> {
   return new ApiError({
     detail: `Tracing with Id ${tracingId} cannot be updated. The state of tracing must be either ERROR or MISSING.`,
+    code: "tracingCannotBeUpdated",
+    title: "Tracing cannot be updated",
+  });
+}
+
+export function tracingReplaceCannotBeUpdated(
+  tracingId: string,
+): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Tracing with Id ${tracingId} cannot be updated. The state of tracing must be COMPLETED.`,
     code: "tracingCannotBeUpdated",
     title: "Tracing cannot be updated",
   });

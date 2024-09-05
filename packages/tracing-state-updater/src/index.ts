@@ -19,20 +19,23 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
 });
 
-await SQS.runConsumer(
-  sqsClient,
-  {
-    queueUrl: config.sqsEndpointProcessingErrorQueue,
-    consumerPollingTimeout: config.consumerPollingTimeout,
-  },
-  processPurposeErrorMessage(OperationsService),
-);
-
-await SQS.runConsumer(
-  sqsClient,
-  {
-    queueUrl: config.sqsEndpointEnricherStateQueue,
-    consumerPollingTimeout: config.consumerPollingTimeout,
-  },
-  processTracingStateMessage(OperationsService),
-);
+await Promise.all([
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsEndpointProcessingErrorQueue,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
+    },
+    processPurposeErrorMessage(OperationsService),
+  ),
+  SQS.runConsumer(
+    sqsClient,
+    {
+      queueUrl: config.sqsEndpointEnricherStateQueue,
+      consumerPollingTimeout: config.consumerPollingTimeout,
+      serviceName: config.applicationName,
+    },
+    processTracingStateMessage(OperationsService),
+  ),
+]);

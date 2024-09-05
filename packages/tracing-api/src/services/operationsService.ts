@@ -13,10 +13,16 @@ import {
   ApiUpdateTracingStateParams,
   ApiSubmitTracingHeaders,
   ApiUpdateTracingStateHeaders,
-  ApicancelTracingStateAndVersionPayload,
-  ApicancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionPayload,
+  ApiCancelTracingStateAndVersionParams,
+  ApiCancelTracingStateAndVersionHeaders,
   ApiRecoverTracingParams,
   ApiGetTracingErrorsParams,
+  ApiGetTracingsHeaders,
+  ApiRecoverTracingHeaders,
+  ApiReplaceTracingHeaders,
+  ApiReplaceTracingParams,
+  ApiGetTracingErrorsHeaders,
 } from "pagopa-interop-tracing-operations-client";
 
 export const operationsServiceBuilder = (
@@ -53,8 +59,9 @@ export const operationsServiceBuilder = (
   },
 
   async cancelTracingStateAndVersion(
-    params: ApicancelTracingStateAndVersionParams,
-    payload: ApicancelTracingStateAndVersionPayload,
+    headers: ApiCancelTracingStateAndVersionHeaders,
+    params: ApiCancelTracingStateAndVersionParams,
+    payload: ApiCancelTracingStateAndVersionPayload,
   ): Promise<void> {
     await operationsApiClient.cancelTracingStateAndVersion(
       {
@@ -62,40 +69,51 @@ export const operationsServiceBuilder = (
         version: payload.version,
       },
       {
+        headers,
         params: { tracingId: params.tracingId },
       },
     );
   },
 
   async getTracings(
+    headers: ApiGetTracingsHeaders,
     filters: ApiGetTracingsQuery,
   ): Promise<ApiGetTracingsResponse> {
     return await operationsApiClient.getTracings({
       queries: filters,
+      headers,
     });
   },
 
   async getTracingErrors(
+    headers: ApiGetTracingErrorsHeaders,
     params: ApiGetTracingErrorsParams,
     filters: ApiGetTracingErrorsQuery,
   ): Promise<ApiGetTracingErrorsResponse> {
     return await operationsApiClient.getTracingErrors({
       queries: filters,
       params: { tracingId: params.tracingId },
+      headers,
     });
   },
 
   async recoverTracing(
+    headers: ApiRecoverTracingHeaders,
     params: ApiRecoverTracingParams,
   ): Promise<ApiRecoverTracingResponse> {
     return await operationsApiClient.recoverTracing(undefined, {
       params: { tracingId: params.tracingId },
+      headers,
     });
   },
 
-  async replaceTracing(tracingId: string): Promise<ApiReplaceTracingResponse> {
+  async replaceTracing(
+    headers: ApiReplaceTracingHeaders,
+    params: ApiReplaceTracingParams,
+  ): Promise<ApiReplaceTracingResponse> {
     return await operationsApiClient.replaceTracing(undefined, {
-      params: { tracingId },
+      params: { tracingId: params.tracingId },
+      headers,
     });
   },
 });
