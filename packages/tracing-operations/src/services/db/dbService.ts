@@ -302,8 +302,7 @@ export function dbServiceBuilder(db: DB) {
           DELETE FROM tracing.purposes_errors pe
           USING tracing.tracings t
           WHERE pe.tracing_id = t.id
-          AND ((t.state = 'COMPLETED') 
-            OR (t.state = 'ERROR' AND pe.version < t.version));`;
+          AND pe.version < t.version;`;
 
         await db.none(deletePurposesErrorsQuery);
       } catch (error) {
