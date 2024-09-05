@@ -439,7 +439,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-
   /tracings/{tracingId}/triggerCopy:
     post:
       summary: Trigger a copy of the csv by tracingId

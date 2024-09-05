@@ -60,7 +60,7 @@ export const sqsMessages = {
       tracingId: uuidv4(),
       state: tracingState.completed,
       version: 1,
-      isReplacing: true,
+      useReplacementBucket: true,
     },
     empty: {},
   },
