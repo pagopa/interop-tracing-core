@@ -1214,7 +1214,7 @@ describe("database test", () => {
           tenant_id: tenantId,
           state: tracingState.completed,
           date: "2024-08-01",
-          version: 1,
+          version: 2,
           errors: false,
         };
 
@@ -1241,6 +1241,7 @@ describe("database test", () => {
         await operationsService.deletePurposesErrors(genericLogger);
 
         const purposesErrors = await findPurposeErrors(dbInstance);
+        console.log("purposesErrors", purposesErrors);
 
         expect(purposesErrors.length).toBe(0);
       });
