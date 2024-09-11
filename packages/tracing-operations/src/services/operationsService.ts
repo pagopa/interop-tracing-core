@@ -5,7 +5,6 @@ import {
   ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
   ApiUpdateTracingStateResponse,
-  ApiMissingResponse,
   ApiGetTracingErrorsResponse,
   ApiSavePurposeErrorPayload,
   ApiSavePurposeErrorParams,
@@ -20,8 +19,14 @@ import {
   ApiCancelTracingStateAndVersionResponse,
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
+  ApiGetTenantsWithMissingTracingsResponse,
+  ApiGetTenantsWithMissingTracingsQuery,
+  ApiSaveMissingTracingParams,
+  ApiSaveMissingTracingPayload,
+  ApiSaveMissingTracingResponse,
+  ApiDeletePurposesErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
-import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
+import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
@@ -192,12 +197,45 @@ export function operationsServiceBuilder(dbService: DBService) {
       });
     },
 
-    async deletePurposeErrors(): Promise<void> {},
+    async deletePurposesErrors(
+      logger: Logger,
+    ): Promise<ApiDeletePurposesErrorsResponse> {
+      logger.info(`Delete purposes errors with old version`);
 
-    async saveMissingTracing(): Promise<ApiMissingResponse> {
-      genericLogger.info(`Saving missing tracing`);
-      await dbService.saveMissingTracing();
-      return Promise.resolve();
+      await dbService.deletePurposesErrors();
+    },
+
+    async saveMissingTracing(
+      params: ApiSaveMissingTracingParams,
+      payload: ApiSaveMissingTracingPayload,
+      logger: Logger,
+    ): Promise<ApiSaveMissingTracingResponse> {
+      logger.info(
+        `Saving missing tracing for tenantId: ${params.tenantId}, date: ${payload.date}`,
+      );
+
+      await dbService.saveMissingTracing({
+        id: generateId(),
+        tenant_id: params.tenantId,
+        date: payload.date,
+        version: 1,
+        state: tracingState.missing,
+        errors: false,
+      });
+    },
+
+    async getTenantsWithMissingTracings(
+      filters: ApiGetTenantsWithMissingTracingsQuery,
+      logger: Logger,
+    ): Promise<ApiGetTenantsWithMissingTracingsResponse> {
+      logger.info(`Get tenants with missing tracings for date ${filters.date}`);
+
+      const data = await dbService.getTenantsWithMissingTracings(filters);
+
+      return {
+        results: data.results,
+        totalCount: data.totalCount,
+      };
     },
 
     async getTracings(

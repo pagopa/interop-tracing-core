@@ -42,6 +42,7 @@ import {
   addTracing,
   clearPurposesErrors,
   clearTracings,
+  findPurposeErrors,
   findTracingById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
@@ -52,6 +53,8 @@ import {
   ApiSavePurposeErrorPayload,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
+  ApiSaveMissingTracingPayload,
+  ApiGetTenantsWithMissingTracingsQuery,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
@@ -62,6 +65,7 @@ describe("database test", () => {
   let dbService: DBService;
 
   const tenantId: TenantId = generateId<TenantId>();
+  const secondTenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
   const todayTruncated = ISODateFormat.parse(new Date().toISOString());
@@ -103,6 +107,17 @@ describe("database test", () => {
         id: tenantId,
         name: "pagoPa",
         origin: "external",
+        externalId: generateId(),
+        deleted: false,
+      },
+      dbInstance,
+    );
+
+    await addTenant(
+      {
+        id: secondTenantId,
+        name: "pagoPa 2",
+        origin: "external 2",
         externalId: generateId(),
         deleted: false,
       },
@@ -954,6 +969,218 @@ describe("database test", () => {
             genericLogger,
           ),
         ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
+      });
+    });
+
+    describe("getTenantsWithMissingTracings", () => {
+      it("searching with 'date' parameter '2024-08-01' should return an empty list of tenants, since tracing already exists", async () => {
+        const date: string = "2024-08-01";
+        const filters: ApiGetTenantsWithMissingTracingsQuery = {
+          date,
+          offset: 0,
+          limit: 50,
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTenantsWithMissingTracings(
+          filters,
+          genericLogger,
+        );
+
+        expect(result.results).toStrictEqual([]);
+        expect(result.totalCount).toBe(0);
+      });
+
+      it("searching with 'date' parameter '2024-08-01' should return 2 tenants, since tracings doesn't exists and must be created", async () => {
+        const date: string = "2024-08-01";
+        const filters: ApiGetTenantsWithMissingTracingsQuery = {
+          date,
+          offset: 0,
+          limit: 50,
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: "2024-06-01",
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addTracing(
+          { ...tracingData, id: generateId<TracingId>(), date: "2024-07-01" },
+          dbInstance,
+        );
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+          },
+          dbInstance,
+        );
+        await addTracing(
+          {
+            ...tracingData,
+            id: generateId<TracingId>(),
+            tenant_id: secondTenantId,
+            date: "2024-07-01",
+          },
+          dbInstance,
+        );
+
+        const result = await operationsService.getTenantsWithMissingTracings(
+          filters,
+          genericLogger,
+        );
+
+        expect(result.totalCount).toBe(2);
+        expect(result.results.length).toBe(2);
+        expect(result.results).toContain(tenantId);
+        expect(result.results).toContain(secondTenantId);
+      });
+    });
+
+    describe("saveMissingTracing", () => {
+      it("should create a missing tracing successfully for date '2024-08-01'", async () => {
+        const saveMissingTracingData: ApiSaveMissingTracingPayload = {
+          date: "2024-08-01",
+        };
+
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: saveMissingTracingData.date,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        expect(
+          async () =>
+            await operationsService.saveMissingTracing(
+              { tenantId },
+              {
+                date: saveMissingTracingData.date,
+              },
+              genericLogger,
+            ),
+        ).not.toThrowError();
+
+        const tracing = await findTracingById(tracingData.id, dbInstance);
+
+        expect(new Date(tracing.date)).toContain(
+          new Date(saveMissingTracingData.date),
+        );
+      });
+    });
+
+    describe("deletePurposesErrors", () => {
+      it("should delete purposes errors with version below the related tracing version with state ERROR, and return 1 record with version 3", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: "2024-08-01",
+          version: 3,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: 1,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 2,
+          },
+          dbInstance,
+        );
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 3,
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposesErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+
+        expect(purposesErrors.length).toBe(1);
+        expect(purposesErrors[0].version).toBe(tracingData.version);
+      });
+
+      it("should delete purposes errors with related tracing in state COMPLETED, and return 0 records", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.completed,
+          date: "2024-08-01",
+          version: 2,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: 1,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposesErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+        console.log("purposesErrors", purposesErrors);
+
+        expect(purposesErrors.length).toBe(0);
       });
     });
   });

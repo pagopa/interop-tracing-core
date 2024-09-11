@@ -10,6 +10,7 @@
     "start:tracing-state-updater": "turbo start --filter pagopa-interop-tracing-state-updater",
     "start:tracing-processing": "turbo start --filter pagopa-interop-tracing-processing",
     "start:tracing-enriched-data-handler": "turbo start --filter pagopa-interop-tracing-enriched-data-handler",
+    "start:tracing-clean-up": "turbo start --filter pagopa-interop-tracing-clean-up",
     "test": "turbo test",
     "test:it": "turbo test:it",
     "build": "turbo build",
@@ -19,7 +20,8 @@
     "format:write": "turbo format:write",
     "generate-model": "turbo generate-model",
     "generate-client": "turbo generate-client",
-    "clean-generated": "turbo clean-generated"
+    "clean-generated": "turbo clean-generated",
+    "check": "turbo check"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "20.1.3",

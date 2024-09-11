@@ -4,17 +4,17 @@ info:
   description: API for tracing operations
   version: 1.0.0
 tags:
-  - name: Write
-    description: Operations related to writing data
-  - name: Read
-    description: Operations related to reading data
+  - name: Tracings
+    description: Operations related to tracings
+  - name: Tenants
+    description: Operations related to tenants
 paths:
   /tracings/submit:
     post:
       summary: Submit tracing request
       operationId: submitTracing
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -64,7 +64,7 @@ paths:
       summary: Update data of existing tracing with state error by tracingId
       operationId: recoverTracing
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -112,7 +112,7 @@ paths:
       summary: Replace tracing with complete state by tracingId
       operationId: replaceTracing
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -160,7 +160,7 @@ paths:
       summary: Update tracing state by tracingId
       operationId: updateTracingState
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -210,7 +210,7 @@ paths:
       summary: Cancel previous tracing state and version   by tracingId
       operationId: cancelTracingStateAndVersion
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -260,7 +260,7 @@ paths:
       summary: Save purpose error
       operationId: savePurposeError
       tags:
-        - Write
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -298,22 +298,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+
+  /tracings/errors:
     delete:
       summary: Delete purposes error
-      operationId: deleteErrors
+      operationId: deletePurposesErrors
       tags:
-        - Write
+        - Tracings
       parameters:
-        - in: path
-          name: tracingId
+        - in: header
+          name: x-correlation-id
           required: true
           schema:
-            type: string
-        - in: path
-          name: version
-          required: true
-          schema:
-            type: string
+            $ref: "#/components/schemas/CorrelationId"
       responses:
         "204":
           description: No content
@@ -329,7 +326,7 @@ paths:
       summary: Get all tracings of a tenant
       operationId: getTracings
       tags:
-        - Read
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -378,52 +375,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
 
-  /tenants/{tenantId}/missing:
-    post:
-      summary: Save missing tracing
-      operationId: saveMissingTracing
-      parameters:
-        - in: path
-          name: tenantId
-          required: true
-          schema:
-            type: string
-      tags:
-        - Write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SaveMissingTracingRequest"
-      responses:
-        "204":
-          description: No content
-        "400":
-          description: The provided input data is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "404":
-          description: The requested resource could not be found on the server
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "500":
-          description: A managed error has occurred during the request elaboration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-
   /tracings/{tracingId}/errors:
     get:
       summary: Get errors details by tracingId
       operationId: getTracingErrors
       tags:
-        - Read
+        - Tracings
       parameters:
         - in: header
           name: x-correlation-id
@@ -482,6 +439,99 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+
+  /tenants/tracings/missing:
+    get:
+      summary: Get all tenants with missing tracings by date
+      operationId: getTenantsWithMissingTracings
+      tags:
+        - Tenants
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 10000
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTenantsWithMissingTracings"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tenants/{tenantId}/tracings/missing:
+    post:
+      summary: Save missing tracing
+      operationId: saveMissingTracing
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveMissingTracingRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
 components:
   schemas:
     CorrelationId:
@@ -550,6 +600,19 @@ components:
           format: date
       required:
         - date
+    GetTenantsWithMissingTracings:
+      type: object
+      required:
+        - results
+        - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            type: string
+        totalCount:
+          type: integer
+          format: int64
     GetTracingErrorsResponse:
       type: object
       required:
