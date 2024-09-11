@@ -68,6 +68,7 @@ export const enrichedServiceBuilder = (
     },
   };
 };
+
 export function createS3Path(message: TracingFromCsv) {
   return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
 }

@@ -147,6 +147,12 @@ export type ApiDeletePurposesErrorsHeaders = ZodiosHeaderParamsByPath<
   "/tracings/errors"
 >;
 
+export type ApiDeleteErrorsPayload = ZodiosBodyByPath<
+  Api,
+  "delete",
+  "/tracings/errors"
+>;
+
 export type ApiDeletePurposesErrorsResponse = ZodiosResponseByPath<
   Api,
   "delete",
@@ -199,30 +205,6 @@ export type ApiGetTracingErrorsHeaders = ZodiosHeaderParamsByPath<
   Api,
   "get",
   "/tracings/:tracingId/errors"
->;
-
-export type ApiTriggerS3CopyParams = ZodiosPathParamsByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/triggerCopy"
->;
-
-export type ApiTriggerS3CopyResponse = ZodiosResponseByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/triggerCopy"
->;
-
-export type ApiTriggerS3CopyPayload = ZodiosBodyByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/triggerCopy"
->;
-
-export type ApiTriggerS3CopyHeaders = ZodiosHeaderParamsByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/triggerCopy"
 >;
 
 export type ApiGetTenantsWithMissingTracingsHeaders = ZodiosHeaderParamsByPath<

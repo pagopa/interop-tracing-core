@@ -27,17 +27,10 @@ export function processTracingStateMessage(
         messageId: message.MessageId,
       };
 
-      const updateTracingStateMessage =
-        decodeSQSUpdateTracingStateMessage(message);
-
-      if (updateTracingStateMessage.useReplacementBucket) {
-        await service.triggerS3Copy(updateTracingStateMessage.tracingId, ctx);
-      } else {
-        await service.updateTracingState(
-          decodeSQSUpdateTracingStateMessage(message),
-          ctx,
-        );
-      }
+      await service.updateTracingState(
+        decodeSQSUpdateTracingStateMessage(message),
+        ctx,
+      );
     } catch (error: unknown) {
       throw errorMapper(
         error,
