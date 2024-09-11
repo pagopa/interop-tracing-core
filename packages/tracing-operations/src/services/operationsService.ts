@@ -12,8 +12,6 @@ import {
   ApiUpdateTracingStateParams,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
-  ApiTriggerS3CopyParams,
-  ApiTriggerS3CopyHeaders,
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
   ApiRecoverTracingParams,
@@ -23,11 +21,7 @@ import {
   ApiSubmitTracingPayload,
   ApiReplaceTracingParams,
 } from "pagopa-interop-tracing-operations-client";
-import {
-  ISODateFormat,
-  Logger,
-  genericLogger,
-} from "pagopa-interop-tracing-commons";
+import { Logger, genericLogger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
@@ -42,13 +36,9 @@ import {
   TracingErrorsContentResponse,
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
-import { BucketService } from "./bucketService.js";
 import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
-export function operationsServiceBuilder(
-  dbService: DBService,
-  bucketService: BucketService,
-) {
+export function operationsServiceBuilder(dbService: DBService) {
   return {
     async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
       return await dbService.getTenantByPurposeId(purposeId);
@@ -202,29 +192,6 @@ export function operationsServiceBuilder(
       });
     },
 
-    async triggerS3Copy(
-      headers: ApiTriggerS3CopyHeaders,
-      params: ApiTriggerS3CopyParams,
-      logger: Logger,
-    ): Promise<void> {
-      logger.info(`Trigger S3 copy for tracingId: ${params.tracingId}`);
-
-      const tracing = await dbService.findTracingById(params.tracingId);
-      if (!tracing) {
-        throw tracingNotFound(params.tracingId);
-      }
-
-      const bucketS3Key = buildS3Key(
-        tracing.tenant_id,
-        tracing.date,
-        tracing.id,
-        tracing.version,
-        headers["x-correlation-id"],
-      );
-
-      return await bucketService.copyObject(bucketS3Key, logger);
-    },
-
     async deletePurposeErrors(): Promise<void> {},
 
     async saveMissingTracing(): Promise<ApiMissingResponse> {
@@ -288,16 +255,5 @@ export function operationsServiceBuilder(
     },
   };
 }
-
-const buildS3Key = (
-  tenantId: string,
-  date: string,
-  tracingId: string,
-  version: number,
-  correlationId: string,
-): string =>
-  `tenantId=${tenantId}/date=${ISODateFormat.parse(
-    date,
-  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export type OperationsService = ReturnType<typeof operationsServiceBuilder>;
