@@ -20,7 +20,8 @@
     "format:write": "turbo format:write",
     "generate-model": "turbo generate-model",
     "generate-client": "turbo generate-client",
-    "clean-generated": "turbo clean-generated"
+    "clean-generated": "turbo clean-generated",
+    "check": "turbo check"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "20.1.3",
