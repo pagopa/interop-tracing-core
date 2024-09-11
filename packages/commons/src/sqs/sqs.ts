@@ -8,9 +8,9 @@ import {
   SQSClientConfig,
   SendMessageCommandInput,
 } from "@aws-sdk/client-sqs";
-import { genericLogger } from "../logging/index.js";
+import { genericLogger, logger } from "../logging/index.js";
 import { ConsumerConfig } from "../config/consumerConfig.js";
-import { logger } from "../logging/index.js";
+import { InternalError } from "pagopa-interop-tracing-models";
 
 const serializeError = (error: unknown): string => {
   try {
@@ -62,8 +62,16 @@ const processQueue = async (
           );
         }
 
-        await consumerHandler(message);
-        await deleteMessage(sqsClient, config.queueUrl, message.ReceiptHandle);
+        try {
+          await consumerHandler(message);
+          await deleteMessage(
+            sqsClient,
+            config.queueUrl,
+            message.ReceiptHandle,
+          );
+        } catch (e) {
+          if (!(e instanceof InternalError)) throw e;
+        }
       }
     }
   } while (keepProcessingQueue);
