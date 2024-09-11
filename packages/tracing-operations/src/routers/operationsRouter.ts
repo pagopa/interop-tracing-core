@@ -155,6 +155,23 @@ const operationsRouter = (
     },
   );
 
+  operationsRouter.post(
+    "/tenants/:tenantId/tracings/missing",
+    async (req, res) => {
+      try {
+        await operationsService.saveMissingTracing(
+          req.params,
+          req.body,
+          logger(req.ctx),
+        );
+        return res.status(204).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
+
   operationsRouter.get("/tenants/tracings/missing", async (req, res) => {
     try {
       const tenants = await operationsService.getTenantsWithMissingTracings(
@@ -171,18 +188,15 @@ const operationsRouter = (
     }
   });
 
-  operationsRouter.delete(
-    "/tracings/:tracingId/versions/:version/errors",
-    async (req, res) => {
-      try {
-        await operationsService.deletePurposeErrors();
-        return res.status(204).end();
-      } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
-        return res.status(errorRes.status).json(errorRes).end();
-      }
-    },
-  );
+  operationsRouter.delete("/tracings/errors", async (req, res) => {
+    try {
+      await operationsService.deletePurposesErrors(logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
 
   operationsRouter.get(
     "/tracings",

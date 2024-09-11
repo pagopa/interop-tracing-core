@@ -20,6 +20,16 @@
         "dist"
       ]
     },
+    "check": {
+      "dependsOn": [
+        "generate-client",
+        "generate-model",
+        "^build"
+      ],
+      "outputs": [
+        "dist"
+      ]
+    },
     "generate-model": {
       "dependsOn": [
         "^generate-model"

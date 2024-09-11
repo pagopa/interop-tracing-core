@@ -29,14 +29,17 @@ export async function addTenant(tenantValues: Tenant, db: DB) {
 export async function addPurposeError(
   purposeErrorValues: PurposeError,
   db: DB,
-) {
+): Promise<{ id: string }> {
   const insertPurposeErrorQuery = `
       INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `;
 
-  await db.one(insertPurposeErrorQuery, Object.values(purposeErrorValues));
+  return await db.one(
+    insertPurposeErrorQuery,
+    Object.values(purposeErrorValues),
+  );
 }
 
 export async function addTracing(
@@ -73,17 +76,13 @@ export async function findTracingById(id: string, db: DB): Promise<Tracing> {
   return await db.one(selectTracingQuery, [id]);
 }
 
-export async function findPurposeErrorById(
-  id: string,
-  db: DB,
-): Promise<PurposeError> {
+export async function findPurposeErrors(db: DB): Promise<PurposeError[]> {
   const selectPurposeErrorQuery = `
       SELECT * 
       FROM tracing.purposes_errors
-      WHERE id = $1
     `;
 
-  return await db.one(selectPurposeErrorQuery, [id]);
+  return await db.any<PurposeError>(selectPurposeErrorQuery);
 }
 
 export async function addEservice(

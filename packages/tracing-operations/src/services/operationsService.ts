@@ -24,6 +24,7 @@ import {
   ApiSaveMissingTracingParams,
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
+  ApiDeletePurposesErrorsResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -196,7 +197,13 @@ export function operationsServiceBuilder(dbService: DBService) {
       });
     },
 
-    async deletePurposeErrors(): Promise<void> {},
+    async deletePurposesErrors(
+      logger: Logger,
+    ): Promise<ApiDeletePurposesErrorsResponse> {
+      logger.info(`Delete purposes errors with old version`);
+
+      await dbService.deletePurposesErrors();
+    },
 
     async saveMissingTracing(
       params: ApiSaveMissingTracingParams,

@@ -5,9 +5,9 @@ info:
   version: 1.0.0
 tags:
   - name: Tracings
-    description: Operations related to writing data
+    description: Operations related to tracings
   - name: Tenants
-    description: Operations related to tenants data
+    description: Operations related to tenants
 paths:
   /tracings/submit:
     post:
@@ -298,22 +298,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+
+  /tracings/errors:
     delete:
       summary: Delete purposes error
-      operationId: deleteErrors
+      operationId: deletePurposesErrors
       tags:
         - Tracings
       parameters:
-        - in: path
-          name: tracingId
+        - in: header
+          name: x-correlation-id
           required: true
           schema:
-            type: string
-        - in: path
-          name: version
-          required: true
-          schema:
-            type: string
+            $ref: "#/components/schemas/CorrelationId"
       responses:
         "204":
           description: No content
