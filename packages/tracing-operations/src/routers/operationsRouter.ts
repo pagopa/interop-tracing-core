@@ -138,10 +138,33 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.post("/tenants/:tenantId/missing", async (req, res) => {
+  operationsRouter.post(
+    "/tenants/:tenantId/tracings/missing",
+    async (req, res) => {
+      try {
+        await operationsService.saveMissingTracing(
+          req.params,
+          req.body,
+          logger(req.ctx),
+        );
+        return res.status(204).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
+
+  operationsRouter.get("/tenants/tracings/missing", async (req, res) => {
     try {
-      await operationsService.saveMissingTracing();
-      return res.status(204).end();
+      const tenants = await operationsService.getTenantsWithMissingTracings(
+        req.query,
+        logger(req.ctx),
+      );
+      return res
+        .status(200)
+        .json({ results: tenants.results, totalCount: tenants.totalCount })
+        .end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();

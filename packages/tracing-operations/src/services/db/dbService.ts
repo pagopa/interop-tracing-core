@@ -6,7 +6,7 @@ import {
   tracingAlreadyExists,
   tracingState,
 } from "pagopa-interop-tracing-models";
-import { DB } from "pagopa-interop-tracing-commons";
+import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
   PurposeError,
   Tracing,
@@ -14,7 +14,6 @@ import {
   UpdateTracingStateAndVersionSchema,
 } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
-import { DateUnit, truncatedTo } from "../../utilities/date.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
@@ -121,7 +120,7 @@ export function dbServiceBuilder(db: DB) {
     async submitTracing(data: Tracing): Promise<Tracing> {
       try {
         const truncatedDate: Date = truncatedTo(
-          new Date(data.date).toISOString(),
+          new Date(data.date),
           DateUnit.DAYS,
         );
 
@@ -305,13 +304,83 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async saveMissingTracing() {
+    async saveMissingTracing(data: Tracing): Promise<void> {
       try {
-        return Promise.resolve();
+        const insertTracingQuery = `
+          INSERT INTO tracing.tracings (id, tenant_id, state, date, version)
+          SELECT $1, $2, $3, $4, $5
+          WHERE NOT EXISTS (
+            SELECT 1 FROM tracing.tracings
+            WHERE tenant_id = $2 AND date >= $4 AND date < $4::date + interval '1 day'
+            )
+          RETURNING id;`;
+
+        await db.oneOrNone<Tracing>(insertTracingQuery, [
+          data.id,
+          data.tenant_id,
+          data.state,
+          truncatedTo(new Date(data.date), DateUnit.DAYS),
+          data.version,
+        ]);
       } catch (error) {
-        throw genericInternalError(
-          `Error save missing tracing error: ${error}`,
+        throw dbServiceErrorMapper("saveMissingTracing", error);
+      }
+    },
+
+    async getTenantsWithMissingTracings(filters: {
+      offset: number;
+      limit: number;
+      date: string;
+    }): Promise<{ results: string[]; totalCount: number }> {
+      try {
+        const { offset, limit = [], date } = filters;
+
+        const getTenantsTotalCountQuery = `
+          SELECT COUNT(DISTINCT t1.tenant_id)::integer AS total_count
+          FROM tracing.tracings t1
+          LEFT JOIN tracing.tracings t2 
+          ON t1.tenant_id = t2.tenant_id 
+          AND t2.date >= $1 AND t2.date < $1::date + interval '1 day'
+          WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM tracing.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 1;
+        `;
+
+        const { total_count } = await db.one<{ total_count: number }>(
+          getTenantsTotalCountQuery,
+          [date],
         );
+
+        const getTenantsQuery = `
+          SELECT DISTINCT t1.tenant_id
+          FROM tracing.tracings t1
+          LEFT JOIN tracing.tracings t2 
+          ON t1.tenant_id = t2.tenant_id 
+          AND t2.date >= $3 AND t2.date < $3::date + interval '1 day'
+          WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM tracing.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 1
+          OFFSET $1 LIMIT $2;
+        `;
+
+        const tracings = await db.any<{ tenant_id: string }>(getTenantsQuery, [
+          offset,
+          limit,
+          date,
+        ]);
+
+        return {
+          results: tracings.map((el) => el.tenant_id),
+          totalCount: total_count,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper("getTenantsWithMissingTracings", error);
       }
     },
   };

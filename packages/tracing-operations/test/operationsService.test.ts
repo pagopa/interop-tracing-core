@@ -62,6 +62,7 @@ describe("database test", () => {
   let dbService: DBService;
 
   const tenantId: TenantId = generateId<TenantId>();
+  const secondTenantId: TenantId = generateId<TenantId>();
   const purposeId: PurposeId = generateId<PurposeId>();
   const eservice_id = generateId();
   const todayTruncated = ISODateFormat.parse(new Date().toISOString());
@@ -103,6 +104,17 @@ describe("database test", () => {
         id: tenantId,
         name: "pagoPa",
         origin: "external",
+        externalId: generateId(),
+        deleted: false,
+      },
+      dbInstance,
+    );
+
+    await addTenant(
+      {
+        id: secondTenantId,
+        name: "pagoPa 2",
+        origin: "external 2",
         externalId: generateId(),
         deleted: false,
       },

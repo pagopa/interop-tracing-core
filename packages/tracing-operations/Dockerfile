@@ -10,7 +10,7 @@ COPY pnpm-workspace.yaml /app/
 COPY ./packages/tracing-operations/package.json /app/packages/tracing-operations/package.json
 COPY ./packages/commons/package.json /app/packages/commons/package.json
 COPY ./packages/models/package.json /app/packages/models/package.json
-COPY ./packages/clients/eservice-operations/package.json /app/packages/clients/eservice-operations/package.json
+COPY ./packages/clients/tracing-operations/package.json /app/packages/clients/tracing-operations/package.json
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
@@ -19,7 +19,7 @@ COPY turbo.json /app/
 COPY ./packages/tracing-operations /app/packages/tracing-operations
 COPY ./packages/commons /app/packages/commons
 COPY ./packages/models /app/packages/models
-COPY ./packages/clients/eservice-operations /app/packages/clients/eservice-operations
+COPY ./packages/clients/tracing-operations /app/packages/clients/tracing-operations
 
 RUN pnpm build
 RUN rm -rf /app/packages/tracing-operations/dist/test
