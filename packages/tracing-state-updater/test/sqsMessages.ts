@@ -56,12 +56,6 @@ export const sqsMessages = {
       state: tracingState.error,
       version: 1,
     },
-    replacing: {
-      tracingId: uuidv4(),
-      state: tracingState.completed,
-      version: 1,
-      useReplacementBucket: true,
-    },
     empty: {},
   },
 } as const;

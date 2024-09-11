@@ -52,33 +52,13 @@ import {
   ApiSavePurposeErrorPayload,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
-  ApiTriggerS3CopyHeaders,
-  ApiGetTenantsWithMissingTracingsQuery,
-  ApiSaveMissingTracingPayload,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "../src/services/bucketService.js";
-import { S3Client } from "@aws-sdk/client-s3";
-
-const buildS3Key = (
-  tenantId: string,
-  date: string,
-  tracingId: string,
-  version: number,
-  correlationId: string,
-): string =>
-  `tenantId=${tenantId}/date=${ISODateFormat.parse(
-    date,
-  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 describe("database test", () => {
   let dbInstance: DB;
   let startedPostgreSqlContainer: StartedTestContainer;
   let operationsService: OperationsService;
-  let bucketService: BucketService;
   let dbService: DBService;
 
   const tenantId: TenantId = generateId<TenantId>();
@@ -89,7 +69,6 @@ describe("database test", () => {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = ISODateFormat.parse(yesterday.toISOString());
-  const s3client: S3Client = new S3Client({ region: config.awsRegion });
 
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -116,8 +95,7 @@ describe("database test", () => {
     });
 
     dbService = dbServiceBuilder(dbInstance);
-    bucketService = bucketServiceBuilder(s3client);
-    operationsService = operationsServiceBuilder(dbService, bucketService);
+    operationsService = operationsServiceBuilder(dbService);
 
     await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
 
@@ -988,191 +966,6 @@ describe("database test", () => {
             genericLogger,
           ),
         ).rejects.toThrowError(tracingCannotBeCancelled(tracing.id));
-      });
-    });
-
-    describe("triggerS3Copy", () => {
-      it("should call trigger s3Copy", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const headers: ApiTriggerS3CopyHeaders = {
-          "x-correlation-id": generateId(),
-        };
-
-        vi.spyOn(bucketService, "copyObject").mockResolvedValueOnce();
-
-        await addTracing(tracingData, dbInstance);
-
-        await operationsService.triggerS3Copy(
-          headers,
-          { tracingId: tracingData.id },
-          genericLogger,
-        );
-
-        const bucketS3Key = buildS3Key(
-          tracingData.tenant_id,
-          tracingData.date,
-          tracingData.id,
-          tracingData.version,
-          headers["x-correlation-id"],
-        );
-
-        expect(bucketService.copyObject).toHaveBeenCalled();
-        expect(bucketService.copyObject).toHaveBeenCalledWith(
-          bucketS3Key,
-          genericLogger,
-        );
-      });
-
-      it("should throw an error when tracing is not found", async () => {
-        const tracingId = generateId();
-        expect(
-          operationsService.triggerS3Copy(
-            {
-              "x-correlation-id": generateId(),
-            },
-            {
-              tracingId,
-            },
-            genericLogger,
-          ),
-        ).rejects.toThrowError(tracingNotFound(tracingId));
-      });
-    });
-
-    describe("getTenantsWithMissingTracings", () => {
-      it("searching with 'date' parameter '2024-08-01' should return an empty list of tenants, since tracing already exists", async () => {
-        const date: string = "2024-08-01";
-        const filters: ApiGetTenantsWithMissingTracingsQuery = {
-          date,
-          offset: 0,
-          limit: 50,
-        };
-
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date,
-          version: 1,
-          errors: false,
-        };
-
-        await addTracing(tracingData, dbInstance);
-        await addTracing(
-          {
-            ...tracingData,
-            id: generateId<TracingId>(),
-            tenant_id: secondTenantId,
-          },
-          dbInstance,
-        );
-
-        const result = await operationsService.getTenantsWithMissingTracings(
-          filters,
-          genericLogger,
-        );
-
-        expect(result.results).toStrictEqual([]);
-        expect(result.totalCount).toBe(0);
-      });
-
-      it("searching with 'date' parameter '2024-08-01' should return 2 tenants, since tracings doesn't exists and must be created", async () => {
-        const date: string = "2024-08-01";
-        const filters: ApiGetTenantsWithMissingTracingsQuery = {
-          date,
-          offset: 0,
-          limit: 50,
-        };
-
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: "2024-07-01",
-          version: 1,
-          errors: false,
-        };
-
-        await addTracing(tracingData, dbInstance);
-        await addTracing(
-          {
-            ...tracingData,
-            id: generateId<TracingId>(),
-            date: "2024-07-02",
-          },
-          dbInstance,
-        );
-        await addTracing(
-          {
-            ...tracingData,
-            id: generateId<TracingId>(),
-            tenant_id: secondTenantId,
-          },
-          dbInstance,
-        );
-        await addTracing(
-          {
-            ...tracingData,
-            id: generateId<TracingId>(),
-            tenant_id: secondTenantId,
-            date: "2024-07-02",
-          },
-          dbInstance,
-        );
-
-        const result = await operationsService.getTenantsWithMissingTracings(
-          filters,
-          genericLogger,
-        );
-
-        expect(result.totalCount).toBe(2);
-        expect(result.results.length).toBe(2);
-        expect(result.results).toContain(tenantId);
-        expect(result.results).toContain(secondTenantId);
-      });
-    });
-
-    describe("saveMissingTracing", () => {
-      it("should create a missing tracing successfully for date '2024-08-01'", async () => {
-        const saveMissingTracingData: ApiSaveMissingTracingPayload = {
-          date: "2024-08-01",
-        };
-
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: saveMissingTracingData.date,
-          version: 1,
-          errors: false,
-        };
-
-        await addTracing(tracingData, dbInstance);
-
-        expect(
-          async () =>
-            await operationsService.saveMissingTracing(
-              { tenantId },
-              {
-                date: saveMissingTracingData.date,
-              },
-              genericLogger,
-            ),
-        ).not.toThrowError();
-
-        const tracing = await findTracingById(tracingData.id, dbInstance);
-
-        expect(new Date(tracing.date)).toContain(
-          new Date(saveMissingTracingData.date),
-        );
       });
     });
   });

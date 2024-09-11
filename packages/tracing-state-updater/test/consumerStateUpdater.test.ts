@@ -19,7 +19,6 @@ describe("Consumer state updater queue test", () => {
   const mockOperationsService = {
     savePurposeError: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
-    triggerS3Copy: vi.fn().mockResolvedValue(undefined),
   };
 
   const correlationIdMessageAttribute = {
@@ -130,32 +129,5 @@ describe("Consumer state updater queue test", () => {
       );
       expect(mockOperationsService.updateTracingState).not.toBeCalled();
     }
-  });
-
-  it("when message has useReplacementBucket: true, triggerS3Copy should be called", async () => {
-    const validMessage: SQS.Message = {
-      MessageId: "12345",
-      ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.updateTracingState.replacing),
-      MessageAttributes: correlationIdMessageAttribute,
-    };
-
-    const attributes = decodeSQSMessageCorrelationId(validMessage);
-    const ctx: WithSQSMessageId<AppContext> = {
-      serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
-      messageId: validMessage.MessageId,
-    };
-
-    const tracing = decodeSQSUpdateTracingStateMessage(validMessage);
-
-    expect(async () => {
-      await processTracingStateMessage(mockOperationsService)(validMessage);
-    }).not.toThrowError();
-
-    expect(mockOperationsService.triggerS3Copy).toHaveBeenCalledWith(
-      tracing.tracingId,
-      ctx,
-    );
   });
 });

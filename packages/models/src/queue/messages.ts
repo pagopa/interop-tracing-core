@@ -5,7 +5,6 @@ export const UpdateTracingStateDto = z.object({
   tracingId: z.string().uuid(),
   state: TracingState,
   version: z.coerce.number(),
-  useReplacementBucket: z.boolean().optional(),
 });
 export type UpdateTracingStateDto = z.infer<typeof UpdateTracingStateDto>;
 
