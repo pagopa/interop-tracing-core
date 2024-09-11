@@ -14,7 +14,6 @@ const apiConfig = HTTPServerConfig.and(LoggerConfig)
         API_OPERATIONS_BASEURL: z.string(),
         CORS_ORIGIN_ALLOWED: z.string(),
         S3_BUCKET_NAME: z.string(),
-        S3_BUCKET_REPLACEMENT_NAME: z.string(),
         STORAGE_PATH_NAME: z.string(),
       })
       .transform((c) => ({
@@ -22,7 +21,6 @@ const apiConfig = HTTPServerConfig.and(LoggerConfig)
         operationsBaseUrl: c.API_OPERATIONS_BASEURL,
         corsOriginAllowed: c.CORS_ORIGIN_ALLOWED,
         bucketS3Name: c.S3_BUCKET_NAME,
-        bucketS3ReplacementName: c.S3_BUCKET_REPLACEMENT_NAME,
         storagePathName: c.STORAGE_PATH_NAME,
       })),
   );

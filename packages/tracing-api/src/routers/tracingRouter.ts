@@ -235,7 +235,7 @@ const tracingRouter =
           );
 
           await bucketService
-            .writeObject(req.body.file, bucketS3Key, true)
+            .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(
