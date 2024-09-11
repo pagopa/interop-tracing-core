@@ -700,7 +700,6 @@ describe("Tracing Router", () => {
       expect(bucketService.writeObject).toHaveBeenCalledWith(
         expect.objectContaining({ originalname: originalFilename }),
         bucketS3Key,
-        true,
       );
 
       expect(operationsApiClient.replaceTracing).toHaveBeenCalledWith(
@@ -831,7 +830,6 @@ describe("Tracing Router", () => {
       expect(bucketService.writeObject).toHaveBeenCalledWith(
         expect.objectContaining({ originalname: originalFilename }),
         bucketS3Key,
-        true,
       );
 
       expect(
@@ -912,7 +910,6 @@ describe("Tracing Router", () => {
       expect(bucketService.writeObject).toHaveBeenCalledWith(
         expect.objectContaining({ originalname: originalFilename }),
         bucketS3Key,
-        true,
       );
 
       expect(

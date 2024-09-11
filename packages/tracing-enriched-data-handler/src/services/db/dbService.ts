@@ -23,6 +23,12 @@ export function dbServiceBuilder(db: DB) {
             RETURNING id;
         `;
 
+        const deleteTracesQuery = `
+          DELETE FROM traces.traces
+          WHERE tracing_id = $1
+          RETURNING id
+        `;
+
         const insertPromises = records.map((record) => {
           const values = [
             generateId(),
@@ -47,6 +53,8 @@ export function dbServiceBuilder(db: DB) {
         });
 
         return await db.tx(async (t) => {
+          await db.manyOrNone(deleteTracesQuery, [tracingId]);
+
           const results = [];
           for (const { query, values } of insertPromises) {
             const result = await t.one<{ id: string }>(query, values);
@@ -56,19 +64,6 @@ export function dbServiceBuilder(db: DB) {
         });
       } catch (error) {
         throw dbServiceErrorMapper("insertTraces", error);
-      }
-    },
-
-    async deleteTraces(tracingId: string): Promise<void> {
-      try {
-        const deleteTracesQuery = `
-          DELETE FROM traces.traces
-          WHERE tracing_id = $1
-          RETURNING id
-        `;
-        await db.manyOrNone(deleteTracesQuery, [tracingId]);
-      } catch (error) {
-        throw dbServiceErrorMapper("deleteTraces", error);
       }
     },
   };
