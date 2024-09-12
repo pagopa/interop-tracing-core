@@ -88,7 +88,7 @@ export const initConsumer = async (
   const kafka = new Kafka({
     ...kafkaConfig,
     logCreator:
-      (_logLevel) =>
+      () =>
       ({ level, log }) => {
         const { message, error } = log;
 
@@ -102,7 +102,6 @@ export const initConsumer = async (
           )
           .otherwise(() => level);
 
-        // eslint-disable-next-line sonarjs/no-nested-template-literals
         const msg = `${message}${error ? ` - ${error}` : ""}`;
 
         match(filteredLevel)
@@ -115,8 +114,6 @@ export const initConsumer = async (
           .otherwise(() => genericLogger.error(msg));
       },
   });
-
-  // -- Consumer ---
 
   const consumer = kafka.consumer({
     groupId: config.kafkaGroupId,
