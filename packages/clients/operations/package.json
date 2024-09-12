@@ -16,7 +16,7 @@
     "start": "node --watch --no-warnings --loader ts-node/esm ./src/index.ts",
     "build": "tsc",
     "check": "tsc --project tsconfig.check.json",
-    "generate-client": "mkdir -p ./src/model/generated && pnpm openapi-zod-client '../../tracing-operations/open-api/api-tracing-operations-interop-v1.yaml' -o './src/model/generated/client.ts'",
+    "generate-client": "mkdir -p ./src/model/generated && pnpm openapi-zod-client '../../operations/open-api/api-tracing-operations-interop-v1.yaml' -o './src/model/generated/client.ts'",
     "clean-generated": "pnpm exec rm ./src/model/generated/client.ts"
   },
   "keywords": [],

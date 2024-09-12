@@ -7,21 +7,24 @@ COPY package.json /app/
 COPY pnpm-lock.yaml /app/
 COPY pnpm-workspace.yaml /app/
 
-COPY ./packages/tracing-processing/package.json /app/packages/tracing-processing/package.json
+COPY ./packages/state-updater/package.json /app/packages/state-updater/package.json
 COPY ./packages/commons/package.json /app/packages/commons/package.json
 COPY ./packages/models/package.json /app/packages/models/package.json
+COPY ./packages/clients/operations/package.json /app/packages/clients/operations/package.json
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY tsconfig.json /app/
 COPY turbo.json /app/
-COPY ./packages/tracing-processing /app/packages/tracing-processing
+COPY ./packages/state-updater /app/packages/state-updater
+COPY ./packages/operations/open-api /app/packages/operations/open-api
 COPY ./packages/commons /app/packages/commons
 COPY ./packages/models /app/packages/models
+COPY ./packages/clients/operations /app/packages/clients/operations
 
 RUN pnpm build
-RUN rm -rf /app/packages/tracing-processing/dist/test
+RUN rm -rf /app/packages/state-updater/dist/test
 
-WORKDIR /app/packages/tracing-processing
+WORKDIR /app/packages/state-updater
 
 CMD [ "node", "." ]
