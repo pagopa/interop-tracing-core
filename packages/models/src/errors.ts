@@ -154,7 +154,7 @@ export function kafkaMessageProcessError(
   topic: string,
   partition: number,
   offset: string,
-  error?: unknown
+  error?: unknown,
 ): InternalError<CommonErrorCodes> {
   return new InternalError({
     code: "kafkaMessageProcessError",
