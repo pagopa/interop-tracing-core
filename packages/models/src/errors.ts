@@ -118,6 +118,7 @@ const errorCodes = {
   tracingAlreadyExists: "9006",
   tracingNotFound: "9007",
   tracingCannotBeUpdated: "9008",
+  kafkaMessageProcessError: "9009",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -146,6 +147,20 @@ export function genericInternalError(
   return new InternalError({
     code: "genericError",
     detail: details,
+  });
+}
+
+export function kafkaMessageProcessError(
+  topic: string,
+  partition: number,
+  offset: string,
+  error?: unknown
+): InternalError<CommonErrorCodes> {
+  return new InternalError({
+    code: "kafkaMessageProcessError",
+    detail: `Error while handling kafka message from topic : ${topic} - partition ${partition} - offset ${offset}. ${
+      error ? parseErrorMessage(error) : ""
+    }`,
   });
 }
 

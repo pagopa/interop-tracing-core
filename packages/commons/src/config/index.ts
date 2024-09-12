@@ -4,3 +4,4 @@ export * from "./httpServerConfig.js";
 export * from "./loggerConfig.js";
 export * from "./jwsConfig.js";
 export * from "./dbConfig.js";
+export * from "./kafka.config.js";
