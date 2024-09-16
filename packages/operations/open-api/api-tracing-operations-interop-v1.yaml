@@ -8,6 +8,8 @@ tags:
     description: Operations related to tracings
   - name: Tenants
     description: Operations related to tenants
+  - name: Eservices
+    description: Operations related to eservices
 paths:
   /tracings/submit:
     post:
@@ -531,6 +533,85 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /eservices:
+    post:
+      summary: Save eservice
+      operationId: saveEservice
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Eservices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveEserviceRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /eservices/{eserviceId}:
+    delete:
+      summary: Delete eservice
+      operationId: deleteEservice
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: eserviceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the purpose
+      tags:
+        - Eservices
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
 
 components:
   schemas:
@@ -735,6 +816,18 @@ components:
           type: number
         previousState:
           $ref: "#/components/schemas/TracingState"
+    SaveEserviceRequest:
+      type: object
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        producerId:
+          type: string
+          format: uuid
+      required:
+        - eserviceId
+        - producerId
     Problem:
       properties:
         type:
