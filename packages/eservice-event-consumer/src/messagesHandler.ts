@@ -47,13 +47,7 @@ export function processMessage(
         `Message was processed. Partition number: ${partition}. Offset: ${message.offset}`,
       );
     } catch (error: unknown) {
-      throw errorMapper(
-        error,
-        logger({
-          serviceName: config.applicationName,
-          correlationId: ctx?.correlationId,
-        }),
-      );
+      throw errorMapper(error, logger(ctx));
     }
   };
 }
