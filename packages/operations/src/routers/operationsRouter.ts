@@ -246,6 +246,26 @@ const operationsRouter = (
     },
   );
 
+  operationsRouter.post("/purposes", async (req, res) => {
+    try {
+      await operationsService.savePurpose(req.body, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/purposes/:purposeId", async (req, res) => {
+    try {
+      await operationsService.deletePurpose(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
   return operationsRouter;
 };
 
