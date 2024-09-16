@@ -297,12 +297,15 @@ export function operationsServiceBuilder(dbService: DBService) {
 
     async savePurpose(purposePayload: ApiSavePurposePayload, logger: Logger) {
       logger.info(`Saving purpose with id ${purposePayload.id}`);
+
       const purpose = PurposeSchema.safeParse(purposePayload);
-      if (purpose.error) {
+
+      if (!purpose.success) {
         throw new Error(
           `Unable to parse purpose: ${JSON.stringify(purpose.error.message)}`,
         );
       }
+
       return await dbService.savePurpose(purpose.data);
     },
 

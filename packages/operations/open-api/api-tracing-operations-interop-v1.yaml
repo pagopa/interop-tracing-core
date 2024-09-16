@@ -535,8 +535,8 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /purposes:
     post:
-      summary: Save purposes
-      operationId: savePurposes
+      summary: Save purpose
+      operationId: savePurpose
       parameters:
         - in: header
           name: x-correlation-id
@@ -574,8 +574,8 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /purposes/{purposeId}:
     delete:
-      summary: Delete purposes
-      operationId: deletePurposes
+      summary: Delete purpose
+      operationId: deletePurpose
       parameters:
         - in: header
           name: x-correlation-id
