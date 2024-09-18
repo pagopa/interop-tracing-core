@@ -17,7 +17,7 @@ export async function handleMessageV1(
   await match(event)
     .with(
       {
-        type: "EServiceAdded",
+        type: P.union("EServiceAdded", "EServiceUpdated"),
       },
       async (evt) => {
         if (!evt.data.eservice) {
@@ -28,7 +28,11 @@ export async function handleMessageV1(
 
         await operationsService.saveEservice(
           { ...correlationIdToHeader(ctx.correlationId) },
-          { eserviceId: eservice.id, producerId: eservice.producerId },
+          {
+            eserviceId: eservice.id,
+            producerId: eservice.producerId,
+            eserviceName: eservice.name,
+          },
           logger,
         );
       },
@@ -61,8 +65,9 @@ export async function handleMessageV1(
         await operationsService.saveEservice(
           { ...correlationIdToHeader(ctx.correlationId) },
           {
-            eserviceId: evt.data.eservice?.id,
+            eserviceId: evt.data.eservice.id,
             producerId: evt.data.eservice.producerId,
+            eserviceName: evt.data.eservice.name,
           },
           logger,
         );
@@ -71,7 +76,6 @@ export async function handleMessageV1(
     .with(
       {
         type: P.union(
-          "EServiceUpdated",
           "EServiceDocumentAdded",
           "EServiceDocumentDeleted",
           "EServiceDocumentUpdated",
@@ -81,7 +85,6 @@ export async function handleMessageV1(
           "EServiceWithDescriptorsDeleted",
         ),
       },
-
       async () => {
         logger.info(`Skip event (not relevant)`);
       },

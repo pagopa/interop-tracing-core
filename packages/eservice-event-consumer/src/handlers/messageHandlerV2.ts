@@ -20,14 +20,7 @@ export async function handleMessageV2(
         type: P.union(
           "EServiceAdded",
           "EServiceCloned",
-          "DraftEServiceUpdated",
-          "EServiceDraftDescriptorDeleted",
-          "EServiceDescriptorAdded",
-          "EServiceDescriptorActivated",
-          "EServiceDescriptorArchived",
-          "EServiceDescriptorPublished",
-          "EServiceDescriptorSuspended",
-          "EServiceDraftDescriptorUpdated",
+          "EServiceDescriptionUpdated",
         ),
       },
       async (evt) => {
@@ -61,7 +54,6 @@ export async function handleMessageV2(
     .with(
       {
         type: P.union(
-          "EServiceDescriptionUpdated",
           "EServiceDescriptorDocumentAdded",
           "EServiceDescriptorDocumentDeleted",
           "EServiceDescriptorDocumentUpdated",
@@ -71,6 +63,14 @@ export async function handleMessageV2(
           "EServiceDescriptorInterfaceDeleted",
           "EServiceDescriptorInterfaceUpdated",
           "EServiceDescriptorQuotasUpdated",
+          "DraftEServiceUpdated",
+          "EServiceDraftDescriptorDeleted",
+          "EServiceDescriptorAdded",
+          "EServiceDescriptorActivated",
+          "EServiceDescriptorArchived",
+          "EServiceDescriptorPublished",
+          "EServiceDescriptorSuspended",
+          "EServiceDraftDescriptorUpdated",
         ),
       },
       async () => {
