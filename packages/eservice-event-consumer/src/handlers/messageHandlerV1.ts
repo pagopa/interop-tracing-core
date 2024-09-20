@@ -31,7 +31,7 @@ export async function handleMessageV1(
           {
             eserviceId: eservice.id,
             producerId: eservice.producerId,
-            eserviceName: eservice.name,
+            name: eservice.name,
           },
           logger,
         );
@@ -67,7 +67,7 @@ export async function handleMessageV1(
           {
             eserviceId: evt.data.eservice.id,
             producerId: evt.data.eservice.producerId,
-            eserviceName: evt.data.eservice.name,
+            name: evt.data.eservice.name,
           },
           logger,
         );

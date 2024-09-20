@@ -822,15 +822,15 @@ components:
         eserviceId:
           type: string
           format: uuid
-        eserviceName:
-          type: string
         producerId:
           type: string
           format: uuid
+        name:
+          type: string
       required:
         - eserviceId
-        - eserviceName
         - producerId
+        - name
 
     Problem:
       properties:
