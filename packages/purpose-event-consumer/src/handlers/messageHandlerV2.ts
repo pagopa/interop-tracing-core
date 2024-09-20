@@ -11,7 +11,7 @@ import {
 import { P, match } from "ts-pattern";
 import { config } from "../utilities/config.js";
 import { OperationsService } from "../services/operationsService.js";
-import { kafkaInvalidVersion } from "../models/domain/errors.js";
+import { errorInvalidVersion } from "../models/domain/errors.js";
 
 export async function handleMessageV2(
   event: PurposeEventV2,
@@ -31,7 +31,9 @@ export async function handleMessageV2(
         const { purpose } = evt.data;
 
         if (hasPurposeVersionInAValidState(purpose.versions)) {
-          throw kafkaInvalidVersion();
+          throw errorInvalidVersion(
+            `Missing valid version within versions Array for purposeId ${purpose.id}`,
+          );
         }
 
         await operationsService.savePurpose(

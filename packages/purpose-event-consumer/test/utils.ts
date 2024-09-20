@@ -136,50 +136,47 @@ export const createAPurposeVersionEventV1 = (
     version: version || 1,
     timestamp: new Date(),
   };
-  return (
-    match({ type })
-      .with({ type: "PurposeVersionRejected" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purpose,
-          versionId: purpose.versions[0].id,
-        },
-      }))
-      .with({ type: "PurposeDeleted" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purposeId: purpose.id,
-        },
-      }))
-      .with({ type: "PurposeVersionDeleted" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purposeId: purpose.id,
-          versionId: purpose.versions[0].id,
-        },
-      }))
-      .with({ type: "PurposeVersionUpdated" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purposeId: purpose.id,
-          version: purpose.versions[0],
-        },
-      }))
-      // eslint-disable-next-line sonarjs/no-identical-functions
-      .with({ type: "PurposeVersionCreated" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purposeId: purpose.id,
-          version: purpose.versions[0],
-        },
-      }))
-      .with({ type: "PurposeVersionActivated" }, () => ({
-        ...purposeGeneric,
-        data: {
-          purposeId: purpose.id,
-          version: purpose.versions[0],
-        },
-      }))
-      .exhaustive()
-  );
+  return match({ type })
+    .with({ type: "PurposeVersionRejected" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purpose,
+        versionId: purpose.versions[0].id,
+      },
+    }))
+    .with({ type: "PurposeDeleted" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+      },
+    }))
+    .with({ type: "PurposeVersionDeleted" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+        versionId: purpose.versions[0].id,
+      },
+    }))
+    .with({ type: "PurposeVersionUpdated" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+        version: purpose.versions[0],
+      },
+    }))
+    .with({ type: "PurposeVersionCreated" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+        version: purpose.versions[0],
+      },
+    }))
+    .with({ type: "PurposeVersionActivated" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+        version: purpose.versions[0],
+      },
+    }))
+    .exhaustive();
 };

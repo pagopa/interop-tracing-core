@@ -14,9 +14,9 @@ export function errorSavePurpose(detail: string): InternalError<ErrorCodes> {
   });
 }
 
-export function kafkaInvalidVersion(): InternalError<ErrorCodes> {
+export function errorInvalidVersion(detail: string): InternalError<ErrorCodes> {
   return new InternalError({
+    detail: `${detail}`,
     code: "noVersionsInValidState",
-    detail: `Missing valid version within versions Array`,
   });
 }

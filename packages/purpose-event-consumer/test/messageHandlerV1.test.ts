@@ -22,7 +22,7 @@ import {
   PurposeV1,
   PurposeVersionV1,
 } from "@pagopa/interop-outbound-models";
-import { kafkaInvalidVersion } from "../src/models/domain/errors.js";
+import { errorInvalidVersion } from "../src/models/domain/errors.js";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -135,7 +135,7 @@ describe("Operations service test", () => {
       }
     });
 
-    it("Should throw kafkaInvalidVersion if versions has no valid state", async () => {
+    it("Should throw errorInvalidVersion if versions has no valid state", async () => {
       const mockPurposeV1 = getMockPurpose() as PurposeV1;
       const purpose: PurposeV1 = {
         ...mockPurposeV1,
@@ -155,7 +155,11 @@ describe("Operations service test", () => {
             ctx,
             genericLogger,
           ),
-      ).rejects.toThrow(kafkaInvalidVersion());
+      ).rejects.toThrow(
+        errorInvalidVersion(
+          `Missing valid version within versions Array for purposeId ${purpose.id}`,
+        ),
+      );
     });
   });
 });

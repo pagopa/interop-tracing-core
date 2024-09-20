@@ -1,7 +1,6 @@
 import {
   PurposeEventV1,
   PurposeStateV1,
-  PurposeV1,
   PurposeVersionV1,
 } from "@pagopa/interop-outbound-models";
 import { Logger, AppContext } from "pagopa-interop-tracing-commons";
@@ -12,8 +11,7 @@ import {
   correlationIdToHeader,
   kafkaMessageMissingData,
 } from "pagopa-interop-tracing-models";
-import { kafkaInvalidVersion } from "../models/domain/errors.js";
-import { PurposeEntity } from "../models/domain/model.js";
+import { errorInvalidVersion } from "../models/domain/errors.js";
 
 export async function handleMessageV1(
   event: PurposeEventV1,
@@ -34,7 +32,9 @@ export async function handleMessageV1(
         const { purpose } = evt.data;
 
         if (purposeHasNoVersionInAValidState(purpose.versions)) {
-          throw kafkaInvalidVersion();
+          throw errorInvalidVersion(
+            `Missing valid version within versions Array for purposeId ${purpose.id}`,
+          );
         }
 
         await operationsService.savePurpose(
@@ -70,26 +70,6 @@ export async function handleMessageV1(
     )
     .exhaustive();
 }
-
-export const toPurposeV1Entity = (
-  event: PurposeEventV1,
-  purpose: PurposeV1,
-): PurposeEntity => {
-  const { stream_id: streamId, version } = event;
-  const validVersion = validVersionInVersionsV1(purpose.versions);
-  if (!validVersion) {
-    throw kafkaInvalidVersion();
-  }
-  return {
-    purposeId: purpose.id,
-    eserviceId: purpose.eserviceId,
-    consumerId: purpose.consumerId,
-    purposeState: validVersion.state,
-    purposeVersionId: validVersion.versionId,
-    eventStreamId: streamId,
-    eventVersionId: version,
-  };
-};
 
 const validVersionInVersionsV1 = (
   purposeVersions: PurposeVersionV1[],
@@ -132,6 +112,5 @@ const getVersionBy = (
 const purposeHasNoVersionInAValidState = (
   versions: PurposeVersionV1[],
 ): boolean => {
-  console.log("versions", versions);
   return !validVersionInVersionsV1(versions);
 };
