@@ -685,6 +685,85 @@ importers:
         specifier: 0.33.0
         version: 0.33.0
 
+  packages/purpose-event-consumer:
+    dependencies:
+      '@pagopa/interop-outbound-models':
+        specifier: 1.0.3
+        version: 1.0.3
+      '@tsconfig/node-lts':
+        specifier: 20.1.0
+        version: 20.1.0
+      '@zodios/core':
+        specifier: 10.9.6
+        version: 10.9.6(axios@1.6.7)(zod@3.23.8)
+      axios:
+        specifier: 1.6.7
+        version: 1.6.7
+      dotenv-flow:
+        specifier: 3.3.0
+        version: 3.3.0
+      kafka-connector:
+        specifier: workspace:*
+        version: link:../kafka-connector
+      kafkajs:
+        specifier: 2.2.4
+        version: 2.2.4
+      pagopa-interop-tracing-commons:
+        specifier: workspace:*
+        version: link:../commons
+      pagopa-interop-tracing-models:
+        specifier: workspace:*
+        version: link:../models
+      pagopa-interop-tracing-operations-client:
+        specifier: workspace:*
+        version: link:../clients/operations
+      ts-pattern:
+        specifier: 5.2.0
+        version: 5.2.0
+      uuid:
+        specifier: 10.0.0
+        version: 10.0.0
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/dotenv-flow':
+        specifier: 3.3.3
+        version: 3.3.3
+      '@types/node':
+        specifier: 20.3.1
+        version: 20.3.1
+      '@types/uuid':
+        specifier: 9.0.8
+        version: 9.0.8
+      '@typescript-eslint/eslint-plugin':
+        specifier: 6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.5.2))(eslint@8.49.0)(typescript@5.5.2)
+      '@typescript-eslint/parser':
+        specifier: 6.21.0
+        version: 6.21.0(eslint@8.49.0)(typescript@5.5.2)
+      eslint:
+        specifier: 8.49.0
+        version: 8.49.0
+      eslint-config-prettier:
+        specifier: 9.0.0
+        version: 9.0.0(eslint@8.49.0)
+      eslint-plugin-prettier:
+        specifier: 5.0.0
+        version: 5.0.0(eslint-config-prettier@9.0.0(eslint@8.49.0))(eslint@8.49.0)(prettier@3.0.3)
+      prettier:
+        specifier: 3.0.3
+        version: 3.0.3
+      ts-node:
+        specifier: 10.9.2
+        version: 10.9.2(@types/node@20.3.1)(typescript@5.5.2)
+      typescript:
+        specifier: 5.5.2
+        version: 5.5.2
+      vitest:
+        specifier: 0.33.0
+        version: 0.33.0
+
   packages/state-updater:
     dependencies:
       '@tsconfig/node-lts':
@@ -1523,9 +1602,15 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
+  '@pagopa/interop-outbound-models@1.0.3':
+    resolution: {integrity: sha512-ENUWBjKnUIHKzchN7cvs2s/uS0yWW8suoUh+/Ziw+DJQus7jz89DCMa7PMhl6gLijGm8PM3QcNqyP2V6qm5/Eg==}
+
   '@pkgr/core@0.1.1':
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@protobuf-ts/runtime@2.9.4':
+    resolution: {integrity: sha512-vHRFWtJJB/SiogWDF0ypoKfRIZ41Kq+G9cEFj6Qm1eQaAhJ1LDFvgZ7Ja4tb3iLOQhz0PaoPnnOijF1qmEqTxg==}
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
@@ -3575,6 +3660,9 @@ packages:
 
   ts-pattern@5.1.2:
     resolution: {integrity: sha512-u+ElKUIWnqisjpRBhv6Y89yNq7Pmz6xL0v7pTSckrVZ0+5Vf32oh/3jmxWl80rAOGcnbBa7fCyeqNdP4yXzWWg==}
+
+  ts-pattern@5.2.0:
+    resolution: {integrity: sha512-aGaSpOlDcns7ZoeG/OMftWyQG1KqPVhgplhJxNCvyIXqWrumM5uIoOSarw/hmmi/T1PnuQ/uD8NaFHvLpHicDg==}
 
   ts-toolbelt@9.6.0:
     resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
@@ -5647,7 +5735,15 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
+  '@pagopa/interop-outbound-models@1.0.3':
+    dependencies:
+      '@protobuf-ts/runtime': 2.9.4
+      ts-pattern: 5.2.0
+      zod: 3.23.8
+
   '@pkgr/core@0.1.1': {}
+
+  '@protobuf-ts/runtime@2.9.4': {}
 
   '@sinclair/typebox@0.27.8': {}
 
@@ -8120,6 +8216,8 @@ snapshots:
       yn: 3.1.1
 
   ts-pattern@5.1.2: {}
+
+  ts-pattern@5.2.0: {}
 
   ts-toolbelt@9.6.0: {}
 

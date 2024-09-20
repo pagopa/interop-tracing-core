@@ -250,6 +250,18 @@ export type ApiSaveMissingTracingParams = ZodiosPathParamsByPath<
 >;
 export type ApiSavePurposePayload = ZodiosBodyByPath<Api, "post", "/purposes">;
 
+export type ApiSavePurposeResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/purposes"
+>;
+
+export type ApiSavePurposeHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/purposes"
+>;
+
 export type ApiDeletePurposeParams = ZodiosPathParamsByPath<
   Api,
   "delete",
