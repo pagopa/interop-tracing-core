@@ -1,4 +1,9 @@
-import { PurposeEventV1 } from "@pagopa/interop-outbound-models";
+import {
+  PurposeEventV1,
+  PurposeStateV1,
+  PurposeV1,
+  PurposeVersionV1,
+} from "@pagopa/interop-outbound-models";
 import { Logger, AppContext } from "pagopa-interop-tracing-commons";
 import { P, match } from "ts-pattern";
 import { config } from "../utilities/config.js";
@@ -7,6 +12,8 @@ import {
   correlationIdToHeader,
   kafkaMessageMissingData,
 } from "pagopa-interop-tracing-models";
+import { kafkaInvalidVersion } from "../models/domain/errors.js";
+import { PurposeEntity } from "../models/domain/model.js";
 
 export async function handleMessageV1(
   event: PurposeEventV1,
@@ -26,6 +33,10 @@ export async function handleMessageV1(
 
         const { purpose } = evt.data;
 
+        if (purposeHasNoVersionInAValidState(purpose.versions)) {
+          throw kafkaInvalidVersion();
+        }
+
         await operationsService.savePurpose(
           { ...correlationIdToHeader(ctx.correlationId) },
           {
@@ -40,10 +51,87 @@ export async function handleMessageV1(
     )
     .with(
       {
-        type: P.union("PurposeCreated", "PurposeVersionArchived"),
+        type: P.union(
+          "PurposeCreated",
+          "PurposeUpdated",
+          "PurposeVersionWaitedForApproval",
+          "PurposeVersionCreated",
+          "PurposeVersionUpdated",
+          "PurposeVersionDeleted",
+          "PurposeVersionRejected",
+          "PurposeDeleted",
+          "PurposeVersionSuspended",
+          "PurposeVersionArchived",
+        ),
       },
       async () => {
         logger.info(`Skip event (not relevant)`);
       },
-    );
+    )
+    .exhaustive();
 }
+
+export const toPurposeV1Entity = (
+  event: PurposeEventV1,
+  purpose: PurposeV1,
+): PurposeEntity => {
+  const { stream_id: streamId, version } = event;
+  const validVersion = validVersionInVersionsV1(purpose.versions);
+  if (!validVersion) {
+    throw kafkaInvalidVersion();
+  }
+  return {
+    purposeId: purpose.id,
+    eserviceId: purpose.eserviceId,
+    consumerId: purpose.consumerId,
+    purposeState: validVersion.state,
+    purposeVersionId: validVersion.versionId,
+    eventStreamId: streamId,
+    eventVersionId: version,
+  };
+};
+
+const validVersionInVersionsV1 = (
+  purposeVersions: PurposeVersionV1[],
+): { versionId: string; state: string } | undefined =>
+  match(purposeVersions)
+    .when(
+      (versions) =>
+        versions.some((version) => version.state === PurposeStateV1.ACTIVE),
+      () => getVersionBy(PurposeStateV1.ACTIVE, purposeVersions),
+    )
+    .when(
+      (versions) =>
+        versions.some((version) => version.state === PurposeStateV1.SUSPENDED),
+      () => getVersionBy(PurposeStateV1.SUSPENDED, purposeVersions),
+    )
+    .when(
+      (versions) =>
+        versions.some((version) => version.state === PurposeStateV1.ARCHIVED),
+      () => getVersionBy(PurposeStateV1.ARCHIVED, purposeVersions),
+    )
+    .otherwise(() => undefined);
+
+const getVersionBy = (
+  purposeState: PurposeStateV1,
+  purposeVersions: PurposeVersionV1[],
+): {
+  versionId: string;
+  state: string;
+} =>
+  purposeVersions
+    .filter((version) => version.state === purposeState)
+    .reduce(
+      (obj, version) => {
+        const { id, state } = version;
+        return { ...obj, versionId: id, state: PurposeStateV1[state] };
+      },
+      {} as { versionId: string; state: string },
+    );
+
+const purposeHasNoVersionInAValidState = (
+  versions: PurposeVersionV1[],
+): boolean => {
+  console.log("versions", versions);
+  return !validVersionInVersionsV1(versions);
+};

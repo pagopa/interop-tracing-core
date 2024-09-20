@@ -40,10 +40,29 @@ export async function handleMessageV2(
 
     .with(
       {
-        type: P.union("PurposeArchived", "PurposeCloned"),
+        type: P.union(
+          "NewPurposeVersionActivated",
+          "PurposeVersionActivated",
+          "PurposeVersionUnsuspendedByProducer",
+          "PurposeVersionUnsuspendedByConsumer",
+          "PurposeVersionSuspendedByProducer",
+          "PurposeVersionSuspendedByConsumer",
+          "PurposeVersionOverQuotaUnsuspended",
+          "PurposeArchived",
+          "PurposeAdded",
+          "DraftPurposeUpdated",
+          "PurposeWaitingForApproval",
+          "DraftPurposeDeleted",
+          "WaitingForApprovalPurposeDeleted",
+          "NewPurposeVersionWaitingForApproval",
+          "WaitingForApprovalPurposeVersionDeleted",
+          "PurposeVersionRejected",
+          "PurposeCloned",
+        ),
       },
       async () => {
         logger.info(`Skip event (not relevant)`);
       },
-    );
+    )
+    .exhaustive();
 }
