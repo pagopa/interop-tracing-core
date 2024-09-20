@@ -10,7 +10,8 @@ CREATE TABLE tracing.tenants (
 
 CREATE TABLE tracing.eservices (
     eservice_id UUID PRIMARY KEY,
-    producer_id UUID NOT NULL
+    producer_id UUID NOT NULL,
+    name VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE tracing.purposes (

@@ -53,8 +53,8 @@ export async function addEservice(
   db: DB,
 ) {
   const insertEserviceQuery = `
-  INSERT INTO tracing.eservices (eservice_id, producer_id)
-  VALUES ($1, $2)
+  INSERT INTO tracing.eservices (eservice_id, producer_id, name)
+  VALUES ($1, $2, $3)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }

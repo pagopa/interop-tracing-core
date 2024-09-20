@@ -86,12 +86,12 @@ export async function findPurposeErrors(db: DB): Promise<PurposeError[]> {
 }
 
 export async function addEservice(
-  eServiceValues: { eservice_id: string; producer_id: string },
+  eServiceValues: { eservice_id: string; producer_id: string; name: string },
   db: DB,
 ) {
   const insertEserviceQuery = `
-  INSERT INTO tracing.eservices (eservice_id, producer_id)
-  VALUES ($1, $2)
+  INSERT INTO tracing.eservices (eservice_id, producer_id, name)
+  VALUES ($1, $2, $3)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }

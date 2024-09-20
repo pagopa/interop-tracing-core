@@ -100,7 +100,10 @@ describe("database test", () => {
     dbService = dbServiceBuilder(dbInstance);
     operationsService = operationsServiceBuilder(dbService);
 
-    await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
+    await addEservice(
+      { eservice_id, producer_id: generateId(), name: "eservice name" },
+      dbInstance,
+    );
 
     await addTenant(
       {

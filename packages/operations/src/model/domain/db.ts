@@ -46,6 +46,13 @@ const UpdateTracingStateAndVersionSchema = z.object({
   state: TracingState,
 });
 
+export const EserviceSchema = z.object({
+  eservice_id: z.string(),
+  producer_id: z.string(),
+  name: z.string(),
+});
+
+export type Eservice = z.infer<typeof EserviceSchema>;
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
