@@ -1208,6 +1208,33 @@ describe("database test", () => {
         ).not.toThrowError();
       });
 
+      it("should update name of existing eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const producerId = generateId<TenantId>();
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+
+        const eservicePayload = {
+          eserviceId: eserviceId,
+          producerId: producerId,
+          name: "eservice name updated",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result?.name).toBe(eservicePayload.name);
+      });
+
       it("should throw an error if the eservice payload is invalid", async () => {
         const invalidEservicePayload = {
           producerId: generateId(),
