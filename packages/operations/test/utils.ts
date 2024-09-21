@@ -1,5 +1,6 @@
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
+  Eservice,
   Purpose,
   PurposeError,
   Tenant,
@@ -94,6 +95,19 @@ export async function addEservice(
   VALUES ($1, $2, $3)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
+}
+
+export async function findEserviceById(
+  id: string,
+  db: DB,
+): Promise<Eservice | null> {
+  const selectEserviceQuery = `
+      SELECT * 
+      FROM tracing.eservices
+      WHERE eservice_id = $1
+    `;
+
+  return await db.oneOrNone(selectEserviceQuery, [id]);
 }
 
 export async function clearTracings(db: DB) {

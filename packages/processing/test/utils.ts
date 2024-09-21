@@ -49,6 +49,7 @@ export async function addEservice(
   eServiceValues: {
     eserviceId: string;
     producerId: string;
+    name: string;
   },
   db: DB,
 ) {

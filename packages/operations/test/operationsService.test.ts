@@ -32,6 +32,7 @@ import {
   tracingNotFound,
   tracingState,
   tracingReplaceCannotBeUpdated,
+  EserviceId,
 } from "pagopa-interop-tracing-models";
 import { StartedTestContainer } from "testcontainers";
 import {
@@ -44,6 +45,7 @@ import {
   clearTracings,
   findPurposeErrors,
   findTracingById,
+  findEserviceById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -1184,6 +1186,75 @@ describe("database test", () => {
         console.log("purposesErrors", purposesErrors);
 
         expect(purposesErrors.length).toBe(0);
+      });
+    });
+
+    describe("saveEservice", () => {
+      it("should save a eservice successfully", async () => {
+        const eservicePayload = {
+          producerId: generateId(),
+          eserviceId: generateId(),
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        expect(
+          async () =>
+            await operationsService.saveEservice(
+              eservicePayload,
+              genericLogger,
+            ),
+        ).not.toThrowError();
+      });
+
+      it("should throw an error if the eservice payload is invalid", async () => {
+        const invalidEservicePayload = {
+          producerId: generateId(),
+          eserviceId: "invalid_uuid",
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveEservice(invalidEservicePayload, genericLogger),
+        ).rejects.toThrowError(/invalid_uuid/);
+      });
+    });
+
+    describe("deleteEservice", () => {
+      it("should delete a eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+        await operationsService.deleteEservice({ eserviceId }, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should throw an error if the eservice eserviceId params is invalid", async () => {
+        const invalidEserviceParams = {
+          eserviceId: "invalid_uuid",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deleteEservice(
+            invalidEserviceParams,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(/invalid_uuid/);
       });
     });
   });
