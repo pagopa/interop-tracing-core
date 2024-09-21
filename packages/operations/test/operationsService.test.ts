@@ -1190,7 +1190,7 @@ describe("database test", () => {
     });
 
     describe("saveEservice", () => {
-      it("should save a eservice successfully", async () => {
+      it("should save an eservice successfully", async () => {
         const eservicePayload = {
           producerId: generateId(),
           eserviceId: generateId(),
@@ -1251,7 +1251,7 @@ describe("database test", () => {
     });
 
     describe("deleteEservice", () => {
-      it("should delete a eservice successfully", async () => {
+      it("should delete an eservice successfully", async () => {
         const eserviceId = generateId<EserviceId>();
         const operationsService = operationsServiceBuilder(dbService);
 
@@ -1269,7 +1269,7 @@ describe("database test", () => {
         expect(result).toBe(null);
       });
 
-      it("should throw an error if the eservice eserviceId params is invalid", async () => {
+      it("should throw an error if the eserviceId param is invalid", async () => {
         const invalidEserviceParams = {
           eserviceId: "invalid_uuid",
         };
