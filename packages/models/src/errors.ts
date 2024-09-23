@@ -109,16 +109,16 @@ export function makeApiProblemBuilder<T extends string>(errors: {
 }
 
 const errorCodes = {
-  genericError: "9000",
-  badRequestError: "9001",
-  invalidClaim: "9002",
-  missingHeader: "9003",
-  unauthorizedError: "9004",
-  jwtDecodingError: "9005",
-  tracingAlreadyExists: "9006",
-  tracingNotFound: "9007",
-  tracingCannotBeUpdated: "9008",
-  kafkaMessageProcessError: "9009",
+  genericError: "GENERIC_ERROR",
+  badRequestError: "BAD_REQUEST_ERROR",
+  invalidClaim: "INVALID_CLAIM",
+  missingHeader: "MISSING_HEADER",
+  unauthorizedError: "UNAUTHORIZED_ERROR",
+  jwtDecodingError: "JWT_DECODING_ERROR",
+  tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
+  tracingNotFound: "TRACING_NOT_FOUND",
+  tracingCannotBeUpdated: "TRACING_CANNOT_BE_UPDATED",
+  kafkaMessageProcessError: "KAFKA_MESSAGE_PROCESS_ERROR",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
