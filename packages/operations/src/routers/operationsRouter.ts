@@ -63,7 +63,7 @@ const operationsRouter = (
         logger(req.ctx),
       );
 
-      return res.status(200).json(eservice).end();
+      return res.status(204).json(eservice).end();
     } catch (error) {
       const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
       return res.status(errorRes.status).json(errorRes).end();
