@@ -21,10 +21,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import { handleMessageV2 } from "../src/handlers/messageHandlerV2.js";
 import { ErrorCodes, errorSaveEservice } from "../src/models/domain/errors.js";
-import {
-  EServiceClonedV2,
-  EServiceDescriptorStateV2,
-} from "@pagopa/interop-outbound-models";
+import { EServiceDescriptorStateV2 } from "@pagopa/interop-outbound-models";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -83,7 +80,7 @@ describe("Message handler V2 test", () => {
 
       await expect(
         handleMessageV2(
-          { ...eServiceV2Event, data: {} as any },
+          { ...eServiceV2Event, data: {} as any }, // eslint-disable-line @typescript-eslint/no-explicit-any
           operationsService,
           ctx,
           genericLogger,
@@ -237,7 +234,7 @@ describe("Message handler V2 test", () => {
           {
             event_version: 2,
             version: 1,
-            type: event.type as any,
+            type: event.type as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             timestamp: new Date(),
             stream_id: "1",
             data: {},

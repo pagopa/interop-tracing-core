@@ -271,7 +271,7 @@ describe("Message handler V1 test", () => {
           {
             event_version: 1,
             version: 1,
-            type: event.type as any,
+            type: event.type as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             timestamp: new Date(),
             stream_id: "1",
             data: {},

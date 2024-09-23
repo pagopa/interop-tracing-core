@@ -165,7 +165,7 @@ export const mockEserviceCloneV2: EServiceEventV2 = {
   timestamp: new Date(),
   stream_id: "1",
   type: "EServiceCloned",
-  data: { eservice: {} } as any,
+  data: { eservice: {} } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
 export function mockApiClientError(
