@@ -1199,13 +1199,14 @@ describe("database test", () => {
 
         const operationsService = operationsServiceBuilder(dbService);
 
-        expect(
-          async () =>
-            await operationsService.saveEservice(
-              eservicePayload,
-              genericLogger,
-            ),
-        ).not.toThrowError();
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(
+          eservicePayload.eserviceId,
+          dbInstance,
+        );
+
+        expect(result?.eservice_id).toBe(eservicePayload.eserviceId);
       });
 
       it("should update name of existing eservice successfully", async () => {
