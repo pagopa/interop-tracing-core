@@ -1206,7 +1206,7 @@ describe("database test", () => {
           eservice_id: eservice_id,
           purpose_title: "Purpose Title",
         };
-        addPurpose(purposePayload, dbInstance);
+        await addPurpose(purposePayload, dbInstance);
         const purpose_title = "New Purpose Title";
 
         const operationsService = operationsServiceBuilder(dbService);
