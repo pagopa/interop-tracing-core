@@ -1,13 +1,13 @@
 import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  errorDeletePurposesErrors: "0701",
+  errorDeletePurposesErrors: "ERROR_DELETE_PURPOSES_ERRORS",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;
 
 export function errorDeletePurposesErrors(
-  detail: string,
+  detail: string
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
