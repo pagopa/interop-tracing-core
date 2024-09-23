@@ -28,6 +28,7 @@ export const operationsServiceBuilder = (
           {
             eserviceId: data.eserviceId,
             producerId: data.producerId,
+            name: data.name,
           },
           {
             headers,

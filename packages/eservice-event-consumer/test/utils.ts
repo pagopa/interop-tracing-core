@@ -1,6 +1,4 @@
 import { AxiosError, AxiosRequestHeaders } from "axios";
-import { v4 as uuidv4 } from "uuid";
-
 import {
   EServiceDescriptorV1,
   EServiceModeV1,
@@ -9,11 +7,10 @@ import {
   EServiceDescriptorStateV1,
   EServiceEventV1,
 } from "@pagopa/interop-outbound-models";
-
-export const generateID = (): string => uuidv4();
+import { generateId } from "pagopa-interop-tracing-models";
 
 const descriptor: EServiceDescriptorV1 = {
-  id: generateID(),
+  id: generateId(),
   audience: ["test.audience"],
   dailyCallsPerConsumer: 100,
   dailyCallsTotal: 100,
@@ -28,8 +25,8 @@ export const createEServiceV1 = (
   partialEservice?: Partial<EServiceV1>,
   descriptorItem?: EServiceDescriptorV1,
 ): EServiceV1 => ({
-  id: generateID(),
-  producerId: generateID(),
+  id: generateId(),
+  producerId: generateId(),
   description: "eService test description",
   name: "eServie test name",
   mode: EServiceModeV1.RECEIVE,
@@ -47,11 +44,40 @@ export const createEserviceAddedEventV1 = (
   timestamp: new Date(),
   event_version: 1,
   version: version || 1,
-  stream_id: stream_id || generateID(),
+  stream_id: stream_id || generateId(),
   data: {
     eservice: eserviceV1,
   },
 });
+
+export const mockEserviceDeleteV1: EServiceEventV1 = {
+  event_version: 1,
+  version: 1,
+  type: "EServiceDeleted",
+  timestamp: new Date(),
+  stream_id: "1",
+  data: {
+    eserviceId: generateId(),
+  },
+};
+
+export const mockEserviceUpdateV1: EServiceEventV1 = {
+  event_version: 1,
+  version: 1,
+  type: "EServiceUpdated",
+  timestamp: new Date(),
+  stream_id: "1",
+  data: {
+    eservice: {
+      description: "",
+      technology: EServiceTechnologyV1.REST,
+      id: generateId(),
+      name: "",
+      producerId: generateId(),
+      descriptors: [descriptor, descriptor],
+    },
+  },
+};
 
 export function mockApiClientError(
   status: number,

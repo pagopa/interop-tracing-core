@@ -1181,10 +1181,7 @@ describe("database test", () => {
         );
 
         await operationsService.deletePurposesErrors(genericLogger);
-
         const purposesErrors = await findPurposeErrors(dbInstance);
-        console.log("purposesErrors", purposesErrors);
-
         expect(purposesErrors.length).toBe(0);
       });
     });
