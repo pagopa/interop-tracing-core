@@ -42,6 +42,7 @@ import {
   addTracing,
   clearPurposesErrors,
   clearTracings,
+  findPurposeById,
   findPurposeErrors,
   findTracingById,
 } from "./utils.js";
@@ -1189,15 +1190,32 @@ describe("database test", () => {
           id: generateId<PurposeId>(),
           consumer_id: tenantId,
           eservice_id: eservice_id,
-          purpose_title: "New Purpose Title",
+          purpose_title: "Purpose Title",
         };
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.savePurpose(purposePayload, genericLogger);
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result).toStrictEqual(purposePayload);
+      });
+
+      it("should add existing purpose successfully", async () => {
+        let purposePayload = {
+          id: generateId<PurposeId>(),
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+        addPurpose(purposePayload, dbInstance);
+        const purpose_title = "New Purpose Title";
 
         const operationsService = operationsServiceBuilder(dbService);
 
-        expect(
-          async () =>
-            await operationsService.savePurpose(purposePayload, genericLogger),
-        ).not.toThrowError();
+        purposePayload = { ...purposePayload, purpose_title };
+        await operationsService.savePurpose(purposePayload, genericLogger);
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result?.purpose_title).toBe(purpose_title);
       });
 
       it("should throw an error if the purpose payload is invalid", async () => {
@@ -1218,13 +1236,22 @@ describe("database test", () => {
     describe("deletePurpose", () => {
       it("should delete a purpose successfully", async () => {
         const purposeId = generateId<PurposeId>();
-        const logger = genericLogger;
-        const operationsService = operationsServiceBuilder(dbService);
+        let purposePayload = {
+          id: purposeId,
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
 
-        expect(
-          async () =>
-            await operationsService.deletePurpose({ purposeId }, logger),
-        ).not.toThrowError();
+        await addPurpose(purposePayload, dbInstance);
+
+        const logger = genericLogger;
+
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.deletePurpose({ purposeId }, logger);
+
+        const result = await findPurposeById(purposeId, dbInstance);
+        expect(result).toBe(null);
       });
 
       it("should throw an error if deleting a non-existent purpose", async () => {

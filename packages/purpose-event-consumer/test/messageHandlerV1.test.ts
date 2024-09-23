@@ -55,8 +55,6 @@ describe("Operations service test", () => {
         generateID(),
       );
 
-      vi.spyOn(apiClient, "savePurpose").mock;
-
       expect(
         async () =>
           await handleMessageV1(
