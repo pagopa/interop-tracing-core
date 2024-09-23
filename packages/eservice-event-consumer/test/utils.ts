@@ -6,6 +6,13 @@ import {
   EServiceV1,
   EServiceDescriptorStateV1,
   EServiceEventV1,
+  AgreementApprovalPolicyV2,
+  EServiceDescriptorStateV2,
+  EServiceDescriptorV2,
+  EServiceEventV2,
+  EServiceV2,
+  EServiceModeV2,
+  EServiceTechnologyV2,
 } from "@pagopa/interop-outbound-models";
 import { generateId } from "pagopa-interop-tracing-models";
 
@@ -61,6 +68,17 @@ export const mockEserviceDeleteV1: EServiceEventV1 = {
   },
 };
 
+export const mockEserviceDeleteV2: EServiceEventV2 = {
+  event_version: 2,
+  version: 1,
+  type: "EServiceDeleted",
+  timestamp: new Date(),
+  stream_id: "1",
+  data: {
+    eserviceId: generateId(),
+  },
+};
+
 export const mockEserviceUpdateV1: EServiceEventV1 = {
   event_version: 1,
   version: 1,
@@ -79,9 +97,75 @@ export const mockEserviceUpdateV1: EServiceEventV1 = {
   },
 };
 
+export const createEserviceAddedEventV2 = (
+  eServiceV2: EServiceV2,
+  stream_id?: string,
+  version?: number,
+): EServiceEventV2 => ({
+  type: "EServiceAdded",
+  event_version: 2,
+  stream_id: stream_id || generateId(),
+  timestamp: new Date(),
+  version: version || 1,
+  data: {
+    eservice: eServiceV2,
+  },
+});
+
+export const getDescriptorV2 = (
+  partialDescriptorV2?: Partial<EServiceDescriptorV2>,
+): EServiceDescriptorV2 => ({
+  id: generateId(),
+  agreementApprovalPolicy: AgreementApprovalPolicyV2.AUTOMATIC,
+  audience: ["test.audience"],
+  createdAt: 1n,
+  dailyCallsPerConsumer: 100,
+  dailyCallsTotal: 100,
+  docs: [],
+  serverUrls: ["http://test.com"],
+  state: EServiceDescriptorStateV2.DRAFT,
+  version: 1n,
+  voucherLifespan: 100,
+  ...partialDescriptorV2,
+});
+
+export const createV2Event = (
+  eServiceId: string,
+  descriptorId: string,
+  producerId: string,
+  eServiceDescriptorState: EServiceDescriptorStateV2,
+  descriptors?: EServiceDescriptorV2[],
+): EServiceV2 => ({
+  id: eServiceId,
+  producerId,
+  createdAt: 1n,
+  description: "eService test description",
+  mode: EServiceModeV2.RECEIVE,
+  name: "eService test name",
+  technology: EServiceTechnologyV2.REST,
+
+  descriptors: descriptors
+    ? descriptors
+    : [
+        getDescriptorV2({
+          id: descriptorId,
+          state: eServiceDescriptorState,
+        }),
+      ],
+});
+
 export const mockClonedEServiceAddedV1: EServiceEventV1 = {
   ...mockEserviceUpdateV1,
   type: "ClonedEServiceAdded",
+};
+
+export const mockEserviceCloneV2: EServiceEventV2 = {
+  event_version: 2,
+  version: 1,
+  timestamp: new Date(),
+  stream_id: "1",
+  type: "EServiceCloned",
+  data: { eservice: {} } as any,
 };
 
 export function mockApiClientError(

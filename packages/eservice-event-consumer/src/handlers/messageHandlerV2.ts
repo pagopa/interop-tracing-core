@@ -31,7 +31,11 @@ export async function handleMessageV2(
 
         await operationsService.saveEservice(
           { ...correlationIdToHeader(ctx.correlationId) },
-          { eserviceId: eservice.id, producerId: eservice.producerId },
+          {
+            eserviceId: eservice.id,
+            producerId: eservice.producerId,
+            name: eservice.name,
+          },
           logger,
         );
       },
