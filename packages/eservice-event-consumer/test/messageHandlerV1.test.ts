@@ -9,6 +9,7 @@ import {
   createEserviceAddedEventV1,
   createEServiceV1,
   mockApiClientError,
+  mockClonedEServiceAddedV1,
   mockEserviceDeleteV1,
   mockEserviceUpdateV1,
 } from "./utils.js";
@@ -213,6 +214,80 @@ describe("Message handler V1 test", () => {
           "errorDeleteEservice",
         );
       }
+    });
+  });
+
+  describe("ClonedEServiceAdded Event", () => {
+    it("clone an Eservice for ClonedEServiceAdded event should return a successfully response", async () => {
+      vi.spyOn(apiClient, "saveEservice").mockResolvedValueOnce(undefined);
+
+      expect(
+        async () =>
+          await handleMessageV1(
+            mockClonedEServiceAddedV1,
+            operationsService,
+            ctx,
+            genericLogger,
+          ),
+      ).not.toThrowError();
+
+      expect(apiClient.saveEservice).toBeCalled();
+    });
+
+    it("clone an Eservice for ClonedEServiceAdded event should return an exception errorSaveEservice", async () => {
+      const apiClientError = mockApiClientError(500, "Internal server error");
+
+      vi.spyOn(apiClient, "saveEservice").mockRejectedValueOnce(apiClientError);
+
+      try {
+        await handleMessageV1(
+          mockClonedEServiceAddedV1,
+          operationsService,
+          ctx,
+          genericLogger,
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "errorSaveEservice",
+        );
+      }
+    });
+  });
+
+  describe("Events to be ignored", () => {
+    it("invoking handleMessageV1 should ignore specific event types and log an info message for each ignored event", async () => {
+      const spy = vi.spyOn(genericLogger, "info");
+
+      const events = [
+        { type: "EServiceDocumentAdded" },
+        { type: "EServiceDocumentDeleted" },
+        { type: "EServiceDocumentUpdated" },
+        { type: "MovedAttributesFromEserviceToDescriptors" },
+        { type: "EServiceDescriptorAdded" },
+        { type: "EServiceDescriptorUpdated" },
+        { type: "EServiceWithDescriptorsDeleted" },
+      ];
+
+      for (const event of events) {
+        await handleMessageV1(
+          {
+            event_version: 1,
+            version: 1,
+            type: event.type as any,
+            timestamp: new Date(),
+            stream_id: "1",
+            data: {},
+          },
+          operationsService,
+          ctx,
+          genericLogger,
+        );
+
+        expect(spy).toHaveBeenCalledWith(`Skip event (not relevant)`);
+      }
+
+      expect(spy).toHaveBeenCalledTimes(events.length);
     });
   });
 });

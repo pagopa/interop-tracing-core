@@ -64,7 +64,7 @@ export const mockEserviceDeleteV1: EServiceEventV1 = {
 export const mockEserviceUpdateV1: EServiceEventV1 = {
   event_version: 1,
   version: 1,
-  type: "EServiceUpdated",
+  type: "ClonedEServiceAdded",
   timestamp: new Date(),
   stream_id: "1",
   data: {
@@ -77,6 +77,11 @@ export const mockEserviceUpdateV1: EServiceEventV1 = {
       descriptors: [descriptor, descriptor],
     },
   },
+};
+
+export const mockClonedEServiceAddedV1: EServiceEventV1 = {
+  ...mockEserviceUpdateV1,
+  type: "ClonedEServiceAdded",
 };
 
 export function mockApiClientError(
