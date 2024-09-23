@@ -35,8 +35,8 @@ describe("Operations service test", () => {
     correlationId: uuidv4(),
   };
 
-  describe("PurposeActivated Event", () => {
-    it("save a new purpose for PurposeActivated event should return a successfully response", async () => {
+  describe("PurposeVersionActivated Event", () => {
+    it("save a new purpose for PurposeVersionActivated event should return a successfully response", async () => {
       const mockPurposeV1 = getMockPurpose() as PurposeV1;
       const mockPurposeVersionV1 = getMockPurposeVersion(
         PurposeStateV1.ACTIVE,

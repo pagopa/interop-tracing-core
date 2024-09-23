@@ -9,9 +9,10 @@ import {
   PurposeV2,
   PurposeVersionV1,
   PurposeVersionV2,
+  PurposeEventV2,
 } from "@pagopa/interop-outbound-models";
 import { z } from "zod";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 export const PurposeEventV1Type = z.union([
   z.literal("PurposeCreated"),
@@ -180,3 +181,115 @@ export const createAPurposeVersionEventV1 = (
     }))
     .exhaustive();
 };
+
+// V2
+
+export const PurposeEventV2Type = z.union([
+  z.literal("PurposeAdded"),
+  z.literal("DraftPurposeUpdated"),
+  z.literal("PurposeWaitingForApproval"),
+  z.literal("PurposeActivated"),
+  z.literal("DraftPurposeDeleted"),
+  z.literal("WaitingForApprovalPurposeDeleted"),
+]);
+type PurposeEventV2Type = z.infer<typeof PurposeEventV2Type>;
+
+export const PurposeVersionEventV2Type = z.union([
+  z.literal("NewPurposeVersionActivated"),
+  z.literal("PurposeVersionActivated"),
+  z.literal("PurposeVersionUnsuspendedByProducer"),
+  z.literal("PurposeVersionUnsuspendedByConsumer"),
+  z.literal("PurposeVersionSuspendedByProducer"),
+  z.literal("PurposeVersionSuspendedByConsumer"),
+  z.literal("NewPurposeVersionWaitingForApproval"),
+  z.literal("PurposeVersionOverQuotaUnsuspended"),
+  z.literal("PurposeArchived"),
+  z.literal("WaitingForApprovalPurposeVersionDeleted"),
+  z.literal("PurposeVersionRejected"),
+  z.literal("PurposeCloned"),
+]);
+type PurposeVersionEventV2Type = z.infer<typeof PurposeVersionEventV2Type>;
+
+export const createAPurposeEventV2 = (
+  type: PurposeEventV2Type,
+  purpose: PurposeV2,
+  stream_id?: string,
+  version?: number,
+): PurposeEventV2 => {
+  const purposeEventV2: PurposeEventV2 = {
+    type,
+    data: {
+      purpose,
+    },
+    event_version: 2,
+    stream_id: stream_id || generateID(),
+    version: version || 1,
+    timestamp: new Date(),
+  };
+  return purposeEventV2;
+};
+
+export const createAPurposeVersionEventV2 = (
+  type: PurposeVersionEventV2Type,
+  purpose: PurposeV2,
+  stream_id?: string,
+  version?: number,
+): PurposeEventV2 => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const purposeGeneric: any = {
+    type,
+    event_version: 2,
+    stream_id: stream_id || generateID(),
+    version: version || 1,
+    timestamp: new Date(),
+  };
+  return match({ type })
+    .with(
+      {
+        type: P.union(
+          "NewPurposeVersionActivated",
+          "PurposeVersionActivated",
+          "PurposeVersionUnsuspendedByProducer",
+          "PurposeVersionUnsuspendedByConsumer",
+          "PurposeVersionSuspendedByProducer",
+          "PurposeVersionSuspendedByConsumer",
+          "NewPurposeVersionWaitingForApproval",
+          "PurposeVersionOverQuotaUnsuspended",
+          "PurposeArchived",
+          "WaitingForApprovalPurposeVersionDeleted",
+          "PurposeVersionRejected",
+        ),
+      },
+      () => ({
+        ...purposeGeneric,
+        data: {
+          purpose,
+          versionId: purpose.versions[0].id,
+        },
+      }),
+    )
+    .with({ type: "PurposeCloned" }, () => ({
+      ...purposeGeneric,
+      data: {
+        purposeId: purpose.id,
+        version: purpose.versions[0],
+        sourcePurposeId: purpose.id,
+      },
+    }))
+    .exhaustive();
+};
+
+export const createPurposeActivatedEventV2 = (
+  purposeV2: PurposeV2 | undefined,
+  stream_id?: string,
+  version?: number,
+): PurposeEventV2 => ({
+  type: "PurposeActivated",
+  timestamp: new Date(),
+  event_version: 2,
+  version: version || 1,
+  stream_id: stream_id || generateID(),
+  data: {
+    purpose: purposeV2,
+  },
+});

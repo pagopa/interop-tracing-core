@@ -1236,7 +1236,7 @@ describe("database test", () => {
     describe("deletePurpose", () => {
       it("should delete a purpose successfully", async () => {
         const purposeId = generateId<PurposeId>();
-        let purposePayload = {
+        const purposePayload = {
           id: purposeId,
           consumer_id: tenantId,
           eservice_id: eservice_id,
