@@ -244,7 +244,9 @@ describe("Message handler V2 test", () => {
           genericLogger,
         );
 
-        expect(spy).toHaveBeenCalledWith(`Skip event (not relevant)`);
+        expect(spy).toHaveBeenCalledWith(
+          `Skip event ${event.type} (not relevant)`,
+        );
       }
 
       expect(spy).toHaveBeenCalledTimes(events.length);

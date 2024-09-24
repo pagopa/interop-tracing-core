@@ -85,8 +85,8 @@ export async function handleMessageV1(
           "EServiceWithDescriptorsDeleted",
         ),
       },
-      async () => {
-        logger.info(`Skip event (not relevant)`);
+      async (evt) => {
+        logger.info(`Skip event ${evt.type} (not relevant)`);
       },
     )
     .exhaustive();

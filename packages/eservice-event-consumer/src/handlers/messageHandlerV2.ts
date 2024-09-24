@@ -77,8 +77,8 @@ export async function handleMessageV2(
           "EServiceDraftDescriptorUpdated",
         ),
       },
-      async () => {
-        logger.info(`Skip event (not relevant)`);
+      async (evt) => {
+        logger.info(`Skip event ${evt.type} (not relevant)`);
       },
     )
     .exhaustive();
