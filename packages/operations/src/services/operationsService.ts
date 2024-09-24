@@ -29,6 +29,10 @@ import {
   ApiSaveEserviceResponse,
   ApiDeleteEserviceParams,
   ApiDeleteEserviceResponse,
+  ApiSaveTenantPayload,
+  ApiDeleteTenantParams,
+  ApiDeleteTenantResponse,
+  ApiSaveTenantResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -318,6 +322,30 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(`Delete eService with eserviceId: ${params.eserviceId}`);
 
       await dbService.deleteEservice({ eservice_id: params.eserviceId });
+    },
+
+    async saveTenant(
+      payload: ApiSaveTenantPayload,
+      logger: Logger,
+    ): Promise<ApiSaveTenantResponse> {
+      logger.info(`Upsert tenant with tenantId: ${payload.tenantId}`);
+
+      await dbService.saveTenant({
+        id: payload.tenantId,
+        name: payload.name,
+        origin: payload.origin,
+        external_id: payload.externalId,
+        deleted: false,
+      });
+    },
+
+    async deleteTenant(
+      params: ApiDeleteTenantParams,
+      logger: Logger,
+    ): Promise<ApiDeleteTenantResponse> {
+      logger.info(`Delete tenant with tenantId: ${params.tenantId}`);
+
+      await dbService.deleteTenant({ id: params.tenantId });
     },
   };
 }

@@ -9,6 +9,7 @@ import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
   Eservice,
   PurposeError,
+  Tenant,
   Tracing,
   UpdateTracingState,
   UpdateTracingStateAndVersionSchema,
@@ -414,6 +415,46 @@ export function dbServiceBuilder(db: DB) {
         await db.none(deleteEserviceQuery, [data.eservice_id]);
       } catch (error) {
         throw dbServiceErrorMapper("deleteEservice", error);
+      }
+    },
+
+    async saveTenant(data: Tenant): Promise<void> {
+      try {
+        const upsertTenantQuery = `
+          INSERT INTO tracing.tenants (
+            id, 
+            name, 
+            origin,
+            external_id,
+            deleted
+          ) VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (id) 
+          DO UPDATE SET 
+            name = EXCLUDED.name,
+            origin = EXCLUDED.origin,
+            external_id = EXCLUDED.external_id
+        `;
+
+        await db.none(upsertTenantQuery, [
+          data.id,
+          data.name,
+          data.origin,
+          data.external_id,
+          data.deleted,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveTenant", error);
+      }
+    },
+
+    async deleteTenant(data: { id: string }): Promise<void> {
+      try {
+        const deleteTenantQuery = `
+          DELETE FROM tracing.tenants WHERE id = $1;`;
+
+        await db.none(deleteTenantQuery, [data.id]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteTenant", error);
       }
     },
   };

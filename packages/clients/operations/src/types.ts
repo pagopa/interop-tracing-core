@@ -284,3 +284,35 @@ export type ApiDeleteEserviceResponse = ZodiosResponseByPath<
   "delete",
   "/eservices/:eserviceId"
 >;
+
+export type ApiSaveTenantHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/tenants"
+>;
+
+export type ApiSaveTenantPayload = ZodiosBodyByPath<Api, "post", "/tenants">;
+
+export type ApiSaveTenantResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/tenants"
+>;
+
+export type ApiDeleteTenantHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "delete",
+  "/tenants/:tenantId"
+>;
+
+export type ApiDeleteTenantParams = ZodiosPathParamsByPath<
+  Api,
+  "delete",
+  "/tenants/:tenantId"
+>;
+
+export type ApiDeleteTenantResponse = ZodiosResponseByPath<
+  Api,
+  "delete",
+  "/tenants/:tenantId"
+>;

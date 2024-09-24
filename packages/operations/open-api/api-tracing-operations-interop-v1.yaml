@@ -442,6 +442,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
 
+  /tenants:
+    post:
+      summary: Save tenant
+      operationId: saveTenant
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveTenantRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /tenants/{tenantId}:
+    delete:
+      summary: Delete tenant
+      operationId: deleteTenant
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the tenant
+      tags:
+        - Tenants
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
   /tenants/tracings/missing:
     get:
       summary: Get all tenants with missing tracings by date
@@ -831,6 +911,24 @@ components:
         - eserviceId
         - producerId
         - name
+    SaveTenantRequest:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        origin:
+          type: string
+        externalId:
+          type: string
+          format: uuid
+      required:
+        - tenantId
+        - name
+        - origin
+        - externalId
 
     Problem:
       properties:

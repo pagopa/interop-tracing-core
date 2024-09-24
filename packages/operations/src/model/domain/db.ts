@@ -5,7 +5,7 @@ export const TenantSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   origin: z.string(),
-  externalId: z.string().uuid(),
+  external_id: z.string().uuid(),
   deleted: z.boolean(),
 });
 
