@@ -5,7 +5,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
-const eServiceEventConsumerConfig = LoggerConfig.and(KafkaConsumerConfig)
+const tenantEventConsumerConfig = LoggerConfig.and(KafkaConsumerConfig)
   .and(KafkaTopicConfig)
   .and(
     z
@@ -19,10 +19,10 @@ const eServiceEventConsumerConfig = LoggerConfig.and(KafkaConsumerConfig)
       })),
   );
 
-export type EserviceEventConsumerConfig = z.infer<
-  typeof eServiceEventConsumerConfig
+export type TenantEventConsumerConfig = z.infer<
+  typeof tenantEventConsumerConfig
 >;
 
-export const config: EserviceEventConsumerConfig = {
-  ...eServiceEventConsumerConfig.parse(process.env),
+export const config: TenantEventConsumerConfig = {
+  ...tenantEventConsumerConfig.parse(process.env),
 };

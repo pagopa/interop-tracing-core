@@ -13,6 +13,10 @@ import {
   EServiceV2,
   EServiceModeV2,
   EServiceTechnologyV2,
+  TenantV1,
+  TenantEventV1,
+  TenantV2,
+  TenantEventV2,
 } from "@pagopa/interop-outbound-models";
 import { generateId } from "pagopa-interop-tracing-models";
 
@@ -42,18 +46,33 @@ export const createEServiceV1 = (
   descriptors: [descriptorItem || descriptor],
 });
 
-export const createEserviceAddedEventV1 = (
-  eserviceV1: EServiceV1 | undefined,
+export const createTenantEventV1 = (
+  tenantV1: TenantV1 | undefined,
   stream_id?: string,
   version?: number,
-): EServiceEventV1 => ({
-  type: "EServiceAdded",
+): TenantEventV1 => ({
+  type: "TenantCreated",
   timestamp: new Date(),
   event_version: 1,
   version: version || 1,
   stream_id: stream_id || generateId(),
   data: {
-    eservice: eserviceV1,
+    tenant: tenantV1,
+  },
+});
+
+export const createTenantEventV2 = (
+  tenantV2: TenantV2 | undefined,
+  stream_id?: string,
+  version?: number,
+): TenantEventV2 => ({
+  type: "TenantOnboarded",
+  timestamp: new Date(),
+  event_version: 2,
+  version: version || 1,
+  stream_id: stream_id || generateId(),
+  data: {
+    tenant: tenantV2,
   },
 });
 
@@ -167,6 +186,72 @@ export const mockEserviceCloneV2: EServiceEventV2 = {
   type: "EServiceCloned",
   data: { eservice: {} } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
 };
+
+export const mockTenantDeleteV1: TenantEventV1 = {
+  event_version: 1,
+  version: 1,
+  type: "TenantDeleted",
+  timestamp: new Date(),
+  stream_id: "1",
+  data: {
+    tenantId: generateId(),
+  },
+};
+
+export const mockTenantDeleteV2: TenantEventV2 = {
+  event_version: 2,
+  version: 1,
+  type: "MaintenanceTenantDeleted",
+  timestamp: new Date(),
+  stream_id: "1",
+  data: {
+    tenantId: generateId(),
+  },
+};
+
+export const mockTenantUpdateV1 = (tenantId: string): TenantEventV1 => ({
+  type: "TenantUpdated",
+  timestamp: new Date(),
+  event_version: 1,
+  version: 1,
+  stream_id: generateId(),
+  data: {
+    tenant: {
+      id: tenantId,
+      name: "tenant name",
+      externalId: {
+        origin: "origin",
+        value: "invalid uuid",
+      },
+      features: [],
+      attributes: [],
+      createdAt: 1n,
+    },
+  },
+});
+
+export const mockTenantUpdateV2 = (tenantId: string): TenantEventV2 => ({
+  type: "TenantOnboardDetailsUpdated",
+  timestamp: new Date(),
+  event_version: 2,
+  version: 1,
+  stream_id: generateId(),
+  data: {
+    tenant: {
+      id: tenantId,
+      selfcareId: "selfcareId",
+      name: "tenant name",
+      externalId: {
+        origin: "origin",
+        value: "invalid uuid",
+      },
+      features: [],
+      attributes: [],
+      createdAt: 1n,
+      onboardedAt: 1n,
+    },
+  },
+});
 
 export function mockApiClientError(
   status: number,
