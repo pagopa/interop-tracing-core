@@ -1,10 +1,10 @@
 import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  decodeSQSMessageError: "0501",
-  errorProcessingSavePurposeError: "0502",
-  errorProcessingUpdateTracingState: "0503",
-  decodeSQSMessageCorrelationIdError: "0504",
+  decodeSQSMessageError: "DECODE_SQS_MESSAGE_ERROR",
+  errorProcessingSavePurposeError: "ERROR_PROCESSING_SAVE_PURPOSE_ERROR",
+  errorProcessingUpdateTracingState: "ERROR_PROCESSING_UPDATE_TRACING_STATE",
+  decodeSQSMessageCorrelationIdError: "DECODE_SQS_MESSAGE_CORRELATION_ID_ERROR",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;
