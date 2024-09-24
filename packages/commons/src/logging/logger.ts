@@ -6,8 +6,13 @@ export type LoggerMetadata = {
   serviceName?: string;
   correlationId?: string;
   messageId?: string | null | undefined;
-  purposeId?: string;
   tenantId?: string;
+  eventType?: string;
+  eventVersion?: number;
+  streamId?: string;
+  version?: number;
+  eserviceId?: string;
+  purposeId?: string;
 };
 
 const parsedLoggerConfig = LoggerConfig.safeParse(process.env);

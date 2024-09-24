@@ -8,6 +8,8 @@ tags:
     description: Operations related to tracings
   - name: Tenants
     description: Operations related to tenants
+  - name: Purposes
+    description: Operations related to purposes
 paths:
   /tracings/submit:
     post:
@@ -531,6 +533,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /purposes:
+    post:
+      summary: Save purpose
+      operationId: savePurpose
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Purposes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavePurposesRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /purposes/{purposeId}:
+    delete:
+      summary: Delete purpose
+      operationId: deletePurpose
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: purposeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the purpose
+      tags:
+        - Purposes
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
 
 components:
   schemas:
@@ -735,6 +817,23 @@ components:
           type: number
         previousState:
           $ref: "#/components/schemas/TracingState"
+    SavePurposesRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumer_id:
+          type: string
+          format: uuid
+        eservice_id:
+          type: string
+          format: uuid
+        purpose_title:
+          type: string
+          format: string
+      required:
+        - date
     Problem:
       properties:
         type:

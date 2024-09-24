@@ -85,6 +85,19 @@ export async function findPurposeErrors(db: DB): Promise<PurposeError[]> {
   return await db.any<PurposeError>(selectPurposeErrorQuery);
 }
 
+export async function findPurposeById(
+  id: string,
+  db: DB,
+): Promise<Purpose | null> {
+  const selectPurposeQuery = `
+      SELECT * 
+      FROM tracing.purposes 
+      WHERE id = $1
+    `;
+
+  return await db.oneOrNone<Purpose | null>(selectPurposeQuery, [id]);
+}
+
 export async function addEservice(
   eServiceValues: { eservice_id: string; producer_id: string },
   db: DB,
