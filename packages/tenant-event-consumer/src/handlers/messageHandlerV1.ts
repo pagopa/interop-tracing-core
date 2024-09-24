@@ -30,9 +30,9 @@ export async function handleMessageV1(
           { ...correlationIdToHeader(ctx.correlationId) },
           {
             tenantId: tenant.id,
-            externalId: tenant.externalId?.value,
-            origin: tenant.externalId?.origin,
-            name: tenant.name,
+            externalId: tenant.externalId?.value || "TODO",
+            origin: tenant.externalId?.origin || "TODO",
+            name: tenant.name || "TODO",
           },
           logger,
         );
