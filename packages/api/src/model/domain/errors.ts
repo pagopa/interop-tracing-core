@@ -9,9 +9,9 @@ import { AxiosError } from "axios";
 import { errorMapper } from "../../utilities/errorMapper.js";
 
 export const errorCodes = {
-  writeObjectS3BucketError: "0001",
-  updateTracingStateError: "0002",
-  cancelTracingStateAndVersionError: "0003",
+  writeObjectS3BucketError: "WRITE_OBJECT_S3_BUCKET_ERROR",
+  updateTracingStateError: "UPDATE_TRACING_STATE_ERROR",
+  cancelTracingStateAndVersionError: "CANCEL_TRACING_STATE_AND_VERSION_ERROR",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;
