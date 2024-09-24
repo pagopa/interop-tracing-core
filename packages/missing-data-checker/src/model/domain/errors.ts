@@ -8,7 +8,7 @@ export const errorCodes = {
 export type ErrorCodes = keyof typeof errorCodes;
 
 export function errorSaveMissingTracing(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -17,7 +17,7 @@ export function errorSaveMissingTracing(
 }
 
 export function errorGetTenantsWithMissingTracings(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,

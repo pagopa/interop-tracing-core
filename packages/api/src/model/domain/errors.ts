@@ -20,7 +20,7 @@ export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
 export const resolveApiProblem = (error: unknown, logger: Logger): Problem => {
   const axiosApiProblem = Problem.safeParse(
-    (error as AxiosError).response?.data
+    (error as AxiosError).response?.data,
   );
 
   if (axiosApiProblem.success) {
@@ -32,7 +32,7 @@ export const resolveApiProblem = (error: unknown, logger: Logger): Problem => {
 };
 
 export function writeObjectS3BucketError(
-  detail: unknown
+  detail: unknown,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -41,7 +41,7 @@ export function writeObjectS3BucketError(
 }
 
 export function updateTracingStateError(
-  detail: unknown
+  detail: unknown,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -50,7 +50,7 @@ export function updateTracingStateError(
 }
 
 export function cancelTracingStateAndVersionError(
-  detail: unknown
+  detail: unknown,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,

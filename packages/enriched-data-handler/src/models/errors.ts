@@ -12,7 +12,7 @@ export const errorCodes = {
 export type ErrorCodes = keyof typeof errorCodes;
 
 export function decodeSQSEventMessageError(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -21,7 +21,7 @@ export function decodeSQSEventMessageError(
 }
 
 export function readObjectBucketS3Error(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -30,7 +30,7 @@ export function readObjectBucketS3Error(
 }
 
 export function insertEnrichedTraceError(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
@@ -39,7 +39,7 @@ export function insertEnrichedTraceError(
 }
 
 export function sendTracingUpdateStateMessageError(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,

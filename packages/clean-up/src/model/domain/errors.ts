@@ -7,7 +7,7 @@ export const errorCodes = {
 export type ErrorCodes = keyof typeof errorCodes;
 
 export function errorDeletePurposesErrors(
-  detail: string
+  detail: string,
 ): InternalError<ErrorCodes> {
   return new InternalError({
     detail: `${detail}`,
