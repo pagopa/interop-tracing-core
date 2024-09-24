@@ -588,7 +588,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: The ID of the purpose
+          description: The ID of the eservice
       tags:
         - Eservices
       responses:
