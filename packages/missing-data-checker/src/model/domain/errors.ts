@@ -1,8 +1,8 @@
 import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  errorSaveMissingTracing: "0601",
-  errorGetTenantsWithMissingTracings: "0602",
+  errorSaveMissingTracing: "ERROR_SAVE_MISSING_TRACING",
+  errorGetTenantsWithMissingTracings: "ERROR_GET_TENANTS_WITH_MISSING_TRACINGS",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;

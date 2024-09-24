@@ -43,6 +43,7 @@ import {
   addTracing,
   clearPurposesErrors,
   clearTracings,
+  findPurposeById,
   findPurposeErrors,
   findTracingById,
   findEserviceById,
@@ -1244,7 +1245,7 @@ describe("database test", () => {
 
         await expect(
           operationsService.saveEservice(invalidEservicePayload, genericLogger),
-        ).rejects.toThrowError(/invalid_uuid/);
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
 
@@ -1279,7 +1280,87 @@ describe("database test", () => {
             invalidEserviceParams,
             genericLogger,
           ),
-        ).rejects.toThrowError(/invalid_uuid/);
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("savePurpose", () => {
+      it("should save a purpose successfully", async () => {
+        const purposePayload = {
+          id: generateId<PurposeId>(),
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.savePurpose(purposePayload, genericLogger);
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result).toStrictEqual(purposePayload);
+      });
+
+      it("should add existing purpose successfully", async () => {
+        let purposePayload = {
+          id: generateId<PurposeId>(),
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+        await addPurpose(purposePayload, dbInstance);
+        const purpose_title = "New Purpose Title";
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        purposePayload = { ...purposePayload, purpose_title };
+        await operationsService.savePurpose(purposePayload, genericLogger);
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result?.purpose_title).toBe(purpose_title);
+      });
+
+      it("should throw an error if the purpose payload is invalid", async () => {
+        const invalidPurposePayload = {
+          id: "invalid_id_format",
+          purpose_title: "New Purpose Title",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.savePurpose(invalidPurposePayload, genericLogger),
+        ).rejects.toThrowError(/Unable to parse purpose/);
+      });
+    });
+
+    describe("deletePurpose", () => {
+      it("should delete a purpose successfully", async () => {
+        const purposeId = generateId<PurposeId>();
+        const purposePayload = {
+          id: purposeId,
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+
+        await addPurpose(purposePayload, dbInstance);
+
+        const logger = genericLogger;
+
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.deletePurpose({ purposeId }, logger);
+
+        const result = await findPurposeById(purposeId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should throw an error if deleting a non-existent purpose", async () => {
+        const purposeId = "non_existent_id";
+        const logger = genericLogger;
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deletePurpose({ purposeId }, logger),
+        ).rejects.toThrowError(/deletePurpose/);
       });
     });
   });

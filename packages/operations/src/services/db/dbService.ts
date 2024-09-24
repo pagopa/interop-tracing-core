@@ -8,6 +8,7 @@ import {
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
   Eservice,
+  Purpose,
   PurposeError,
   Tracing,
   UpdateTracingState,
@@ -414,6 +415,39 @@ export function dbServiceBuilder(db: DB) {
         await db.none(deleteEserviceQuery, [data.eservice_id]);
       } catch (error) {
         throw dbServiceErrorMapper("deleteEservice", error);
+      }
+    },
+
+    async savePurpose(purpose: Purpose) {
+      try {
+        const upsertPurposeQuery = `
+          INSERT INTO tracing.purposes (id, consumer_id, eservice_id, purpose_title)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (id) 
+          DO UPDATE SET consumer_id = $2, eservice_id = $3, purpose_title = $4
+          RETURNING id;
+        `;
+
+        return await db.one(upsertPurposeQuery, [
+          purpose.id,
+          purpose.consumer_id,
+          purpose.eservice_id,
+          purpose.purpose_title,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("savePurpose", error);
+      }
+    },
+
+    async deletePurpose(purposeId: string) {
+      try {
+        const deletePurposeQuery = `
+          DELETE FROM tracing.purposes WHERE id = $1;
+        `;
+
+        await db.none(deletePurposeQuery, [purposeId]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deletePurpose", error);
       }
     },
   };

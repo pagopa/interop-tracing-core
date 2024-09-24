@@ -25,6 +25,8 @@ import {
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
   ApiDeletePurposesErrorsResponse,
+  ApiSavePurposePayload,
+  ApiDeletePurposeParams,
   ApiSaveEservicePayload,
   ApiSaveEserviceResponse,
   ApiDeleteEserviceParams,
@@ -46,6 +48,7 @@ import {
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
 import { tracingCannotBeCancelled } from "../model/domain/errors.js";
+import { PurposeSchema } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -318,6 +321,26 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(`Delete eService with eserviceId: ${params.eserviceId}`);
 
       await dbService.deleteEservice({ eservice_id: params.eserviceId });
+    },
+
+    async savePurpose(purposePayload: ApiSavePurposePayload, logger: Logger) {
+      logger.info(`Saving purpose with id ${purposePayload.id}`);
+
+      const purpose = PurposeSchema.safeParse(purposePayload);
+
+      if (!purpose.success) {
+        throw new Error(
+          `Unable to parse purpose: ${JSON.stringify(purpose.error.message)}`,
+        );
+      }
+
+      return await dbService.savePurpose(purpose.data);
+    },
+
+    async deletePurpose(params: ApiDeletePurposeParams, logger: Logger) {
+      const purposeId = params.purposeId;
+      logger.info(`Deleting purpose with id ${purposeId}`);
+      return await dbService.deletePurpose(purposeId);
     },
   };
 }
