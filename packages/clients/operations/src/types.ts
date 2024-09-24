@@ -248,6 +248,43 @@ export type ApiSaveMissingTracingParams = ZodiosPathParamsByPath<
   "post",
   "/tenants/:tenantId/tracings/missing"
 >;
+
+export type ApiSaveEserviceHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "post",
+  "/eservices"
+>;
+
+export type ApiSaveEservicePayload = ZodiosBodyByPath<
+  Api,
+  "post",
+  "/eservices"
+>;
+
+export type ApiSaveEserviceResponse = ZodiosResponseByPath<
+  Api,
+  "post",
+  "/eservices"
+>;
+
+export type ApiDeleteEserviceHeaders = ZodiosHeaderParamsByPath<
+  Api,
+  "delete",
+  "/eservices/:eserviceId"
+>;
+
+export type ApiDeleteEserviceParams = ZodiosPathParamsByPath<
+  Api,
+  "delete",
+  "/eservices/:eserviceId"
+>;
+
+export type ApiDeleteEserviceResponse = ZodiosResponseByPath<
+  Api,
+  "delete",
+  "/eservices/:eserviceId"
+>;
+
 export type ApiSavePurposePayload = ZodiosBodyByPath<Api, "post", "/purposes">;
 
 export type ApiSavePurposeResponse = ZodiosResponseByPath<

@@ -32,6 +32,7 @@ import {
   tracingNotFound,
   tracingState,
   tracingReplaceCannotBeUpdated,
+  EserviceId,
 } from "pagopa-interop-tracing-models";
 import { StartedTestContainer } from "testcontainers";
 import {
@@ -45,6 +46,7 @@ import {
   findPurposeById,
   findPurposeErrors,
   findTracingById,
+  findEserviceById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -101,7 +103,10 @@ describe("database test", () => {
     dbService = dbServiceBuilder(dbInstance);
     operationsService = operationsServiceBuilder(dbService);
 
-    await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
+    await addEservice(
+      { eservice_id, producer_id: generateId(), name: "eservice name" },
+      dbInstance,
+    );
 
     await addTenant(
       {
@@ -1177,10 +1182,105 @@ describe("database test", () => {
         );
 
         await operationsService.deletePurposesErrors(genericLogger);
-
         const purposesErrors = await findPurposeErrors(dbInstance);
-
         expect(purposesErrors.length).toBe(0);
+      });
+    });
+
+    describe("saveEservice", () => {
+      it("should save an eservice successfully", async () => {
+        const eservicePayload = {
+          producerId: generateId(),
+          eserviceId: generateId(),
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(
+          eservicePayload.eserviceId,
+          dbInstance,
+        );
+
+        expect(result?.eservice_id).toBe(eservicePayload.eserviceId);
+      });
+
+      it("should update name of existing eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const producerId = generateId<TenantId>();
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+
+        const eservicePayload = {
+          eserviceId: eserviceId,
+          producerId: producerId,
+          name: "eservice name updated",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result?.name).toBe(eservicePayload.name);
+      });
+
+      it("should throw an error if the eservice payload is invalid", async () => {
+        const invalidEservicePayload = {
+          producerId: generateId(),
+          eserviceId: "invalid_uuid",
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveEservice(invalidEservicePayload, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("deleteEservice", () => {
+      it("should delete an eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+        await operationsService.deleteEservice({ eserviceId }, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should throw an error if the eserviceId param is invalid", async () => {
+        const invalidEserviceParams = {
+          eserviceId: "invalid_uuid",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deleteEservice(
+            invalidEserviceParams,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
 
@@ -1224,15 +1324,14 @@ describe("database test", () => {
           purpose_title: "New Purpose Title",
         };
 
-        const logger = genericLogger;
-
         const operationsService = operationsServiceBuilder(dbService);
 
         await expect(
-          operationsService.savePurpose(invalidPurposePayload, logger),
+          operationsService.savePurpose(invalidPurposePayload, genericLogger),
         ).rejects.toThrowError(/Unable to parse purpose/);
       });
     });
+
     describe("deletePurpose", () => {
       it("should delete a purpose successfully", async () => {
         const purposeId = generateId<PurposeId>();

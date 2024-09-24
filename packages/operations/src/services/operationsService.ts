@@ -27,6 +27,10 @@ import {
   ApiDeletePurposesErrorsResponse,
   ApiSavePurposePayload,
   ApiDeletePurposeParams,
+  ApiSaveEservicePayload,
+  ApiSaveEserviceResponse,
+  ApiDeleteEserviceParams,
+  ApiDeleteEserviceResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -293,6 +297,30 @@ export function operationsServiceBuilder(dbService: DBService) {
         results: parsedTracingErrors.data,
         totalCount: data.totalCount,
       };
+    },
+
+    async saveEservice(
+      payload: ApiSaveEservicePayload,
+      logger: Logger,
+    ): Promise<ApiSaveEserviceResponse> {
+      logger.info(
+        `Upsert eService with eserviceId: ${payload.eserviceId}, producerId: ${payload.producerId}`,
+      );
+
+      await dbService.saveEservice({
+        eservice_id: payload.eserviceId,
+        producer_id: payload.producerId,
+        name: payload.name,
+      });
+    },
+
+    async deleteEservice(
+      params: ApiDeleteEserviceParams,
+      logger: Logger,
+    ): Promise<ApiDeleteEserviceResponse> {
+      logger.info(`Delete eService with eserviceId: ${params.eserviceId}`);
+
+      await dbService.deleteEservice({ eservice_id: params.eserviceId });
     },
 
     async savePurpose(purposePayload: ApiSavePurposePayload, logger: Logger) {

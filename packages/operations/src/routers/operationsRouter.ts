@@ -56,6 +56,30 @@ const operationsRouter = (
     },
   );
 
+  operationsRouter.post("/eservices", async (req, res) => {
+    try {
+      const eservice = await operationsService.saveEservice(
+        req.body,
+        logger(req.ctx),
+      );
+
+      return res.status(204).json(eservice).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/eservices/:eserviceId", async (req, res) => {
+    try {
+      await operationsService.deleteEservice(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
   operationsRouter.post(
     "/tracings/:tracingId/recover",
     purposeAuthorizerMiddleware(),

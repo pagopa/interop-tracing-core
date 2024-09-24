@@ -2,12 +2,12 @@ import {
   PurposeId,
   TenantId,
   TracingState,
-  genericInternalError,
   tracingAlreadyExists,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
+  Eservice,
   Purpose,
   PurposeError,
   Tracing,
@@ -232,14 +232,6 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async replaceTracing() {
-      try {
-        return Promise.resolve();
-      } catch (error) {
-        throw genericInternalError(`error: ${error}`);
-      }
-    },
-
     async updateTracingState(data: UpdateTracingState): Promise<void> {
       try {
         const updateTracingStateQuery = `
@@ -388,6 +380,41 @@ export function dbServiceBuilder(db: DB) {
         };
       } catch (error) {
         throw dbServiceErrorMapper("getTenantsWithMissingTracings", error);
+      }
+    },
+
+    async saveEservice(data: Eservice): Promise<void> {
+      try {
+        const upsertEserviceQuery = `
+          INSERT INTO tracing.eservices (
+            eservice_id, 
+            producer_id, 
+            name
+          ) VALUES ($1, $2, $3)
+          ON CONFLICT (eservice_id) 
+          DO UPDATE SET 
+            producer_id = EXCLUDED.producer_id,
+            name = EXCLUDED.name
+        `;
+
+        await db.none(upsertEserviceQuery, [
+          data.eservice_id,
+          data.producer_id,
+          data.name,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveEservice", error);
+      }
+    },
+
+    async deleteEservice(data: { eservice_id: string }): Promise<void> {
+      try {
+        const deleteEserviceQuery = `
+          DELETE FROM tracing.eservices WHERE eservice_id = $1;`;
+
+        await db.none(deleteEserviceQuery, [data.eservice_id]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteEservice", error);
       }
     },
 
