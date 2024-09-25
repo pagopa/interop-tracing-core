@@ -27,6 +27,19 @@ export async function addTenant(tenantValues: Tenant, db: DB) {
   return await db.one(insertTenantQuery, Object.values(tenantValues));
 }
 
+export async function findTenantById(
+  id: string,
+  db: DB,
+): Promise<Tenant | null> {
+  const selectTenantQuery = `
+      SELECT * 
+      FROM tracing.tenants
+      WHERE id = $1
+    `;
+
+  return await db.oneOrNone(selectTenantQuery, [id]);
+}
+
 export async function addPurposeError(
   purposeErrorValues: PurposeError,
   db: DB,

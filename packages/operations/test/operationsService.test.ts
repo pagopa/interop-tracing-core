@@ -47,6 +47,7 @@ import {
   findPurposeErrors,
   findTracingById,
   findEserviceById,
+  findTenantById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -113,7 +114,7 @@ describe("database test", () => {
         id: tenantId,
         name: "pagoPa",
         origin: "external",
-        externalId: generateId(),
+        external_id: generateId(),
         deleted: false,
       },
       dbInstance,
@@ -124,7 +125,7 @@ describe("database test", () => {
         id: secondTenantId,
         name: "pagoPa 2",
         origin: "external 2",
-        externalId: generateId(),
+        external_id: generateId(),
         deleted: false,
       },
       dbInstance,
@@ -1361,6 +1362,104 @@ describe("database test", () => {
         await expect(
           operationsService.deletePurpose({ purposeId }, logger),
         ).rejects.toThrowError(/deletePurpose/);
+      });
+    });
+
+    describe("saveTenant", () => {
+      it("should save an tenant successfully", async () => {
+        const tenantPayload = {
+          tenantId: generateId(),
+          name: "tenant name",
+          origin: "tenant origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveTenant(tenantPayload, genericLogger);
+
+        const result = await findTenantById(tenantPayload.tenantId, dbInstance);
+
+        expect(result?.id).toBe(tenantPayload.tenantId);
+      });
+
+      it("should update name of existing tenant successfully", async () => {
+        const tenantId = generateId<TenantId>();
+
+        await addTenant(
+          {
+            id: tenantId,
+            name: "tenant name",
+            origin: "origin",
+            external_id: generateId(),
+            deleted: false,
+          },
+          dbInstance,
+        );
+
+        const tenantPayload = {
+          tenantId,
+          name: "tenant name updated",
+          origin: "tenant origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveTenant(tenantPayload, genericLogger);
+
+        const result = await findTenantById(tenantId, dbInstance);
+
+        expect(result?.name).toBe(tenantPayload.name);
+      });
+
+      it("should throw an error if the tenant payload is invalid", async () => {
+        const invalidTenantPayload = {
+          tenantId: "invalid_external_id",
+          name: "tenant name",
+          origin: "origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveTenant(invalidTenantPayload, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("deleteTenant", () => {
+      it("should delete an tenant successfully", async () => {
+        const tenantId = generateId<TenantId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addTenant(
+          {
+            id: tenantId,
+            name: "tenant name",
+            origin: "origin",
+            external_id: generateId(),
+            deleted: false,
+          },
+          dbInstance,
+        );
+        await operationsService.deleteTenant({ tenantId }, genericLogger);
+
+        const result = await findTenantById(tenantId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should throw an error if the tenantId param is invalid", async () => {
+        const invalidTenantParams = {
+          tenantId: "invalid_tenant_id",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deleteTenant(invalidTenantParams, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
   });
