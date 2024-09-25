@@ -4,23 +4,16 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import {
-  AppContext,
-  WithSQSMessageId,
-  logger,
-} from "pagopa-interop-tracing-commons";
 import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
-// import {
-//   readObjectBucketS3Error,
-//   writeObjectBucketS3Error,
-// } from "../models/errors.js";
+import path from "path";
+import fs from "fs";
+import { ExpressMulterFile } from "../model/multer.js";
 
 export type FileManager = {
   writeObject: (
-    input: string[] | Buffer,
-    s3KeyPath: string,
-    contentType: string,
-    ctx: WithSQSMessageId<AppContext>,
+    input: string[] | Buffer | ExpressMulterFile,
+    bucketS3Key: string,
+    headers?: (keyof string)[],
   ) => Promise<void>;
   readObject: (s3KeyFile: string) => Promise<string[]>;
 };
@@ -28,33 +21,50 @@ export type FileManager = {
 export const fileManagerBuilder = (
   s3Client: S3Client,
   bucketS3Name: string,
-  bucketEnrichedS3Name: string,
-  headers: (keyof string)[],
 ): FileManager => {
   return {
     async writeObject(
-      input: string[] | Buffer,
-      s3KeyPath: string,
-      contentType: string,
-      ctx: WithSQSMessageId<AppContext>,
-    ) {
+      input: string[] | Buffer | ExpressMulterFile,
+      bucketS3Key: string,
+      headers?: (keyof string)[],
+    ): Promise<void> {
       try {
-        const body: Buffer = Buffer.isBuffer(input)
-          ? input
-          : Buffer.from(generateCSV(input, headers));
+        let body: Buffer;
+        let contentType: string;
 
-        const params = {
-          Bucket: bucketEnrichedS3Name,
-          Key: s3KeyPath,
+        if (Array.isArray(input)) {
+          if (!headers) {
+            throw new Error(
+              "Headers must be provided when input is an array of strings.",
+            );
+          }
+          const csvData = generateCSV(input, headers);
+          body = Buffer.from(csvData);
+          contentType = "text/csv";
+        } else if (input instanceof Buffer) {
+          body = input;
+          contentType = "application/octet-stream";
+        } else if (input.path && input.mimetype) {
+          if (input.buffer) {
+            body = input.buffer;
+          } else {
+            const filePath = path.resolve(input.path);
+            body = await fs.promises.readFile(filePath);
+          }
+          contentType = input.mimetype;
+        } else {
+          throw new Error("Invalid input type provided.");
+        }
+
+        const putObjectParams = {
+          Bucket: bucketS3Name,
+          Key: bucketS3Key,
           Body: body,
           ContentType: contentType,
         };
-
-        await s3Client.send(new PutObjectCommand(params));
-        logger(ctx).info(`File uploaded successfully with path: ${s3KeyPath}`);
-      } catch (error) {
-        // Uncomment this line to throw a custom error
-        // throw writeObjectBucketS3Error(`Error writing object: ${error}`);
+        await s3Client.send(new PutObjectCommand(putObjectParams));
+      } catch (error: unknown) {
+        throw new Error(`Error writing object to S3: ${error}`);
       }
     },
 
@@ -73,8 +83,6 @@ export const fileManagerBuilder = (
         const csvData = await parseCSV<string>(s3Object.Body as Readable);
         return csvData;
       } catch (error) {
-        // Uncomment this line to throw a custom error
-        // throw readObjectBucketS3Error(`Error fetching object: ${error}`);
         throw new Error(`Failed to read object: ${error}`);
       }
     },

@@ -10,10 +10,10 @@ import tracingRouter from "./routers/tracingRouter.js";
 import healthRouter from "./routers/healthRouter.js";
 import { config } from "./utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "./services/bucketService.js";
+// import {
+//   BucketService,
+//   bucketServiceBuilder,
+// } from "./services/bucketService.js";
 import {
   OperationsService,
   operationsServiceBuilder,
@@ -24,13 +24,21 @@ import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "./model/types.js";
 import { LocalExpressContext, localZodiosCtx } from "./context/index.js";
 import { authenticationMiddleware } from "./auth/index.js";
+import {
+  FileManager,
+  fileManagerBuilder,
+} from "../../commons/src/file-manager/fileManager.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
   operationsServiceBuilder(operationsApiClient);
 
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
-const bucketService: BucketService = bucketServiceBuilder(s3client);
+const bucketService: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
+console.log("bucketService", bucketService);
 
 const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
 
