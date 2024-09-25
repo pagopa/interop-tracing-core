@@ -12,9 +12,9 @@ export async function parseCSV<T>(stream: Readable): Promise<T[]> {
   });
 }
 
-export function generateCSV<T>(
-  records: T[],
-  headers: (keyof T)[],
+export function generateCSV(
+  records: string[],
+  headers: (keyof string)[],
   extraFields: { [key: string]: string } = {},
 ): string {
   const headerRow = headers.join(",");
@@ -24,7 +24,8 @@ export function generateCSV<T>(
       return headers
         .map((header) => {
           const field = record[header];
-          return field === null || field === undefined ? "" : field.toString();
+
+          return field === null || field === undefined ? "" : String(field);
         })
         .concat(Object.values(extraFields))
         .join(",");

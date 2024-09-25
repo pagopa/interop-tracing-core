@@ -17,7 +17,7 @@ import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
 
 export type FileManager = {
   writeObject: (
-    input: string | Buffer,
+    input: string[] | Buffer,
     s3KeyPath: string,
     contentType: string,
     ctx: WithSQSMessageId<AppContext>,
@@ -33,20 +33,15 @@ export const fileManagerBuilder = (
 ): FileManager => {
   return {
     async writeObject(
-      input: string | Buffer,
+      input: string[] | Buffer,
       s3KeyPath: string,
       contentType: string,
       ctx: WithSQSMessageId<AppContext>,
     ) {
       try {
-        let body: Buffer;
-
-        if (Buffer.isBuffer(input)) {
-          body = input;
-        } else {
-          const csvData = generateCSV(input, headers);
-          body = Buffer.from(csvData);
-        }
+        const body: Buffer = Buffer.isBuffer(input)
+          ? input
+          : Buffer.from(generateCSV(input, headers));
 
         const params = {
           Bucket: bucketEnrichedS3Name,
@@ -57,10 +52,9 @@ export const fileManagerBuilder = (
 
         await s3Client.send(new PutObjectCommand(params));
         logger(ctx).info(`File uploaded successfully with path: ${s3KeyPath}`);
-      } catch (error: unknown) {
-        // throw writeObjectBucketS3Error(
-        //   `Error writing object with path: ${s3KeyPath}. Details: ${error}`,
-        // );
+      } catch (error) {
+        // Uncomment this line to throw a custom error
+        // throw writeObjectBucketS3Error(`Error writing object: ${error}`);
       }
     },
 
@@ -69,6 +63,7 @@ export const fileManagerBuilder = (
         Bucket: bucketS3Name,
         Key: s3KeyFile,
       };
+
       try {
         const s3Object = await s3Client.send(new GetObjectCommand(params));
         if (!s3Object.Body) {
@@ -77,13 +72,10 @@ export const fileManagerBuilder = (
 
         const csvData = await parseCSV<string>(s3Object.Body as Readable);
         return csvData;
-      } catch (error: unknown) {
-        // throw readObjectBucketS3Error(
-        //   `Error fetching object from bucket with path: ${s3KeyFile}. Details: ${JSON.stringify(
-        //     error,
-        //   )}`,
-        // );
-        throw new Error();
+      } catch (error) {
+        // Uncomment this line to throw a custom error
+        // throw readObjectBucketS3Error(`Error fetching object: ${error}`);
+        throw new Error(`Failed to read object: ${error}`);
       }
     },
   };
