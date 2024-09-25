@@ -25,14 +25,16 @@ import {
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
   ApiDeletePurposesErrorsResponse,
+  ApiSavePurposePayload,
+  ApiDeletePurposeParams,
   ApiSaveEservicePayload,
   ApiSaveEserviceResponse,
   ApiDeleteEserviceParams,
   ApiDeleteEserviceResponse,
   ApiSaveTenantPayload,
+  ApiSaveTenantResponse,
   ApiDeleteTenantParams,
   ApiDeleteTenantResponse,
-  ApiSaveTenantResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -50,6 +52,7 @@ import {
   TracingsContentResponse,
 } from "../model/domain/tracing.js";
 import { tracingCannotBeCancelled } from "../model/domain/errors.js";
+import { PurposeSchema } from "../model/domain/db.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
@@ -346,6 +349,25 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(`Delete tenant with tenantId: ${params.tenantId}`);
 
       await dbService.deleteTenant({ id: params.tenantId });
+    },
+
+    async savePurpose(purposePayload: ApiSavePurposePayload, logger: Logger) {
+      logger.info(`Saving purpose with id ${purposePayload.id}`);
+
+      const purpose = PurposeSchema.safeParse(purposePayload);
+      if (!purpose.success) {
+        throw new Error(
+          `Unable to parse purpose: ${JSON.stringify(purpose.error.message)}`,
+        );
+      }
+
+      return await dbService.savePurpose(purpose.data);
+    },
+
+    async deletePurpose(params: ApiDeletePurposeParams, logger: Logger) {
+      const purposeId = params.purposeId;
+      logger.info(`Deleting purpose with id ${purposeId}`);
+      return await dbService.deletePurpose(purposeId);
     },
   };
 }

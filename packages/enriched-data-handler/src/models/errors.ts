@@ -1,12 +1,12 @@
 import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  decodeSQSEventMessageError: "0601",
-  readObjectBucketS3Error: "0602",
-  insertEnrichedTraceError: "0603",
-  insertTracesError: "0604",
-  deleteTracesError: "0605",
-  sendTracingUpdateStateMessageError: "0606",
+  decodeSQSEventMessageError: "DECODE_SQS_EVENT_MESSAGE_ERROR",
+  readObjectBucketS3Error: "READ_OBJECT_BUCKET_S3_ERROR",
+  insertEnrichedTraceError: "INSERT_ENRICHED_TRACE_ERROR",
+  insertTracesError: "INSERT_TRACES_ERROR",
+  deleteTracesError: "DELETE_TRACES_ERROR",
+  sendTracingUpdateStateMessageError: "SEND_TRACING_UPDATE_STATE_MESSAGE_ERROR",
 } as const;
 
 export type ErrorCodes = keyof typeof errorCodes;

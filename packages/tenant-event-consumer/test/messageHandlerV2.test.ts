@@ -8,9 +8,7 @@ import { config } from "../src/utilities/config.js";
 import {
   createTenantEventV2,
   mockApiClientError,
-  mockTenantDeleteV1,
   mockTenantDeleteV2,
-  mockTenantUpdateV1,
   mockTenantUpdateV2,
 } from "./utils.js";
 import { v4 as uuidv4 } from "uuid";

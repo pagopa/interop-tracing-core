@@ -6,12 +6,8 @@ import {
 } from "../src/services/operationsService.js";
 import { config } from "../src/utilities/config.js";
 import {
-  createEServiceV1,
   createTenantEventV1,
   mockApiClientError,
-  mockClonedEServiceAddedV1,
-  mockEserviceDeleteV1,
-  mockEserviceUpdateV1,
   mockTenantDeleteV1,
   mockTenantUpdateV1,
 } from "./utils.js";

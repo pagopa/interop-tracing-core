@@ -4,10 +4,10 @@ import {
 } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  tracingNotFound: "0001",
-  tenantNotFound: "0002",
-  tracingAlreadyExists: "0003",
-  tracingCannotBeCancelled: "1000",
+  tracingNotFound: "TRACING_NOT_FOUND",
+  tenantNotFound: "TENANT_NOT_FOUND",
+  tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
+  tracingCannotBeCancelled: "TRACING_CANNOT_BE_CANCELLED",
 };
 
 export type ErrorCodes = keyof typeof errorCodes;

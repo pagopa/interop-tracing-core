@@ -1,0 +1,37 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
+    "default-case": "off",
+    "prefer-arrow/prefer-arrow-functions": "off",
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "sort-keys": "off",
+    "functional/prefer-readonly-type": "off",
+    "@typescript-eslint/no-shadow": "off",
+    "extra-rules/no-commented-out-code": "off",
+    "max-lines-per-function": "off",
+    "@typescript-eslint/naming-convention": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/await-thenable": "off"
+  },
+  "ignorePatterns": [
+    ".eslintrc",
+    "**/src/model/generated/*.ts",
+    "vitest.config.ts",
+    "**/dist"
+  ]
+}
