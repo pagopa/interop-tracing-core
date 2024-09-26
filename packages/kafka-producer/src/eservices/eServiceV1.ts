@@ -1,5 +1,4 @@
 import {
-  EServiceAddedV1,
   EServiceDescriptorStateV1,
   EServiceDescriptorV1,
   EServiceEvent,
@@ -13,21 +12,19 @@ import { tenantIdV1 } from "../tenants/tenantsV1.js";
 
 export const eServiceIdV1 = randomUUID();
 
-const eServiceAddedV1: EServiceAddedV1 = {
-  eservice: {
-    description: "",
-    descriptors: [],
-    id: eServiceIdV1,
-    name: "Eservice-test",
-    producerId: tenantIdV1,
-    technology: 1,
-  },
-};
-
-const eServiceAddedEvent: EServiceEvent = {
+const EServiceAdded: EServiceEvent = {
   event_version: 1,
   type: "EServiceAdded",
-  data: eServiceAddedV1,
+  data: {
+    eservice: {
+      description: "",
+      descriptors: [],
+      id: eServiceIdV1,
+      name: "Eservice-test",
+      producerId: tenantIdV1,
+      technology: 1,
+    },
+  },
   stream_id: "1",
   version: 1,
   timestamp: new Date(),
@@ -45,15 +42,21 @@ const descriptor: EServiceDescriptorV1 = {
   voucherLifespan: 10,
 };
 
-const eServiceDescriptorAdded: EServiceEvent = {
+const ClonedEServiceAdded: EServiceEventV1 = {
   event_version: 1,
-  type: "EServiceDescriptorAdded",
+  version: 1,
+  type: "ClonedEServiceAdded",
   timestamp: new Date(),
   stream_id: "1",
-  version: 2,
   data: {
-    eserviceId: eServiceIdV1,
-    eserviceDescriptor: descriptor,
+    eservice: {
+      description: "",
+      technology: EServiceTechnologyV1.REST,
+      id: eServiceIdV1,
+      name: "",
+      producerId: tenantIdV1,
+      descriptors: [descriptor, descriptor],
+    },
   },
 };
 
@@ -86,20 +89,20 @@ const EserviceDeleted: EServiceEventV1 = {
   },
 };
 
-export const EserviceEventType = z.union([
+export const EserviceEventTypeV1 = z.union([
   z.literal("EServiceAdded"),
-  z.literal("EServiceDescriptorAdded"),
+  z.literal("ClonedEServiceAdded"),
   z.literal("EServiceUpdated"),
   z.literal("EServiceDeleted"),
 ]);
-export type EserviceEventType = z.infer<typeof EserviceEventType>;
+export type EserviceEventTypeV1 = z.infer<typeof EserviceEventTypeV1>;
 
 export function getEserviceEventV1ByType(
-  type: EserviceEventType,
+  type: EserviceEventTypeV1,
 ): EServiceEvent {
   return match(type)
-    .with("EServiceAdded", () => eServiceAddedEvent)
-    .with("EServiceDescriptorAdded", () => eServiceDescriptorAdded)
+    .with("EServiceAdded", () => EServiceAdded)
+    .with("ClonedEServiceAdded", () => ClonedEServiceAdded)
     .with("EServiceUpdated", () => EserviceUpdated)
     .with("EServiceDeleted", () => EserviceDeleted)
     .exhaustive();

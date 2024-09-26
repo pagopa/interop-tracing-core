@@ -17,7 +17,7 @@ export const TenantCreated: TenantEventV1 = {
       name: "tenant name",
       externalId: {
         origin: "origin",
-        value: "invalid uuid",
+        value: randomUUID(),
       },
       features: [],
       attributes: [],
@@ -38,7 +38,7 @@ export const TenantUpdated: TenantEventV1 = {
       name: "tenant name",
       externalId: {
         origin: "origin",
-        value: "invalid uuid",
+        value: randomUUID(),
       },
       features: [],
       attributes: [],
@@ -58,14 +58,14 @@ export const TenantDeleted: TenantEventV1 = {
   },
 };
 
-export const TenantEventType = z.union([
+export const TenantEventTypeV1 = z.union([
   z.literal("TenantCreated"),
   z.literal("TenantUpdated"),
   z.literal("TenantDeleted"),
 ]);
-export type TenantEventType = z.infer<typeof TenantEventType>;
+export type TenantEventTypeV1 = z.infer<typeof TenantEventTypeV1>;
 
-export function getTenantEventV1ByType(type: TenantEventType): TenantEvent {
+export function getTenantEventV1ByType(type: TenantEventTypeV1): TenantEvent {
   return match(type)
     .with("TenantCreated", () => TenantCreated)
     .with("TenantUpdated", () => TenantUpdated)
