@@ -172,7 +172,7 @@ export const initProducer = async (
 
     genericLogger.debug("Producer connected");
 
-    for (let topic of topics.split(",")) {
+    for (const topic of topics.split(",")) {
       const topicExists = await validateTopicMetadata(kafka, [topic]);
       if (!topicExists) {
         processExit();
