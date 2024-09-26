@@ -141,10 +141,12 @@ const initKafka = (config: KafkaProducerConfig): Kafka => {
 
 export const initProducer = async (
   config: KafkaProducerConfig,
-  topic: string,
+  topics: string,
 ): Promise<
   Producer & {
-    send: (record: Omit<ProducerRecord, "topic">) => Promise<RecordMetadata[]>;
+    send: (
+      record: Omit<ProducerRecord, "topic"> & { topic: string },
+    ) => Promise<RecordMetadata[]>;
   }
 > => {
   try {
@@ -170,18 +172,17 @@ export const initProducer = async (
 
     genericLogger.debug("Producer connected");
 
-    const topicExists = await validateTopicMetadata(kafka, [topic]);
-    if (!topicExists) {
-      processExit();
+    for (let topic of topics.split(",")) {
+      const topicExists = await validateTopicMetadata(kafka, [topic]);
+      if (!topicExists) {
+        processExit();
+      }
     }
 
     return {
       ...producer,
-      send: async (record: Omit<ProducerRecord, "topic">) =>
-        await producer.send({
-          ...record,
-          topic,
-        }),
+      send: async (record: Omit<ProducerRecord, "topic"> & { topic: string }) =>
+        await producer.send(record),
     };
   } catch (e) {
     genericLogger.error(

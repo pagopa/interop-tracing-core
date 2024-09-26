@@ -10,6 +10,7 @@ import {
   TenantEventTypeV2,
   getTenantEventV2ByType,
 } from "../tenants/tenantsV2.js";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 
 const tenantRouter: Router = express.Router();
 
@@ -28,8 +29,11 @@ tenantRouter.get("/V1/:typeId", async (req, res, next) => {
   const message = produceTenantEvent(tenantEvent);
 
   await producer.send({
+    topic: "tenant",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V1 Message: ${message}`);
 
   res.send(tenantEvent);
 });
@@ -47,9 +51,13 @@ tenantRouter.get("/V2/:typeId", async (req, res, next) => {
 
   const tenantEvent = getTenantEventV2ByType(typeEvent.data!);
   const message = produceTenantEvent(tenantEvent);
+
   await producer.send({
+    topic: "tenant",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V2 Message: ${message}`);
 
   res.send(tenantEvent);
 });
@@ -59,6 +67,7 @@ tenantRouter.post("/", async (req, res) => {
 
   const message = produceTenantEvent(tenantEvent);
   await producer.send({
+    topic: "tenant",
     messages: [{ value: message }],
   });
 

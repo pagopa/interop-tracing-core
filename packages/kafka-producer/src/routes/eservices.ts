@@ -10,6 +10,7 @@ import {
   getEserviceEventV2ByType,
   EserviceEventTypeV2,
 } from "../eservices/eServiceV2.js";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 
 const eServiceRouter: Router = express.Router();
 
@@ -28,8 +29,11 @@ eServiceRouter.get("/V1/:typeId", async (req, res, next) => {
   const message = produceEserviceEvent(eServiceEvent);
 
   await producer.send({
+    topic: "eservice",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V1 Message: ${message}`);
 
   res.send(eServiceEvent);
 });
@@ -47,9 +51,13 @@ eServiceRouter.get("/V2/:typeId", async (req, res, next) => {
 
   const eServiceEvent = getEserviceEventV2ByType(typeEvent.data!);
   const message = produceEserviceEvent(eServiceEvent);
+
   await producer.send({
+    topic: "eservice",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V2 Message: ${message}`);
 
   res.send(eServiceEvent);
 });
@@ -59,6 +67,7 @@ eServiceRouter.post("/", async (req, res) => {
 
   const message = produceEserviceEvent(eServiceEvent);
   await producer.send({
+    topic: "eservice",
     messages: [{ value: message }],
   });
 

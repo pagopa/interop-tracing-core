@@ -8,8 +8,9 @@ import {
 import { match } from "ts-pattern";
 import { z } from "zod";
 import { tenantIdV2 } from "../tenants/tenantsV2.js";
+import { randomUUID } from "crypto";
 
-export const eServiceIdV2 = "6d2ceb4c-7a83-4b6d-9e7c-316edb289a8d";
+export const eServiceIdV2 = randomUUID();
 
 const eServiceAddedEventV2: EServiceEvent = {
   event_version: 2,

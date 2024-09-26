@@ -4,7 +4,7 @@ import { AWSConfig } from "pagopa-interop-tracing-commons";
 
 export const KafkaProducerConfig = z
   .object({
-    KAFKA_TOPIC: z.string(),
+    KAFKA_TOPICS: z.string(),
     KAFKA_BROKERS: z
       .string()
       .transform((s) => s.split(","))
@@ -27,7 +27,7 @@ export const KafkaProducerConfig = z
     kafkaDisableAwsIamAuth: c.KAFKA_DISABLE_AWS_IAM_AUTH === "true",
     kafkaLogLevel: logLevel[c.KAFKA_LOG_LEVEL],
     kafkaReauthenticationThreshold: c.KAFKA_REAUTHENTICATION_THRESHOLD,
-    kafkaTopic: c.KAFKA_TOPIC,
+    kafkaTopics: c.KAFKA_TOPICS,
   }));
 
 const parsedFromEnv = KafkaProducerConfig.safeParse(process.env);

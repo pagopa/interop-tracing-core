@@ -6,7 +6,7 @@ import { z } from "zod";
 import { tenantIdV1 } from "../tenants/tenantsV1.js";
 import { eServiceIdV1 } from "../eservices/eServiceV1.js";
 
-const purposeIdV1 = "cb488fcc-64c0-41ce-93d3-4f1c7d11cf2b";
+const purposeIdV1 = randomUUID();
 
 export const PurposeCreated: PurposeEventV1 = {
   type: "PurposeCreated",

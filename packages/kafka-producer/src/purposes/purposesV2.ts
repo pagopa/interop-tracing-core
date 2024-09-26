@@ -7,7 +7,7 @@ import { z } from "zod";
 import { tenantIdV2 } from "../tenants/tenantsV2.js";
 import { eServiceIdV2 } from "../eservices/eServiceV2.js";
 
-const purposeIdV2 = "5f8fbf96-9c8c-456b-a98f-86851ee20b0d";
+const purposeIdV2 = randomUUID();
 
 export const PurposeAdded: PurposeEventV2 = {
   type: "PurposeAdded",

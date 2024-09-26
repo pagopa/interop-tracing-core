@@ -16,9 +16,9 @@ export const producer = await initProducer(
     kafkaDisableAwsIamAuth: true,
     kafkaLogLevel: config.kafkaLogLevel,
     kafkaReauthenticationThreshold: config.kafkaReauthenticationThreshold,
-    kafkaTopic: config.kafkaTopic,
+    kafkaTopics: config.kafkaTopics,
   },
-  config.kafkaTopic,
+  config.kafkaTopics,
 );
 
 app.use(express.json());
@@ -29,6 +29,6 @@ app.use("/purposes", purposeRouter);
 app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(
-    `Kafka-producer topic: ${config.kafkaTopic} listening on port: ${port}`,
+    `Kafka-producer topics: [${config.kafkaTopics}] listening on port: ${port}`,
   );
 });

@@ -10,6 +10,7 @@ import {
 import { producePurposeEvent } from "../purposes/index.js";
 import { producer } from "../index.js";
 import { PurposeEvent } from "@pagopa/interop-outbound-models";
+import { genericLogger } from "pagopa-interop-tracing-commons";
 
 const purposeRouter: Router = express.Router();
 
@@ -26,9 +27,13 @@ purposeRouter.get("/V1/:typeId", async (req, res, next) => {
 
   const purposeEvent = getPurposeEventV1ByType(typeEvent.data!);
   const message = producePurposeEvent(purposeEvent);
+
   await producer.send({
+    topic: "purpose",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V1 Message: ${message}`);
 
   res.send(purposeEvent);
 });
@@ -46,9 +51,13 @@ purposeRouter.get("/V2/:typeId", async (req, res, next) => {
 
   const purposeEvent = getPurposeEventV2ByType(typeEvent.data!);
   const message = producePurposeEvent(purposeEvent);
+
   await producer.send({
+    topic: "purpose",
     messages: [{ value: message }],
   });
+
+  genericLogger.info(`EVENT V2 Message: ${message}`);
 
   res.send(purposeEvent);
 });
@@ -58,6 +67,7 @@ purposeRouter.post("/", async (req, res) => {
 
   const message = producePurposeEvent(purposeEvent);
   await producer.send({
+    topic: "purpose",
     messages: [{ value: message }],
   });
 
