@@ -26,6 +26,7 @@ tenantRouter.get("/V1/:typeId", async (req, res, next) => {
 
   const tenantEvent = getTenantEventV1ByType(typeEvent.data!);
   const message = produceTenantEvent(tenantEvent);
+
   await producer.send({
     messages: [{ value: message }],
   });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   EServiceDescriptorStateV1,
   EServiceDescriptorV1,
@@ -5,12 +6,11 @@ import {
   EServiceEventV1,
   EServiceTechnologyV1,
 } from "@pagopa/interop-outbound-models";
-import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
 import { tenantIdV1 } from "../tenants/tenantsV1.js";
 
-export const eServiceIdV1 = randomUUID();
+export const eServiceIdV1 = "0d3b6e7d-041f-4f19-928a-791606924235";
 
 const EServiceAdded: EServiceEvent = {
   event_version: 1,

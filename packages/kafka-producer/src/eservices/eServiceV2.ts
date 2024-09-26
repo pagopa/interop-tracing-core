@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   EServiceEvent,
   EServiceEventV2,
   EServiceModeV2,
   EServiceTechnologyV2,
 } from "@pagopa/interop-outbound-models";
-import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
 import { tenantIdV2 } from "../tenants/tenantsV2.js";
 
-export const eServiceIdV2 = randomUUID();
+export const eServiceIdV2 = "6d2ceb4c-7a83-4b6d-9e7c-316edb289a8d";
 
 const eServiceAddedEventV2: EServiceEvent = {
   event_version: 2,
@@ -18,7 +18,7 @@ const eServiceAddedEventV2: EServiceEvent = {
     eservice: {
       id: eServiceIdV2,
       producerId: tenantIdV2,
-      createdAt: 1n,
+      createdAt: "1" as any,
       description: "eService test description",
       mode: EServiceModeV2.RECEIVE,
       name: "eService test name",
@@ -42,7 +42,7 @@ const eServiceCloned: EServiceEvent = {
     eservice: {
       id: eServiceIdV2,
       producerId: tenantIdV2,
-      createdAt: 1n,
+      createdAt: "1" as any,
       description: "eService test description",
       mode: EServiceModeV2.RECEIVE,
       name: "eService test name",
@@ -66,7 +66,7 @@ const EServiceDescriptionUpdated: EServiceEventV2 = {
       name: "",
       producerId: tenantIdV2,
       descriptors: [],
-      createdAt: 1n,
+      createdAt: "1" as any,
       mode: EServiceModeV2.RECEIVE,
     },
   },

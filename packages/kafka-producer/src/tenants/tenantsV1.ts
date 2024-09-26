@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TenantEvent, TenantEventV1 } from "@pagopa/interop-outbound-models";
 import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-export const tenantIdV1 = randomUUID();
+export const tenantIdV1 = "180381f1-22b0-49f7-ae63-627deea4904a";
 
 export const TenantCreated: TenantEventV1 = {
   type: "TenantCreated",
@@ -21,7 +22,7 @@ export const TenantCreated: TenantEventV1 = {
       },
       features: [],
       attributes: [],
-      createdAt: 1n,
+      createdAt: "1" as any,
     },
   },
 };
@@ -42,7 +43,7 @@ export const TenantUpdated: TenantEventV1 = {
       },
       features: [],
       attributes: [],
-      createdAt: 1n,
+      createdAt: "1" as any,
     },
   },
 };

@@ -26,6 +26,7 @@ eServiceRouter.get("/V1/:typeId", async (req, res, next) => {
 
   const eServiceEvent = getEserviceEventV1ByType(typeEvent.data!);
   const message = produceEserviceEvent(eServiceEvent);
+
   await producer.send({
     messages: [{ value: message }],
   });

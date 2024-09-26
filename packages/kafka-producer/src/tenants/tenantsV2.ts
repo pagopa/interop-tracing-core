@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TenantEvent, TenantEventV2 } from "@pagopa/interop-outbound-models";
 import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-export const tenantIdV2 = randomUUID();
+export const tenantIdV2 = "b525c70c-fde5-41d2-8307-06f4fce05a72";
 
 export const TenantOnboarded: TenantEventV2 = {
   type: "TenantOnboardDetailsUpdated",
@@ -22,8 +23,8 @@ export const TenantOnboarded: TenantEventV2 = {
       },
       features: [],
       attributes: [],
-      createdAt: 1n,
-      onboardedAt: 1n,
+      createdAt: "1" as any,
+      onboardedAt: "1" as any,
     },
   },
 };
@@ -45,8 +46,8 @@ export const TenantOnboardDetailsUpdated: TenantEventV2 = {
       },
       features: [],
       attributes: [],
-      createdAt: 1n,
-      onboardedAt: 1n,
+      createdAt: "1" as any,
+      onboardedAt: "1" as any,
     },
   },
 };

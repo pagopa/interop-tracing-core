@@ -1294,14 +1294,22 @@ describe("database test", () => {
           purpose_title: "Purpose Title",
         };
         const operationsService = operationsServiceBuilder(dbService);
-        await operationsService.savePurpose(purposePayload, genericLogger);
+        await operationsService.savePurpose(
+          {
+            id: purposePayload.id,
+            consumerId: purposePayload.consumer_id,
+            eserviceId: purposePayload.eservice_id,
+            purposeTitle: purposePayload.purpose_title,
+          },
+          genericLogger,
+        );
 
         const result = await findPurposeById(purposePayload.id, dbInstance);
         expect(result).toStrictEqual(purposePayload);
       });
 
       it("should add existing purpose successfully", async () => {
-        let purposePayload = {
+        const purposePayload = {
           id: generateId<PurposeId>(),
           consumer_id: tenantId,
           eservice_id: eservice_id,
@@ -1312,8 +1320,15 @@ describe("database test", () => {
 
         const operationsService = operationsServiceBuilder(dbService);
 
-        purposePayload = { ...purposePayload, purpose_title };
-        await operationsService.savePurpose(purposePayload, genericLogger);
+        await operationsService.savePurpose(
+          {
+            id: purposePayload.id,
+            consumerId: purposePayload.consumer_id,
+            eserviceId: purposePayload.eservice_id,
+            purposeTitle: purpose_title,
+          },
+          genericLogger,
+        );
 
         const result = await findPurposeById(purposePayload.id, dbInstance);
         expect(result?.purpose_title).toBe(purpose_title);
@@ -1322,14 +1337,14 @@ describe("database test", () => {
       it("should throw an error if the purpose payload is invalid", async () => {
         const invalidPurposePayload = {
           id: "invalid_id_format",
-          purpose_title: "New Purpose Title",
-        };
+          purposeTitle: "New Purpose Title",
+        } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
         const operationsService = operationsServiceBuilder(dbService);
 
         await expect(
           operationsService.savePurpose(invalidPurposePayload, genericLogger),
-        ).rejects.toThrowError(/Unable to parse purpose/);
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
 

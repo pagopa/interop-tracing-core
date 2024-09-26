@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { PurposeEvent, PurposeEventV2 } from "@pagopa/interop-outbound-models";
 import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
@@ -5,7 +7,7 @@ import { z } from "zod";
 import { tenantIdV2 } from "../tenants/tenantsV2.js";
 import { eServiceIdV2 } from "../eservices/eServiceV2.js";
 
-const purposeIdV2 = randomUUID();
+const purposeIdV2 = "5f8fbf96-9c8c-456b-a98f-86851ee20b0d";
 
 export const PurposeAdded: PurposeEventV2 = {
   type: "PurposeAdded",
@@ -18,10 +20,19 @@ export const PurposeAdded: PurposeEventV2 = {
       id: purposeIdV2,
       eserviceId: eServiceIdV2,
       consumerId: tenantIdV2,
-      versions: [],
+      versions: [
+        {
+          id: "9945585d-5b8a-4ec7-841e-c882c0886c15",
+          state: 2,
+          dailyCalls: 10,
+          createdAt: "1" as any,
+          updatedAt: "1" as any,
+          firstActivationAt: "1" as any,
+        },
+      ],
       title: "This is a Purpose for testing event consuming V2",
       description: "This is a description for a test purpose",
-      createdAt: 1n,
+      createdAt: "1" as any,
       isFreeOfCharge: false,
     },
   },

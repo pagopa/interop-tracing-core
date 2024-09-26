@@ -21,9 +21,9 @@ export const operationsServiceBuilder = (
         await operationsApiClient.savePurpose(
           {
             id: data.id,
-            consumer_id: data.consumer_id,
-            eservice_id: data.eservice_id,
-            purpose_title: data.purpose_title,
+            consumerId: data.consumerId,
+            eserviceId: data.eserviceId,
+            purposeTitle: data.purposeTitle,
           },
           {
             headers,

@@ -42,7 +42,7 @@ export async function handleMessageV2(
             id: purpose.id,
             eserviceId: purpose.eserviceId,
             consumerId: purpose.consumerId,
-            purpose_title: purpose.title,
+            purposeTitle: purpose.title,
           },
           logger,
         );
