@@ -2,9 +2,9 @@ CREATE SCHEMA IF NOT EXISTS tracing;
 
 CREATE TABLE IF NOT EXISTS tracing.tenants (
     id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    origin VARCHAR(255) NOT NULL,
-    external_id VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    origin VARCHAR(255),
+    external_id VARCHAR(255),
     deleted BOOLEAN NOT NULL
 );
 

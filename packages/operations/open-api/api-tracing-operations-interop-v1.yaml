@@ -1009,9 +1009,6 @@ components:
           format: uuid
       required:
         - tenantId
-        - name
-        - origin
-        - externalId
     SavePurposesRequest:
       type: object
       properties:
