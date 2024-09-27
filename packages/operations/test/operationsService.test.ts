@@ -1269,6 +1269,38 @@ describe("database test", () => {
         expect(result).toBe(null);
       });
 
+      it("should delete an eservice and associated purposes successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+
+        const purpose = await addPurpose(
+          {
+            id: generateId<PurposeId>(),
+            consumer_id: tenantId,
+            eservice_id: eserviceId,
+            purpose_title: "purpose title",
+          },
+          dbInstance,
+        );
+
+        await operationsService.deleteEservice({ eserviceId }, genericLogger);
+
+        const purposeResult = await findPurposeById(purpose.id, dbInstance);
+        const eserviceResult = await findEserviceById(eserviceId, dbInstance);
+
+        expect(purposeResult).toBe(null);
+        expect(eserviceResult).toBe(null);
+      });
+
       it("should throw an error if the eserviceId param is invalid", async () => {
         const invalidEserviceParams = {
           eserviceId: "invalid_uuid",
