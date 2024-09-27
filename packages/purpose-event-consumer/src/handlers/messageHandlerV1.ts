@@ -41,9 +41,9 @@ export async function handleMessageV1(
           { ...correlationIdToHeader(ctx.correlationId) },
           {
             id: purpose.id,
-            consumer_id: purpose.consumerId,
-            eservice_id: purpose.eserviceId,
-            purpose_title: purpose.title,
+            eserviceId: purpose.eserviceId,
+            consumerId: purpose.consumerId,
+            purposeTitle: purpose.title,
           },
           logger,
         );

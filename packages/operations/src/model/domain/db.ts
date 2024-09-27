@@ -3,9 +3,9 @@ import { z } from "zod";
 
 export const TenantSchema = z.object({
   id: z.string().uuid(),
-  name: z.string(),
-  origin: z.string(),
-  external_id: z.string().uuid(),
+  name: z.string().nullish(),
+  origin: z.string().nullish(),
+  external_id: z.string().uuid().nullish(),
   deleted: z.boolean(),
 });
 

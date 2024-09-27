@@ -410,10 +410,17 @@ export function dbServiceBuilder(db: DB) {
 
     async deleteEservice(data: { eservice_id: string }): Promise<void> {
       try {
-        const deleteEserviceQuery = `
-          DELETE FROM tracing.eservices WHERE eservice_id = $1;`;
+        await db.tx(async (t) => {
+          const deletePurposesQuery = `
+            DELETE FROM tracing.purposes WHERE eservice_id = $1;
+          `;
+          await t.none(deletePurposesQuery, [data.eservice_id]);
 
-        await db.none(deleteEserviceQuery, [data.eservice_id]);
+          const deleteEserviceQuery = `
+            DELETE FROM tracing.eservices WHERE eservice_id = $1;
+          `;
+          await t.none(deleteEserviceQuery, [data.eservice_id]);
+        });
       } catch (error) {
         throw dbServiceErrorMapper("deleteEservice", error);
       }
@@ -484,7 +491,10 @@ export function dbServiceBuilder(db: DB) {
     async deleteTenant(data: { id: string }): Promise<void> {
       try {
         const deleteTenantQuery = `
-          DELETE FROM tracing.tenants WHERE id = $1;`;
+          UPDATE tracing.tenants 
+          SET deleted = true 
+          WHERE id = $1;
+        `;
 
         await db.none(deleteTenantQuery, [data.id]);
       } catch (error) {

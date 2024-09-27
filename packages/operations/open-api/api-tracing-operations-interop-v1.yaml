@@ -615,6 +615,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+
   /purposes:
     post:
       summary: Save purpose
@@ -992,6 +993,7 @@ components:
         - eserviceId
         - producerId
         - name
+
     SaveTenantRequest:
       type: object
       properties:
@@ -1007,26 +1009,26 @@ components:
           format: uuid
       required:
         - tenantId
-        - name
-        - origin
-        - externalId
     SavePurposesRequest:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        consumer_id:
+        consumerId:
           type: string
           format: uuid
-        eservice_id:
+        eserviceId:
           type: string
           format: uuid
-        purpose_title:
+        purposeTitle:
           type: string
           format: string
       required:
-        - date
+        - id
+        - consumerId
+        - eserviceId
+        - purposeTitle
     Problem:
       properties:
         type:

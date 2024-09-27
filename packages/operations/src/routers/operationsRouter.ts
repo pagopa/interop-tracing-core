@@ -162,6 +162,30 @@ const operationsRouter = (
     },
   );
 
+  operationsRouter.post("/tenants", async (req, res) => {
+    try {
+      const eservice = await operationsService.saveTenant(
+        req.body,
+        logger(req.ctx),
+      );
+
+      return res.status(204).json(eservice).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/tenants/:tenantId", async (req, res) => {
+    try {
+      await operationsService.deleteTenant(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
   operationsRouter.post(
     "/tenants/:tenantId/tracings/missing",
     async (req, res) => {
