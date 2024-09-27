@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-export const tenantIdV2 = "b525c70c-fde5-41d2-8307-06f4fce05a72";
+export const tenantIdV2 = randomUUID();
 
 export const TenantOnboarded: TenantEventV2 = {
   type: "TenantOnboardDetailsUpdated",
