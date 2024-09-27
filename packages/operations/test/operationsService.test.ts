@@ -1462,7 +1462,7 @@ describe("database test", () => {
         await operationsService.deleteTenant({ tenantId }, genericLogger);
 
         const result = await findTenantById(tenantId, dbInstance);
-        expect(result).toBe(null);
+        expect(result?.deleted).toBe(true);
       });
 
       it("should throw an error if the tenantId param is invalid", async () => {

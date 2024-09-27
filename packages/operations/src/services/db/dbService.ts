@@ -484,7 +484,10 @@ export function dbServiceBuilder(db: DB) {
     async deleteTenant(data: { id: string }): Promise<void> {
       try {
         const deleteTenantQuery = `
-          DELETE FROM tracing.tenants WHERE id = $1;`;
+          UPDATE tracing.tenants 
+          SET deleted = true 
+          WHERE id = $1;
+        `;
 
         await db.none(deleteTenantQuery, [data.id]);
       } catch (error) {
