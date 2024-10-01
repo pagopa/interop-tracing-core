@@ -3,10 +3,10 @@ import {
   EnrichedService,
   enrichedServiceBuilder,
 } from "../src/services/enrichedService.js";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "../src/services/bucketService.js";
+// import {
+//   BucketService,
+//   bucketServiceBuilder,
+// } from "../src/services/bucketService.js";
 import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   ProducerService,
@@ -31,14 +31,18 @@ import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
-
+import {
+  FileManager,
+  fileManagerBuilder,
+} from "../../commons/src/file-manager/fileManager.js";
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
-  let bucketService: BucketService;
+  //let bucketService: BucketService;
   let producerService: ProducerService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
+  let bucketService: FileManager;
 
   const mockAppCtx: WithSQSMessageId<AppContext> = {
     serviceName: config.applicationName,
@@ -70,7 +74,8 @@ describe("Enriched Service", () => {
       useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
-    bucketService = bucketServiceBuilder(s3client);
+    // bucketService = bucketServiceBuilder(s3client);
+    bucketService = fileManagerBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
 
     enrichedService = enrichedServiceBuilder(

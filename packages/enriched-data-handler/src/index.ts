@@ -3,10 +3,10 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "./services/producerService.js";
-import {
-  bucketServiceBuilder,
-  BucketService,
-} from "./services/bucketService.js";
+// import {
+//   bucketServiceBuilder,
+//   BucketService,
+// } from "./services/bucketService.js";
 import {
   EnrichedService,
   enrichedServiceBuilder,
@@ -15,6 +15,10 @@ import { config } from "./utilities/config.js";
 import { processEnrichedStateMessage } from "./messageHandler.js";
 import { S3Client } from "@aws-sdk/client-s3";
 import { SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  FileManager,
+  fileManagerBuilder,
+} from "../../commons/src/file-manager/fileManager.js";
 
 const dbInstance = initDB({
   username: config.dbUsername,
@@ -34,7 +38,8 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
 });
 
-const bucketService: BucketService = bucketServiceBuilder(s3client);
+//  const bucketService: BucketService = bucketServiceBuilder(s3client);
+const bucketService: FileManager = fileManagerBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
 const enrichedService: EnrichedService = enrichedServiceBuilder(

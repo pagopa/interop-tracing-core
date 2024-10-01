@@ -30,10 +30,10 @@ import {
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
 import { S3Client } from "@aws-sdk/client-s3";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "../src/services/bucketService.js";
+// import {
+//   BucketService,
+//   bucketServiceBuilder,
+// } from "../src/services/bucketService.js";
 import {
   OperationsService,
   operationsServiceBuilder,
@@ -54,13 +54,21 @@ import {
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
+import {
+  FileManager,
+  fileManagerBuilder,
+} from "../../commons/src/file-manager/fileManager.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
   operationsServiceBuilder(operationsApiClient);
 
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
-const bucketService: BucketService = bucketServiceBuilder(s3client);
+// const bucketService: BucketService = bucketServiceBuilder(s3client);
+const bucketService: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
 
 const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
 app.use(contextMiddleware(config.applicationName));

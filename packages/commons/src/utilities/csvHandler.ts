@@ -12,10 +12,10 @@ export async function parseCSV<T>(stream: Readable): Promise<T[]> {
   });
 }
 
-export function generateCSV(
-  records: string[],
-  headers: (keyof string)[],
-  extraFields: { [key: string]: string } = {},
+export function generateCSV<T>(
+  records: T[],
+  headers: (keyof T)[],
+  extraFields: { [key: string]: string } = {}, // Rimuovi il '?' e assegna un valore predefinito
 ): string {
   const headerRow = headers.join(",");
 
@@ -24,10 +24,9 @@ export function generateCSV(
       return headers
         .map((header) => {
           const field = record[header];
-
           return field === null || field === undefined ? "" : String(field);
         })
-        .concat(Object.values(extraFields))
+        .concat(Object.values(extraFields)) // Qui concateno solo i valori definiti
         .join(",");
     })
     .join("\n");
