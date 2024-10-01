@@ -8,7 +8,14 @@ import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
 import path from "path";
 import fs from "fs";
 import { ExpressMulterFile } from "../model/multer.js";
-import { AppContext, WithSQSMessageId } from "../index.js";
+import {
+  fileManagerBucketS3NameReadError,
+  fileManagerBucketS3NameWriteError,
+  fileManagerMissingTenantIdError,
+  fileManagerWriteError,
+  fileManagerReadError,
+  fileManagerMissingBodyError,
+ } from "./fileManagerErrors.js";
 
 type RecordType = {
   status: number;
@@ -32,11 +39,10 @@ export const fileManagerBuilder = (
       input: RecordType[] | Buffer | ExpressMulterFile,
       bucketS3Key: string,
       tenantId?: string,
-      ctx?: WithSQSMessageId<AppContext>,
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
-          throw new Error("Bucket S3 name is required for write operation.");
+          throw fileManagerBucketS3NameWriteError("Bucket S3 name is required for write operation.");
         }
 
         let body: Buffer;
@@ -52,7 +58,7 @@ export const fileManagerBuilder = (
             body = Buffer.from(csvData);
             contentType = "text/csv";
           } else {
-            throw new Error("Tenant ID is required when writing CSV data.");
+            throw fileManagerMissingTenantIdError("Tenant ID is required when writing CSV data.");
           }
         } else if (Buffer.isBuffer(input)) {
           body = input;
@@ -71,12 +77,8 @@ export const fileManagerBuilder = (
         };
 
         await s3Client.send(new PutObjectCommand(putObjectParams));
-
-        if (ctx) {
-          console.log(`File uploaded successfully with path: ${bucketS3Key}`);
-        }
       } catch (error: unknown) {
-        throw new Error(`Error writing object to S3: ${error}`);
+        throw fileManagerWriteError(`Error writing object to S3: ${error}`);
       }
     },
 
@@ -86,7 +88,7 @@ export const fileManagerBuilder = (
     ): Promise<T> {
       try {
         if (!bucketS3Name) {
-          throw new Error("Bucket S3 name is required for read operation.");
+          throw fileManagerBucketS3NameReadError("Bucket S3 name is required for read operation.");
         }
 
         const params = {
@@ -96,13 +98,13 @@ export const fileManagerBuilder = (
 
         const s3Object = await s3Client.send(new GetObjectCommand(params));
         if (!s3Object.Body) {
-          throw new Error("No body found in S3 object");
+          throw fileManagerMissingBodyError("No body found in S3 object");
         }
 
         const csvData = await parseCSV<string>(s3Object.Body as Readable);
         return transformFn ? transformFn(csvData) : (csvData as T);
       } catch (error: unknown) {
-        throw new Error(`Failed to read object: ${error}`);
+        throw fileManagerReadError(`Failed to read object: ${error}`);
       }
     },
   };
