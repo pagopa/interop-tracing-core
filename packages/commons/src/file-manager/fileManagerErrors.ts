@@ -1,4 +1,4 @@
-import { InternalError, parseErrorMessage } from "pagopa-interop-tracing-models";
+import { InternalError } from "pagopa-interop-tracing-models";
 
 type FileManagerErrorCode =
   | "fileManagerWriteError"
