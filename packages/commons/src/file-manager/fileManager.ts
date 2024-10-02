@@ -15,7 +15,7 @@ import {
   fileManagerWriteError,
   fileManagerReadError,
   fileManagerMissingBodyError,
- } from "./fileManagerErrors.js";
+} from "./fileManagerErrors.js";
 
 type RecordType = {
   status: number;
@@ -42,7 +42,9 @@ export const fileManagerBuilder = (
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
-          throw fileManagerBucketS3NameWriteError("Bucket S3 name is required for write operation.");
+          throw fileManagerBucketS3NameWriteError(
+            "Bucket S3 name is required for write operation.",
+          );
         }
 
         let body: Buffer;
@@ -58,7 +60,9 @@ export const fileManagerBuilder = (
             body = Buffer.from(csvData);
             contentType = "text/csv";
           } else {
-            throw fileManagerMissingTenantIdError("Tenant ID is required when writing CSV data.");
+            throw fileManagerMissingTenantIdError(
+              "Tenant ID is required when writing CSV data.",
+            );
           }
         } else if (Buffer.isBuffer(input)) {
           body = input;
@@ -88,7 +92,9 @@ export const fileManagerBuilder = (
     ): Promise<T> {
       try {
         if (!bucketS3Name) {
-          throw fileManagerBucketS3NameReadError("Bucket S3 name is required for read operation.");
+          throw fileManagerBucketS3NameReadError(
+            "Bucket S3 name is required for read operation.",
+          );
         }
 
         const params = {

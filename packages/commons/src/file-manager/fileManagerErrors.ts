@@ -20,18 +20,14 @@ export class FileManagerError extends InternalError<FileManagerErrorCode> {
   }
 }
 
-export function fileManagerWriteError(
-  detail: unknown,
-): FileManagerError {
+export function fileManagerWriteError(detail: unknown): FileManagerError {
   return new FileManagerError({
     detail: `${detail}`,
     code: "fileManagerWriteError",
   });
 }
 
-export function fileManagerReadError(
-  detail: unknown,
-): FileManagerError {
+export function fileManagerReadError(detail: unknown): FileManagerError {
   return new FileManagerError({
     detail: `${detail}`,
     code: "fileManagerReadError",
@@ -65,9 +61,7 @@ export function fileManagerMissingTenantIdError(
   });
 }
 
-export function fileManagerMissingBodyError(
-  detail: unknown,
-): FileManagerError {
+export function fileManagerMissingBodyError(detail: unknown): FileManagerError {
   return new FileManagerError({
     detail: `${detail}`,
     code: "fileManagerMissingBodyError",
