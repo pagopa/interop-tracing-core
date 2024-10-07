@@ -12,7 +12,7 @@ const apiConfig = HTTPServerConfig.and(LoggerConfig)
       .object({
         APPLICATION_NAME: z.string(),
         API_OPERATIONS_BASEURL: z.string(),
-        CORS_ORIGIN_ALLOWED: z.string(),
+        CORS_ORIGIN_ALLOWED: z.string().optional(),
         S3_BUCKET_NAME: z.string(),
         STORAGE_PATH_NAME: z.string(),
       })
