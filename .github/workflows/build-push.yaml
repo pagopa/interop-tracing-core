@@ -27,7 +27,7 @@ jobs:
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
 
   docker_push_image:
-    name: Build and Push        #TOCHECK
+    name: Build and Push
     needs: [find_dockerfiles]
     runs-on: ubuntu-latest
     environment: dev          
@@ -50,7 +50,7 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.IAM_ROLE_ARN }}
-          role-session-name: tracing-core-build-push-${{ github.run_number }}   #TOCHECK
+          role-session-name: tracing-core-build-push-${{ github.run_number }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -58,10 +58,10 @@ jobs:
 
       - name: (latest) Docker metadata
         id: meta_latest
-        if: ${{ github.ref_type == 'branch' }}
+        if: ${{ github.ref_type == 'branch' && github_ref_name == 'develop' }}
         uses: docker/metadata-action@60a0d343a0d8a18aedee9d34e62251f752153bdb
         with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.package }}   #TOCHECK
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.package }}
           flavor: |
             latest=false
             prefix=
@@ -74,7 +74,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' }}
         uses: docker/metadata-action@60a0d343a0d8a18aedee9d34e62251f752153bdb
         with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.package }}   #TOCHECK
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.package }}
           flavor: |
             latest=false
             prefix=
@@ -89,5 +89,5 @@ jobs:
           context: .
           file: packages/${{ matrix.package }}/Dockerfile
           push: true
-          tags: ${{ github.ref_type == 'branch' && steps.meta_latest.outputs.tags || steps.meta_tag.outputs.tags }}
-          labels: ${{ github.ref_type == 'branch' && steps.meta_latest.outputs.labels || steps.meta_tag.outputs.labels }}
+          tags: ${{ github.ref_type == 'branch' && github_ref_name == 'develop' && steps.meta_latest.outputs.tags || steps.meta_tag.outputs.tags }}
+          labels: ${{ github.ref_type == 'branch' && github_ref_name == 'develop' && steps.meta_latest.outputs.labels || steps.meta_tag.outputs.labels }}
