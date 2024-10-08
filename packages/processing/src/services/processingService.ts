@@ -3,7 +3,9 @@ import {
   TracingFromS3KeyPathDto,
   genericInternalError,
 } from "pagopa-interop-tracing-models";
-import { BucketService } from "./bucketService.js";
+
+import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
+import { generateCSV } from "../utilities/csvHandler.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
@@ -24,7 +26,7 @@ import { ZodIssue } from "zod";
 
 export const processingServiceBuilder = (
   dbService: DBService,
-  bucketService: BucketService,
+  fileManager: FileManager,
   producerService: ProducerService,
 ) => {
   return {
@@ -39,7 +41,7 @@ export const processingServiceBuilder = (
 
         const s3KeyPath = createS3Path(tracing);
 
-        const tracingRecords = await bucketService.readObject(s3KeyPath);
+        const tracingRecords = await fileManager.readObject(s3KeyPath);
         if (!tracingRecords || tracingRecords.length === 0) {
           throw new Error(`No record found for key ${s3KeyPath}`);
         }
@@ -55,7 +57,7 @@ export const processingServiceBuilder = (
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
 
         await writeEnrichedTracingOrSendPurposeErrors(
-          bucketService,
+          fileManager,
           producerService,
           dbService,
           tracingRecords,
@@ -74,11 +76,10 @@ export const processingServiceBuilder = (
 };
 
 export async function writeEnrichedTracingOrSendPurposeErrors(
-  bucketService: BucketService,
+  FileManager: FileManager,
   producerService: ProducerService,
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
-  s3KeyPath: string,
   tracing: TracingFromS3KeyPathDto,
   formalErrors: PurposeErrorMessage[],
   ctx: WithSQSMessageId<AppContext>,
@@ -118,12 +119,9 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     }
 
     if (purposeEnriched.data) {
-      await bucketService.writeObject(
-        purposeEnriched.data,
-        s3KeyPath,
-        tracing.tenantId,
-        ctx,
-      );
+      const csvData = generateCSV( purposeEnriched.data, tracing.tenantId );
+      const input = Buffer.from(csvData)
+      await FileManager.writeObject( input );
     }
   }
 }
