@@ -28,8 +28,13 @@ export function initDB({
     schema,
   });
 
+  const encodedUsername = encodeURIComponent(username);
+  const encodedPassword = encodeURIComponent(password);
+  const encodedHost = encodeURIComponent(host);
+  const encodedDatabase = encodeURIComponent(database);
+
   const conData = new ConnectionString(
-    `postgresql://${username}:${password}@${host}:${port}/${database}`,
+    `postgresql://${encodedUsername}:${encodedPassword}@${encodedHost}:${port}/${encodedDatabase}`,
   );
 
   const dbConfig: IConnectionParameters<IClient> = {
