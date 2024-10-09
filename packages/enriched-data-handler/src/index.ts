@@ -3,10 +3,6 @@ import {
   ProducerService,
   producerServiceBuilder,
 } from "./services/producerService.js";
-// import {
-//   bucketServiceBuilder,
-//   BucketService,
-// } from "./services/bucketService.js";
 import {
   EnrichedService,
   enrichedServiceBuilder,
@@ -38,13 +34,12 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
 });
 
-//  const bucketService: BucketService = bucketServiceBuilder(s3client);
-const bucketService: FileManager = fileManagerBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
 const enrichedService: EnrichedService = enrichedServiceBuilder(
   dbServiceBuilder(dbInstance),
-  bucketService,
+  fileManager,
   producerService,
 );
 
