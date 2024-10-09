@@ -13,6 +13,17 @@ tags:
   - name: Eservices
     description: Operations related to eservices
 paths:
+  /status:
+    get:
+      security: []
+      tags:
+        - Health
+      summary: Health status endpoint
+      description: Return ok
+      operationId: getStatus
+      responses:
+        "200":
+          description: successful operation
   /tracings/submit:
     post:
       summary: Submit tracing request
