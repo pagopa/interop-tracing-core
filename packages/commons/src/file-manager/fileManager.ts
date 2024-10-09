@@ -4,31 +4,16 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
-import path from "path";
-import fs from "fs";
-import { ExpressMulterFile } from "../model/multer.js";
+import { parseCSV } from "../utilities/csvHandler.js";
+import { TracingRecordSchema } from "../model/db.js";
+import { TracingFromCsv, TracingEnriched } from "../model/messages.js"
 import {
   fileManagerBucketS3NameReadError,
   fileManagerBucketS3NameWriteError,
-  fileManagerMissingTenantIdError,
   fileManagerWriteError,
   fileManagerReadError,
   fileManagerMissingBodyError,
 } from "./fileManagerErrors.js";
-
-type RecordType = {
-  status: number;
-  date: string;
-  rowNumber: number;
-  tracingId: string;
-  producerOrigin: string;
-  producerExternalId: string;
-  producerName: string;
-  consumerId: string;
-  consumerExternalId: string;
-  producerId: string;
-};
 
 export const fileManagerBuilder = (
   s3Client: S3Client,
@@ -36,9 +21,8 @@ export const fileManagerBuilder = (
 ) => {
   return {
     async writeObject(
-      input: RecordType[] | Buffer | ExpressMulterFile,
-      bucketS3Key: string,
-      tenantId?: string,
+      input:  Buffer,
+      bucketS3Key?: string //TODO: da approfondire la questione
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
@@ -47,36 +31,12 @@ export const fileManagerBuilder = (
           );
         }
 
-        let body: Buffer;
-        let contentType: string;
-
-        if (Array.isArray(input)) {
-          if (tenantId && tenantId !== "") {
-            const csvData = generateCSV(
-              input,
-              Object.keys(input[0]) as (keyof RecordType)[],
-              { tenantId },
-            );
-            body = Buffer.from(csvData);
-            contentType = "text/csv";
-          } else {
-            throw fileManagerMissingTenantIdError(
-              "Tenant ID is required when writing CSV data.",
-            );
-          }
-        } else if (Buffer.isBuffer(input)) {
-          body = input;
-          contentType = "application/octet-stream";
-        } else {
-          const filePath = path.resolve(input.path);
-          body = await fs.promises.readFile(filePath);
-          contentType = input.mimetype;
-        }
+        let contentType: string = "text/csv";
 
         const putObjectParams = {
           Bucket: bucketS3Name,
           Key: bucketS3Key,
-          Body: body,
+          Body: input,
           ContentType: contentType,
         };
 
@@ -86,10 +46,9 @@ export const fileManagerBuilder = (
       }
     },
 
-    async readObject<T = string[]>(
+    async readObject(
       s3KeyFile: string,
-      transformFn?: (data: string[]) => T,
-    ): Promise<T> {
+    ): Promise<TracingRecordSchema[] | TracingEnriched[]> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameReadError(
@@ -107,11 +66,34 @@ export const fileManagerBuilder = (
           throw fileManagerMissingBodyError("No body found in S3 object");
         }
 
-        const csvData = await parseCSV<string>(s3Object.Body as Readable);
-        return transformFn ? transformFn(csvData) : (csvData as T);
+        const csvData = await parseCSV<TracingRecordSchema | TracingEnriched>(s3Object.Body as Readable);
+        const csvDataWithRow = csvData.map((row) => ({
+          ...row
+        })); const isTracingRecordSchema = (data: any): data is TracingRecordSchema => {
+          return 'purpose_id' in data;
+        };
+
+        if (csvDataWithRow.every(isTracingRecordSchema)) {
+          return csvDataWithRow as TracingRecordSchema[];
+        }
+        return csvDataWithRow as TracingEnriched[];
       } catch (error: unknown) {
         throw fileManagerReadError(`Failed to read object: ${error}`);
       }
+    },
+    createS3Path(message: TracingFromCsv) {
+      return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
+    },
+    buildS3Key(
+      tenantId: string,
+      date: string,
+      tracingId: string,
+      version: number,
+      correlationId: string,
+    ): string {
+      const formattedDate = new Date(date).toISOString().split('T')[0];
+
+      return `tenantId=${tenantId}/date=${formattedDate}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
     },
   };
 };

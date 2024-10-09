@@ -4,16 +4,16 @@ import {
   logger,
 } from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
-import { BucketService } from "./bucketService.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
 import { tracingState } from "pagopa-interop-tracing-models";
+import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
-  bucketService: BucketService,
   producerService: ProducerService,
+  fileManager: FileManager,
 ) => {
   return {
     async insertEnrichedTrace(
@@ -34,10 +34,10 @@ export const enrichedServiceBuilder = (
           `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
         );
 
-        const s3KeyPath = createS3Path(tracing);
+        const s3KeyPath = fileManager.createS3Path(tracing);
 
         const enrichedTracingRecords: TracingEnriched[] =
-          await bucketService.readObject(s3KeyPath);
+          await fileManager.readObject(s3KeyPath);
 
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
           throw new Error(`No record found for key ${s3KeyPath}`);
@@ -68,9 +68,5 @@ export const enrichedServiceBuilder = (
     },
   };
 };
-
-export function createS3Path(message: TracingFromCsv) {
-  return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
-}
 
 export type EnrichedService = ReturnType<typeof enrichedServiceBuilder>;

@@ -120,7 +120,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
 
     if (purposeEnriched.data) {
       const csvData = generateCSV( purposeEnriched.data, tracing.tenantId );
-      const input = Buffer.from(csvData)
+      const input = Buffer.from(csvData);
       await FileManager.writeObject( input );
     }
   }

@@ -4,7 +4,6 @@ type FileManagerErrorCode =
   | "fileManagerWriteError"
   | "fileManagerBucketS3NameReadError"
   | "fileManagerBucketS3NameWriteError"
-  | "fileManagerMissingTenantIdError"
   | "fileManagerMissingBodyError"
   | "fileManagerReadError";
 
@@ -49,15 +48,6 @@ export function fileManagerBucketS3NameWriteError(
   return new FileManagerError({
     detail: `${detail}`,
     code: "fileManagerBucketS3NameWriteError",
-  });
-}
-
-export function fileManagerMissingTenantIdError(
-  detail: unknown,
-): FileManagerError {
-  return new FileManagerError({
-    detail: `${detail}`,
-    code: "fileManagerMissingTenantIdError",
   });
 }
 

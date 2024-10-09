@@ -34,11 +34,11 @@ const s3client: S3Client = new S3Client({
   region: config.awsRegion,
 });
 
-const bucketService: FileManager = fileManagerBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
   dbServiceBuilder(dbInstance),
-  bucketService,
+  fileManager,
   producerService,
 );
 
