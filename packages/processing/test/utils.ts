@@ -1,5 +1,6 @@
 import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
+import { config } from "../src/utilities/config.js";
 
 export async function addPurpose(
   purposeValues: {
@@ -11,7 +12,7 @@ export async function addPurpose(
   db: DB,
 ) {
   const insertPurposeQuery = `
-      INSERT INTO tracing.purposes (id, consumer_id, eservice_id, purpose_title)
+      INSERT INTO ${config.dbSchemaName}.purposes (id, consumer_id, eservice_id, purpose_title)
       VALUES ($1, $2, $3, $4)
       RETURNING id
     `;
@@ -20,7 +21,7 @@ export async function addPurpose(
 }
 export async function removePurpose(id: string, db: DB) {
   const insertPurposeQuery = `
-      DELETE FROM tracing.purposes WHERE id = $1
+      DELETE FROM ${config.dbSchemaName}.purposes WHERE id = $1
       RETURNING id
     `;
   return await db.one(insertPurposeQuery, id);
@@ -37,7 +38,7 @@ export async function addTenant(
   db: DB,
 ) {
   const insertTenantQuery = `
-      INSERT INTO tracing.tenants (id, name, origin, external_id, deleted)
+      INSERT INTO ${config.dbSchemaName}.tenants (id, name, origin, external_id, deleted)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
@@ -54,7 +55,7 @@ export async function addEservice(
   db: DB,
 ) {
   const insertEserviceQuery = `
-  INSERT INTO tracing.eservices (eservice_id, producer_id, name)
+  INSERT INTO ${config.dbSchemaName}.eservices (eservice_id, producer_id, name)
   VALUES ($1, $2, $3)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
@@ -77,7 +78,7 @@ export async function removeAndInsertWrongEserviceAndPurpose(
     db,
   );
   const deleteEserviceQuery = `
-  DELETE FROM tracing.eservices WHERE eservice_id = $1 RETURNING eservice_id`;
+  DELETE FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1 RETURNING eservice_id`;
   await db.one(deleteEserviceQuery, eservice_id);
 }
 

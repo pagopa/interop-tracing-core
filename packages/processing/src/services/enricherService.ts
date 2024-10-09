@@ -9,6 +9,7 @@ import { getEnrichedPurposeError } from "../models/errors.js";
 import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
 import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
+import { config } from "../utilities/config.js";
 
 type EnrichedPurposeResult = (PurposeErrorMessage[] | EnrichedPurpose)[];
 
@@ -31,7 +32,7 @@ export function dbServiceBuilder(db: DB) {
               origin: string;
               external_id: string;
             }>(
-              `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
+              `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
               [tracing.tenantId],
             );
 
@@ -46,7 +47,7 @@ export function dbServiceBuilder(db: DB) {
               eservice_id: string;
               consumer_id: string;
             }>(
-              `SELECT purpose_title, eservice_id, consumer_id FROM tracing.purposes WHERE id = $1`,
+              `SELECT purpose_title, eservice_id, consumer_id FROM ${config.dbSchemaName}.purposes WHERE id = $1`,
               [record.purpose_id],
             );
 
@@ -61,7 +62,7 @@ export function dbServiceBuilder(db: DB) {
               ];
             } else {
               const eService = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE eservice_id = $1`,
+                `SELECT * FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1`,
                 [fullPurpose.eservice_id],
               );
 
@@ -72,7 +73,7 @@ export function dbServiceBuilder(db: DB) {
               }
 
               const tenantEservice = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM tracing.eservices WHERE producer_id = $1 AND eservice_id = $2`,
+                `SELECT * FROM ${config.dbSchemaName}.eservices WHERE producer_id = $1 AND eservice_id = $2`,
                 [tracing.tenantId, eService.eservice_id],
               );
 
@@ -96,7 +97,7 @@ export function dbServiceBuilder(db: DB) {
                 origin: string;
                 external_id: string;
               }>(
-                `SELECT name, origin, external_id FROM tracing.tenants WHERE id = $1`,
+                `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
                 [eService.producer_id],
               );
 
