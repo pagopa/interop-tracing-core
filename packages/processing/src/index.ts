@@ -11,10 +11,6 @@ import {
 } from "./services/producerService.js";
 import { config } from "./utilities/config.js";
 import { S3Client } from "@aws-sdk/client-s3";
-// import {
-//   bucketServiceBuilder,
-//   BucketService,
-// } from "./services/bucketService.js";
 import {
   FileManager,
   fileManagerBuilder,
@@ -38,7 +34,6 @@ const s3client: S3Client = new S3Client({
   region: config.awsRegion,
 });
 
-//const bucketService: BucketService = bucketServiceBuilder(s3client);
 const bucketService: FileManager = fileManagerBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
