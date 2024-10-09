@@ -1,7 +1,6 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
-  ISODateFormat,
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
@@ -22,7 +21,7 @@ import {
   ApiTracingErrorsContent,
   ApiTracingsContent,
 } from "../model/tracing.js";
-import { BucketService } from "../services/bucketService.js";
+import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import storage from "../routers/config/multer.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 
@@ -31,9 +30,9 @@ const tracingRouter =
     ctx: LocalZodiosContext,
   ): ((
     operationsService: OperationsService,
-    bucketService: BucketService,
+      fileManager: FileManager,
   ) => ZodiosRouter<ZodiosEndpointDefinitions, LocalExpressContext>) =>
-  (operationsService: OperationsService, bucketService: BucketService) => {
+    (operationsService: OperationsService, fileManager: FileManager) => {
     const router = ctx.router(api.api, {
       validationErrorHandler: zodiosValidationErrorToApiProblem,
     });
@@ -51,7 +50,7 @@ const tracingRouter =
             },
           );
 
-          const bucketS3Key = buildS3Key(
+          const bucketS3Key = fileManager.buildS3Key(
             result.tenantId,
             result.date,
             result.tracingId,
@@ -59,7 +58,7 @@ const tracingRouter =
             req.ctx.correlationId,
           );
 
-          await bucketService
+          await fileManager
             .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
               await operationsService
@@ -174,7 +173,7 @@ const tracingRouter =
             req.params,
           );
 
-          const bucketS3Key = buildS3Key(
+          const bucketS3Key = fileManager.buildS3Key(
             result.tenantId,
             result.date,
             result.tracingId,
@@ -182,7 +181,7 @@ const tracingRouter =
             req.ctx.correlationId,
           );
 
-          await bucketService
+          await fileManager
             .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
               await operationsService
@@ -226,7 +225,7 @@ const tracingRouter =
             req.params,
           );
 
-          const bucketS3Key = buildS3Key(
+          const bucketS3Key = fileManager.buildS3Key(
             result.tenantId,
             result.date,
             result.tracingId,
@@ -234,7 +233,8 @@ const tracingRouter =
             req.ctx.correlationId,
           );
 
-          await bucketService
+          // TODO: Da sistemare il casting
+          await fileManager
             .writeObject(req.body.file, bucketS3Key)
             .catch(async (error) => {
               await operationsService
@@ -271,16 +271,5 @@ const tracingRouter =
 
     return router;
   };
-
-const buildS3Key = (
-  tenantId: string,
-  date: string,
-  tracingId: string,
-  version: number,
-  correlationId: string,
-): string =>
-  `tenantId=${tenantId}/date=${ISODateFormat.parse(
-    date,
-  )}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
 
 export default tracingRouter;
