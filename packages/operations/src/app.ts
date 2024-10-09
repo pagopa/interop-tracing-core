@@ -3,8 +3,8 @@ import {
   loggerMiddleware,
 } from "pagopa-interop-tracing-commons";
 import operationsRouter from "./routers/operationsRouter.js";
-import { config } from "../src/utilities/config.js";
 import { localZodiosCtx } from "./context/index.js";
+import { config } from "./utilities/config.js";
 const app = localZodiosCtx.app();
 
 // Disable the "X-Powered-By: Express" HTTP header for security reasons.
