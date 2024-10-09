@@ -6,10 +6,11 @@ import {
   Tenant,
   Tracing,
 } from "../src/model/domain/db.js";
+import { config } from "../src/utilities/config.js";
 
 export async function addPurpose(purposeValues: Purpose, db: DB) {
   const insertPurposeQuery = `
-      INSERT INTO tracing.purposes (id, consumer_id, eservice_id, purpose_title)
+      INSERT INTO ${config.dbSchemaName}.purposes (id, consumer_id, eservice_id, purpose_title)
       VALUES ($1, $2, $3, $4)
       RETURNING id
     `;
@@ -19,7 +20,7 @@ export async function addPurpose(purposeValues: Purpose, db: DB) {
 
 export async function addTenant(tenantValues: Tenant, db: DB) {
   const insertTenantQuery = `
-      INSERT INTO tracing.tenants (id, name, origin, external_id, deleted)
+      INSERT INTO ${config.dbSchemaName}.tenants (id, name, origin, external_id, deleted)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
@@ -33,7 +34,7 @@ export async function findTenantById(
 ): Promise<Tenant | null> {
   const selectTenantQuery = `
       SELECT * 
-      FROM tracing.tenants
+      FROM ${config.dbSchemaName}.tenants
       WHERE id = $1
     `;
 
@@ -45,7 +46,7 @@ export async function addPurposeError(
   db: DB,
 ): Promise<{ id: string }> {
   const insertPurposeErrorQuery = `
-      INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
+      INSERT INTO ${config.dbSchemaName}.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `;
@@ -65,7 +66,7 @@ export async function addTracing(
     DateUnit.DAYS,
   );
   const insertTracingQuery = `
-      INSERT INTO tracing.tracings (id, tenant_id, state, date, version, errors)
+      INSERT INTO ${config.dbSchemaName}.tracings (id, tenant_id, state, date, version, errors)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, date, version, tenant_id, state, errors
     `;
@@ -83,7 +84,7 @@ export async function addTracing(
 export async function findTracingById(id: string, db: DB): Promise<Tracing> {
   const selectTracingQuery = `
       SELECT * 
-      FROM tracing.tracings
+      FROM ${config.dbSchemaName}.tracings
       WHERE id = $1
     `;
 
@@ -93,7 +94,7 @@ export async function findTracingById(id: string, db: DB): Promise<Tracing> {
 export async function findPurposeErrors(db: DB): Promise<PurposeError[]> {
   const selectPurposeErrorQuery = `
       SELECT * 
-      FROM tracing.purposes_errors
+      FROM ${config.dbSchemaName}.purposes_errors
     `;
 
   return await db.any<PurposeError>(selectPurposeErrorQuery);
@@ -105,7 +106,7 @@ export async function findPurposeById(
 ): Promise<Purpose | null> {
   const selectPurposeQuery = `
       SELECT * 
-      FROM tracing.purposes 
+      FROM ${config.dbSchemaName}.purposes 
       WHERE id = $1
     `;
 
@@ -117,7 +118,7 @@ export async function addEservice(
   db: DB,
 ) {
   const insertEserviceQuery = `
-  INSERT INTO tracing.eservices (eservice_id, producer_id, name)
+  INSERT INTO ${config.dbSchemaName}.eservices (eservice_id, producer_id, name)
   VALUES ($1, $2, $3)
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
@@ -129,7 +130,7 @@ export async function findEserviceById(
 ): Promise<Eservice | null> {
   const selectEserviceQuery = `
       SELECT * 
-      FROM tracing.eservices
+      FROM ${config.dbSchemaName}.eservices
       WHERE eservice_id = $1
     `;
 
@@ -138,14 +139,14 @@ export async function findEserviceById(
 
 export async function clearTracings(db: DB) {
   const deleteTracingsQuery = `
-    TRUNCATE TABLE tracing.tracings CASCADE;
+    TRUNCATE TABLE ${config.dbSchemaName}.tracings CASCADE;
   `;
   await db.any(deleteTracingsQuery);
 }
 
 export async function clearPurposesErrors(db: DB) {
   const deletePurposesErrorsQuery = `
-    TRUNCATE TABLE tracing.purposes_errors CASCADE;
+    TRUNCATE TABLE ${config.dbSchemaName}.purposes_errors CASCADE;
   `;
   await db.any(deletePurposesErrorsQuery);
 }

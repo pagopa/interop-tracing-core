@@ -1,6 +1,7 @@
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../src/models/messages.js";
 import { generateId } from "pagopa-interop-tracing-models";
+import { config } from "../src/utilities/config.js";
 
 export async function addTraces(
   tracingId: string,
@@ -8,7 +9,7 @@ export async function addTraces(
   db: DB,
 ) {
   const insertQuery = `
-  INSERT INTO traces.traces (
+  INSERT INTO ${config.dbSchemaName}.traces (
     id, tracing_id, date, purpose_id, purpose_name, status, requests_count, eservice_id,
     consumer_id, consumer_origin, consumer_name, consumer_external_id,
     producer_id, producer_name, producer_origin, producer_external_id, submitter_id, created_at
