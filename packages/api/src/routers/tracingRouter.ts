@@ -24,15 +24,16 @@ import {
 import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import storage from "../routers/config/multer.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
+import { readExpressMulterFile } from "../utilities/fileData.js";
 
 const tracingRouter =
   (
     ctx: LocalZodiosContext,
   ): ((
     operationsService: OperationsService,
-      fileManager: FileManager,
+    fileManager: FileManager,
   ) => ZodiosRouter<ZodiosEndpointDefinitions, LocalExpressContext>) =>
-    (operationsService: OperationsService, fileManager: FileManager) => {
+  (operationsService: OperationsService, fileManager: FileManager) => {
     const router = ctx.router(api.api, {
       validationErrorHandler: zodiosValidationErrorToApiProblem,
     });
@@ -59,7 +60,7 @@ const tracingRouter =
           );
 
           await fileManager
-            .writeObject(req.body.file, bucketS3Key)
+            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
             .catch(async (error) => {
               await operationsService
                 .updateTracingState(
@@ -182,7 +183,7 @@ const tracingRouter =
           );
 
           await fileManager
-            .writeObject(req.body.file, bucketS3Key)
+            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(
@@ -233,9 +234,8 @@ const tracingRouter =
             req.ctx.correlationId,
           );
 
-          // TODO: Da sistemare il casting
           await fileManager
-            .writeObject(req.body.file, bucketS3Key)
+            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(

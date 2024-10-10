@@ -1,2 +1,2 @@
-export * as FileManager from "./fileManager.js";
-export * as FileManagerErrors from "./fileManagerErrors.js";
+export * from "./fileManager.js";
+export * from "./fileManagerErrors.js";

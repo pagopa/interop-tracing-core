@@ -2,11 +2,9 @@ import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
+  PutObjectCommandOutput,
+  GetObjectCommandOutput,
 } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
-import { parseCSV } from "../utilities/csvHandler.js";
-import { TracingRecordSchema } from "../model/db.js";
-import { TracingFromCsv, TracingEnriched } from "../model/messages.js"
 import {
   fileManagerBucketS3NameReadError,
   fileManagerBucketS3NameWriteError,
@@ -22,8 +20,8 @@ export const fileManagerBuilder = (
   return {
     async writeObject(
       input:  Buffer,
-      bucketS3Key?: string //TODO: da approfondire la questione
-    ): Promise<void> {
+      bucketS3Key: string
+    ): Promise<PutObjectCommandOutput> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameWriteError(
@@ -40,7 +38,7 @@ export const fileManagerBuilder = (
           ContentType: contentType,
         };
 
-        await s3Client.send(new PutObjectCommand(putObjectParams));
+        return await s3Client.send(new PutObjectCommand(putObjectParams));
       } catch (error: unknown) {
         throw fileManagerWriteError(`Error writing object to S3: ${error}`);
       }
@@ -48,7 +46,7 @@ export const fileManagerBuilder = (
 
     async readObject(
       s3KeyFile: string,
-    ): Promise<TracingRecordSchema[] | TracingEnriched[]> {
+    ): Promise<GetObjectCommandOutput> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameReadError(
@@ -65,24 +63,11 @@ export const fileManagerBuilder = (
         if (!s3Object.Body) {
           throw fileManagerMissingBodyError("No body found in S3 object");
         }
-
-        const csvData = await parseCSV<TracingRecordSchema | TracingEnriched>(s3Object.Body as Readable);
-        const csvDataWithRow = csvData.map((row) => ({
-          ...row
-        })); const isTracingRecordSchema = (data: any): data is TracingRecordSchema => {
-          return 'purpose_id' in data;
-        };
-
-        if (csvDataWithRow.every(isTracingRecordSchema)) {
-          return csvDataWithRow as TracingRecordSchema[];
-        }
-        return csvDataWithRow as TracingEnriched[];
+        
+        return s3Object;
       } catch (error: unknown) {
         throw fileManagerReadError(`Failed to read object: ${error}`);
       }
-    },
-    createS3Path(message: TracingFromCsv) {
-      return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
     },
     buildS3Key(
       tenantId: string,
