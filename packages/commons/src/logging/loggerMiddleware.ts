@@ -17,7 +17,10 @@ export function loggerMiddleware(serviceName: string): express.RequestHandler {
     const loggerMetadata: LoggerMetadata = {
       serviceName,
       correlationId: context?.correlationId,
-      authData: { tenantId: context?.authData?.tenantId },
+      authData: {
+        tenantId: context?.authData?.tenantId,
+        organizationId: context?.authData?.organizationId,
+      },
     };
 
     const loggerInstance = logger(loggerMetadata);
