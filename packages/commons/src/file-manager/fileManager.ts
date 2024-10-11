@@ -2,7 +2,6 @@ import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
-  PutObjectCommandOutput,
   GetObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import {
@@ -21,7 +20,7 @@ export const fileManagerBuilder = (
     async writeObject(
       input:  Buffer,
       bucketS3Key: string
-    ): Promise<PutObjectCommandOutput> {
+    ): Promise<void> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameWriteError(
@@ -38,7 +37,7 @@ export const fileManagerBuilder = (
           ContentType: contentType,
         };
 
-        return await s3Client.send(new PutObjectCommand(putObjectParams));
+        await s3Client.send(new PutObjectCommand(putObjectParams));
       } catch (error: unknown) {
         throw fileManagerWriteError(`Error writing object to S3: ${error}`);
       }
