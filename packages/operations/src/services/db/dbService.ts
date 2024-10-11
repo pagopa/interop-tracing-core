@@ -33,6 +33,18 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
+    async getTenantById(tenantId: TenantId): Promise<TenantId> {
+      try {
+        const { id } = await db.one<{ id: TenantId }>(
+          `SELECT id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
+          [tenantId],
+        );
+        return id;
+      } catch (error) {
+        throw dbServiceErrorMapper("getTenantById", error);
+      }
+    },
+
     async getTracings(filters: {
       offset: number;
       limit: number;

@@ -37,7 +37,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
@@ -87,7 +87,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
@@ -135,7 +135,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
@@ -233,7 +233,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
@@ -349,7 +349,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
@@ -403,7 +403,7 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
         - in: header
-          name: x-requester-purpose-id
+          name: x-organization-id
           required: true
           schema:
             $ref: "#/components/schemas/RequesterPurposeId"
