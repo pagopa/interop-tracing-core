@@ -83,10 +83,17 @@ describe("Enriched Service", () => {
       const readObjectSpy = vi
         .spyOn(fileManager, "readObject")
         .mockResolvedValue(mockBodyStream(mockEnrichedPuposes as any));
+
+      const parsedMockEnrichedPuposes = mockEnrichedPuposes.map((record) => ({
+        ...record,
+        status: Number(record.status),
+      }));
+
       const tracesInserted = await dbService.insertTraces(
         mockTracingFromCsv.tracingId,
-        mockEnrichedPuposes,
+        parsedMockEnrichedPuposes,
       );
+
       const sendUpdateStateSpy = vi
         .spyOn(producerService, "sendTracingUpdateStateMessage")
         .mockResolvedValue();
