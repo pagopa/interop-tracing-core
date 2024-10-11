@@ -202,10 +202,13 @@ describe("Processing Service", () => {
 
   describe("checkRecords", () => {
     it("should not send error messages when all records pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(wrongMockTracingRecords as any),
       );
-      const records = await bucketService.readObject("dummy-s3-key");
+      const dataObject = await fileManager.readObject("dummy-s3-key");
+      const records: TracingRecordSchema[] = await parseCSV(
+        dataObject.Body as Readable,
+      );
       const hasError = await checkRecords(records, mockMessage);
       expect(hasError).toHaveLength(0);
     });
@@ -255,11 +258,13 @@ describe("Processing Service", () => {
         mockEnrichedPurposesWithErrors,
       ]);
 
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(
+          wrongMockTracingRecords as any,
+        ),
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(undefined);
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
       );
@@ -282,17 +287,19 @@ describe("Processing Service", () => {
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(3);
 
-      expect(bucketService.writeObject).toHaveBeenCalledTimes(0);
+      expect(fileManager.writeObject).toHaveBeenCalledTimes(0);
     });
 
     it("should call writeObject when there are no error purposes", async () => {
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
         mockEnrichedPurposes,
       );
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(
+          wrongMockTracingRecords as any,
+        ),
       );
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(undefined);
 
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
