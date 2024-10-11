@@ -3,10 +3,6 @@ import {
   EnrichedService,
   enrichedServiceBuilder,
 } from "../src/services/enrichedService.js";
-// import {
-//   BucketService,
-//   bucketServiceBuilder,
-// } from "../src/services/bucketService.js";
 import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   ProducerService,
@@ -18,6 +14,8 @@ import {
   SQS,
   WithSQSMessageId,
   initDB,
+  FileManager,
+  fileManagerBuilder,
 } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
@@ -31,18 +29,14 @@ import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
-import {
-  FileManager,
-  fileManagerBuilder,
-} from "../../commons/src/file-manager/fileManager.js";
+import { mockBodyStream } from "./fileManger.js";
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
-  //let bucketService: BucketService;
   let producerService: ProducerService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
-  let bucketService: FileManager;
+  let fileManager: FileManager;
 
   const mockAppCtx: WithSQSMessageId<AppContext> = {
     serviceName: config.applicationName,
@@ -74,22 +68,21 @@ describe("Enriched Service", () => {
       useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
-    // bucketService = bucketServiceBuilder(s3client);
-    bucketService = fileManagerBuilder(s3client);
+    fileManager = fileManagerBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
 
     enrichedService = enrichedServiceBuilder(
       dbService,
-      bucketService,
       producerService,
+      fileManager,
     );
   });
 
   describe("insertEnrichedTrace", () => {
     it("should insert a tracing successfully", async () => {
       const readObjectSpy = vi
-        .spyOn(bucketService, "readObject")
-        .mockResolvedValue(mockEnrichedPuposes);
+        .spyOn(fileManager, "readObject")
+        .mockResolvedValue(mockBodyStream(mockEnrichedPuposes as any));
       const tracesInserted = await dbService.insertTraces(
         mockTracingFromCsv.tracingId,
         mockEnrichedPuposes,
@@ -117,7 +110,7 @@ describe("Enriched Service", () => {
     it("should throw an error if tracing message is not valid", async () => {
       const invalidMessage = { tracingId: generateId() };
 
-      const readObjectSpy = vi.spyOn(bucketService, "readObject");
+      const readObjectSpy = vi.spyOn(fileManager, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
@@ -138,8 +131,8 @@ describe("Enriched Service", () => {
 
     it("should throw an error if no record found in the bucket", async () => {
       const readObjectSpy = vi
-        .spyOn(bucketService, "readObject")
-        .mockResolvedValue([]);
+        .spyOn(fileManager, "readObject")
+        .mockResolvedValue([] as any);
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
@@ -159,8 +152,8 @@ describe("Enriched Service", () => {
     });
     it("should not send update if DB insert fails", async () => {
       const readObjectSpy = vi
-        .spyOn(bucketService, "readObject")
-        .mockResolvedValue(mockEnrichedPuposes);
+        .spyOn(fileManager, "readObject")
+        .mockResolvedValue(mockBodyStream(mockEnrichedPuposes as any));
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
         .mockRejectedValue(insertTracesError(``));
@@ -186,8 +179,8 @@ describe("Enriched Service", () => {
     });
 
     it("should send update 'COMPLETED' if DB insert succeded", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        mockEnrichedPuposes,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockEnrichedPuposes as any),
       );
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
