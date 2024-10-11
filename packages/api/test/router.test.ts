@@ -53,7 +53,6 @@ import {
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
-import { mockBodyStream } from "./fileManager.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -130,9 +129,7 @@ describe("Tracing Router", () => {
         mockSubmitTracingResponse,
       );
 
-      vi.spyOn(fileManager, "writeObject").mockResolvedValue(
-        mockBodyStream(mockSubmitTracingResponse as any),
-      );
+      vi.spyOn(fileManager, "writeObject").mockResolvedValue();
 
       vi.spyOn(operationsService, "updateTracingState").mockResolvedValue();
 
@@ -412,9 +409,7 @@ describe("Tracing Router", () => {
         mockRecoverTracingResponse,
       );
 
-      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(
-        mockBodyStream(mockRecoverTracingResponse as any),
-      );
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
@@ -691,9 +686,7 @@ describe("Tracing Router", () => {
         mockReplaceTracingResponse,
       );
 
-      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(
-        mockBodyStream(mockReplaceTracingResponse as any),
-      );
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient

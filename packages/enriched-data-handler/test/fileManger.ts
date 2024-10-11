@@ -12,9 +12,17 @@ export const mockBodyStream = (
   const csvRows = records
     .map(
       (record) =>
-        `${record.date},${record.purposeId || record.purposeId},${
-          record.status || ""
-        },${record.requestsCount || ""},`,
+        `${record.submitterId || ""},${record.date || ""},${
+          record.purposeId || ""
+        },${record.purposeName || ""},${record.status || ""},${
+          record.requestsCount || ""
+        },${record.eserviceId || ""},${record.consumerId || ""},${
+          record.consumerOrigin || ""
+        },${record.consumerName || ""},${record.consumerExternalId || ""},${
+          record.producerId || ""
+        },${record.producerName || ""},${record.producerOrigin || ""},${
+          record.producerExternalId || ""
+        }`,
     )
     .join("\n");
 

@@ -39,8 +39,8 @@ const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
 const enrichedService: EnrichedService = enrichedServiceBuilder(
   dbServiceBuilder(dbInstance),
-  fileManager,
   producerService,
+  fileManager,
 );
 
 await SQS.runConsumer(
