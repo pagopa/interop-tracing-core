@@ -40,7 +40,6 @@ import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
-  PurposeId,
   generateId,
   tracingRecoverCannotBeUpdated,
   tracingReplaceCannotBeUpdated,
@@ -55,9 +54,6 @@ import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
-    async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
-      return await dbService.getTenantByPurposeId(purposeId);
-    },
     async submitTracing(
       payload: ApiSubmitTracingPayload & { tenantId: string },
       logger: Logger,
