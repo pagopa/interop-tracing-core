@@ -143,18 +143,18 @@ describe("database test", () => {
   });
 
   describe("Operations service", () => {
-    describe("getTenantByPurposeId", () => {
-      it("retrieve tenant by purposeId", async () => {
-        const result = await operationsService.getTenantByPurposeId(purposeId);
+    describe("getTenantByOrganizationId", () => {
+      it("retrieve tenant by id", async () => {
+        const result = await dbService.getTenantById(tenantId);
 
         expect(result).toBe(tenantId);
       });
 
-      it("should give error when purposeId not a tenant", async () => {
-        const wrongPurposeId: PurposeId = generateId();
+      it("should give error when tenantId is not found", async () => {
+        const wrongTenantId: TenantId = generateId();
 
         try {
-          await operationsService.getTenantByPurposeId(wrongPurposeId);
+          await dbService.getTenantById(wrongTenantId);
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);

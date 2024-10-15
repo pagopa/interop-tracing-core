@@ -1,5 +1,4 @@
 import {
-  PurposeId,
   TenantId,
   TracingState,
   tracingAlreadyExists,
@@ -21,15 +20,15 @@ import { config } from "../../utilities/config.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
-    async getTenantByPurposeId(purposeId: PurposeId): Promise<TenantId> {
+    async getTenantById(tenantId: TenantId): Promise<TenantId> {
       try {
-        const { consumer_id } = await db.one<{ consumer_id: TenantId }>(
-          `SELECT consumer_id FROM ${config.dbSchemaName}.purposes WHERE id = $1`,
-          [purposeId],
+        const { id } = await db.one<{ id: TenantId }>(
+          `SELECT id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
+          [tenantId],
         );
-        return consumer_id;
+        return id;
       } catch (error) {
-        throw dbServiceErrorMapper("getTenantByPurposeId", error);
+        throw dbServiceErrorMapper("getTenantById", error);
       }
     },
 

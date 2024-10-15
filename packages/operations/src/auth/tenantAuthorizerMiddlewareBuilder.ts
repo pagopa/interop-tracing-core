@@ -17,7 +17,7 @@ import { makeApiProblem } from "../model/domain/errors.js";
 import { match } from "ts-pattern";
 import { DBService } from "../services/db/dbService.js";
 
-const purposeAuthorizerMiddleware =
+const tenantAuthorizerMiddleware =
   (dbService: DBService) =>
   <
     Api extends ZodiosEndpointDefinition[],
@@ -28,15 +28,14 @@ const purposeAuthorizerMiddleware =
   async (req, res, next) => {
     const ctx = req.ctx as ServiceContext<{ authData: TenantAuthData }>;
     const headers = getRequesterAuthData(req as Request);
-
     try {
-      if (!headers?.purposeId) {
+      if (!headers?.tenantId) {
         throw genericInternalError(
-          `No header requester purposedId found to execute this request ${req.method} ${req.url}`,
+          `No tenantId found in headers to execute this request ${req.method} ${req.url}`,
         );
       }
 
-      const tenantId = await dbService.getTenantByPurposeId(headers.purposeId);
+      const tenantId = await dbService.getTenantById(headers.tenantId);
       if (!tenantId) {
         throw genericInternalError(
           `No related tenant found to execute this request ${req.method} ${req.url}`,
@@ -67,12 +66,12 @@ const purposeAuthorizerMiddleware =
     }
   };
 
-export function purposeAuthorizerMiddlewareBuilder(dbService: DBService) {
+export function tenantAuthorizerMiddlewareBuilder(dbService: DBService) {
   return {
-    purposeAuthorizerMiddleware: purposeAuthorizerMiddleware(dbService),
+    tenantAuthorizerMiddleware: tenantAuthorizerMiddleware(dbService),
   };
 }
 
-export type PurposeAuthorizationMiddleware = ReturnType<
-  typeof purposeAuthorizerMiddlewareBuilder
+export type tenantAuthorizationMiddleware = ReturnType<
+  typeof tenantAuthorizerMiddleware
 >;

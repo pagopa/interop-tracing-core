@@ -1,7 +1,8 @@
+import { TenantId } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 
 export const RequesterAuthData = z.object({
-  purposeId: z.string().uuid(),
+  organizationId: TenantId,
 });
 export type RequesterAuthData = z.infer<typeof RequesterAuthData>;
 
