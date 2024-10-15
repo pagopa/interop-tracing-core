@@ -102,7 +102,7 @@ describe("Message handler V2 test", () => {
         handleMessageV2(tenantV2Event, operationsService, ctx, genericLogger),
       ).rejects.toThrow(
         errorSaveTenant(
-          `Error saving tenant with tenantId: ${tenantV2.id}. Details: ${zodiosValidationError}`,
+          `Error saving tenant with tenantId: ${tenantV2.id}. Details: ${zodiosValidationError}. Data: {"tenantId":"invalid uuid","externalId":"value","origin":"origin","name":"tenant name"}`,
         ),
       );
     });
