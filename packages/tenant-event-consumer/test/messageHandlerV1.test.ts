@@ -77,13 +77,12 @@ describe("Message handler V1 test", () => {
     });
 
     it("save a new Tenant for TenantCreated event should return an exception errorSaveTenant with validation body error", async () => {
-      const tenantId = generateId<TenantId>();
       const tenantV1: TenantV1 = {
-        id: tenantId,
+        id: "invalid uuid",
         name: "tenant name",
         externalId: {
           origin: "origin",
-          value: "invalid uuid",
+          value: "value",
         },
         features: [],
         attributes: [],
@@ -99,7 +98,7 @@ describe("Message handler V1 test", () => {
         handleMessageV1(tenantV1Event, operationsService, ctx, genericLogger),
       ).rejects.toThrow(
         errorSaveTenant(
-          `Error saving tenant with tenantId: ${tenantId}. Details: ${zodiosValidationError}`,
+          `Error saving tenant with tenantId: ${tenantV1.id}. Details: ${zodiosValidationError}`,
         ),
       );
     });
@@ -111,9 +110,9 @@ describe("Message handler V1 test", () => {
         name: "tenant name",
         externalId: {
           origin: "origin",
-          value: "invalid uuid",
+          value: "value",
         },
-        features: [],
+        features: undefined as unknown as [],
         attributes: [],
         createdAt: 1n,
       };

@@ -85,7 +85,7 @@ describe("Message handler V2 test", () => {
         selfcareId: "selfcareId",
         externalId: {
           origin: "origin",
-          value: "invalid uuid",
+          value: "value",
         },
         features: [],
         attributes: [],
@@ -115,9 +115,9 @@ describe("Message handler V2 test", () => {
         selfcareId: "selfcareId",
         externalId: {
           origin: "origin",
-          value: "invalid uuid",
+          value: "value",
         },
-        features: [],
+        features: undefined as unknown as [],
         attributes: [],
         createdAt: 1n,
         onboardedAt: 1n,
