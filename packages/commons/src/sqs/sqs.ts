@@ -27,9 +27,7 @@ const processExit = async (exitStatusCode: number = 1): Promise<void> => {
 };
 
 export const instantiateClient = (config: SQSClientConfig): SQSClient => {
-  const sqsClient = new SQSClient({
-    region: config.region,
-  });
+  const sqsClient = new SQSClient(config);
   return sqsClient;
 };
 
@@ -49,7 +47,6 @@ const processQueue = async (
 
   do {
     const { Messages } = await sqsClient.send(command);
-
     if (config.runUntilQueueIsEmpty && (!Messages || Messages?.length === 0)) {
       keepProcessingQueue = false;
     }
@@ -70,6 +67,11 @@ const processQueue = async (
             message.ReceiptHandle,
           );
         } catch (e) {
+          genericLogger.error(
+            `Unexpected error consuming message: ${JSON.stringify(
+              message,
+            )}. QueueUrl: ${config.queueUrl}. ${e}`,
+          );
           if (!(e instanceof InternalError)) throw e;
         }
       }

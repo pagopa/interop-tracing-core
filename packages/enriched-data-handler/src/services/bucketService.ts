@@ -10,7 +10,7 @@ export const bucketServiceBuilder = (s3Client: S3Client) => {
     async readObject(s3KeyFile: string): Promise<TracingEnriched[]> {
       try {
         const params = {
-          Bucket: config.bucketS3Enriched,
+          Bucket: config.bucketS3Name,
           Key: s3KeyFile,
         };
 

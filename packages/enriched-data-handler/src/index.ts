@@ -13,7 +13,7 @@ import {
 } from "./services/enrichedService.js";
 import { config } from "./utilities/config.js";
 import { processEnrichedStateMessage } from "./messageHandler.js";
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import { SQS, initDB } from "pagopa-interop-tracing-commons";
 
 const dbInstance = initDB({
@@ -26,12 +26,19 @@ const dbInstance = initDB({
   useSSL: config.dbUseSSL,
 });
 
-const s3client: S3Client = new S3Client({
+const s3ClientConfig: S3ClientConfig = {
+  endpoint: config.s3CustomServer
+    ? `${config.s3ServerHost}:${config.s3ServerPort}`
+    : undefined,
+  forcePathStyle: config.s3CustomServer,
+  logger: config.logLevel === "debug" ? console : undefined,
   region: config.awsRegion,
-});
+};
+const s3client: S3Client = new S3Client(s3ClientConfig);
 
 const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
+  ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
 });
 
 const bucketService: BucketService = bucketServiceBuilder(s3client);
