@@ -36,7 +36,7 @@ export function decodeSQSEventMessage(
 }
 
 function parseS3Key(key: string): Partial<TracingFromS3KeyPathDto> {
-  return key
+  return decodeURIComponent(key)
     .split("/")
     .map((part) => {
       const [k, v] = decodeURIComponent(part).split("=");

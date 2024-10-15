@@ -30,13 +30,13 @@ export function decodeSQSEventMessage(
     }
   } catch (error: unknown) {
     throw decodeSQSEventMessageError(
-      `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Deailts: ${error}`,
+      `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
     );
   }
 }
 
 function parseS3Key(key: string): Partial<TracingFromS3KeyPathDto> {
-  return key
+  return decodeURIComponent(key)
     .split("/")
     .map((part) => {
       const [k, v] = decodeURIComponent(part).split("=");
