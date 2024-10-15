@@ -1017,7 +1017,6 @@ components:
           type: string
         externalId:
           type: string
-          format: uuid
       required:
         - tenantId
     SavePurposesRequest:
