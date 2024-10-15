@@ -221,7 +221,7 @@ export const mockTenantUpdateV1 = (tenantId: string): TenantEventV1 => ({
       name: "tenant name",
       externalId: {
         origin: "origin",
-        value: "invalid uuid",
+        value: "value",
       },
       features: [],
       attributes: [],
@@ -243,7 +243,7 @@ export const mockTenantUpdateV2 = (tenantId: string): TenantEventV2 => ({
       name: "tenant name",
       externalId: {
         origin: "origin",
-        value: "invalid uuid",
+        value: "value",
       },
       features: [],
       attributes: [],
