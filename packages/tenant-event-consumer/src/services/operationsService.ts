@@ -36,7 +36,9 @@ export const operationsServiceBuilder = (
         logger.info(`Tenant saved with tenantId: ${data.tenantId}.`);
       } catch (error: unknown) {
         throw errorSaveTenant(
-          `Error saving tenant with tenantId: ${data.tenantId}. Details: ${error}`,
+          `Error saving tenant with tenantId: ${
+            data.tenantId
+          }. Details: ${error}. Data: ${JSON.stringify(data)}`,
         );
       }
     },
