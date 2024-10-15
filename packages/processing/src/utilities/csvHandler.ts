@@ -6,7 +6,7 @@ import { EnrichedPurpose } from "../models/csv.js";
 export async function parseCSV(
   stream: Readable,
 ): Promise<TracingRecordSchema[]> {
-  const results: TracingRecordSchema[] = [];
+  let results: TracingRecordSchema[] = [];
 
   return new Promise((resolve, reject) => {
     stream

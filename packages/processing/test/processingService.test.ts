@@ -42,7 +42,11 @@ import {
   removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
 
-import { InternalError, generateId } from "pagopa-interop-tracing-models";
+import {
+  InternalError,
+  TracingId,
+  generateId,
+} from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSQSEventMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
@@ -203,13 +207,15 @@ describe("Processing Service", () => {
   describe("checkRecords", () => {
     it("should not send error messages when all records pass formal check", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(wrongMockTracingRecords as any),
+        mockBodyStream(mockTracingRecords),
       );
       const dataObject = await fileManager.readObject("dummy-s3-key");
       const records: TracingRecordSchema[] = await parseCSV(
         dataObject.Body as Readable,
       );
+
       const hasError = await checkRecords(records, mockMessage);
+
       expect(hasError).toHaveLength(0);
     });
 
@@ -217,6 +223,7 @@ describe("Processing Service", () => {
       const records =
         wrongMockTracingRecords as unknown as TracingRecordSchema[];
       const errors = await checkRecords(records, mockMessage);
+
       const dateNotValidError = errors.filter(
         (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );
@@ -259,9 +266,7 @@ describe("Processing Service", () => {
       ]);
 
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(
-          wrongMockTracingRecords as any,
-        ),
+        mockBodyStream(mockTracingRecords),
       );
 
       vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(undefined);
@@ -295,11 +300,9 @@ describe("Processing Service", () => {
         mockEnrichedPurposes,
       );
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(
-          wrongMockTracingRecords as any,
-        ),
+        mockBodyStream(mockTracingRecords),
       );
-      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
@@ -313,18 +316,20 @@ describe("Processing Service", () => {
 
       await processingService.processTracing(mockMessage, mockAppCtx);
 
-      expect(fileManager.writeObject).toHaveBeenCalledWith(
-        enrichedPurposes,
-        fileManager.buildS3Key(
-          mockMessage.tenantId,
-          mockMessage.date,
-          mockMessage.tracingId,
-          mockMessage.version,
-          mockMessage.correlationId,
-        ),
+      const purposeEnriched = EnrichedPurposeArray.parse(enrichedPurposes);
+
+      const csvData = generateCSV(purposeEnriched, generateId<TracingId>());
+      const input = Buffer.from(csvData);
+      const bucketS3Key = fileManager.buildS3Key(
         mockMessage.tenantId,
-        mockAppCtx,
+        mockMessage.date,
+        mockMessage.tracingId,
+        mockMessage.version,
+        mockMessage.correlationId,
       );
+      await fileManager.writeObject(input, bucketS3Key);
+
+      expect(fileManager.writeObject).toHaveBeenCalledWith(input, bucketS3Key);
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
     });
@@ -333,17 +338,16 @@ describe("Processing Service", () => {
   describe("sendErrorMessage", () => {
     it("should send error messages when all records don't pass formal check", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(
-          wrongMockTracingRecords as any,
-        ),
+        mockBodyStream(wrongMockTracingRecords as any),
       );
 
       const dataObject = await fileManager.readObject("dummy-s3-key");
+
       const records: TracingRecordSchema[] = await parseCSV(
         dataObject.Body as Readable,
       );
-      const errors = await checkRecords(records, mockMessage);
 
+      const errors = await checkRecords(records, mockMessage);
       const dateNotValidError = errors.filter(
         (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );

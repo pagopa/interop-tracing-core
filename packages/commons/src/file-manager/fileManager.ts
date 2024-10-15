@@ -18,8 +18,9 @@ export const fileManagerBuilder = (
 ) => {
   return {
     async writeObject(
-      input:  Buffer,
-      bucketS3Key: string
+      input: Buffer,
+      bucketS3Key: string,
+      contentType: string,
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
@@ -43,9 +44,7 @@ export const fileManagerBuilder = (
       }
     },
 
-    async readObject(
-      s3KeyFile: string,
-    ): Promise<GetObjectCommandOutput> {
+    async readObject(s3KeyFile: string): Promise<GetObjectCommandOutput> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameReadError(
@@ -62,7 +61,7 @@ export const fileManagerBuilder = (
         if (!s3Object.Body) {
           throw fileManagerMissingBodyError("No body found in S3 object");
         }
-        
+
         return s3Object;
       } catch (error: unknown) {
         throw fileManagerReadError(`Failed to read object: ${error}`);
@@ -75,7 +74,7 @@ export const fileManagerBuilder = (
       version: number,
       correlationId: string,
     ): string {
-      const formattedDate = new Date(date).toISOString().split('T')[0];
+      const formattedDate = new Date(date).toISOString().split("T")[0];
 
       return `tenantId=${tenantId}/date=${formattedDate}/tracingId=${tracingId}/version=${version}/correlationId=${correlationId}/${tracingId}.csv`;
     },

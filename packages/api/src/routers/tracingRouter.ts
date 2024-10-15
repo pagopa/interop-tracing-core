@@ -60,7 +60,11 @@ const tracingRouter =
           );
 
           await fileManager
-            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
+            .writeObject(
+              await readExpressMulterFile(req.body.file),
+              bucketS3Key,
+              req.body.file.mimetype,
+            )
             .catch(async (error) => {
               await operationsService
                 .updateTracingState(
@@ -183,7 +187,11 @@ const tracingRouter =
           );
 
           await fileManager
-            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
+            .writeObject(
+              await readExpressMulterFile(req.body.file),
+              bucketS3Key,
+              req.body.file.mimetype,
+            )
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(
@@ -235,7 +243,11 @@ const tracingRouter =
           );
 
           await fileManager
-            .writeObject(await readExpressMulterFile(req.body.file), bucketS3Key)
+            .writeObject(
+              await readExpressMulterFile(req.body.file),
+              bucketS3Key,
+              req.body.file.mimetype,
+            )
             .catch(async (error) => {
               await operationsService
                 .cancelTracingStateAndVersion(

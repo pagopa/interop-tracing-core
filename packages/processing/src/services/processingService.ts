@@ -45,7 +45,7 @@ export const processingServiceBuilder = (
           tracing.date,
           tracing.tracingId,
           tracing.version,
-          tracing.correlationId
+          tracing.correlationId,
         );
 
         let enrichedDataObject = await fileManager.readObject(bucketS3Key);
@@ -130,9 +130,9 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     }
 
     if (purposeEnriched.data) {
-      const csvData = generateCSV( purposeEnriched.data, tracing.tenantId );
+      const csvData = generateCSV(purposeEnriched.data, tracing.tenantId);
       const input = Buffer.from(csvData);
-      await fileManager.writeObject(input, bucketS3Key);
+      await fileManager.writeObject(input, bucketS3Key, "text/csv");
     }
   }
 }
@@ -145,6 +145,7 @@ export async function checkRecords(
 
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
+
     if (result.error) {
       for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);

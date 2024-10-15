@@ -830,8 +830,9 @@ describe("Tracing Router", () => {
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        Buffer.from(""),
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
