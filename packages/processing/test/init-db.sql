@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS tracing.purposes (
     id UUID PRIMARY KEY,
     consumer_id UUID NOT NULL,
     eservice_id UUID NOT NULL,
-    purpose_title VARCHAR(2048) NOT NULL,
+    purpose_title VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tracing.tracings (
