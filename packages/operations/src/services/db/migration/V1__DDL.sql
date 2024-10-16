@@ -19,8 +19,6 @@ CREATE TABLE tracing.purposes (
     consumer_id UUID NOT NULL,
     eservice_id UUID NOT NULL,
     purpose_title VARCHAR(2048) NOT NULL,
-    FOREIGN KEY (consumer_id) REFERENCES tracing.tenants(id),
-    FOREIGN KEY (eservice_id) REFERENCES tracing.eservices(eservice_id)
 );
 
 CREATE TABLE tracing.tracings (
