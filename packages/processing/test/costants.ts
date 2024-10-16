@@ -63,7 +63,7 @@ export const wrongMockTracingRecords = [
     status: 404,
     rowNumber: undefined,
   },
-];
+] as unknown as TracingRecordSchema[];
 
 export const mockEnrichedPurposesWithErrors = [
   {

@@ -8,13 +8,13 @@ export const mockTracingFromCsv = {
   date: "2024-09-07",
 };
 
-export const mockEnrichedPuposes = [
+export const mockEnrichedPurposes = [
   {
     submitterId: generateId(),
     date: "2024-09-07",
     purposeId: generateId(),
     purposeName: "Purpose 1",
-    status: "200",
+    status: 200,
     requestsCount: "50",
     eserviceId: generateId(),
     consumerId: generateId(),
@@ -31,7 +31,7 @@ export const mockEnrichedPuposes = [
     date: "2024-09-07",
     purposeId: generateId(),
     purposeName: "Purpose 1",
-    status: "500",
+    status: 500,
     requestsCount: "3",
     eserviceId: generateId(),
     consumerId: generateId(),

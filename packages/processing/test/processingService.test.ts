@@ -220,8 +220,7 @@ describe("Processing Service", () => {
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
-      const records =
-        wrongMockTracingRecords as unknown as TracingRecordSchema[];
+      const records = wrongMockTracingRecords;
       const errors = await checkRecords(records, mockMessage);
 
       const dateNotValidError = errors.filter(
@@ -327,9 +326,13 @@ describe("Processing Service", () => {
         mockMessage.version,
         mockMessage.correlationId,
       );
-      await fileManager.writeObject(input, bucketS3Key);
+      await fileManager.writeObject(input, bucketS3Key, "text/csv");
 
-      expect(fileManager.writeObject).toHaveBeenCalledWith(input, bucketS3Key);
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        input,
+        bucketS3Key,
+        "text/csv",
+      );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
     });
@@ -338,7 +341,7 @@ describe("Processing Service", () => {
   describe("sendErrorMessage", () => {
     it("should send error messages when all records don't pass formal check", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(wrongMockTracingRecords as any),
+        mockBodyStream(wrongMockTracingRecords),
       );
 
       const dataObject = await fileManager.readObject("dummy-s3-key");

@@ -48,7 +48,7 @@ export const processingServiceBuilder = (
           tracing.correlationId,
         );
 
-        let enrichedDataObject = await fileManager.readObject(bucketS3Key);
+        const enrichedDataObject = await fileManager.readObject(bucketS3Key);
         const tracingRecords: TracingRecordSchema[] = await parseCSV(
           enrichedDataObject.Body as Readable,
         );

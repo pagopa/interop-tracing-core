@@ -44,7 +44,7 @@ export const enrichedServiceBuilder = (
           tracing.correlationId,
         );
 
-        let enrichedDataObject = await fileManager.readObject(s3KeyPath);
+        const enrichedDataObject = await fileManager.readObject(s3KeyPath);
         const enrichedTracingRecords: TracingEnriched[] = await parseCSV(
           enrichedDataObject.Body as Readable,
         );

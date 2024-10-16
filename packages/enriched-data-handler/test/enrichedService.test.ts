@@ -19,17 +19,19 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
-import { TracingFromCsv } from "../src/models/messages.js";
+import { TracingEnriched, TracingFromCsv } from "../src/models/messages.js";
 import {
   InternalError,
   generateId,
   tracingState,
 } from "pagopa-interop-tracing-models";
-import { mockEnrichedPuposes, mockTracingFromCsv } from "./constants.js";
+import { mockEnrichedPurposes, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
 import { mockBodyStream } from "./fileManger.js";
+import { parseCSV } from "../src/utilities/csvHandler.js";
+import { Readable } from "stream";
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
@@ -82,16 +84,16 @@ describe("Enriched Service", () => {
     it("should insert a tracing successfully", async () => {
       const readObjectSpy = vi
         .spyOn(fileManager, "readObject")
-        .mockResolvedValue(mockBodyStream(mockEnrichedPuposes as any));
+        .mockResolvedValue(mockBodyStream(mockEnrichedPurposes));
 
-      const parsedMockEnrichedPuposes = mockEnrichedPuposes.map((record) => ({
+      const parsedmockEnrichedPurposes = mockEnrichedPurposes.map((record) => ({
         ...record,
         status: Number(record.status),
       }));
 
       const tracesInserted = await dbService.insertTraces(
         mockTracingFromCsv.tracingId,
-        parsedMockEnrichedPuposes,
+        parsedmockEnrichedPurposes,
       );
 
       const sendUpdateStateSpy = vi
@@ -102,7 +104,7 @@ describe("Enriched Service", () => {
 
       expect(readObjectSpy).toHaveBeenCalledWith(expect.any(String));
 
-      expect(tracesInserted).toHaveLength(mockEnrichedPuposes.length);
+      expect(tracesInserted).toHaveLength(mockEnrichedPurposes.length);
 
       expect(sendUpdateStateSpy).toHaveBeenCalledWith(
         {
@@ -139,7 +141,7 @@ describe("Enriched Service", () => {
     it("should throw an error if no record found in the bucket", async () => {
       const readObjectSpy = vi
         .spyOn(fileManager, "readObject")
-        .mockResolvedValue([] as any);
+        .mockResolvedValue(mockBodyStream([]));
       const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
@@ -160,13 +162,16 @@ describe("Enriched Service", () => {
     it("should not send update if DB insert fails", async () => {
       const readObjectSpy = vi
         .spyOn(fileManager, "readObject")
-        .mockResolvedValue(mockBodyStream(mockEnrichedPuposes as any));
+        .mockResolvedValue(mockBodyStream(mockEnrichedPurposes));
       const insertTracingSpy = vi
         .spyOn(dbService, "insertTraces")
         .mockRejectedValue(insertTracesError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",
+      );
+      const enrichedTracingRecords: TracingEnriched[] = await parseCSV(
+        mockBodyStream(mockEnrichedPurposes).Body as Readable,
       );
 
       try {
@@ -179,7 +184,7 @@ describe("Enriched Service", () => {
         expect(readObjectSpy).toHaveBeenCalled();
         expect(insertTracingSpy).toHaveBeenCalledWith(
           mockTracingFromCsv.tracingId,
-          mockEnrichedPuposes,
+          enrichedTracingRecords,
         );
         expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
@@ -187,7 +192,7 @@ describe("Enriched Service", () => {
 
     it("should send update 'COMPLETED' if DB insert succeded", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(mockEnrichedPuposes as any),
+        mockBodyStream(mockEnrichedPurposes),
       );
       vi.spyOn(dbService, "insertTraces").mockReturnValue(
         Promise.resolve([{ id: mockTracingFromCsv.tracingId }]),
@@ -200,7 +205,7 @@ describe("Enriched Service", () => {
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
       mockTracingFromCsv.tracingId,
-        mockEnrichedPuposes,
+        mockEnrichedPurposes,
         expect(sendUpdateStateSpy).toHaveBeenCalledWith(
           {
             tracingId: mockTracingFromCsv.tracingId,

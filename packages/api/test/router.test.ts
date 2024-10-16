@@ -154,8 +154,9 @@ describe("Tracing Router", () => {
       );
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.submitTracing).toHaveBeenCalledWith(
@@ -424,8 +425,9 @@ describe("Tracing Router", () => {
       );
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.recoverTracing).toHaveBeenCalledWith(
@@ -554,8 +556,9 @@ describe("Tracing Router", () => {
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
@@ -636,8 +639,9 @@ describe("Tracing Router", () => {
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
@@ -700,8 +704,9 @@ describe("Tracing Router", () => {
         mockReplaceTracingResponse.tracingId,
       );
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.replaceTracing).toHaveBeenCalledWith(
@@ -830,7 +835,7 @@ describe("Tracing Router", () => {
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        Buffer.from(""),
+        mockFile,
         bucketS3Key,
         "text/plain",
       );
@@ -911,8 +916,9 @@ describe("Tracing Router", () => {
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(

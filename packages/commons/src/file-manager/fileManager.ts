@@ -28,9 +28,6 @@ export const fileManagerBuilder = (
             "Bucket S3 name is required for write operation.",
           );
         }
-
-        let contentType: string = "text/csv";
-
         const putObjectParams = {
           Bucket: bucketS3Name,
           Key: bucketS3Key,
