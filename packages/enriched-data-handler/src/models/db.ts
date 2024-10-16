@@ -13,11 +13,11 @@ const TraceSchema = z.object({
   consumer_id: z.string().uuid(),
   consumer_origin: z.string().max(255),
   consumer_name: z.string().max(255),
-  consumer_external_id: z.string().uuid(),
+  consumer_external_id: z.string(),
   producer_id: z.string().uuid(),
   producer_name: z.string().max(255),
   producer_origin: z.string().max(255),
-  producer_external_id: z.string().uuid(),
+  producer_external_id: z.string(),
   created_at: z.date(),
 });
 
