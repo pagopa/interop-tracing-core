@@ -13,10 +13,10 @@ CREATE TABLE traces.traces (
     consumer_id UUID,
     consumer_origin VARCHAR(255),
     consumer_name VARCHAR(255),
-    consumer_external_id UUID,
+    consumer_external_id VARCHAR(255),
     producer_id UUID,
     producer_name VARCHAR(255),
     producer_origin VARCHAR(255),
-    producer_external_id UUID,
+    producer_external_id VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -12,9 +12,9 @@ import {
 import { config } from "./utilities/config.js";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import {
-  bucketServiceBuilder,
-  BucketService,
-} from "./services/bucketService.js";
+  FileManager,
+  fileManagerBuilder,
+} from "../../commons/src/file-manager/fileManager.js";
 
 const dbInstance = initDB({
   username: config.dbUsername,
@@ -41,11 +41,11 @@ const s3ClientConfig: S3ClientConfig = {
 };
 const s3client: S3Client = new S3Client(s3ClientConfig);
 
-const bucketService: BucketService = bucketServiceBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(s3client);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
   dbServiceBuilder(dbInstance),
-  bucketService,
+  fileManager,
   producerService,
 );
 

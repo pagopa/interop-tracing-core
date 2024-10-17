@@ -1184,6 +1184,7 @@ describe("database test", () => {
 
         await operationsService.deletePurposesErrors(genericLogger);
         const purposesErrors = await findPurposeErrors(dbInstance);
+
         expect(purposesErrors.length).toBe(0);
       });
     });

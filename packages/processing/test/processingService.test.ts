@@ -11,7 +11,6 @@ import {
 import {
   ProcessingService,
   checkRecords,
-  createS3Path,
   processingServiceBuilder,
   writeEnrichedTracingOrSendPurposeErrors,
 } from "../src/services/processingService.js";
@@ -19,10 +18,6 @@ import {
   DBService,
   dbServiceBuilder,
 } from "../src/services/enricherService.js";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "../src/services/bucketService.js";
 import {
   ProducerService,
   producerServiceBuilder,
@@ -32,9 +27,11 @@ import { S3Client } from "@aws-sdk/client-s3";
 import {
   AppContext,
   DB,
+  FileManager,
   PurposeErrorCodes,
   SQS,
   WithSQSMessageId,
+  fileManagerBuilder,
   initDB,
 } from "pagopa-interop-tracing-commons";
 import {
@@ -45,12 +42,16 @@ import {
   removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
 
-import { InternalError, generateId } from "pagopa-interop-tracing-models";
+import {
+  InternalError,
+  TracingId,
+  generateId,
+} from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSQSEventMessage } from "../src/models/models.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
-import { generateCSV } from "../src/utilities/csvHandler.js";
+import { generateCSV, parseCSV } from "../src/utilities/csvHandler.js";
 import {
   eServiceData,
   tenantData,
@@ -77,6 +78,7 @@ import {
 } from "../src/models/csv.js";
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingEnriched } from "../src/models/tracing.js";
+import { mockBodyStream } from "./fileManager.js";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
@@ -88,7 +90,7 @@ describe("Processing Service", () => {
     region: config.awsRegion,
   });
 
-  let bucketService: BucketService = bucketServiceBuilder(s3client);
+  let fileManager: FileManager = fileManagerBuilder(s3client);
   let producerService: ProducerService = producerServiceBuilder(sqsClient);
   let startedPostgreSqlContainer: StartedTestContainer;
   let processingService: ProcessingService;
@@ -126,11 +128,11 @@ describe("Processing Service", () => {
     });
 
     dbService = dbServiceBuilder(dbInstance);
-    bucketService = bucketServiceBuilder(s3client);
+    fileManager = fileManagerBuilder(s3client);
     producerService = producerServiceBuilder(sqsClient);
     processingService = processingServiceBuilder(
       dbService,
-      bucketService,
+      fileManager,
       producerService,
     );
 
@@ -186,9 +188,15 @@ describe("Processing Service", () => {
     });
   });
 
-  describe("createS3Path", () => {
+  describe("buildS3Key", () => {
     it("should generate correct S3 path ", () => {
-      const path = createS3Path(mockMessage);
+      const path = fileManager.buildS3Key(
+        mockMessage.tenantId,
+        mockMessage.date,
+        mockMessage.tracingId,
+        mockMessage.version,
+        mockMessage.correlationId,
+      );
 
       expect(path).toBe(
         "tenantId=123e4567-e89b-12d3-a456-426614174001/date=2024-12-12/tracingId=87dcfab8-3161-430b-97db-7787a77a7a3d/version=1/correlationId=8fa62e67-92bf-48f8-a9e1-4e73a37c4682/87dcfab8-3161-430b-97db-7787a77a7a3d.csv",
@@ -198,18 +206,21 @@ describe("Processing Service", () => {
 
   describe("checkRecords", () => {
     it("should not send error messages when all records pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValueOnce(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
       );
-      const records = await bucketService.readObject("dummy-s3-key");
+      const dataObject = await fileManager.readObject("dummy-s3-key");
+      const records: TracingRecordSchema[] = await parseCSV(dataObject);
+
       const hasError = await checkRecords(records, mockMessage);
+
       expect(hasError).toHaveLength(0);
     });
 
     it("should send error messages when all records don't pass formal check", async () => {
-      const records =
-        wrongMockTracingRecords as unknown as TracingRecordSchema[];
+      const records = wrongMockTracingRecords;
       const errors = await checkRecords(records, mockMessage);
+
       const dateNotValidError = errors.filter(
         (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );
@@ -251,11 +262,11 @@ describe("Processing Service", () => {
         mockEnrichedPurposesWithErrors,
       ]);
 
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce(undefined);
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
       );
@@ -278,17 +289,17 @@ describe("Processing Service", () => {
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(3);
 
-      expect(bucketService.writeObject).toHaveBeenCalledTimes(0);
+      expect(fileManager.writeObject).toHaveBeenCalledTimes(0);
     });
 
     it("should call writeObject when there are no error purposes", async () => {
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
         mockEnrichedPurposes,
       );
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        mockTracingRecords,
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
       );
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce(undefined);
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
@@ -302,11 +313,23 @@ describe("Processing Service", () => {
 
       await processingService.processTracing(mockMessage, mockAppCtx);
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        enrichedPurposes,
-        createS3Path(mockMessage),
+      const purposeEnriched = EnrichedPurposeArray.parse(enrichedPurposes);
+
+      const csvData = generateCSV(purposeEnriched, generateId<TracingId>());
+      const input = Buffer.from(csvData);
+      const bucketS3Key = fileManager.buildS3Key(
         mockMessage.tenantId,
-        mockAppCtx,
+        mockMessage.date,
+        mockMessage.tracingId,
+        mockMessage.version,
+        mockMessage.correlationId,
+      );
+      await fileManager.writeObject(input, bucketS3Key, "text/csv");
+
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        input,
+        bucketS3Key,
+        "text/csv",
       );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
@@ -315,13 +338,15 @@ describe("Processing Service", () => {
 
   describe("sendErrorMessage", () => {
     it("should send error messages when all records don't pass formal check", async () => {
-      vi.spyOn(bucketService, "readObject").mockResolvedValue(
-        wrongMockTracingRecords as unknown as TracingRecordSchema[],
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(wrongMockTracingRecords),
       );
 
-      const records = await bucketService.readObject("dummy-s3-key");
-      const errors = await checkRecords(records, mockMessage);
+      const dataObject = await fileManager.readObject("dummy-s3-key");
 
+      const records: TracingRecordSchema[] = await parseCSV(dataObject);
+
+      const errors = await checkRecords(records, mockMessage);
       const dateNotValidError = errors.filter(
         (error) => error.errorCode === PurposeErrorCodes.INVALID_DATE,
       );
@@ -359,7 +384,7 @@ describe("Processing Service", () => {
       );
 
       await writeEnrichedTracingOrSendPurposeErrors(
-        bucketService,
+        fileManager,
         producerService,
         dbService,
         mockTracingRecords,

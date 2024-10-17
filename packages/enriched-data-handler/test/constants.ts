@@ -8,7 +8,7 @@ export const mockTracingFromCsv = {
   date: "2024-09-07",
 };
 
-export const mockEnrichedPuposes = [
+export const mockEnrichedPurposes = [
   {
     submitterId: generateId(),
     date: "2024-09-07",

@@ -26,14 +26,13 @@ import {
   contextMiddleware,
   PurposeErrorCodes,
   genericLogger,
+  FileManager,
+  fileManagerBuilder,
 } from "pagopa-interop-tracing-commons";
 import tracingRouter from "../src/routers/tracingRouter.js";
 import supertest from "supertest";
 import { S3Client } from "@aws-sdk/client-s3";
-import {
-  BucketService,
-  bucketServiceBuilder,
-} from "../src/services/bucketService.js";
+
 import {
   OperationsService,
   operationsServiceBuilder,
@@ -60,7 +59,10 @@ const operationsService: OperationsService =
   operationsServiceBuilder(operationsApiClient);
 
 const s3client: S3Client = new S3Client({ region: config.awsRegion });
-const bucketService: BucketService = bucketServiceBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
 
 const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
 app.use(contextMiddleware(config.applicationName));
@@ -83,7 +85,7 @@ const mockAuthenticationMiddleware = (
 };
 
 app.use(mockAuthenticationMiddleware);
-app.use(tracingRouter(localZodiosCtx)(operationsService, bucketService));
+app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
 
 const tracingApiClient = supertest(app);
 
@@ -127,7 +129,7 @@ describe("Tracing Router", () => {
         mockSubmitTracingResponse,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValue();
+      vi.spyOn(fileManager, "writeObject").mockResolvedValue();
 
       vi.spyOn(operationsService, "updateTracingState").mockResolvedValue();
 
@@ -151,9 +153,10 @@ describe("Tracing Router", () => {
         mockAppCtx.correlationId,
       );
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.submitTracing).toHaveBeenCalledWith(
@@ -407,7 +410,7 @@ describe("Tracing Router", () => {
         mockRecoverTracingResponse,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce();
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
@@ -421,9 +424,10 @@ describe("Tracing Router", () => {
         mockRecoverTracingResponse.tracingId,
       );
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.recoverTracing).toHaveBeenCalledWith(
@@ -535,7 +539,7 @@ describe("Tracing Router", () => {
         `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+      vi.spyOn(fileManager, "writeObject").mockRejectedValueOnce(
         writeObjectS3BucketErrorMock,
       );
 
@@ -551,9 +555,10 @@ describe("Tracing Router", () => {
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
@@ -607,7 +612,7 @@ describe("Tracing Router", () => {
         `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+      vi.spyOn(fileManager, "writeObject").mockRejectedValueOnce(
         writeObjectS3BucketErrorMock,
       );
 
@@ -633,9 +638,10 @@ describe("Tracing Router", () => {
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
@@ -684,7 +690,7 @@ describe("Tracing Router", () => {
         mockReplaceTracingResponse,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockResolvedValueOnce();
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
       const originalFilename: string = "testfile.txt";
       const response = await tracingApiClient
@@ -697,9 +703,10 @@ describe("Tracing Router", () => {
       expect(response.body.tracingId).toBe(
         mockReplaceTracingResponse.tracingId,
       );
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(operationsApiClient.replaceTracing).toHaveBeenCalledWith(
@@ -811,7 +818,7 @@ describe("Tracing Router", () => {
         `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+      vi.spyOn(fileManager, "writeObject").mockRejectedValueOnce(
         writeObjectS3BucketErrorMock,
       );
 
@@ -827,9 +834,10 @@ describe("Tracing Router", () => {
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
@@ -881,7 +889,7 @@ describe("Tracing Router", () => {
         `Unable to write tracing with pathName: ${bucketS3Key}. Details: ${mockSQSError}`,
       );
 
-      vi.spyOn(bucketService, "writeObject").mockRejectedValueOnce(
+      vi.spyOn(fileManager, "writeObject").mockRejectedValueOnce(
         writeObjectS3BucketErrorMock,
       );
 
@@ -907,9 +915,10 @@ describe("Tracing Router", () => {
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
-      expect(bucketService.writeObject).toHaveBeenCalledWith(
-        expect.objectContaining({ originalname: originalFilename }),
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
         bucketS3Key,
+        "text/plain",
       );
 
       expect(
