@@ -70,7 +70,7 @@ describe("Enriched Service", () => {
       useSSL: config.dbUseSSL,
     });
     dbService = dbServiceBuilder(dbInstance);
-    fileManager = fileManagerBuilder(s3client, config.bucketS3Name);
+    fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
     producerService = producerServiceBuilder(sqsClient);
 
     enrichedService = enrichedServiceBuilder(

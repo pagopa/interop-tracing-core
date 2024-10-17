@@ -4,14 +4,12 @@ import {
   DbConfig,
   FileManagerConfig,
   LoggerConfig,
-  S3Config,
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
   .and(DbConfig)
-  .and(S3Config)
   .and(FileManagerConfig)
   .and(
     z
@@ -20,12 +18,14 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
         SQS_ENRICHED_UPLOAD_ENDPOINT: z.string(),
         SQS_ENRICHER_STATE_ENDPOINT: z.string(),
         SQS_ENDPOINT: z.string().nullish(),
+        S3_ENRICHED_BUCKET_NAME: z.string(),
       })
       .transform((c) => ({
         applicationName: c.APPLICATION_NAME,
         sqsEnrichedUploadEndpoint: c.SQS_ENRICHED_UPLOAD_ENDPOINT,
         sqsEnricherStateEndpoint: c.SQS_ENRICHER_STATE_ENDPOINT,
         sqsEndpoint: c.SQS_ENDPOINT,
+        bucketEnrichedS3Name: c.S3_ENRICHED_BUCKET_NAME,
       })),
   );
 
