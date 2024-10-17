@@ -7,7 +7,7 @@ export default defineConfig({
     clearMocks: true,
     globals: true,
     setupFiles: ["dotenv/config"],
-    hookTimeout: 20000,
+    hookTimeout: 40000,
   },
   resolve: {
     alias: [{ find: "~", replacement: resolve(__dirname, "src") }],
