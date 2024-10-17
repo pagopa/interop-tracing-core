@@ -10,11 +10,12 @@ import {
 import { config } from "./utilities/config.js";
 import { processEnrichedStateMessage } from "./messageHandler.js";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
 import {
   FileManager,
+  SQS,
   fileManagerBuilder,
-} from "../../commons/src/file-manager/fileManager.js";
+  initDB,
+} from "pagopa-interop-tracing-commons";
 
 const dbInstance = initDB({
   username: config.dbUsername,
