@@ -62,8 +62,8 @@ const tracingRouter =
           await fileManager
             .writeObject(
               await readExpressMulterFile(req.body.file),
-              bucketS3Key,
               req.body.file.mimetype,
+              bucketS3Key,
             )
             .catch(async (error) => {
               await operationsService
@@ -189,8 +189,8 @@ const tracingRouter =
           await fileManager
             .writeObject(
               await readExpressMulterFile(req.body.file),
-              bucketS3Key,
               req.body.file.mimetype,
+              bucketS3Key,
             )
             .catch(async (error) => {
               await operationsService
@@ -245,8 +245,8 @@ const tracingRouter =
           await fileManager
             .writeObject(
               await readExpressMulterFile(req.body.file),
-              bucketS3Key,
               req.body.file.mimetype,
+              bucketS3Key,
             )
             .catch(async (error) => {
               await operationsService

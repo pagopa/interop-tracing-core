@@ -14,13 +14,14 @@ import { Readable } from "stream";
 
 export const fileManagerBuilder = (
   s3Client: S3Client,
-  bucketS3Name?: string,
+  bucketS3Name: string,
 ) => {
   return {
     async writeObject(
       input: Buffer,
-      bucketS3Key: string,
       contentType: string,
+      bucketS3Key: string,
+      bucketEnrichedS3Name?: string,
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
@@ -29,7 +30,7 @@ export const fileManagerBuilder = (
           );
         }
         const putObjectParams = {
-          Bucket: bucketS3Name,
+          Bucket: bucketEnrichedS3Name ?? bucketS3Name,
           Key: bucketS3Key,
           Body: input,
           ContentType: contentType,

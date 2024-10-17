@@ -90,7 +90,10 @@ describe("Processing Service", () => {
     region: config.awsRegion,
   });
 
-  let fileManager: FileManager = fileManagerBuilder(s3client);
+  let fileManager: FileManager = fileManagerBuilder(
+    s3client,
+    config.bucketS3Name,
+  );
   let producerService: ProducerService = producerServiceBuilder(sqsClient);
   let startedPostgreSqlContainer: StartedTestContainer;
   let processingService: ProcessingService;
@@ -128,7 +131,7 @@ describe("Processing Service", () => {
     });
 
     dbService = dbServiceBuilder(dbInstance);
-    fileManager = fileManagerBuilder(s3client);
+    fileManager = fileManagerBuilder(s3client, config.bucketS3Name);
     producerService = producerServiceBuilder(sqsClient);
     processingService = processingServiceBuilder(
       dbService,
@@ -324,12 +327,18 @@ describe("Processing Service", () => {
         mockMessage.version,
         mockMessage.correlationId,
       );
-      await fileManager.writeObject(input, bucketS3Key, "text/csv");
+      await fileManager.writeObject(
+        input,
+        "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
+      );
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         input,
-        bucketS3Key,
         "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
       );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
