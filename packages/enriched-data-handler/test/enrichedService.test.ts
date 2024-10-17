@@ -31,7 +31,7 @@ import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
 import { mockBodyStream } from "./fileManger.js";
 import { parseCSV } from "../src/utilities/csvHandler.js";
-import { Readable } from "stream";
+
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
@@ -171,7 +171,7 @@ describe("Enriched Service", () => {
         "sendTracingUpdateStateMessage",
       );
       const enrichedTracingRecords: TracingEnriched[] = await parseCSV(
-        mockBodyStream(mockEnrichedPurposes).Body as Readable,
+        mockBodyStream(mockEnrichedPurposes),
       );
 
       try {

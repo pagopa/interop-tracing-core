@@ -79,7 +79,6 @@ import {
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingEnriched } from "../src/models/tracing.js";
 import { mockBodyStream } from "./fileManager.js";
-import { Readable } from "stream";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
@@ -211,9 +210,7 @@ describe("Processing Service", () => {
         mockBodyStream(mockTracingRecords),
       );
       const dataObject = await fileManager.readObject("dummy-s3-key");
-      const records: TracingRecordSchema[] = await parseCSV(
-        dataObject.Body as Readable,
-      );
+      const records: TracingRecordSchema[] = await parseCSV(dataObject);
 
       const hasError = await checkRecords(records, mockMessage);
 
@@ -347,9 +344,7 @@ describe("Processing Service", () => {
 
       const dataObject = await fileManager.readObject("dummy-s3-key");
 
-      const records: TracingRecordSchema[] = await parseCSV(
-        dataObject.Body as Readable,
-      );
+      const records: TracingRecordSchema[] = await parseCSV(dataObject);
 
       const errors = await checkRecords(records, mockMessage);
       const dateNotValidError = errors.filter(

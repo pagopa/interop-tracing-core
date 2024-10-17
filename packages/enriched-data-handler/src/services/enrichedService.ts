@@ -10,7 +10,6 @@ import { insertEnrichedTraceError } from "../models/errors.js";
 import { tracingState } from "pagopa-interop-tracing-models";
 import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import { parseCSV } from "../utilities/csvHandler.js";
-import { Readable } from "stream";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
@@ -45,9 +44,8 @@ export const enrichedServiceBuilder = (
         );
 
         const enrichedDataObject = await fileManager.readObject(s3KeyPath);
-        const enrichedTracingRecords: TracingEnriched[] = await parseCSV(
-          enrichedDataObject.Body as Readable,
-        );
+        const enrichedTracingRecords: TracingEnriched[] =
+          await parseCSV(enrichedDataObject);
 
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
           throw new Error(`No record found for key ${s3KeyPath}`);

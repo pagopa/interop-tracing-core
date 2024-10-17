@@ -23,7 +23,6 @@ import {
 } from "../models/csv.js";
 import { processTracingError } from "../models/errors.js";
 import { ZodIssue } from "zod";
-import { Readable } from "stream";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -49,9 +48,8 @@ export const processingServiceBuilder = (
         );
 
         const enrichedDataObject = await fileManager.readObject(bucketS3Key);
-        const tracingRecords: TracingRecordSchema[] = await parseCSV(
-          enrichedDataObject.Body as Readable,
-        );
+        const tracingRecords: TracingRecordSchema[] =
+          await parseCSV(enrichedDataObject);
         if (!tracingRecords || tracingRecords.length === 0) {
           throw new Error(`No record found for key ${bucketS3Key}`);
         }

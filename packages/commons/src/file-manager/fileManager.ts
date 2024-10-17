@@ -2,7 +2,6 @@ import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
-  GetObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import {
   fileManagerBucketS3NameReadError,
@@ -11,6 +10,7 @@ import {
   fileManagerReadError,
   fileManagerMissingBodyError,
 } from "./fileManagerErrors.js";
+import { Readable } from "stream";
 
 export const fileManagerBuilder = (
   s3Client: S3Client,
@@ -41,7 +41,7 @@ export const fileManagerBuilder = (
       }
     },
 
-    async readObject(s3KeyFile: string): Promise<GetObjectCommandOutput> {
+    async readObject(s3KeyFile: string): Promise<Readable> {
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameReadError(
@@ -59,7 +59,11 @@ export const fileManagerBuilder = (
           throw fileManagerMissingBodyError("No body found in S3 object");
         }
 
-        return s3Object;
+        // It's safe to cast s3Object.Body to Readable because, in a Node.js environment,
+        // s3Object.Body will either be an IncomingMessage or another Readable type,
+        // as specified in NodeJsRuntimeStreamingBlobPayloadOutputTypes, which is part of
+        // the StreamingBlobPayloadOutputTypes union type.
+        return s3Object.Body as Readable;
       } catch (error: unknown) {
         throw fileManagerReadError(`Failed to read object: ${error}`);
       }
