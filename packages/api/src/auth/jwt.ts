@@ -49,7 +49,6 @@ const getKey = async (
   kid: string,
   logger: Logger,
 ): Promise<Secret> => {
-  logger.info(`Getting signing key for kid ${kid}`);
   for (const client of clients) {
     try {
       const signingKey = await client.getSigningKey(kid);

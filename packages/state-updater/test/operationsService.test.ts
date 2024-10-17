@@ -7,7 +7,6 @@ import {
 import { config } from "./../src/utilities/config.js";
 import { mockApiClientError } from "./utils.js";
 import { sqsMessages } from "./sqsMessages.js";
-import { SQS } from "../../commons/dist/sqs/index.js";
 import {
   decodeSQSMessageCorrelationId,
   decodeSQSPurposeErrorMessage,
@@ -20,7 +19,11 @@ import {
   errorProcessingUpdateTracingState,
 } from "../src/model/domain/errors.js";
 import { v4 as uuidv4 } from "uuid";
-import { AppContext, WithSQSMessageId } from "pagopa-interop-tracing-commons";
+import {
+  AppContext,
+  WithSQSMessageId,
+  SQS,
+} from "pagopa-interop-tracing-commons";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
