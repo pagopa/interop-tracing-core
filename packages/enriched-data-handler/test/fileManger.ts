@@ -1,6 +1,5 @@
 import { GetObjectCommandOutput } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-
 import { SdkStream } from "@aws-sdk/types";
 import { TracingEnriched } from "../src/models/messages.js";
 

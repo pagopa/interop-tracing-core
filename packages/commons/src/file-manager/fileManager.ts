@@ -64,6 +64,7 @@ export const fileManagerBuilder = (
         throw fileManagerReadError(`Failed to read object: ${error}`);
       }
     },
+
     buildS3Key(
       tenantId: string,
       date: string,
