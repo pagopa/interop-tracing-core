@@ -155,8 +155,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(operationsApiClient.submitTracing).toHaveBeenCalledWith(
@@ -426,8 +426,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(operationsApiClient.recoverTracing).toHaveBeenCalledWith(
@@ -557,8 +557,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(
@@ -640,8 +640,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(
@@ -705,8 +705,8 @@ describe("Tracing Router", () => {
       );
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(operationsApiClient.replaceTracing).toHaveBeenCalledWith(
@@ -836,8 +836,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(
@@ -917,8 +917,8 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        bucketS3Key,
         "text/plain",
+        bucketS3Key,
       );
 
       expect(
