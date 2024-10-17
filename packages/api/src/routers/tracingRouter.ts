@@ -1,6 +1,7 @@
 import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
+  FileManager,
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
@@ -21,7 +22,6 @@ import {
   ApiTracingErrorsContent,
   ApiTracingsContent,
 } from "../model/tracing.js";
-import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import storage from "../routers/config/multer.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 import { readExpressMulterFile } from "../utilities/fileData.js";
