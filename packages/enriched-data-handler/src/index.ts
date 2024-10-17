@@ -44,7 +44,7 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
 
 const fileManager: FileManager = fileManagerBuilder(
   s3client,
-  config.bucketS3Name,
+  config.bucketEnrichedS3Name,
 );
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
