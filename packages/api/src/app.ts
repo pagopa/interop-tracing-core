@@ -9,7 +9,7 @@ import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import tracingRouter from "./routers/tracingRouter.js";
 import healthRouter from "./routers/healthRouter.js";
 import { config } from "./utilities/config.js";
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import {
   OperationsService,
   operationsServiceBuilder,
@@ -29,7 +29,15 @@ const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
   operationsServiceBuilder(operationsApiClient);
 
-const s3client: S3Client = new S3Client({ region: config.awsRegion });
+const s3ClientConfig: S3ClientConfig = {
+  endpoint: config.s3CustomServer
+    ? `${config.s3ServerHost}:${config.s3ServerPort}`
+    : undefined,
+  forcePathStyle: config.s3CustomServer,
+  logger: config.logLevel === "debug" ? console : undefined,
+  region: config.awsRegion,
+};
+const s3client: S3Client = new S3Client(s3ClientConfig);
 const fileManager: FileManager = fileManagerBuilder(
   s3client,
   config.bucketS3Name,
@@ -79,10 +87,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(contextMiddleware(config.applicationName));
 app.use(loggerMiddleware(config.applicationName));
+app.use(healthRouter);
 app.use(authenticationMiddleware);
 
 configureMulterEndpoints(app);
 app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
-app.use(healthRouter);
 
 export default app;

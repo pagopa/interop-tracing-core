@@ -1,32 +1,34 @@
 import {
-  PurposeId,
   TenantId,
   TracingState,
-  genericInternalError,
   tracingAlreadyExists,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
+  Eservice,
+  Purpose,
   PurposeError,
+  Tenant,
   Tracing,
   UpdateTracingState,
   UpdateTracingStateAndVersionSchema,
 } from "../../model/domain/db.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import { config } from "../../utilities/config.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
-    async getTenantByPurposeId(purposeId: PurposeId): Promise<TenantId> {
+    async getTenantById(tenantId: TenantId): Promise<TenantId> {
       try {
-        const { consumer_id } = await db.one<{ consumer_id: TenantId }>(
-          "SELECT consumer_id FROM tracing.purposes WHERE id = $1",
-          [purposeId],
+        const { id } = await db.one<{ id: TenantId }>(
+          `SELECT id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
+          [tenantId],
         );
-        return consumer_id;
+        return id;
       } catch (error) {
-        throw dbServiceErrorMapper("getTenantByPurposeId", error);
+        throw dbServiceErrorMapper("getTenantById", error);
       }
     },
 
@@ -41,7 +43,7 @@ export function dbServiceBuilder(db: DB) {
 
         const getTracingsTotalCountQuery = `
           SELECT COUNT(*)::integer as total_count
-          FROM tracing.tracings
+          FROM ${config.dbSchemaName}.tracings
           WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
         `;
 
@@ -52,7 +54,7 @@ export function dbServiceBuilder(db: DB) {
 
         const getTracingsQuery = `
           SELECT *
-          FROM tracing.tracings
+          FROM ${config.dbSchemaName}.tracings
           WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
           ORDER BY date
           OFFSET $3 LIMIT $4
@@ -84,8 +86,8 @@ export function dbServiceBuilder(db: DB) {
 
         const getTracingErrorsTotalCountQuery = `
           SELECT COUNT(*)::integer as total_count
-          FROM tracing.purposes_errors pe 
-            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          FROM ${config.dbSchemaName}.purposes_errors pe 
+            JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $1
         `;
 
@@ -96,8 +98,8 @@ export function dbServiceBuilder(db: DB) {
 
         const getTracingErrorsQuery = `
           SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.error_code, pe.message, pe.row_number
-          FROM tracing.purposes_errors pe 
-            JOIN tracing.tracings tr ON tr.id = pe.tracing_id
+          FROM ${config.dbSchemaName}.purposes_errors pe 
+            JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $3
           ORDER BY pe.row_number
           OFFSET $1 LIMIT $2
@@ -125,7 +127,7 @@ export function dbServiceBuilder(db: DB) {
         );
 
         const findOneTracingQuery = `
-          SELECT id, state FROM tracing.tracings
+          SELECT id, state FROM ${config.dbSchemaName}.tracings
           WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
           LIMIT 1;`;
 
@@ -142,7 +144,7 @@ export function dbServiceBuilder(db: DB) {
 
         const findPastTracingErrorsQuery = `
           SELECT 1 
-          FROM tracing.tracings tracing
+          FROM ${config.dbSchemaName}.tracings tracing
           WHERE (tracing.state = 'ERROR' OR tracing.state = 'MISSING')
             AND tracing.tenant_id = $1
             AND tracing.id <> $2
@@ -150,7 +152,7 @@ export function dbServiceBuilder(db: DB) {
 
         if (tracing && tracing.state === tracingState.missing) {
           const updateTracingQuery = `
-            UPDATE tracing.tracings 
+            UPDATE ${config.dbSchemaName}.tracings 
             SET state = 'PENDING', 
                 errors = false,
                 updated_at = CURRENT_TIMESTAMP
@@ -177,7 +179,7 @@ export function dbServiceBuilder(db: DB) {
         }
 
         const insertTracingQuery = `
-          INSERT INTO tracing.tracings (id, tenant_id, state, date, version)
+          INSERT INTO ${config.dbSchemaName}.tracings (id, tenant_id, state, date, version)
           VALUES ($1, $2, $3, $4, $5)
           RETURNING id, tenant_id, date, state, version`;
 
@@ -211,7 +213,7 @@ export function dbServiceBuilder(db: DB) {
       try {
         const findOneTracingQuery = `
           SELECT id, tenant_id, state, date, version, errors 
-          FROM tracing.tracings
+          FROM ${config.dbSchemaName}.tracings
           WHERE id = $1
           LIMIT 1;`;
 
@@ -231,18 +233,10 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async replaceTracing() {
-      try {
-        return Promise.resolve();
-      } catch (error) {
-        throw genericInternalError(`error: ${error}`);
-      }
-    },
-
     async updateTracingState(data: UpdateTracingState): Promise<void> {
       try {
         const updateTracingStateQuery = `
-          UPDATE tracing.tracings
+          UPDATE ${config.dbSchemaName}.tracings
             SET state = $1,
                 updated_at = CURRENT_TIMESTAMP
           WHERE id = $2`;
@@ -258,7 +252,7 @@ export function dbServiceBuilder(db: DB) {
     ): Promise<void> {
       try {
         const updateTracingStateQuery = `
-          UPDATE tracing.tracings
+          UPDATE ${config.dbSchemaName}.tracings
             SET version = $2,
               state = $3,
               updated_at = CURRENT_TIMESTAMP
@@ -277,7 +271,7 @@ export function dbServiceBuilder(db: DB) {
     async savePurposeError(data: PurposeError): Promise<void> {
       try {
         const upsertTracingQuery = `
-          INSERT INTO tracing.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
+          INSERT INTO ${config.dbSchemaName}.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING id;
         `;
@@ -299,8 +293,8 @@ export function dbServiceBuilder(db: DB) {
     async deletePurposesErrors(): Promise<void> {
       try {
         const deletePurposesErrorsQuery = `
-          DELETE FROM tracing.purposes_errors pe
-          USING tracing.tracings t
+          DELETE FROM ${config.dbSchemaName}.purposes_errors pe
+          USING ${config.dbSchemaName}.tracings t
           WHERE pe.tracing_id = t.id
           AND pe.version < t.version;`;
 
@@ -313,10 +307,10 @@ export function dbServiceBuilder(db: DB) {
     async saveMissingTracing(data: Tracing): Promise<void> {
       try {
         const insertTracingQuery = `
-          INSERT INTO tracing.tracings (id, tenant_id, state, date, version)
+          INSERT INTO ${config.dbSchemaName}.tracings (id, tenant_id, state, date, version)
           SELECT $1, $2, $3, $4, $5
           WHERE NOT EXISTS (
-            SELECT 1 FROM tracing.tracings
+            SELECT 1 FROM ${config.dbSchemaName}.tracings
             WHERE tenant_id = $2 AND date >= $4 AND date < $4::date + interval '1 day'
             )
           RETURNING id;`;
@@ -343,14 +337,14 @@ export function dbServiceBuilder(db: DB) {
 
         const getTenantsTotalCountQuery = `
           SELECT COUNT(DISTINCT t1.tenant_id)::integer AS total_count
-          FROM tracing.tracings t1
-          LEFT JOIN tracing.tracings t2 
+          FROM ${config.dbSchemaName}.tracings t1
+          LEFT JOIN ${config.dbSchemaName}.tracings t2 
           ON t1.tenant_id = t2.tenant_id 
           AND t2.date >= $1 AND t2.date < $1::date + interval '1 day'
           WHERE t2.tenant_id IS NULL
           AND (
             SELECT COUNT(*)
-            FROM tracing.tracings t3
+            FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
           ) > 1;
         `;
@@ -362,14 +356,14 @@ export function dbServiceBuilder(db: DB) {
 
         const getTenantsQuery = `
           SELECT DISTINCT t1.tenant_id
-          FROM tracing.tracings t1
-          LEFT JOIN tracing.tracings t2 
+          FROM ${config.dbSchemaName}.tracings t1
+          LEFT JOIN ${config.dbSchemaName}.tracings t2 
           ON t1.tenant_id = t2.tenant_id 
           AND t2.date >= $3 AND t2.date < $3::date + interval '1 day'
           WHERE t2.tenant_id IS NULL
           AND (
             SELECT COUNT(*)
-            FROM tracing.tracings t3
+            FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
           ) > 1
           OFFSET $1 LIMIT $2;
@@ -387,6 +381,124 @@ export function dbServiceBuilder(db: DB) {
         };
       } catch (error) {
         throw dbServiceErrorMapper("getTenantsWithMissingTracings", error);
+      }
+    },
+
+    async saveEservice(data: Eservice): Promise<void> {
+      try {
+        const upsertEserviceQuery = `
+          INSERT INTO ${config.dbSchemaName}.eservices (
+            eservice_id, 
+            producer_id, 
+            name
+          ) VALUES ($1, $2, $3)
+          ON CONFLICT (eservice_id) 
+          DO UPDATE SET 
+            producer_id = EXCLUDED.producer_id,
+            name = EXCLUDED.name
+        `;
+
+        await db.none(upsertEserviceQuery, [
+          data.eservice_id,
+          data.producer_id,
+          data.name,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveEservice", error);
+      }
+    },
+
+    async deleteEservice(data: { eservice_id: string }): Promise<void> {
+      try {
+        await db.tx(async (t) => {
+          const deletePurposesQuery = `
+            DELETE FROM ${config.dbSchemaName}.purposes WHERE eservice_id = $1;
+          `;
+          await t.none(deletePurposesQuery, [data.eservice_id]);
+
+          const deleteEserviceQuery = `
+            DELETE FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1;
+          `;
+          await t.none(deleteEserviceQuery, [data.eservice_id]);
+        });
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteEservice", error);
+      }
+    },
+
+    async savePurpose(purpose: Purpose) {
+      try {
+        const upsertPurposeQuery = `
+          INSERT INTO ${config.dbSchemaName}.purposes (id, consumer_id, eservice_id, purpose_title)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (id) 
+          DO UPDATE SET consumer_id = $2, eservice_id = $3, purpose_title = $4
+          RETURNING id;
+        `;
+
+        return await db.one(upsertPurposeQuery, [
+          purpose.id,
+          purpose.consumer_id,
+          purpose.eservice_id,
+          purpose.purpose_title,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("savePurpose", error);
+      }
+    },
+
+    async deletePurpose(purposeId: string) {
+      try {
+        const deletePurposeQuery = `
+          DELETE FROM ${config.dbSchemaName}.purposes WHERE id = $1;
+        `;
+
+        await db.none(deletePurposeQuery, [purposeId]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deletePurpose", error);
+      }
+    },
+
+    async saveTenant(data: Tenant): Promise<void> {
+      try {
+        const upsertTenantQuery = `
+          INSERT INTO ${config.dbSchemaName}.tenants (
+            id, 
+            name, 
+            origin,
+            external_id,
+            deleted
+          ) VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (id) 
+          DO UPDATE SET 
+            name = EXCLUDED.name,
+            origin = EXCLUDED.origin,
+            external_id = EXCLUDED.external_id
+        `;
+
+        await db.none(upsertTenantQuery, [
+          data.id,
+          data.name,
+          data.origin,
+          data.external_id,
+          data.deleted,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveTenant", error);
+      }
+    },
+
+    async deleteTenant(data: { id: string }): Promise<void> {
+      try {
+        const deleteTenantQuery = `
+          UPDATE ${config.dbSchemaName}.tenants 
+          SET deleted = true 
+          WHERE id = $1;
+        `;
+
+        await db.none(deleteTenantQuery, [data.id]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteTenant", error);
       }
     },
   };

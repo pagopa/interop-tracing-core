@@ -6,8 +6,13 @@ export type LoggerMetadata = {
   serviceName?: string;
   correlationId?: string;
   messageId?: string | null | undefined;
+  authData?: { tenantId?: string; organizationId?: string };
+  eventType?: string;
+  eventVersion?: number;
+  streamId?: string;
+  version?: number;
+  eserviceId?: string;
   purposeId?: string;
-  tenantId?: string;
 };
 
 const parsedLoggerConfig = LoggerConfig.safeParse(process.env);
@@ -28,10 +33,15 @@ const logFormat = (
   msg: string,
   timestamp: string,
   level: string,
-  { serviceName, tenantId, correlationId, messageId }: LoggerMetadata,
+  { serviceName, authData, correlationId, messageId }: LoggerMetadata,
 ) => {
   const serviceLogPart = serviceName ? `[${serviceName}]` : undefined;
-  const tenantLogPart = tenantId ? `[TID=${tenantId}]` : undefined;
+  const tenantLogPart = authData?.tenantId
+    ? `[TID=${authData.tenantId}]`
+    : undefined;
+  const organizationLogPart = authData?.organizationId
+    ? `[OID=${authData.organizationId}]`
+    : undefined;
   const messageLogPart = messageId ? `[MID=${messageId}]` : undefined;
   const correlationLogPart = correlationId
     ? `[CID=${correlationId}]`
@@ -41,7 +51,12 @@ const logFormat = (
     .filter((e) => e !== undefined)
     .join(" ");
 
-  const secondPart = [tenantLogPart, correlationLogPart, messageLogPart]
+  const secondPart = [
+    organizationLogPart,
+    tenantLogPart,
+    correlationLogPart,
+    messageLogPart,
+  ]
     .filter((e) => e !== undefined)
     .join(" ");
 

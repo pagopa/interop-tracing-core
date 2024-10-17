@@ -84,6 +84,7 @@ import { Readable } from "stream";
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
     region: config.awsRegion,
+    ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
   });
 
   const s3client: S3Client = new S3Client({

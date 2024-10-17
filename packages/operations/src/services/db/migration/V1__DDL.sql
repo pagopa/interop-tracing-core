@@ -2,24 +2,23 @@ CREATE SCHEMA IF NOT EXISTS tracing;
 
 CREATE TABLE tracing.tenants (
     id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    origin VARCHAR(255) NOT NULL,
-    external_id VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    origin VARCHAR(255),
+    external_id VARCHAR(255),
     deleted BOOLEAN NOT NULL
 );
 
 CREATE TABLE tracing.eservices (
     eservice_id UUID PRIMARY KEY,
-    producer_id UUID NOT NULL
+    producer_id UUID NOT NULL,
+    name VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE tracing.purposes (
     id UUID PRIMARY KEY,
     consumer_id UUID NOT NULL,
     eservice_id UUID NOT NULL,
-    purpose_title VARCHAR(2048) NOT NULL,
-    FOREIGN KEY (consumer_id) REFERENCES tracing.tenants(id),
-    FOREIGN KEY (eservice_id) REFERENCES tracing.eservices(eservice_id)
+    purpose_title VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE tracing.tracings (

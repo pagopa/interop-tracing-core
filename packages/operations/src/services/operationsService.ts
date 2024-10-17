@@ -25,12 +25,21 @@ import {
   ApiSaveMissingTracingPayload,
   ApiSaveMissingTracingResponse,
   ApiDeletePurposesErrorsResponse,
+  ApiSavePurposePayload,
+  ApiDeletePurposeParams,
+  ApiSaveEservicePayload,
+  ApiSaveEserviceResponse,
+  ApiDeleteEserviceParams,
+  ApiDeleteEserviceResponse,
+  ApiSaveTenantPayload,
+  ApiSaveTenantResponse,
+  ApiDeleteTenantParams,
+  ApiDeleteTenantResponse,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
   PurposeErrorId,
-  PurposeId,
   generateId,
   tracingRecoverCannotBeUpdated,
   tracingReplaceCannotBeUpdated,
@@ -45,9 +54,6 @@ import { tracingCannotBeCancelled } from "../model/domain/errors.js";
 
 export function operationsServiceBuilder(dbService: DBService) {
   return {
-    async getTenantByPurposeId(purposeId: PurposeId): Promise<string> {
-      return await dbService.getTenantByPurposeId(purposeId);
-    },
     async submitTracing(
       payload: ApiSubmitTracingPayload & { tenantId: string },
       logger: Logger,
@@ -290,6 +296,71 @@ export function operationsServiceBuilder(dbService: DBService) {
         results: parsedTracingErrors.data,
         totalCount: data.totalCount,
       };
+    },
+
+    async saveEservice(
+      payload: ApiSaveEservicePayload,
+      logger: Logger,
+    ): Promise<ApiSaveEserviceResponse> {
+      logger.info(
+        `Upsert eService with eserviceId: ${payload.eserviceId}, producerId: ${payload.producerId}`,
+      );
+
+      await dbService.saveEservice({
+        eservice_id: payload.eserviceId,
+        producer_id: payload.producerId,
+        name: payload.name,
+      });
+    },
+
+    async deleteEservice(
+      params: ApiDeleteEserviceParams,
+      logger: Logger,
+    ): Promise<ApiDeleteEserviceResponse> {
+      logger.info(`Delete eService with eserviceId: ${params.eserviceId}`);
+
+      await dbService.deleteEservice({ eservice_id: params.eserviceId });
+    },
+
+    async saveTenant(
+      payload: ApiSaveTenantPayload,
+      logger: Logger,
+    ): Promise<ApiSaveTenantResponse> {
+      logger.info(`Upsert tenant with tenantId: ${payload.tenantId}`);
+
+      await dbService.saveTenant({
+        id: payload.tenantId,
+        name: payload.name,
+        origin: payload.origin,
+        external_id: payload.externalId,
+        deleted: false,
+      });
+    },
+
+    async deleteTenant(
+      params: ApiDeleteTenantParams,
+      logger: Logger,
+    ): Promise<ApiDeleteTenantResponse> {
+      logger.info(`Delete tenant with tenantId: ${params.tenantId}`);
+
+      await dbService.deleteTenant({ id: params.tenantId });
+    },
+
+    async savePurpose(purposePayload: ApiSavePurposePayload, logger: Logger) {
+      logger.info(`Saving purpose with id ${purposePayload.id}`);
+
+      return await dbService.savePurpose({
+        id: purposePayload.id,
+        eservice_id: purposePayload.eserviceId,
+        consumer_id: purposePayload.consumerId,
+        purpose_title: purposePayload.purposeTitle,
+      });
+    },
+
+    async deletePurpose(params: ApiDeletePurposeParams, logger: Logger) {
+      const purposeId = params.purposeId;
+      logger.info(`Deleting purpose with id ${purposeId}`);
+      return await dbService.deletePurpose(purposeId);
     },
   };
 }

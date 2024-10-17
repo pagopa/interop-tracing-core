@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const RequesterAuthData = z.object({
-  purposeId: z.string().uuid(),
+  organizationId: z.string().uuid(),
 });
 export type RequesterAuthData = z.infer<typeof RequesterAuthData>;
 

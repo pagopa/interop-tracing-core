@@ -7,7 +7,7 @@ import {
 import {
   correlationIdToHeader,
   genericError,
-  purposeIdToHeader,
+  organizationIdToHeader,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import {
@@ -43,7 +43,7 @@ const tracingRouter =
         try {
           const result = await operationsService.submitTracing(
             {
-              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             {
@@ -106,7 +106,7 @@ const tracingRouter =
         try {
           const data = await operationsService.getTracings(
             {
-              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             req.query,
@@ -138,7 +138,7 @@ const tracingRouter =
         try {
           const data = await operationsService.getTracingErrors(
             {
-              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             req.params,
@@ -172,7 +172,7 @@ const tracingRouter =
         try {
           const result = await operationsService.recoverTracing(
             {
-              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             req.params,
@@ -196,7 +196,7 @@ const tracingRouter =
               await operationsService
                 .cancelTracingStateAndVersion(
                   {
-                    ...purposeIdToHeader(req.ctx.authData.purposeId),
+                    ...organizationIdToHeader(req.ctx.authData.organizationId),
                     ...correlationIdToHeader(req.ctx.correlationId),
                   },
                   {
@@ -228,7 +228,7 @@ const tracingRouter =
         try {
           const result = await operationsService.replaceTracing(
             {
-              ...purposeIdToHeader(req.ctx.authData.purposeId),
+              ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
             req.params,
@@ -252,7 +252,7 @@ const tracingRouter =
               await operationsService
                 .cancelTracingStateAndVersion(
                   {
-                    ...purposeIdToHeader(req.ctx.authData.purposeId),
+                    ...organizationIdToHeader(req.ctx.authData.organizationId),
                     ...correlationIdToHeader(req.ctx.correlationId),
                   },
                   {

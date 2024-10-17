@@ -2,6 +2,7 @@ import { generateId } from "pagopa-interop-tracing-models";
 import { DB } from "pagopa-interop-tracing-commons";
 import { TracingEnriched } from "../../models/messages.js";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import { config } from "../../utilities/config.js";
 
 export function dbServiceBuilder(db: DB) {
   return {
@@ -11,7 +12,7 @@ export function dbServiceBuilder(db: DB) {
     ): Promise<{ id: string }[]> {
       try {
         const queryText = `
-          INSERT INTO traces.traces (
+          INSERT INTO ${config.dbSchemaName}.traces (
             id, tracing_id, date, purpose_id, purpose_name, status, requests_count, eservice_id,
             consumer_id, consumer_origin, consumer_name, consumer_external_id,
             producer_id, producer_name, producer_origin, producer_external_id, submitter_id
@@ -24,7 +25,7 @@ export function dbServiceBuilder(db: DB) {
         `;
 
         const deleteTracesQuery = `
-          DELETE FROM traces.traces
+          DELETE FROM ${config.dbSchemaName}.traces
           WHERE tracing_id = $1
           RETURNING id
         `;

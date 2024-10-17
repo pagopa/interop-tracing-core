@@ -17,6 +17,7 @@ const OperationsService: OperationsService =
 
 const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
+  ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
 });
 
 await Promise.all([

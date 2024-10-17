@@ -1,0 +1,50 @@
+{
+  "name": "pagopa-interop-tracing-eservice-event-consumer",
+  "version": "1.0.0",
+  "description": "PagoPA Interop Tracing eservice event consumer",
+  "main": "dist",
+  "type": "module",
+  "scripts": {
+    "test": "vitest --config ./test/vitest.config.ts",
+    "test:it": "vitest db --config ./test/vitest.config.ts",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:autofix": "eslint . --ext .ts,.tsx --fix",
+    "format:check": "prettier --check src",
+    "format:write": "prettier --write src",
+    "start": "node --watch --no-warnings --loader ts-node/esm -r 'dotenv-flow/config' ./src/index.ts",
+    "build": "tsc",
+    "check": "tsc --project tsconfig.check.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@pagopa/interop-outbound-models": "^1.0.0",
+    "@tsconfig/node-lts": "20.1.0",
+    "@zodios/core": "10.9.6",
+    "axios": "1.6.7",
+    "dotenv-flow": "3.3.0",
+    "kafka-connector": "workspace:*",
+    "kafkajs": "2.2.4",
+    "pagopa-interop-tracing-commons": "workspace:*",
+    "pagopa-interop-tracing-models": "workspace:*",
+    "pagopa-interop-tracing-operations-client": "workspace:*",
+    "ts-pattern": "5.2.0",
+    "uuid": "10.0.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/dotenv-flow": "3.3.3",
+    "@types/node": "20.3.1",
+    "@types/uuid": "9.0.8",
+    "@typescript-eslint/eslint-plugin": "6.21.0",
+    "@typescript-eslint/parser": "6.21.0",
+    "eslint": "8.49.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "prettier": "3.0.3",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.2",
+    "vitest": "0.33.0"
+  }
+}

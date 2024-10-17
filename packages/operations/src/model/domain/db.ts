@@ -3,9 +3,9 @@ import { z } from "zod";
 
 export const TenantSchema = z.object({
   id: z.string().uuid(),
-  name: z.string(),
-  origin: z.string(),
-  externalId: z.string().uuid(),
+  name: z.string().nullish(),
+  origin: z.string().nullish(),
+  external_id: z.string().nullish(),
   deleted: z.boolean(),
 });
 
@@ -46,6 +46,13 @@ const UpdateTracingStateAndVersionSchema = z.object({
   state: TracingState,
 });
 
+export const EserviceSchema = z.object({
+  eservice_id: z.string(),
+  producer_id: z.string(),
+  name: z.string(),
+});
+
+export type Eservice = z.infer<typeof EserviceSchema>;
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;

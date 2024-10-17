@@ -109,16 +109,18 @@ export function makeApiProblemBuilder<T extends string>(errors: {
 }
 
 const errorCodes = {
-  genericError: "9000",
-  badRequestError: "9001",
-  invalidClaim: "9002",
-  missingHeader: "9003",
-  unauthorizedError: "9004",
-  jwtDecodingError: "9005",
-  tracingAlreadyExists: "9006",
-  tracingNotFound: "9007",
-  tracingCannotBeUpdated: "9008",
-  kafkaMessageProcessError: "9009",
+  genericError: "GENERIC_ERROR",
+  badRequestError: "BAD_REQUEST_ERROR",
+  invalidClaim: "INVALID_CLAIM",
+  missingHeader: "MISSING_HEADER",
+  unauthorizedError: "UNAUTHORIZED_ERROR",
+  jwtDecodingError: "JWT_DECODING_ERROR",
+  tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
+  tracingNotFound: "TRACING_NOT_FOUND",
+  tracingCannotBeUpdated: "TRACING_CANNOT_BE_UPDATED",
+  kafkaMessageProcessError: "KAFKA_MESSAGE_PROCESS_ERROR",
+  kafkaMessageValueError: "KAFKA_MESSAGE_VALUE_ERROR",
+  kafkaMessageMissingData: "KAFKA_MESSAGE_MISSING_DATA",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -161,6 +163,25 @@ export function kafkaMessageProcessError(
     detail: `Error while handling kafka message from topic : ${topic} - partition ${partition} - offset ${offset}. ${
       error ? parseErrorMessage(error) : ""
     }`,
+  });
+}
+
+export function kafkaMissingMessageValue(
+  topic: string,
+): InternalError<CommonErrorCodes> {
+  return new InternalError({
+    code: "kafkaMessageValueError",
+    detail: `Missing value message in kafka message from topic: ${topic}`,
+  });
+}
+
+export function kafkaMessageMissingData(
+  topic: string,
+  eventType: string,
+): InternalError<CommonErrorCodes> {
+  return new InternalError({
+    code: "kafkaMessageMissingData",
+    detail: `Missing data in kafka message from topic: ${topic} and event type: ${eventType}`,
   });
 }
 

@@ -10,9 +10,9 @@ import { makeApiProblem } from "../model/domain/errors.js";
 import { operationsServiceBuilder } from "../services/operationsService.js";
 import { config } from "../utilities/config.js";
 import { dbServiceBuilder } from "../services/db/dbService.js";
-import { purposeAuthorizerMiddlewareBuilder } from "../auth/purposeAuthorizerMiddlewareBuilder.js";
 import { errorMapper } from "../utilities/errorMapper.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
+import { tenantAuthorizerMiddlewareBuilder } from "../auth/tenantAuthorizerMiddlewareBuilder.js";
 
 const operationsRouter = (
   ctx: LocalZodiosContext,
@@ -32,12 +32,12 @@ const operationsRouter = (
 
   const dbService = dbServiceBuilder(dbInstance);
   const operationsService = operationsServiceBuilder(dbService);
-  const { purposeAuthorizerMiddleware } =
-    purposeAuthorizerMiddlewareBuilder(dbService);
+  const { tenantAuthorizerMiddleware } =
+    tenantAuthorizerMiddlewareBuilder(dbService);
 
   operationsRouter.post(
     "/tracings/submit",
-    purposeAuthorizerMiddleware(),
+    tenantAuthorizerMiddleware(),
     async (req, res) => {
       try {
         const tracing = await operationsService.submitTracing(
@@ -56,9 +56,33 @@ const operationsRouter = (
     },
   );
 
+  operationsRouter.post("/eservices", async (req, res) => {
+    try {
+      const eservice = await operationsService.saveEservice(
+        req.body,
+        logger(req.ctx),
+      );
+
+      return res.status(204).json(eservice).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/eservices/:eserviceId", async (req, res) => {
+    try {
+      await operationsService.deleteEservice(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
   operationsRouter.post(
     "/tracings/:tracingId/recover",
-    purposeAuthorizerMiddleware(),
+    tenantAuthorizerMiddleware(),
     async (req, res) => {
       try {
         const tracing = await operationsService.recoverTracing(
@@ -75,7 +99,7 @@ const operationsRouter = (
 
   operationsRouter.post(
     "/tracings/:tracingId/cancel",
-    purposeAuthorizerMiddleware(),
+    tenantAuthorizerMiddleware(),
     async (req, res) => {
       try {
         await operationsService.cancelTracingStateAndVersion(
@@ -137,6 +161,30 @@ const operationsRouter = (
       }
     },
   );
+
+  operationsRouter.post("/tenants", async (req, res) => {
+    try {
+      const eservice = await operationsService.saveTenant(
+        req.body,
+        logger(req.ctx),
+      );
+
+      return res.status(204).json(eservice).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/tenants/:tenantId", async (req, res) => {
+    try {
+      await operationsService.deleteTenant(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
 
   operationsRouter.post(
     "/tenants/:tenantId/tracings/missing",
@@ -200,7 +248,7 @@ const operationsRouter = (
 
   operationsRouter.get(
     "/tracings",
-    purposeAuthorizerMiddleware(),
+    tenantAuthorizerMiddleware(),
     async (req, res) => {
       try {
         const tracings = await operationsService.getTracings(
@@ -223,7 +271,7 @@ const operationsRouter = (
 
   operationsRouter.get(
     "/tracings/:tracingId/errors",
-    purposeAuthorizerMiddleware(),
+    tenantAuthorizerMiddleware(),
     async (req, res) => {
       try {
         const tracingErrors = await operationsService.getTracingErrors(
@@ -245,6 +293,26 @@ const operationsRouter = (
       }
     },
   );
+
+  operationsRouter.post("/purposes", async (req, res) => {
+    try {
+      await operationsService.savePurpose(req.body, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
+
+  operationsRouter.delete("/purposes/:purposeId", async (req, res) => {
+    try {
+      await operationsService.deletePurpose(req.params, logger(req.ctx));
+      return res.status(204).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
 
   return operationsRouter;
 };

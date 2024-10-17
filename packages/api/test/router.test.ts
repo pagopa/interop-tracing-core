@@ -12,12 +12,12 @@ import {
   correlationIdToHeader,
   generateId,
   genericInternalError,
-  purposeIdToHeader,
   tracingAlreadyExists,
   tracingRecoverCannotBeUpdated,
   tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
+  organizationIdToHeader,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -71,7 +71,7 @@ configureMulterEndpoints(app);
 const mockAppCtx = {
   correlationId: generateId(),
   authData: {
-    purposeId: generateId(),
+    organizationId: generateId(),
   },
 };
 
@@ -92,7 +92,7 @@ const tracingApiClient = supertest(app);
 interface RequestWithZodiosCtx extends Request {
   ctx: {
     authData: {
-      purposeId: string;
+      organizationId: string;
     };
     correlationId: string;
   };
@@ -166,7 +166,7 @@ describe("Tracing Router", () => {
         {
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -436,7 +436,7 @@ describe("Tracing Router", () => {
           params: { tracingId: mockRecoverTracingResponse.tracingId },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -574,7 +574,7 @@ describe("Tracing Router", () => {
           },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -657,7 +657,7 @@ describe("Tracing Router", () => {
           },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -715,7 +715,7 @@ describe("Tracing Router", () => {
           params: { tracingId: mockReplaceTracingResponse.tracingId },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -851,7 +851,7 @@ describe("Tracing Router", () => {
           params: { tracingId: mockReplaceTracingResponse.tracingId },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );
@@ -932,7 +932,7 @@ describe("Tracing Router", () => {
           params: { tracingId: mockReplaceTracingResponse.tracingId },
           headers: {
             ...correlationIdToHeader(mockAppCtx.correlationId),
-            ...purposeIdToHeader(mockAppCtx.authData.purposeId),
+            ...organizationIdToHeader(mockAppCtx.authData.organizationId),
           },
         },
       );

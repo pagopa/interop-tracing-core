@@ -14,12 +14,14 @@ const tracingStateUpdateronfig = AWSConfig.and(ConsumerConfig)
         API_OPERATIONS_BASEURL: z.string(),
         SQS_ENDPOINT_ENRICHER_STATE_QUEUE: z.string(),
         SQS_ENDPOINT_PROCESSING_ERROR_QUEUE: z.string(),
+        SQS_ENDPOINT: z.string().nullish(),
       })
       .transform((c) => ({
         applicationName: c.APPLICATION_NAME,
         operationsBaseUrl: c.API_OPERATIONS_BASEURL,
         sqsEndpointEnricherStateQueue: c.SQS_ENDPOINT_ENRICHER_STATE_QUEUE,
         sqsEndpointProcessingErrorQueue: c.SQS_ENDPOINT_PROCESSING_ERROR_QUEUE,
+        sqsEndpoint: c.SQS_ENDPOINT,
       })),
   );
 

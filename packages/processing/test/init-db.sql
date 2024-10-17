@@ -10,16 +10,15 @@ CREATE TABLE IF NOT EXISTS tracing.tenants (
 
 CREATE TABLE IF NOT EXISTS tracing.eservices (
     eservice_id UUID PRIMARY KEY,
-    producer_id UUID NOT NULL
+    producer_id UUID NOT NULL,
+    name VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tracing.purposes (
     id UUID PRIMARY KEY,
     consumer_id UUID NOT NULL,
     eservice_id UUID NOT NULL,
-    purpose_title VARCHAR(2048) NOT NULL,
-    FOREIGN KEY (consumer_id) REFERENCES tracing.tenants(id),
-    FOREIGN KEY (eservice_id) REFERENCES tracing.eservices(eservice_id)
+    purpose_title VARCHAR(2048) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tracing.tracings (

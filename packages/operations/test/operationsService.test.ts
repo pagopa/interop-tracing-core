@@ -32,6 +32,7 @@ import {
   tracingNotFound,
   tracingState,
   tracingReplaceCannotBeUpdated,
+  EserviceId,
 } from "pagopa-interop-tracing-models";
 import { StartedTestContainer } from "testcontainers";
 import {
@@ -42,8 +43,11 @@ import {
   addTracing,
   clearPurposesErrors,
   clearTracings,
+  findPurposeById,
   findPurposeErrors,
   findTracingById,
+  findEserviceById,
+  findTenantById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -100,14 +104,17 @@ describe("database test", () => {
     dbService = dbServiceBuilder(dbInstance);
     operationsService = operationsServiceBuilder(dbService);
 
-    await addEservice({ eservice_id, producer_id: generateId() }, dbInstance);
+    await addEservice(
+      { eservice_id, producer_id: generateId(), name: "eservice name" },
+      dbInstance,
+    );
 
     await addTenant(
       {
         id: tenantId,
         name: "pagoPa",
         origin: "external",
-        externalId: generateId(),
+        external_id: generateId(),
         deleted: false,
       },
       dbInstance,
@@ -118,7 +125,7 @@ describe("database test", () => {
         id: secondTenantId,
         name: "pagoPa 2",
         origin: "external 2",
-        externalId: generateId(),
+        external_id: generateId(),
         deleted: false,
       },
       dbInstance,
@@ -136,18 +143,18 @@ describe("database test", () => {
   });
 
   describe("Operations service", () => {
-    describe("getTenantByPurposeId", () => {
-      it("retrieve tenant by purposeId", async () => {
-        const result = await operationsService.getTenantByPurposeId(purposeId);
+    describe("getTenantByOrganizationId", () => {
+      it("retrieve tenant by id", async () => {
+        const result = await dbService.getTenantById(tenantId);
 
         expect(result).toBe(tenantId);
       });
 
-      it("should give error when purposeId not a tenant", async () => {
-        const wrongPurposeId: PurposeId = generateId();
+      it("should give error when tenantId is not found", async () => {
+        const wrongTenantId: TenantId = generateId();
 
         try {
-          await operationsService.getTenantByPurposeId(wrongPurposeId);
+          await dbService.getTenantById(wrongTenantId);
         } catch (e) {
           const error = e as InternalError<CommonErrorCodes>;
           expect(error).toBeInstanceOf(Error);
@@ -1176,10 +1183,331 @@ describe("database test", () => {
         );
 
         await operationsService.deletePurposesErrors(genericLogger);
-
         const purposesErrors = await findPurposeErrors(dbInstance);
 
         expect(purposesErrors.length).toBe(0);
+      });
+    });
+
+    describe("saveEservice", () => {
+      it("should save an eservice successfully", async () => {
+        const eservicePayload = {
+          producerId: generateId(),
+          eserviceId: generateId(),
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(
+          eservicePayload.eserviceId,
+          dbInstance,
+        );
+
+        expect(result?.eservice_id).toBe(eservicePayload.eserviceId);
+      });
+
+      it("should update name of existing eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const producerId = generateId<TenantId>();
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+
+        const eservicePayload = {
+          eserviceId: eserviceId,
+          producerId: producerId,
+          name: "eservice name updated",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveEservice(eservicePayload, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result?.name).toBe(eservicePayload.name);
+      });
+
+      it("should throw an error if the eservice payload is invalid", async () => {
+        const invalidEservicePayload = {
+          producerId: generateId(),
+          eserviceId: "invalid_uuid",
+          name: "eservice name",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveEservice(invalidEservicePayload, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("deleteEservice", () => {
+      it("should delete an eservice successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+        await operationsService.deleteEservice({ eserviceId }, genericLogger);
+
+        const result = await findEserviceById(eserviceId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should delete an eservice and associated purposes successfully", async () => {
+        const eserviceId = generateId<EserviceId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addEservice(
+          {
+            eservice_id: eserviceId,
+            producer_id: generateId(),
+            name: "eservice name",
+          },
+          dbInstance,
+        );
+
+        const purpose = await addPurpose(
+          {
+            id: generateId<PurposeId>(),
+            consumer_id: tenantId,
+            eservice_id: eserviceId,
+            purpose_title: "purpose title",
+          },
+          dbInstance,
+        );
+
+        await operationsService.deleteEservice({ eserviceId }, genericLogger);
+
+        const purposeResult = await findPurposeById(purpose.id, dbInstance);
+        const eserviceResult = await findEserviceById(eserviceId, dbInstance);
+
+        expect(purposeResult).toBe(null);
+        expect(eserviceResult).toBe(null);
+      });
+
+      it("should throw an error if the eserviceId param is invalid", async () => {
+        const invalidEserviceParams = {
+          eserviceId: "invalid_uuid",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deleteEservice(
+            invalidEserviceParams,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("savePurpose", () => {
+      it("should save a purpose successfully", async () => {
+        const purposePayload = {
+          id: generateId<PurposeId>(),
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.savePurpose(
+          {
+            id: purposePayload.id,
+            consumerId: purposePayload.consumer_id,
+            eserviceId: purposePayload.eservice_id,
+            purposeTitle: purposePayload.purpose_title,
+          },
+          genericLogger,
+        );
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result).toStrictEqual(purposePayload);
+      });
+
+      it("should add existing purpose successfully", async () => {
+        const purposePayload = {
+          id: generateId<PurposeId>(),
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+        await addPurpose(purposePayload, dbInstance);
+        const purpose_title = "New Purpose Title";
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.savePurpose(
+          {
+            id: purposePayload.id,
+            consumerId: purposePayload.consumer_id,
+            eserviceId: purposePayload.eservice_id,
+            purposeTitle: purpose_title,
+          },
+          genericLogger,
+        );
+
+        const result = await findPurposeById(purposePayload.id, dbInstance);
+        expect(result?.purpose_title).toBe(purpose_title);
+      });
+
+      it("should throw an error if the purpose payload is invalid", async () => {
+        const invalidPurposePayload = {
+          id: "invalid_id_format",
+          purposeTitle: "New Purpose Title",
+        } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.savePurpose(invalidPurposePayload, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("deletePurpose", () => {
+      it("should delete a purpose successfully", async () => {
+        const purposeId = generateId<PurposeId>();
+        const purposePayload = {
+          id: purposeId,
+          consumer_id: tenantId,
+          eservice_id: eservice_id,
+          purpose_title: "Purpose Title",
+        };
+
+        await addPurpose(purposePayload, dbInstance);
+
+        const logger = genericLogger;
+
+        const operationsService = operationsServiceBuilder(dbService);
+        await operationsService.deletePurpose({ purposeId }, logger);
+
+        const result = await findPurposeById(purposeId, dbInstance);
+        expect(result).toBe(null);
+      });
+
+      it("should throw an error if deleting a non-existent purpose", async () => {
+        const purposeId = "non_existent_id";
+        const logger = genericLogger;
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deletePurpose({ purposeId }, logger),
+        ).rejects.toThrowError(/deletePurpose/);
+      });
+    });
+
+    describe("saveTenant", () => {
+      it("should save an tenant successfully", async () => {
+        const tenantPayload = {
+          tenantId: generateId(),
+          name: "tenant name",
+          origin: "tenant origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveTenant(tenantPayload, genericLogger);
+
+        const result = await findTenantById(tenantPayload.tenantId, dbInstance);
+
+        expect(result?.id).toBe(tenantPayload.tenantId);
+      });
+
+      it("should update name of existing tenant successfully", async () => {
+        const tenantId = generateId<TenantId>();
+
+        await addTenant(
+          {
+            id: tenantId,
+            name: "tenant name",
+            origin: "origin",
+            external_id: generateId(),
+            deleted: false,
+          },
+          dbInstance,
+        );
+
+        const tenantPayload = {
+          tenantId,
+          name: "tenant name updated",
+          origin: "tenant origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveTenant(tenantPayload, genericLogger);
+
+        const result = await findTenantById(tenantId, dbInstance);
+
+        expect(result?.name).toBe(tenantPayload.name);
+      });
+
+      it("should throw an error if the tenant payload is invalid", async () => {
+        const invalidTenantPayload = {
+          tenantId: "invalid_external_id",
+          name: "tenant name",
+          origin: "origin",
+          externalId: generateId(),
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveTenant(invalidTenantPayload, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+
+    describe("deleteTenant", () => {
+      it("should delete an tenant successfully", async () => {
+        const tenantId = generateId<TenantId>();
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await addTenant(
+          {
+            id: tenantId,
+            name: "tenant name",
+            origin: "origin",
+            external_id: generateId(),
+            deleted: false,
+          },
+          dbInstance,
+        );
+        await operationsService.deleteTenant({ tenantId }, genericLogger);
+
+        const result = await findTenantById(tenantId, dbInstance);
+        expect(result?.deleted).toBe(true);
+      });
+
+      it("should throw an error if the tenantId param is invalid", async () => {
+        const invalidTenantParams = {
+          tenantId: "invalid_tenant_id",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.deleteTenant(invalidTenantParams, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
   });
