@@ -327,12 +327,18 @@ describe("Processing Service", () => {
         mockMessage.version,
         mockMessage.correlationId,
       );
-      await fileManager.writeObject(input, bucketS3Key, "text/csv");
+      await fileManager.writeObject(
+        input,
+        "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
+      );
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         input,
-        bucketS3Key,
         "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
       );
 
       expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);

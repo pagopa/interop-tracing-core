@@ -23,6 +23,7 @@ import {
 } from "../models/csv.js";
 import { processTracingError } from "../models/errors.js";
 import { ZodIssue } from "zod";
+import { config } from "../utilities/config.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -48,8 +49,13 @@ export const processingServiceBuilder = (
         );
 
         const enrichedDataObject = await fileManager.readObject(bucketS3Key);
-        const tracingRecords: TracingRecordSchema[] =
+        const csvData: TracingRecordSchema[] =
           await parseCSV(enrichedDataObject);
+
+        const tracingRecords = csvData.map((csv, index) => {
+          return { ...csv, rowNumber: index + 1 };
+        });
+
         if (!tracingRecords || tracingRecords.length === 0) {
           throw new Error(`No record found for key ${bucketS3Key}`);
         }
@@ -130,7 +136,12 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     if (purposeEnriched.data) {
       const csvData = generateCSV(purposeEnriched.data, tracing.tenantId);
       const input = Buffer.from(csvData);
-      await fileManager.writeObject(input, bucketS3Key, "text/csv");
+      await fileManager.writeObject(
+        input,
+        "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
+      );
     }
   }
 }
@@ -143,7 +154,6 @@ export async function checkRecords(
 
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
-
     if (result.error) {
       for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);
