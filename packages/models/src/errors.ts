@@ -115,6 +115,7 @@ const errorCodes = {
   missingHeader: "MISSING_HEADER",
   unauthorizedError: "UNAUTHORIZED_ERROR",
   jwtDecodingError: "JWT_DECODING_ERROR",
+  jwksSigningKeyError: "JWT_SIGNING_KEY_ERROR",
   tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
   tracingNotFound: "TRACING_NOT_FOUND",
   tracingCannotBeUpdated: "TRACING_CANNOT_BE_UPDATED",
@@ -220,6 +221,14 @@ export function jwtDecodingError(error: unknown): ApiError<CommonErrorCodes> {
     detail: `Unexpected error on JWT decoding: ${parseErrorMessage(error)}`,
     code: "jwtDecodingError",
     title: "JWT decoding error",
+  });
+}
+
+export function jwksSigningKeyError(): ApiError<CommonErrorCodes> {
+  return new ApiError({
+    detail: `Error getting signing key`,
+    code: "jwksSigningKeyError",
+    title: "JWK signing key error",
   });
 }
 

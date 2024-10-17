@@ -1,7 +1,11 @@
-import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from "jsonwebtoken";
-import jwksClient from "jwks-rsa";
+import jwt, { JwtHeader, JwtPayload, Secret } from "jsonwebtoken";
+import jwksClient, { JwksClient } from "jwks-rsa";
 import { AuthToken } from "./authData.js";
-import { invalidClaim, jwtDecodingError } from "pagopa-interop-tracing-models";
+import {
+  invalidClaim,
+  jwksSigningKeyError,
+  jwtDecodingError,
+} from "pagopa-interop-tracing-models";
 import {
   JWTConfig,
   Logger,
@@ -12,6 +16,19 @@ const decodeJwtToken = (jwtToken: string): JwtPayload | null => {
   try {
     return jwt.decode(jwtToken, { json: true });
   } catch (err) {
+    throw jwtDecodingError(err);
+  }
+};
+
+export const decodeJwtTokenHeaders = (
+  jwtToken: string,
+  logger: Logger,
+): JwtHeader | undefined => {
+  try {
+    const decoded = jwt.decode(jwtToken, { complete: true });
+    return decoded?.header;
+  } catch (err) {
+    logger.error(`Error decoding JWT token: ${err}`);
     throw jwtDecodingError(err);
   }
 };
@@ -27,41 +44,48 @@ export const readAuthDataFromJwtToken = (
   return RequesterAuthData.parse(token.data);
 };
 
-const getKey =
-  (
-    clients: jwksClient.JwksClient[],
-    logger: Logger,
-  ): ((header: JwtHeader, callback: SigningKeyCallback) => void) =>
-  (header, callback) => {
-    for (const { client, last } of clients.map((c, i) => ({
-      client: c,
-      last: i === clients.length - 1,
-    }))) {
-      client.getSigningKey(header.kid, function (err, key) {
-        if (err && last) {
-          logger.error(`Error getting signing key: ${err}`);
-          return callback(err, undefined);
-        } else {
-          return callback(null, key?.getPublicKey());
-        }
-      });
+const getKey = async (
+  clients: jwksClient.JwksClient[],
+  kid: string,
+  logger: Logger,
+): Promise<Secret> => {
+  logger.info(`Getting signing key for kid ${kid}`);
+  for (const client of clients) {
+    try {
+      const signingKey = await client.getSigningKey(kid);
+      return signingKey.getPublicKey();
+    } catch (error) {
+      // Continue to the next client
+      logger.debug(`Skip Jwks client`);
     }
-  };
+  }
 
-export const verifyJwtToken = (
+  logger.error(`Error getting signing key`);
+  throw jwksSigningKeyError();
+};
+
+export const verifyJwtToken = async (
   jwtToken: string,
   logger: Logger,
 ): Promise<boolean> => {
   const config = JWTConfig.parse(process.env);
-  const clients = config.wellKnownUrls.map((url: string) => {
-    return jwksClient({
-      jwksUri: url,
-    });
-  });
+
+  const jwtHeader = decodeJwtTokenHeaders(jwtToken, logger);
+  if (!jwtHeader?.kid) {
+    logger.warn("Token verification failed: missing kid");
+    return Promise.resolve(false);
+  }
+
+  const secret: Secret = await getKey(
+    getJwksClients(config),
+    jwtHeader.kid,
+    logger,
+  );
+
   return new Promise((resolve) => {
     jwt.verify(
       jwtToken,
-      getKey(clients, logger),
+      secret,
       {
         audience: config.acceptedAudiences,
       },
@@ -75,3 +99,17 @@ export const verifyJwtToken = (
     );
   });
 };
+
+export function getJwksClients(config: JWTConfig): JwksClient[] {
+  return config.wellKnownUrls.map((url) =>
+    jwksClient({
+      cache: true,
+      rateLimit: true,
+      jwksUri: url,
+      /* If JWKS_CACHE_MAX_AGE_MILLIS not provided using 10 minute like default value: 
+      https://github.com/auth0/node-jwks-rsa/blob/master/EXAMPLES.md#configuration 
+      */
+      cacheMaxAge: config.jwksCacheMaxAge ?? 600000,
+    }),
+  );
+}
