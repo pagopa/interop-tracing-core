@@ -3,7 +3,9 @@ import {
   TracingFromS3KeyPathDto,
   genericInternalError,
 } from "pagopa-interop-tracing-models";
-import { BucketService } from "./bucketService.js";
+
+import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
+import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
@@ -24,7 +26,7 @@ import { ZodIssue } from "zod";
 
 export const processingServiceBuilder = (
   dbService: DBService,
-  bucketService: BucketService,
+  fileManager: FileManager,
   producerService: ProducerService,
 ) => {
   return {
@@ -37,11 +39,19 @@ export const processingServiceBuilder = (
           `Reading and processing file for tracingId: ${tracing.tracingId}`,
         );
 
-        const s3KeyPath = createS3Path(tracing);
+        const bucketS3Key = fileManager.buildS3Key(
+          tracing.tenantId,
+          tracing.date,
+          tracing.tracingId,
+          tracing.version,
+          tracing.correlationId,
+        );
 
-        const tracingRecords = await bucketService.readObject(s3KeyPath);
+        const enrichedDataObject = await fileManager.readObject(bucketS3Key);
+        const tracingRecords: TracingRecordSchema[] =
+          await parseCSV(enrichedDataObject);
         if (!tracingRecords || tracingRecords.length === 0) {
-          throw new Error(`No record found for key ${s3KeyPath}`);
+          throw new Error(`No record found for key ${bucketS3Key}`);
         }
 
         const hasSemiColonSeparator = tracingRecords.some((trace) => {
@@ -49,17 +59,17 @@ export const processingServiceBuilder = (
         });
 
         if (hasSemiColonSeparator) {
-          throw new Error(`Invalid delimiter found on csv at ${s3KeyPath}`);
+          throw new Error(`Invalid delimiter found on csv at ${bucketS3Key}`);
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
 
         await writeEnrichedTracingOrSendPurposeErrors(
-          bucketService,
+          fileManager,
           producerService,
           dbService,
           tracingRecords,
-          s3KeyPath,
+          bucketS3Key,
           tracing,
           formalErrorsRecords,
           ctx,
@@ -74,11 +84,11 @@ export const processingServiceBuilder = (
 };
 
 export async function writeEnrichedTracingOrSendPurposeErrors(
-  bucketService: BucketService,
+  fileManager: FileManager,
   producerService: ProducerService,
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
-  s3KeyPath: string,
+  bucketS3Key: string,
   tracing: TracingFromS3KeyPathDto,
   formalErrors: PurposeErrorMessage[],
   ctx: WithSQSMessageId<AppContext>,
@@ -118,12 +128,9 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     }
 
     if (purposeEnriched.data) {
-      await bucketService.writeObject(
-        purposeEnriched.data,
-        s3KeyPath,
-        tracing.tenantId,
-        ctx,
-      );
+      const csvData = generateCSV(purposeEnriched.data, tracing.tenantId);
+      const input = Buffer.from(csvData);
+      await fileManager.writeObject(input, bucketS3Key, "text/csv");
     }
   }
 }
@@ -136,6 +143,7 @@ export async function checkRecords(
 
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
+
     if (result.error) {
       for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);
@@ -214,10 +222,6 @@ async function sendPurposeErrors(
     return producerService.sendErrorMessage(purposeError, ctx);
   });
   await Promise.all(errorMessagePromises);
-}
-
-export function createS3Path(message: TracingFromS3KeyPathDto) {
-  return `tenantId=${message.tenantId}/date=${message.date}/tracingId=${message.tracingId}/version=${message.version}/correlationId=${message.correlationId}/${message.tracingId}.csv`;
 }
 
 function getDuplicatePurposesRow(

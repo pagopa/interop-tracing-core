@@ -22,7 +22,7 @@ export const TracingRecordSchema = z.object({
       },
     ),
   requests_count: requestsCountPipe(z.number().nonnegative()),
-  rowNumber: z.number(),
+  rowNumber: z.coerce.number(),
 });
 
 export const EserviceSchema = z.object({
