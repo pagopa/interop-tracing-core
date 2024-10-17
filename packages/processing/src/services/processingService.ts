@@ -4,12 +4,12 @@ import {
   genericInternalError,
 } from "pagopa-interop-tracing-models";
 
-import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
   AppContext,
+  FileManager,
   PurposeErrorCodes,
   WithSQSMessageId,
   logger,

@@ -2,7 +2,9 @@ import helmet from "helmet";
 import express from "express";
 import cors, { CorsOptions } from "cors";
 import {
+  FileManager,
   contextMiddleware,
+  fileManagerBuilder,
   loggerMiddleware,
 } from "pagopa-interop-tracing-commons";
 import { createApiClient } from "pagopa-interop-tracing-operations-client";
@@ -20,10 +22,6 @@ import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "./model/types.js";
 import { LocalExpressContext, localZodiosCtx } from "./context/index.js";
 import { authenticationMiddleware } from "./auth/index.js";
-import {
-  FileManager,
-  fileManagerBuilder,
-} from "../../commons/src/file-manager/fileManager.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =

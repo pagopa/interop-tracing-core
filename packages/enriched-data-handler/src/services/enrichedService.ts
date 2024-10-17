@@ -1,5 +1,6 @@
 import {
   AppContext,
+  FileManager,
   WithSQSMessageId,
   logger,
 } from "pagopa-interop-tracing-commons";
@@ -8,7 +9,6 @@ import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
 import { tracingState } from "pagopa-interop-tracing-models";
-import { FileManager } from "../../../commons/src/file-manager/fileManager.js";
 import { parseCSV } from "../utilities/csvHandler.js";
 
 export const enrichedServiceBuilder = (

@@ -1,4 +1,9 @@
-import { SQS, initDB } from "pagopa-interop-tracing-commons";
+import {
+  FileManager,
+  SQS,
+  fileManagerBuilder,
+  initDB,
+} from "pagopa-interop-tracing-commons";
 import { processMessage } from "./messageHandler.js";
 import { dbServiceBuilder } from "./services/enricherService.js";
 import {
@@ -11,10 +16,6 @@ import {
 } from "./services/producerService.js";
 import { config } from "./utilities/config.js";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
-import {
-  FileManager,
-  fileManagerBuilder,
-} from "../../commons/src/file-manager/fileManager.js";
 
 const dbInstance = initDB({
   username: config.dbUsername,
