@@ -42,7 +42,10 @@ const s3ClientConfig: S3ClientConfig = {
 };
 const s3client: S3Client = new S3Client(s3ClientConfig);
 
-const fileManager: FileManager = fileManagerBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const processingService: ProcessingService = processingServiceBuilder(
   dbServiceBuilder(dbInstance),

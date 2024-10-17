@@ -14,7 +14,7 @@ import { Readable } from "stream";
 
 export const fileManagerBuilder = (
   s3Client: S3Client,
-  bucketS3Name?: string,
+  bucketS3Name: string,
 ) => {
   return {
     async writeObject(

@@ -42,7 +42,10 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
 });
 
-const fileManager: FileManager = fileManagerBuilder(s3client);
+const fileManager: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 
 const enrichedService: EnrichedService = enrichedServiceBuilder(

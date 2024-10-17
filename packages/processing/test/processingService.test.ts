@@ -90,7 +90,10 @@ describe("Processing Service", () => {
     region: config.awsRegion,
   });
 
-  let fileManager: FileManager = fileManagerBuilder(s3client);
+  let fileManager: FileManager = fileManagerBuilder(
+    s3client,
+    config.bucketS3Name,
+  );
   let producerService: ProducerService = producerServiceBuilder(sqsClient);
   let startedPostgreSqlContainer: StartedTestContainer;
   let processingService: ProcessingService;
@@ -128,7 +131,7 @@ describe("Processing Service", () => {
     });
 
     dbService = dbServiceBuilder(dbInstance);
-    fileManager = fileManagerBuilder(s3client);
+    fileManager = fileManagerBuilder(s3client, config.bucketS3Name);
     producerService = producerServiceBuilder(sqsClient);
     processingService = processingServiceBuilder(
       dbService,
