@@ -96,6 +96,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Successful response
@@ -144,6 +145,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Successful response
@@ -187,6 +189,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: version
           in: path
           required: true
@@ -242,6 +245,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -287,6 +291,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: version
           in: path
           required: true
@@ -597,6 +602,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       tags:
         - Tenants
       requestBody:
