@@ -30,8 +30,8 @@ CREATE TABLE tracing.tracings (
     date TIMESTAMP NOT NULL,
     version INT NOT NULL,
     errors BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tenant_id) REFERENCES tracing.tenants(id)
 );
 
@@ -43,6 +43,6 @@ CREATE TABLE tracing.purposes_errors (
     error_code VARCHAR(255) NOT NULL,
     message VARCHAR(2048) NOT NULL,
     row_number INT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tracing_id) REFERENCES tracing.tracings(id)
 );

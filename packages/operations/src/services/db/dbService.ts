@@ -17,7 +17,6 @@ import {
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { config } from "../../utilities/config.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
     async getTenantById(tenantId: TenantId): Promise<TenantId> {
