@@ -17,7 +17,6 @@ import {
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { config } from "../../utilities/config.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function dbServiceBuilder(db: DB) {
   return {
     async getTenantById(tenantId: TenantId): Promise<TenantId> {
@@ -346,7 +345,7 @@ export function dbServiceBuilder(db: DB) {
             SELECT COUNT(*)
             FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
-          ) > 1;
+          ) > 0;
         `;
 
         const { total_count } = await db.one<{ total_count: number }>(
@@ -365,7 +364,7 @@ export function dbServiceBuilder(db: DB) {
             SELECT COUNT(*)
             FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
-          ) > 1
+          ) > 0
           OFFSET $1 LIMIT $2;
         `;
 
