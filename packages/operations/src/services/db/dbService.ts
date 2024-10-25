@@ -345,7 +345,7 @@ export function dbServiceBuilder(db: DB) {
             SELECT COUNT(*)
             FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
-          ) > 0;
+          ) > 1;
         `;
 
         const { total_count } = await db.one<{ total_count: number }>(
@@ -364,7 +364,7 @@ export function dbServiceBuilder(db: DB) {
             SELECT COUNT(*)
             FROM ${config.dbSchemaName}.tracings t3
             WHERE t3.tenant_id = t1.tenant_id
-          ) > 0
+          ) > 1
           OFFSET $1 LIMIT $2;
         `;
 
