@@ -5,7 +5,12 @@ import {
 import { z } from "zod";
 import { logger, Logger } from "../logging/index.js";
 import { readCorrelationIdHeader } from "./headers.js";
-import { CorrelationId, generateId } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  generateId,
+  unsafeBrandId,
+} from "pagopa-interop-tracing-models";
+import { v4 as uuidv4 } from "uuid";
 
 export const AppContext = z.object({
   serviceName: z.string(),
@@ -36,7 +41,9 @@ export const contextMiddleware =
       serviceName,
       correlationId: overrideCorrelationId
         ? generateId<CorrelationId>()
-        : readCorrelationIdHeader(req) ?? generateId<CorrelationId>(),
+        : unsafeBrandId<CorrelationId>(
+            readCorrelationIdHeader(req) || uuidv4(),
+          ),
     } as AppContext;
 
     next();
