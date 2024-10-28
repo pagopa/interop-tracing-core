@@ -207,6 +207,41 @@ describe("Tracing Router", () => {
       expect(response.text).contains(errorMessage);
       expect(response.status).toBe(400);
     });
+    it("should return a 400 status bad request error if a tracing date is in the future", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        version: 1,
+        errors: false,
+      };
+
+      const errorMessage = `The submission date cannot be in the future.`;
+      const apiErrorMock = makeApiProblem(
+        tracingAlreadyExists(errorMessage),
+        errorMapper,
+        genericLogger,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "submitTracing").mockRejectedValue(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post("/tracings/submit")
+        .attach("file", mockFile, originalFilename)
+        .field("date", mockSubmitTracingResponse.date)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(errorMessage);
+      expect(response.status).toBe(400);
+    });
   });
 
   describe("getTracings", () => {

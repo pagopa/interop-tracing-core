@@ -10,6 +10,7 @@ import {
   correlationIdToHeader,
   genericError,
   organizationIdToHeader,
+  tracingFutureDate,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import {
@@ -45,6 +46,14 @@ const tracingRouter =
           genericLogger.info(
             `Calling tracings submit with body: ${JSON.stringify(req.body)}`,
           );
+          const submissionDate = new Date(req.body.date);
+          const today = new Date();
+
+          if (submissionDate > today) {
+            throw tracingFutureDate(
+              `The submission date cannot be in the future.`,
+            );
+          }
           const result = await operationsService.submitTracing(
             {
               ...organizationIdToHeader(req.ctx.authData.organizationId),
