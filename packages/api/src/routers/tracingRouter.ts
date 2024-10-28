@@ -2,6 +2,7 @@ import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
   FileManager,
+  genericLogger,
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
@@ -41,6 +42,9 @@ const tracingRouter =
     router
       .post("/tracings/submit", async (req, res) => {
         try {
+          genericLogger.info(
+            `Calling tracings submit with body: ${JSON.stringify(req.body)}`,
+          );
           const result = await operationsService.submitTracing(
             {
               ...organizationIdToHeader(req.ctx.authData.organizationId),
