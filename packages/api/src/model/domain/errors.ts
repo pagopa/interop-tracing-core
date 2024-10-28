@@ -4,7 +4,7 @@ import {
   makeApiProblemBuilder,
   makeProblemLogString,
 } from "pagopa-interop-tracing-models";
-import { Logger } from "pagopa-interop-tracing-commons";
+import { AppContext, logger } from "pagopa-interop-tracing-commons";
 import { AxiosError } from "axios";
 import { errorMapper } from "../../utilities/errorMapper.js";
 
@@ -18,16 +18,20 @@ export type ErrorCodes = keyof typeof errorCodes;
 
 export const makeApiProblem = makeApiProblemBuilder(errorCodes);
 
-export const resolveApiProblem = (error: unknown, logger: Logger): Problem => {
+export const resolveApiProblem = (error: unknown, ctx: AppContext): Problem => {
   const axiosApiProblem = Problem.safeParse(
     (error as AxiosError).response?.data,
   );
 
   if (axiosApiProblem.success) {
-    logger.warn(makeProblemLogString(axiosApiProblem.data, error));
-    return axiosApiProblem.data;
+    logger(ctx).warn(makeProblemLogString(axiosApiProblem.data, error));
+    return Object.assign(axiosApiProblem.data, {
+      correlationId: ctx.correlationId,
+    });
   } else {
-    return makeApiProblem(error, errorMapper, logger);
+    return Object.assign(makeApiProblem(error, errorMapper, logger(ctx)), {
+      correlationId: ctx.correlationId,
+    });
   }
 };
 
