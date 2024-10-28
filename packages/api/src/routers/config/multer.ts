@@ -19,6 +19,7 @@ const attachFileInstance = (
   _res: Response,
   next: NextFunction,
 ): void => {
+  console.log(`Calling with body: ${JSON.stringify(req.body)}`);
   if (req.file) {
     req.body.file = req.file;
   }
