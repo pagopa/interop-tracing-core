@@ -25,13 +25,9 @@ export const resolveApiProblem = (error: unknown, ctx: AppContext): Problem => {
 
   if (axiosApiProblem.success) {
     logger(ctx).warn(makeProblemLogString(axiosApiProblem.data, error));
-    return Object.assign(axiosApiProblem.data, {
-      correlationId: ctx.correlationId,
-    });
+    return axiosApiProblem.data;
   } else {
-    return Object.assign(makeApiProblem(error, errorMapper, logger(ctx)), {
-      correlationId: ctx.correlationId,
-    });
+    return makeApiProblem(error, errorMapper, logger(ctx), ctx.correlationId);
   }
 };
 

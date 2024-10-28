@@ -54,6 +54,7 @@ const tenantAuthorizerMiddleware =
             .with("missingHeader", () => 400)
             .otherwise(() => 500),
         logger(ctx),
+        ctx.correlationId,
       );
 
       return (

@@ -50,7 +50,12 @@ const operationsRouter = (
 
         return res.status(200).json(tracing).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -65,7 +70,12 @@ const operationsRouter = (
 
       return res.status(204).json(eservice).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -75,7 +85,12 @@ const operationsRouter = (
       await operationsService.deleteEservice(req.params, logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -91,7 +106,12 @@ const operationsRouter = (
         );
         return res.status(200).json(tracing).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -109,7 +129,12 @@ const operationsRouter = (
         );
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -123,7 +148,12 @@ const operationsRouter = (
       );
       return res.status(200).json(tracing).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -139,7 +169,12 @@ const operationsRouter = (
         );
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -156,7 +191,12 @@ const operationsRouter = (
         );
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -171,7 +211,12 @@ const operationsRouter = (
 
       return res.status(204).json(eservice).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -181,7 +226,12 @@ const operationsRouter = (
       await operationsService.deleteTenant(req.params, logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -197,7 +247,12 @@ const operationsRouter = (
         );
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -214,7 +269,12 @@ const operationsRouter = (
         );
         return res.status(204).end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -231,7 +291,12 @@ const operationsRouter = (
         .json({ results: tenants.results, totalCount: tenants.totalCount })
         .end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -241,7 +306,12 @@ const operationsRouter = (
       await operationsService.deletePurposesErrors(logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -263,7 +333,12 @@ const operationsRouter = (
           .json({ results: tracings.results, totalCount: tracings.totalCount })
           .end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -288,7 +363,12 @@ const operationsRouter = (
           })
           .end();
       } catch (error) {
-        const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
         return res.status(errorRes.status).json(errorRes).end();
       }
     },
@@ -299,7 +379,12 @@ const operationsRouter = (
       await operationsService.savePurpose(req.body, logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
@@ -309,7 +394,12 @@ const operationsRouter = (
       await operationsService.deletePurpose(req.params, logger(req.ctx));
       return res.status(204).end();
     } catch (error) {
-      const errorRes = makeApiProblem(error, errorMapper, logger(req.ctx));
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
       return res.status(errorRes.status).json(errorRes).end();
     }
   });

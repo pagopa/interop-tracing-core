@@ -8,6 +8,7 @@ import { decodeSQSEventMessage } from "./models/models.js";
 import { EnrichedService } from "./services/enrichedService.js";
 import { errorMapper } from "./utilities/errorMapper.js";
 import { config } from "./utilities/config.js";
+import { unsafeBrandId, CorrelationId } from "pagopa-interop-tracing-models";
 
 export function processEnrichedStateMessage(
   enrichedService: EnrichedService,
@@ -18,7 +19,9 @@ export function processEnrichedStateMessage(
     try {
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: decodedMessage.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(
+          decodedMessage.correlationId,
+        ),
         messageId: message.MessageId,
       };
 

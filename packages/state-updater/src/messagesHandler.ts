@@ -11,7 +11,11 @@ import {
   decodeSQSUpdateTracingStateMessage,
 } from "./model/models.js";
 import { errorMapper } from "./utilities/errorMapper.js";
-import { tracingState } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  tracingState,
+  unsafeBrandId,
+} from "pagopa-interop-tracing-models";
 import { config } from "./utilities/config.js";
 
 export function processTracingStateMessage(
@@ -23,7 +27,9 @@ export function processTracingStateMessage(
     try {
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: decodedAttributeMessage.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(
+          decodedAttributeMessage.correlationId,
+        ),
         messageId: message.MessageId,
       };
 
@@ -51,7 +57,9 @@ export function processPurposeErrorMessage(
     const decodedAttributeMessage = decodeSQSMessageCorrelationId(message);
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
-      correlationId: decodedAttributeMessage.correlationId,
+      correlationId: unsafeBrandId<CorrelationId>(
+        decodedAttributeMessage.correlationId,
+      ),
       messageId: message.MessageId,
     };
 
