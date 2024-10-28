@@ -18,6 +18,7 @@ import {
   tracingNotFound,
   tracingState,
   organizationIdToHeader,
+  tracingFutureDate,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -219,7 +220,7 @@ describe("Tracing Router", () => {
 
       const errorMessage = `The submission date cannot be in the future.`;
       const apiErrorMock = makeApiProblem(
-        tracingAlreadyExists(errorMessage),
+        tracingFutureDate(errorMessage),
         errorMapper,
         genericLogger,
       );
