@@ -119,7 +119,7 @@ const errorCodes = {
   tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
   tracingNotFound: "TRACING_NOT_FOUND",
   tracingCannotBeUpdated: "TRACING_CANNOT_BE_UPDATED",
-  tracingFutureDate: "TRACING_FUTURE_DATE",
+  invalidTracingDate: "INVALID_TRACING_DATE",
   kafkaMessageProcessError: "KAFKA_MESSAGE_PROCESS_ERROR",
   kafkaMessageValueError: "KAFKA_MESSAGE_VALUE_ERROR",
   kafkaMessageMissingData: "KAFKA_MESSAGE_MISSING_DATA",
@@ -267,10 +267,12 @@ export function tracingAlreadyExists(
     title: "Bad Request",
   });
 }
-export function tracingFutureDate(details: string): ApiError<CommonErrorCodes> {
+export function invalidTracingDate(
+  details: string,
+): ApiError<CommonErrorCodes> {
   return new ApiError({
     detail: details,
-    code: "tracingFutureDate",
+    code: "invalidTracingDate",
     title: "Bad Request",
   });
 }

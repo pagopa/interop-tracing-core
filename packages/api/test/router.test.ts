@@ -18,7 +18,7 @@ import {
   tracingNotFound,
   tracingState,
   organizationIdToHeader,
-  tracingFutureDate,
+  invalidTracingDate,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -208,7 +208,8 @@ describe("Tracing Router", () => {
       expect(response.text).contains(errorMessage);
       expect(response.status).toBe(400);
     });
-    it("should return a 400 status bad request error if a tracing date is in the future", async () => {
+
+    it("should return a 400 Bad Request error if the provided tracing date is not a past date", async () => {
       const mockFile = Buffer.from("test file content");
       const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
         tracingId: generateId(),
@@ -218,9 +219,9 @@ describe("Tracing Router", () => {
         errors: false,
       };
 
-      const errorMessage = `The submission date cannot be in the future.`;
+      const errorMessage = `The tracing date is invalid. Please provide a past date, earlier than today.`;
       const apiErrorMock = makeApiProblem(
-        tracingFutureDate(errorMessage),
+        invalidTracingDate(errorMessage),
         errorMapper,
         genericLogger,
       );
