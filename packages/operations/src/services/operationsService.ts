@@ -276,6 +276,11 @@ export function operationsServiceBuilder(dbService: DBService) {
     ): Promise<ApiGetTracingErrorsResponse> {
       logger.info(`Get purposes errors for tracingId: ${params.tracingId}`);
 
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
       const data = await dbService.getTracingErrors({
         ...filters,
         tracing_id: params.tracingId,
