@@ -10,7 +10,11 @@ import {
   decodeSQSMessageCorrelationId,
   decodeSQSUpdateTracingStateMessage,
 } from "../src/model/models.js";
-import { InternalError } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  InternalError,
+  unsafeBrandId,
+} from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
 import { v4 as uuidv4 } from "uuid";
 import { config } from "../src/utilities/config.js";
@@ -43,7 +47,7 @@ describe("Consumer state updater queue test", () => {
     const attributes = decodeSQSMessageCorrelationId(validMessage);
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
+      correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
       messageId: validMessage.MessageId,
     };
 

@@ -96,6 +96,7 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
           .with("missingHeader", () => 400)
           .otherwise(() => 500),
       loggerInstance,
+      req.ctx.correlationId,
     );
     return res.status(problem.status).json(problem).end();
   }

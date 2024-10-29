@@ -1,10 +1,15 @@
-import { generateId } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  generateId,
+  TenantId,
+  TracingId,
+} from "pagopa-interop-tracing-models";
 
 export const mockTracingFromCsv = {
-  tracingId: generateId(),
+  tracingId: generateId<TracingId>(),
   version: 1,
-  tenantId: generateId(),
-  correlationId: generateId(),
+  tenantId: generateId<TenantId>(),
+  correlationId: generateId<CorrelationId>(),
   date: "2024-09-07",
 };
 

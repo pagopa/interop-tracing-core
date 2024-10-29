@@ -11,9 +11,9 @@ import {
   mockTenantDeleteV2,
   mockTenantUpdateV2,
 } from "./utils.js";
-import { v4 as uuidv4 } from "uuid";
 import { AppContext, genericLogger } from "pagopa-interop-tracing-commons";
 import {
+  CorrelationId,
   generateId,
   InternalError,
   kafkaMessageMissingData,
@@ -31,7 +31,7 @@ describe("Message handler V2 test", () => {
 
   const ctx: AppContext = {
     serviceName: config.applicationName,
-    correlationId: uuidv4(),
+    correlationId: generateId<CorrelationId>(),
   };
 
   describe("TenantOnboarded Event", () => {

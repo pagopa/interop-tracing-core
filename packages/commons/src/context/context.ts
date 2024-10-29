@@ -2,14 +2,19 @@ import {
   ZodiosRouterContextRequestHandler,
   zodiosContext,
 } from "@zodios/express";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-import { Logger } from "../logging/index.js";
+import { logger, Logger } from "../logging/index.js";
 import { readCorrelationIdHeader } from "./headers.js";
+import {
+  CorrelationId,
+  generateId,
+  unsafeBrandId,
+} from "pagopa-interop-tracing-models";
+import { v4 as uuidv4 } from "uuid";
 
 export const AppContext = z.object({
   serviceName: z.string(),
-  correlationId: z.string(),
+  correlationId: CorrelationId,
 });
 
 export type AppContext = z.infer<typeof AppContext>;
@@ -22,6 +27,10 @@ export type ExpressContext = NonNullable<typeof zodiosCtx.context>;
 export type WithLogger<T> = T & { logger: Logger };
 export type WithSQSMessageId<T> = T & { messageId?: string | null | undefined };
 
+export function fromAppContext(ctx: AppContext): WithLogger<AppContext> {
+  return { ...ctx, logger: logger({ ...ctx }) };
+}
+
 export const contextMiddleware =
   (
     serviceName: string,
@@ -31,8 +40,10 @@ export const contextMiddleware =
     req.ctx = {
       serviceName,
       correlationId: overrideCorrelationId
-        ? uuidv4()
-        : readCorrelationIdHeader(req) ?? uuidv4(),
+        ? generateId<CorrelationId>()
+        : unsafeBrandId<CorrelationId>(
+            readCorrelationIdHeader(req) || uuidv4(),
+          ),
     } as AppContext;
 
     next();

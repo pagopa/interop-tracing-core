@@ -18,6 +18,7 @@ import {
   tracingNotFound,
   tracingState,
   organizationIdToHeader,
+  CorrelationId,
   invalidTracingDate,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -70,7 +71,7 @@ app.use(contextMiddleware(config.applicationName));
 configureMulterEndpoints(app);
 
 const mockAppCtx = {
-  correlationId: generateId(),
+  correlationId: generateId<CorrelationId>(),
   authData: {
     organizationId: generateId(),
   },
@@ -188,6 +189,7 @@ describe("Tracing Router", () => {
         tracingAlreadyExists(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -224,6 +226,7 @@ describe("Tracing Router", () => {
         invalidTracingDate(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -493,6 +496,7 @@ describe("Tracing Router", () => {
         tracingRecoverCannotBeUpdated(mockRecoverTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -527,6 +531,7 @@ describe("Tracing Router", () => {
         tracingNotFound(mockRecoverTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -658,6 +663,7 @@ describe("Tracing Router", () => {
         genericInternalError(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -772,6 +778,7 @@ describe("Tracing Router", () => {
         tracingReplaceCannotBeUpdated(mockReplaceTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -806,6 +813,7 @@ describe("Tracing Router", () => {
         tracingNotFound(mockReplaceTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -935,6 +943,7 @@ describe("Tracing Router", () => {
         genericInternalError(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =

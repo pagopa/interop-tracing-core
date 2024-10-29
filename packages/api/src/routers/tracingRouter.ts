@@ -104,7 +104,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         } finally {
           if (req.body?.file) {
@@ -140,7 +140,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -174,7 +174,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -230,7 +230,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -286,7 +286,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       });

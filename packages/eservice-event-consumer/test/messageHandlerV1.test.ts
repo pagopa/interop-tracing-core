@@ -13,9 +13,9 @@ import {
   mockEserviceDeleteV1,
   mockEserviceUpdateV1,
 } from "./utils.js";
-import { v4 as uuidv4 } from "uuid";
 import { AppContext, genericLogger } from "pagopa-interop-tracing-commons";
 import {
+  CorrelationId,
   generateId,
   InternalError,
   kafkaMessageMissingData,
@@ -31,7 +31,7 @@ describe("Message handler V1 test", () => {
 
   const ctx: AppContext = {
     serviceName: config.applicationName,
-    correlationId: uuidv4(),
+    correlationId: generateId<CorrelationId>(),
   };
 
   describe("EserviceAdded Event", () => {

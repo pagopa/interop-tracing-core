@@ -43,9 +43,11 @@ import {
 } from "./utils.js";
 
 import {
+  CorrelationId,
   InternalError,
   TracingId,
   generateId,
+  unsafeBrandId,
 } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
 import { decodeSQSEventMessage } from "../src/models/models.js";
@@ -109,7 +111,9 @@ describe("Processing Service", () => {
   const mockAppCtx: WithSQSMessageId<AppContext> = {
     serviceName: config.applicationName,
     messageId: SqsMockMessageForS3.MessageId,
-    correlationId: decodeSQSEventMessage(sqsMessage).correlationId,
+    correlationId: unsafeBrandId<CorrelationId>(
+      decodeSQSEventMessage(sqsMessage).correlationId,
+    ),
   };
 
   afterAll(async () => {
