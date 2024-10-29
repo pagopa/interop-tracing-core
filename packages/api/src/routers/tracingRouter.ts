@@ -42,8 +42,8 @@ const tracingRouter =
     router
       .post("/tracings/submit", async (req, res) => {
         try {
-          const tracingDate = new Date(req.body.date);
-          const today = new Date();
+          const tracingDate = new Date(req.body.date).toDateString();
+          const today = new Date().toDateString();
 
           if (tracingDate >= today) {
             throw invalidTracingDate(
