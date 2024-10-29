@@ -19,6 +19,7 @@ import {
   tracingState,
   organizationIdToHeader,
   CorrelationId,
+  invalidTracingDate,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -186,6 +187,43 @@ describe("Tracing Router", () => {
       const errorMessage = `A tracing for the current tenant already exists on this date: ${mockSubmitTracingResponse.date}`;
       const apiErrorMock = makeApiProblem(
         tracingAlreadyExists(errorMessage),
+        errorMapper,
+        genericLogger,
+        mockAppCtx.correlationId,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "submitTracing").mockRejectedValue(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post("/tracings/submit")
+        .attach("file", mockFile, originalFilename)
+        .field("date", mockSubmitTracingResponse.date)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(errorMessage);
+      expect(response.status).toBe(400);
+    });
+
+    it("should return a 400 Bad Request error if the provided tracing date is not a past date", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        version: 1,
+        errors: false,
+      };
+
+      const errorMessage = `The tracing date is invalid. Please provide a past date, earlier than today.`;
+      const apiErrorMock = makeApiProblem(
+        invalidTracingDate(errorMessage),
         errorMapper,
         genericLogger,
         mockAppCtx.correlationId,

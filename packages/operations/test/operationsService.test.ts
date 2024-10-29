@@ -591,6 +591,21 @@ describe("database test", () => {
           expect(error.code).toBe("genericError");
         }
       });
+
+      it("searching with non-existing 'tracingId' should throw an error tracingNotFound", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        expect(
+          operationsService.getTracingErrors(query, params, genericLogger),
+        ).rejects.toThrowError(tracingNotFound(params.tracingId));
+      });
     });
 
     describe("updateTracingState", () => {

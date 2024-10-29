@@ -2,7 +2,6 @@ import { ZodiosEndpointDefinitions } from "@zodios/core";
 import { ZodiosRouter } from "@zodios/express";
 import {
   FileManager,
-  genericLogger,
   logger,
   zodiosValidationErrorToApiProblem,
 } from "pagopa-interop-tracing-commons";
@@ -10,6 +9,7 @@ import {
   correlationIdToHeader,
   genericError,
   organizationIdToHeader,
+  invalidTracingDate,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import {
@@ -42,9 +42,15 @@ const tracingRouter =
     router
       .post("/tracings/submit", async (req, res) => {
         try {
-          genericLogger.info(
-            `Calling tracings submit with body: ${JSON.stringify(req.body)}`,
-          );
+          const tracingDate = new Date(req.body.date).toDateString();
+          const today = new Date().toDateString();
+
+          if (tracingDate >= today) {
+            throw invalidTracingDate(
+              `The tracing date is invalid. Please provide a past date, earlier than today.`,
+            );
+          }
+
           const result = await operationsService.submitTracing(
             {
               ...organizationIdToHeader(req.ctx.authData.organizationId),
