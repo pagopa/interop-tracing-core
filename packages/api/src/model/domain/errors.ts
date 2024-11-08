@@ -1,4 +1,5 @@
 import {
+  ApiError,
   InternalError,
   Problem,
   makeApiProblemBuilder,
@@ -11,6 +12,7 @@ import { errorMapper } from "../../utilities/errorMapper.js";
 export const errorCodes = {
   writeObjectS3BucketError: "WRITE_OBJECT_S3_BUCKET_ERROR",
   updateTracingStateError: "UPDATE_TRACING_STATE_ERROR",
+  invalidTracingDate: "INVALID_TRACING_DATE",
   cancelTracingStateAndVersionError: "CANCEL_TRACING_STATE_AND_VERSION_ERROR",
 };
 
@@ -55,5 +57,13 @@ export function cancelTracingStateAndVersionError(
   return new InternalError({
     detail: `${detail}`,
     code: "cancelTracingStateAndVersionError",
+  });
+}
+
+export function invalidTracingDate(details: string): ApiError<ErrorCodes> {
+  return new ApiError({
+    detail: details,
+    code: "invalidTracingDate",
+    title: "Bad Request",
   });
 }
