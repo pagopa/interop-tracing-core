@@ -4,9 +4,6 @@ import {
 } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
-  tracingNotFound: "TRACING_NOT_FOUND",
-  tenantNotFound: "TENANT_NOT_FOUND",
-  tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
   tracingCannotBeCancelled: "TRACING_CANNOT_BE_CANCELLED",
 };
 
