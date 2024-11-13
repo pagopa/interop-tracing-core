@@ -373,7 +373,9 @@ export function operationsServiceBuilder(dbService: DBService) {
       payload: ApiSaveDelegationPayload,
       logger: Logger,
     ): Promise<void> {
-      logger.info(`Upsert delegation with delegationId: ${payload.delegationId}`);
+      logger.info(
+        `Upsert delegation with delegationId: ${payload.delegationId}`,
+      );
 
       await dbService.saveDelegation({
         id: payload.id,

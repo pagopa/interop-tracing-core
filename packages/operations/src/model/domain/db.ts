@@ -52,7 +52,12 @@ export const EserviceSchema = z.object({
   name: z.string(),
 });
 
-const DelegationStateEnum = z.enum(["WAITING", "ACTIVE", "REJECTED", "REVOKED"]);
+const DelegationStateEnum = z.enum([
+  "WAITING",
+  "ACTIVE",
+  "REJECTED",
+  "REVOKED",
+]);
 
 export const DelegationSchema = z.object({
   id: z.string(),

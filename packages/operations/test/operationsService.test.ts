@@ -1537,9 +1537,15 @@ describe("database test", () => {
         };
         const operationsService = operationsServiceBuilder(dbService);
 
-        await operationsService.saveDelegation(delegationPayload, genericLogger);
+        await operationsService.saveDelegation(
+          delegationPayload,
+          genericLogger,
+        );
 
-        const result = await findDelegationById(delegationPayload.id, dbInstance);
+        const result = await findDelegationById(
+          delegationPayload.id,
+          dbInstance,
+        );
 
         expect(result?.id).toBe(delegationPayload.id);
       });
@@ -1552,9 +1558,15 @@ describe("database test", () => {
         };
         const operationsService = operationsServiceBuilder(dbService);
 
-        await operationsService.saveDelegation(delegationPayload, genericLogger);
+        await operationsService.saveDelegation(
+          delegationPayload,
+          genericLogger,
+        );
 
-        const result = await findDelegationById(delegationPayload.id, dbInstance);
+        const result = await findDelegationById(
+          delegationPayload.id,
+          dbInstance,
+        );
 
         expect(result?.id).toBe(delegationPayload.id);
 
@@ -1571,7 +1583,10 @@ describe("database test", () => {
         const operationsService = operationsServiceBuilder(dbService);
 
         await expect(
-          operationsService.saveDelegation(invalidDelegationPayload, genericLogger),
+          operationsService.saveDelegation(
+            invalidDelegationPayload,
+            genericLogger,
+          ),
         ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });
