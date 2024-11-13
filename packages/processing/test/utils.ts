@@ -1,7 +1,7 @@
 import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
 import { config } from "../src/utilities/config.js";
-import { DelegateSchema } from "../src/models/db.js";
+import { DelegationSchema } from "../src/models/db.js";
 import { generateId } from "pagopa-interop-tracing-models";
 import { tenant_id2 } from "./costants.js";
 
@@ -23,9 +23,9 @@ export async function addPurpose(
   return await db.one(insertPurposeQuery, Object.values(purposeValues));
 }
 
-export async function insertDelegate(delegate: DelegateSchema, db: DB) {
-  const insertDelegateQuery = `
-      INSERT INTO ${config.dbSchemaName}.delegates (id, eservice_id, state)
+export async function insertDelegation(delegation: DelegationSchema, db: DB) {
+  const insertDelegationQuery = `
+      INSERT INTO ${config.dbSchemaName}.delegations (id, eservice_id, state)
       VALUES ($1, $2, $3)
       ON CONFLICT (id) 
       DO UPDATE SET 
@@ -34,7 +34,7 @@ export async function insertDelegate(delegate: DelegateSchema, db: DB) {
       RETURNING id
     `;
 
-  return await db.one(insertDelegateQuery, Object.values(delegate));
+  return await db.one(insertDelegationQuery, Object.values(delegation));
 }
 
 export async function removePurpose(id: string, db: DB) {

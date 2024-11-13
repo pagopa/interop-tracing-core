@@ -79,13 +79,13 @@ const operationsRouter = (
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
-  operationsRouter.post("/delegates", async (req, res) => {
+  operationsRouter.post("/delegations", async (req, res) => {
     try {
-      const delegate = await operationsService.saveDelegate(
+      const delegation = await operationsService.saveDelegation(
         req.body,
         logger(req.ctx),
       );
-      return res.status(204).json(delegate).end();
+      return res.status(204).json(delegation).end();
     } catch (error) {
       const errorRes = makeApiProblem(
         error,

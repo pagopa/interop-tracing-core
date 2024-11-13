@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS tracing.eservices (
     name VARCHAR(2048) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS tracing.delegates (
+CREATE TABLE IF NOT EXISTS tracing.delegations (
     id UUID PRIMARY KEY,
     eservice_id UUID NOT NULL,
     state VARCHAR(255) NOT NULL

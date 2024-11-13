@@ -6,7 +6,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
-  Delegate,
+  Delegation,
   Eservice,
   Purpose,
   PurposeError,
@@ -502,10 +502,10 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async saveDelegate(data: Delegate): Promise<void> {
+    async saveDelegation(data: Delegation): Promise<void> {
       try {
-        const upsertDelegateQuery = `
-          INSERT INTO ${config.dbSchemaName}.delegates (
+        const upsertDelegationQuery = `
+          INSERT INTO ${config.dbSchemaName}.delegations (
             id, 
             eservice_id, 
             state
@@ -516,13 +516,13 @@ export function dbServiceBuilder(db: DB) {
             state = EXCLUDED.state
         `;
 
-        await db.none(upsertDelegateQuery, [
+        await db.none(upsertDelegationQuery, [
           data.id,
           data.eservice_id,
           data.state,
         ]);
       } catch (error) {
-        throw dbServiceErrorMapper("saveDelegate", error);
+        throw dbServiceErrorMapper("saveDelegation", error);
       }
     },
   };

@@ -791,10 +791,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  /delegates:
+  /delegations:
     post:
-      summary: Save delegate
-      operationId: saveDelegate
+      summary: Save delegation
+      operationId: saveDelegation
       parameters:
         - in: header
           name: x-correlation-id
@@ -802,13 +802,13 @@ paths:
           schema:
             $ref: "#/components/schemas/CorrelationId"
       tags:
-        - Delegates
+        - Delegations
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SaveDelegateRequest"
+              $ref: "#/components/schemas/SaveDelegationRequest"
       responses:
         "204":
           description: No content
@@ -1050,7 +1050,7 @@ components:
         - producerId
         - name
         
-    SaveDelegateRequest:
+    SaveDelegationRequest:
       type: object
       properties:
         id:

@@ -39,7 +39,7 @@ import {
   addNotAssociatedPurposeAndTenant,
   addPurpose,
   addTenant,
-  insertDelegate,
+  insertDelegation,
   parseCSVFromString,
 } from "./utils.js";
 
@@ -425,7 +425,7 @@ describe("Processing Service", () => {
   });
 
   describe("getEnrichedPurpose", () => {
-    const delegateId = generateId();
+    const delegationId = generateId();
     it("should return a type of EnrichedPurpose if purpose is valid", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
@@ -494,10 +494,10 @@ describe("Processing Service", () => {
       }
     });
 
-    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegate", async () => {
-      await insertDelegate(
+    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegation", async () => {
+      await insertDelegation(
         {
-          id: delegateId,
+          id: delegationId,
           eservice_id: validPurposeNotAssociated[0].eserviceId,
           state: "REVOKED",
         },
@@ -531,10 +531,10 @@ describe("Processing Service", () => {
       });
     });
 
-    it("should success if tenant is not a consumer or a producer but a delegated", async () => {
-      await insertDelegate(
+    it("should success if tenant is not a consumer or a producer but a delegationd", async () => {
+      await insertDelegation(
         {
-          id: delegateId,
+          id: delegationId,
           eservice_id: validPurposeNotAssociated[0].eserviceId,
           state: "ACTIVE",
         },

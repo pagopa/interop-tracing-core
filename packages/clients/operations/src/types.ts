@@ -319,22 +319,22 @@ export type ApiSaveTenantResponse = ZodiosResponseByPath<
   "/tenants"
 >;
 
-export type ApiSaveDelegateHeaders = ZodiosHeaderParamsByPath<
+export type ApiSaveDelegationHeaders = ZodiosHeaderParamsByPath<
   Api,
   "post",
-  "/delegates"
+  "/delegations"
 >;
 
-export type ApiSaveDelegatePayload = ZodiosBodyByPath<
+export type ApiSaveDelegationPayload = ZodiosBodyByPath<
   Api,
   "post",
-  "/delegates"
+  "/delegations"
 >;
 
-export type ApiSaveDelegateResponse = ZodiosBodyByPath<
+export type ApiSaveDelegationResponse = ZodiosBodyByPath<
   Api,
   "post",
-  "/delegates"
+  "/delegations"
 >;
 
 export type ApiDeleteTenantHeaders = ZodiosHeaderParamsByPath<
