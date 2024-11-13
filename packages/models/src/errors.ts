@@ -121,7 +121,6 @@ const errorCodes = {
   tracingAlreadyExists: "TRACING_ALREADY_EXISTS",
   tracingNotFound: "TRACING_NOT_FOUND",
   tracingCannotBeUpdated: "TRACING_CANNOT_BE_UPDATED",
-  invalidTracingDate: "INVALID_TRACING_DATE",
   kafkaMessageProcessError: "KAFKA_MESSAGE_PROCESS_ERROR",
   kafkaMessageValueError: "KAFKA_MESSAGE_VALUE_ERROR",
   kafkaMessageMissingData: "KAFKA_MESSAGE_MISSING_DATA",
@@ -266,15 +265,6 @@ export function tracingAlreadyExists(
   return new ApiError({
     detail: details,
     code: "tracingAlreadyExists",
-    title: "Bad Request",
-  });
-}
-export function invalidTracingDate(
-  details: string,
-): ApiError<CommonErrorCodes> {
-  return new ApiError({
-    detail: details,
-    code: "invalidTracingDate",
     title: "Bad Request",
   });
 }

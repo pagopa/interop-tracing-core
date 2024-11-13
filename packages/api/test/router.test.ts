@@ -19,7 +19,6 @@ import {
   tracingState,
   organizationIdToHeader,
   CorrelationId,
-  invalidTracingDate,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -42,6 +41,7 @@ import {
 import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
 import {
+  invalidTracingDate,
   makeApiProblem,
   writeObjectS3BucketError,
 } from "../src/model/domain/errors.js";
