@@ -14,6 +14,7 @@
     "start:event:tenant": "turbo start --filter pagopa-interop-tracing-tenant-event-consumer",
     "start:event:eservice": "turbo start --filter pagopa-interop-tracing-eservice-event-consumer",
     "start:event:purpose": "turbo start --filter pagopa-interop-tracing-purpose-event-consumer",
+    "start:event:delegation": "turbo start --filter pagopa-interop-tracing-delegation-event-consumer",
     "start:producer": "turbo start --filter pagopa-interop-tracing-kafka-producer",
     "start:webhook": "turbo start --filter pagopa-interop-tracing-minio-webhook",
     "test": "turbo test",
