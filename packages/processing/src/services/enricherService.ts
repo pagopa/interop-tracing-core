@@ -6,7 +6,11 @@ import {
   logger,
 } from "pagopa-interop-tracing-commons";
 import { getEnrichedPurposeError } from "../models/errors.js";
-import { TracingRecordSchema, EserviceSchema } from "../models/db.js";
+import {
+  TracingRecordSchema,
+  EserviceSchema,
+  DelegateStateEnum,
+} from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
 import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
 import { config } from "../utilities/config.js";
@@ -77,8 +81,16 @@ export function dbServiceBuilder(db: DB) {
                 [tracing.tenantId, eService.eservice_id],
               );
 
+              const tenantDelegated = await db.oneOrNone<{
+                id: string;
+              }>(
+                `SELECT id FROM ${config.dbSchemaName}.delegates WHERE eservice_id = $1 AND state = $2`,
+                [eService.eservice_id, DelegateStateEnum.Enum.ACTIVE],
+              );
+
               if (
                 !tenantEservice &&
+                !tenantDelegated &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
                 return [
@@ -100,7 +112,6 @@ export function dbServiceBuilder(db: DB) {
                 `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
                 [eService.producer_id],
               );
-
               if (!producer) {
                 throw new Error(
                   `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,

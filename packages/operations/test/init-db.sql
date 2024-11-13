@@ -8,6 +8,12 @@ CREATE TABLE IF NOT EXISTS tracing.tenants (
     deleted BOOLEAN NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS tracing.delegates (
+    id UUID PRIMARY KEY,
+    eservice_id UUID NOT NULL,
+    state VARCHAR(255) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS tracing.eservices (
     eservice_id UUID PRIMARY KEY,
     producer_id UUID NOT NULL,

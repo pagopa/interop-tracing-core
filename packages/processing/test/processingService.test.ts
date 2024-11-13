@@ -36,10 +36,11 @@ import {
 } from "pagopa-interop-tracing-commons";
 import {
   addEservice,
+  addNotAssociatedPurposeAndTenant,
   addPurpose,
   addTenant,
+  insertDelegate,
   parseCSVFromString,
-  removeAndInsertWrongEserviceAndPurpose,
 } from "./utils.js";
 
 import {
@@ -206,7 +207,7 @@ describe("Processing Service", () => {
       );
 
       expect(path).toBe(
-        "tenantId=123e4567-e89b-12d3-a456-426614174001/date=2024-12-12/tracingId=87dcfab8-3161-430b-97db-7787a77a7a3d/version=1/correlationId=8fa62e67-92bf-48f8-a9e1-4e73a37c4682/87dcfab8-3161-430b-97db-7787a77a7a3d.csv",
+        `tenantId=${mockMessage.tenantId}/date=${mockMessage.date}/tracingId=${mockMessage.tracingId}/version=${mockMessage.version}/correlationId=${mockMessage.correlationId}/${mockMessage.tracingId}.csv`,
       );
     });
   });
@@ -424,6 +425,7 @@ describe("Processing Service", () => {
   });
 
   describe("getEnrichedPurpose", () => {
+    const delegateId = generateId();
     it("should return a type of EnrichedPurpose if purpose is valid", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
@@ -441,7 +443,7 @@ describe("Processing Service", () => {
         mockMessage,
         mockAppCtx,
       );
-      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.flat().filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
           return item;
         } else {
@@ -492,20 +494,27 @@ describe("Processing Service", () => {
       }
     });
 
-    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer", async () => {
-      await removeAndInsertWrongEserviceAndPurpose(
-        eServiceData.eserviceId,
-        validPurposeNotAssociated[0],
-        mockMessage.tenantId,
-        purposeData.id,
+    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegate", async () => {
+      await insertDelegate(
+        {
+          id: delegateId,
+          eservice_id: validPurposeNotAssociated[0].eserviceId,
+          state: "REVOKED",
+        },
         dbInstance,
       );
+
+      await addNotAssociatedPurposeAndTenant(
+        validPurposeNotAssociated[0],
+        dbInstance,
+      );
+
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
         mockAppCtx,
       );
-      const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
+      const purposeErrorsFiltered = enrichedPurposes.flat().filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
           return item;
         } else {
@@ -520,6 +529,26 @@ describe("Processing Service", () => {
       purposeErrors?.forEach((item) => {
         expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
       });
+    });
+
+    it("should success if tenant is not a consumer or a producer but a delegated", async () => {
+      await insertDelegate(
+        {
+          id: delegateId,
+          eservice_id: validPurposeNotAssociated[0].eserviceId,
+          state: "ACTIVE",
+        },
+        dbInstance,
+      );
+
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurposeNotAssociated,
+        mockMessage,
+        mockAppCtx,
+      );
+
+      const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
+      expect(safeEnriched.success).toBe(true);
     });
   });
 

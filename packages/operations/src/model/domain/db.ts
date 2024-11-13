@@ -52,11 +52,20 @@ export const EserviceSchema = z.object({
   name: z.string(),
 });
 
+const DelegateStateEnum = z.enum(["WAITING", "ACTIVE", "REJECTED", "REVOKED"]);
+
+export const DelegateSchema = z.object({
+  id: z.string(),
+  eservice_id: z.string(),
+  state: DelegateStateEnum,
+});
+
 export type Eservice = z.infer<typeof EserviceSchema>;
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Purpose = z.infer<typeof PurposeSchema>;
 export type PurposeError = z.infer<typeof PurposeErrorSchema>;
 export type Tracing = z.infer<typeof TracingSchema>;
+export type Delegate = z.infer<typeof DelegateSchema>;
 export type UpdateTracingState = z.infer<typeof UpdateTracingStateSchema>;
 export type UpdateTracingStateAndVersionSchema = z.infer<
   typeof UpdateTracingStateAndVersionSchema

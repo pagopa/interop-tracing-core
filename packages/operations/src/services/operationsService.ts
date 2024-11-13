@@ -35,6 +35,7 @@ import {
   ApiSaveTenantResponse,
   ApiDeleteTenantParams,
   ApiDeleteTenantResponse,
+  ApiSaveDelegatePayload,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -366,6 +367,19 @@ export function operationsServiceBuilder(dbService: DBService) {
       const purposeId = params.purposeId;
       logger.info(`Deleting purpose with id ${purposeId}`);
       return await dbService.deletePurpose(purposeId);
+    },
+
+    async saveDelegate(
+      payload: ApiSaveDelegatePayload,
+      logger: Logger,
+    ): Promise<void> {
+      logger.info(`Upsert delegate with delegateId: ${payload.delegateId}`);
+
+      await dbService.saveDelegate({
+        id: payload.delegateId,
+        eservice_id: payload.eserviceId,
+        state: payload.state,
+      });
     },
   };
 }

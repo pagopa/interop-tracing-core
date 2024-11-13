@@ -30,5 +30,20 @@ export const EserviceSchema = z.object({
   producer_id: z.string(),
 });
 
+export const DelegateStateEnum = z.enum([
+  "WAITING",
+  "ACTIVE",
+  "REJECTED",
+  "REVOKED",
+]);
+
+export const DelegateSchema = z.object({
+  id: z.string(),
+  eservice_id: z.string(),
+  state: DelegateStateEnum,
+});
+
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
 export type EserviceSchema = z.infer<typeof EserviceSchema>;
+export type DelegateSchema = z.infer<typeof DelegateSchema>;
+export type DelegateStateEnum = z.infer<typeof DelegateStateEnum>;

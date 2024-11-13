@@ -1,6 +1,9 @@
 import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
 import { config } from "../src/utilities/config.js";
+import { DelegateSchema } from "../src/models/db.js";
+import { generateId } from "pagopa-interop-tracing-models";
+import { tenant_id2 } from "./costants.js";
 
 export async function addPurpose(
   purposeValues: {
@@ -19,6 +22,21 @@ export async function addPurpose(
 
   return await db.one(insertPurposeQuery, Object.values(purposeValues));
 }
+
+export async function insertDelegate(delegate: DelegateSchema, db: DB) {
+  const insertDelegateQuery = `
+      INSERT INTO ${config.dbSchemaName}.delegates (id, eservice_id, state)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (id) 
+      DO UPDATE SET 
+      eservice_id = EXCLUDED.eservice_id,
+      state = EXCLUDED.state
+      RETURNING id
+    `;
+
+  return await db.one(insertDelegateQuery, Object.values(delegate));
+}
+
 export async function removePurpose(id: string, db: DB) {
   const insertPurposeQuery = `
       DELETE FROM ${config.dbSchemaName}.purposes WHERE id = $1
@@ -60,26 +78,29 @@ export async function addEservice(
   RETURNING eservice_id`;
   await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }
-export async function removeAndInsertWrongEserviceAndPurpose(
-  eservice_id: string,
+export async function addNotAssociatedPurposeAndTenant(
   purpose: { eserviceId: string; purpose_id: string },
-  tenantId: string,
-  purposeId: string,
   db: DB,
 ) {
-  await removePurpose(purposeId, db);
   await addPurpose(
     {
       id: purpose.purpose_id,
-      consumerId: tenantId,
+      consumerId: generateId(),
       eserviceId: purpose.eserviceId,
-      purposeTitle: "NOT ASSOCIATED",
+      purposeTitle: "purpose new",
     },
     db,
   );
-  const deleteEserviceQuery = `
-  DELETE FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1 RETURNING eservice_id`;
-  await db.one(deleteEserviceQuery, eservice_id);
+  await addTenant(
+    {
+      id: tenant_id2,
+      name: "tenant",
+      origin: "pagoPa",
+      externalId: generateId(),
+      deleted: false,
+    },
+    db,
+  );
 }
 
 export async function parseCSVFromString(

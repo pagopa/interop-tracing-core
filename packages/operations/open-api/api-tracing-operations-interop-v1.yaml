@@ -791,6 +791,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /delegates:
+    post:
+      summary: Save delegate
+      operationId: saveDelegate
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Delegates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveDelegateRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
 
 components:
   schemas:
@@ -1010,6 +1049,27 @@ components:
         - eserviceId
         - producerId
         - name
+        
+    SaveDelegateRequest:
+      type: object
+      properties:
+        delegateId:
+          type: string
+          format: uuid
+        eserviceId:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum:
+          - WAITING
+          - ACTIVE
+          - REJECTED
+          - REVOKED
+      required:
+        - delegateId
+        - eserviceId
+        - state
 
     SaveTenantRequest:
       type: object
