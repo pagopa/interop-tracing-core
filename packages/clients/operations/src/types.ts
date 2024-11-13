@@ -331,7 +331,7 @@ export type ApiSaveDelegationPayload = ZodiosBodyByPath<
   "/delegations"
 >;
 
-export type ApiSaveDelegationResponse = ZodiosBodyByPath<
+export type ApiSaveDelegationResponse = ZodiosResponseByPath<
   Api,
   "post",
   "/delegations"
