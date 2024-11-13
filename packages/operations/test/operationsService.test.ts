@@ -48,6 +48,7 @@ import {
   findTracingById,
   findEserviceById,
   findTenantById,
+  findDelegateById,
 } from "./utils.js";
 import { PurposeError, Tracing } from "../src/model/domain/db.js";
 import { postgreSQLContainer } from "./config.js";
@@ -59,6 +60,7 @@ import {
   ApiGetTracingsQuery,
   ApiSaveMissingTracingPayload,
   ApiGetTenantsWithMissingTracingsQuery,
+  ApiSaveDelegatePayload,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
@@ -1522,6 +1524,54 @@ describe("database test", () => {
 
         await expect(
           operationsService.deleteTenant(invalidTenantParams, genericLogger),
+        ).rejects.toThrowError(/invalid input syntax for type uuid/);
+      });
+    });
+    describe("saveDelegate", () => {
+      const delegateId = generateId();
+      it("should save a delegate successfully", async () => {
+        const delegatePayload: ApiSaveDelegatePayload = {
+          id: delegateId,
+          eserviceId: generateId(),
+          state: "ACTIVE",
+        };
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveDelegate(delegatePayload, genericLogger);
+
+        const result = await findDelegateById(delegatePayload.id, dbInstance);
+
+        expect(result?.id).toBe(delegatePayload.id);
+      });
+
+      it("should update state of existing delegate successfully", async () => {
+        const delegatePayload: ApiSaveDelegatePayload = {
+          id: delegateId,
+          eserviceId: generateId(),
+          state: "REVOKED",
+        };
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await operationsService.saveDelegate(delegatePayload, genericLogger);
+
+        const result = await findDelegateById(delegatePayload.id, dbInstance);
+
+        expect(result?.id).toBe(delegatePayload.id);
+
+        expect(result?.state).toBe(delegatePayload.state);
+      });
+
+      it("should throw an error if the delegate payload is invalid", async () => {
+        const invalidDelegatePayload: ApiSaveDelegatePayload = {
+          id: "invalid_uuid",
+          eserviceId: "invalid eservice uuid",
+          state: "ACTIVE",
+        };
+
+        const operationsService = operationsServiceBuilder(dbService);
+
+        await expect(
+          operationsService.saveDelegate(invalidDelegatePayload, genericLogger),
         ).rejects.toThrowError(/invalid input syntax for type uuid/);
       });
     });

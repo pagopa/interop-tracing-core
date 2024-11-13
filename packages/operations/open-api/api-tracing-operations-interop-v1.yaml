@@ -1053,7 +1053,7 @@ components:
     SaveDelegateRequest:
       type: object
       properties:
-        delegateId:
+        id:
           type: string
           format: uuid
         eserviceId:
@@ -1067,7 +1067,7 @@ components:
           - REJECTED
           - REVOKED
       required:
-        - delegateId
+        - id
         - eserviceId
         - state
 

@@ -505,10 +505,10 @@ export function dbServiceBuilder(db: DB) {
     async saveDelegate(data: Delegate): Promise<void> {
       try {
         const upsertDelegateQuery = `
-          INSERT INTO ${config.dbSchemaName}.tenants (
+          INSERT INTO ${config.dbSchemaName}.delegates (
             id, 
             eservice_id, 
-            state,
+            state
           ) VALUES ($1, $2, $3)
             ON CONFLICT (id) 
             DO UPDATE SET 

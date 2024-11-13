@@ -376,7 +376,7 @@ export function operationsServiceBuilder(dbService: DBService) {
       logger.info(`Upsert delegate with delegateId: ${payload.delegateId}`);
 
       await dbService.saveDelegate({
-        id: payload.delegateId,
+        id: payload.id,
         eservice_id: payload.eserviceId,
         state: payload.state,
       });
