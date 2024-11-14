@@ -21,7 +21,6 @@ export const operationsServiceBuilder = (
         await operationsApiClient.saveDelegation(
           {
             id: data.id,
-            delegatorId: data.delegatorId,
             delegateId: data.delegateId,
             eserviceId: data.eserviceId,
             state: data.state,

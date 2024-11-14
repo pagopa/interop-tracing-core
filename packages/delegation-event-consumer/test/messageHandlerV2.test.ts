@@ -151,9 +151,9 @@ describe("Message handler V2 test", () => {
       const zodiosValidationError =
         "Error: Zodios: Invalid Body parameter 'body'";
 
-      const data = `{"id":"${delegationV2.id}","delegatorId":"${
-        delegationV2.delegatorId
-      }","delegateId":"${delegationV2.delegateId}","eserviceId":"${
+      const data = `{"id":"${delegationV2.id}","delegateId":"${
+        delegationV2.delegateId
+      }","eserviceId":"${
         delegationV2.eserviceId
       }","state":"${mapToDelegationState(delegationV2.state)}"}`;
 

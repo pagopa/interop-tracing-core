@@ -38,7 +38,6 @@ export async function handleMessageV2(
             { ...correlationIdToHeader(ctx.correlationId) },
             {
               id: delegation.id,
-              delegatorId: delegation.delegatorId,
               delegateId: delegation.delegateId,
               eserviceId: delegation.eserviceId,
               state: mapToDelegationState(delegation.state),
