@@ -73,6 +73,7 @@ import {
   validEnrichedPurpose,
   eServiceDataNotAssociated,
   mockFormalErrors,
+  tenant_id,
 } from "./costants.js";
 import {
   EnrichedPurposeArray,
@@ -425,7 +426,7 @@ describe("Processing Service", () => {
   });
 
   describe("getEnrichedPurpose", () => {
-    const delegationId = generateId();
+    const delegationId = tenant_id;
     it("should return a type of EnrichedPurpose if purpose is valid", async () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
