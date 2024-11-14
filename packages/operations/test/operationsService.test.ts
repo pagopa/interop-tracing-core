@@ -1528,10 +1528,11 @@ describe("database test", () => {
       });
     });
     describe("saveDelegation", () => {
-      const delegationId = generateId();
+      const delegateId = generateId();
       it("should save a delegation successfully", async () => {
         const delegationPayload: ApiSaveDelegationPayload = {
-          id: delegationId,
+          id: generateId(),
+          delegateId: delegateId,
           eserviceId: generateId(),
           state: "ACTIVE",
         };
@@ -1552,7 +1553,8 @@ describe("database test", () => {
 
       it("should update state of existing delegation successfully", async () => {
         const delegationPayload: ApiSaveDelegationPayload = {
-          id: delegationId,
+          id: generateId(),
+          delegateId: delegateId,
           eserviceId: generateId(),
           state: "REVOKED",
         };
@@ -1576,6 +1578,7 @@ describe("database test", () => {
       it("should throw an error if the delegation payload is invalid", async () => {
         const invalidDelegationPayload: ApiSaveDelegationPayload = {
           id: "invalid_uuid",
+          delegateId: "",
           eserviceId: "invalid eservice uuid",
           state: "ACTIVE",
         };
