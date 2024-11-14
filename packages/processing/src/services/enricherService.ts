@@ -81,16 +81,15 @@ export function dbServiceBuilder(db: DB) {
                 [tracing.tenantId, eService.eservice_id],
               );
 
-              const tenantDelegationd = await db.oneOrNone<{
+              const tenantDelegations = await db.manyOrNone<{
                 id: string;
               }>(
                 `SELECT id FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2`,
                 [eService.eservice_id, DelegationStateEnum.Enum.ACTIVE],
               );
-
               if (
                 !tenantEservice &&
-                !tenantDelegationd &&
+                tenantDelegations.every(({ id }) => id !== tracing.tenantId) &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
                 return [
