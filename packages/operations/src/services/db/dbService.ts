@@ -507,9 +507,10 @@ export function dbServiceBuilder(db: DB) {
         const upsertDelegationQuery = `
           INSERT INTO ${config.dbSchemaName}.delegations (
             id, 
+            delegate_id,
             eservice_id, 
             state
-          ) VALUES ($1, $2, $3)
+          ) VALUES ($1, $2, $3, $4)
             ON CONFLICT (id) 
             DO UPDATE SET 
             eservice_id = EXCLUDED.eservice_id,
@@ -518,6 +519,7 @@ export function dbServiceBuilder(db: DB) {
 
         await db.none(upsertDelegationQuery, [
           data.id,
+          data.delegate_id,
           data.eservice_id,
           data.state,
         ]);
