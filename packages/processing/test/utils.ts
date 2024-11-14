@@ -25,8 +25,8 @@ export async function addPurpose(
 
 export async function insertDelegation(delegation: DelegationSchema, db: DB) {
   const insertDelegationQuery = `
-      INSERT INTO ${config.dbSchemaName}.delegations (id, eservice_id, state)
-      VALUES ($1, $2, $3)
+      INSERT INTO ${config.dbSchemaName}.delegations (id, delegate_id, eservice_id, state)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (id) 
       DO UPDATE SET 
       eservice_id = EXCLUDED.eservice_id,

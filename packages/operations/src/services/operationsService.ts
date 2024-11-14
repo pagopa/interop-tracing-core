@@ -379,6 +379,7 @@ export function operationsServiceBuilder(dbService: DBService) {
 
       await dbService.saveDelegation({
         id: payload.id,
+        delegate_id: payload.delegateId,
         eservice_id: payload.eserviceId,
         state: payload.state,
       });

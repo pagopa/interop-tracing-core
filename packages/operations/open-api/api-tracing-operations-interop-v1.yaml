@@ -1056,18 +1056,22 @@ components:
         id:
           type: string
           format: uuid
+        delegateId:
+          type: string
+          format: uuid
         eserviceId:
           type: string
           format: uuid
         state:
           type: string
           enum:
-          - WAITING
+          - WAITING_FOR_APPROVAL
           - ACTIVE
           - REJECTED
           - REVOKED
       required:
         - id
+        - delegateId
         - eserviceId
         - state
 

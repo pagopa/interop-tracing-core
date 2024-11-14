@@ -10,6 +10,7 @@ import {
   TracingRecordSchema,
   EserviceSchema,
   DelegationStateEnum,
+  DelegationSchema,
 } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
 import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
@@ -81,15 +82,15 @@ export function dbServiceBuilder(db: DB) {
                 [tracing.tenantId, eService.eservice_id],
               );
 
-              const tenantDelegations = await db.manyOrNone<{
-                id: string;
-              }>(
-                `SELECT id FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2`,
+              const tenantDelegations = await db.manyOrNone<DelegationSchema>(
+                `SELECT * FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2`,
                 [eService.eservice_id, DelegationStateEnum.Enum.ACTIVE],
               );
               if (
                 !tenantEservice &&
-                tenantDelegations.every(({ id }) => id !== tracing.tenantId) &&
+                tenantDelegations.every(
+                  ({ delegate_id }) => delegate_id !== tracing.tenantId,
+                ) &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
                 return [

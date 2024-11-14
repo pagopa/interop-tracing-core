@@ -53,15 +53,16 @@ export const EserviceSchema = z.object({
 });
 
 const DelegationStateEnum = z.enum([
-  "WAITING",
+  "WAITING_FOR_APPROVAL",
   "ACTIVE",
   "REJECTED",
   "REVOKED",
 ]);
 
 export const DelegationSchema = z.object({
-  id: z.string(),
-  eservice_id: z.string(),
+  id: z.string().uuid(),
+  delegate_id: z.string().uuid(),
+  eservice_id: z.string().uuid(),
   state: DelegationStateEnum,
 });
 

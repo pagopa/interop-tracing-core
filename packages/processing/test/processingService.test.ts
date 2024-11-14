@@ -498,7 +498,8 @@ describe("Processing Service", () => {
     it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegation", async () => {
       await insertDelegation(
         {
-          id: delegationId,
+          id: generateId(),
+          delegate_id: delegationId,
           eservice_id: validPurposeNotAssociated[0].eserviceId,
           state: "REVOKED",
         },
@@ -532,10 +533,11 @@ describe("Processing Service", () => {
       });
     });
 
-    it("should success if tenant is not a consumer or a producer but a delegationd", async () => {
+    it("should success if tenant is not a consumer or a producer but a delegate", async () => {
       await insertDelegation(
         {
-          id: delegationId,
+          id: generateId(),
+          delegate_id: delegationId,
           eservice_id: validPurposeNotAssociated[0].eserviceId,
           state: "ACTIVE",
         },
