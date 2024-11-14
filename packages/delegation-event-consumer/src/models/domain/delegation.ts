@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const delegationState = {
-  waiting_for_approval: "WAITING", // TODO: must become -> WAITING_FOR_APPROVAL
+  waiting_for_approval: "WAITING_FOR_APPROVAL",
   active: "ACTIVE",
   rejected: "REJECTED",
   revoked: "REVOKED",
