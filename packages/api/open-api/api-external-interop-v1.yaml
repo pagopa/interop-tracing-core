@@ -277,9 +277,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9g,404,100`
         date:
           type: string
           pattern: ^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$
@@ -306,9 +306,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9,404,100`
       required:
         - file
     ReplaceTracingResponse:
@@ -330,9 +330,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEyMywiZXhwIjoxNjg4MjgyMDAwfQ.nE1Q5tyVjloA5ZRohptDlTfKmj0RRYKcD1hwKsXQgWg,404,100`
       required:
         - file
     RecoverTracingResponse:

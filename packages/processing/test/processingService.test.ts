@@ -217,6 +217,7 @@ describe("Processing Service", () => {
         mockBodyStream(mockTracingRecords),
       );
       const dataObject = await fileManager.readObject("dummy-s3-key");
+      console.log("DATA OBJECT", await parseCSV(dataObject));
       const records: TracingRecordSchema[] = await parseCSV(dataObject);
 
       const hasError = await checkRecords(records, mockMessage);

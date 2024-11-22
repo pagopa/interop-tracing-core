@@ -202,6 +202,7 @@ function parseErrorMessage(issue: ZodIssue) {
   const errorCode = match(issue.path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
+    .with("token", () => PurposeErrorCodes.INVALID_TOKEN)
     .with("date", () => PurposeErrorCodes.INVALID_DATE)
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
@@ -240,7 +241,10 @@ function getDuplicatePurposesRow(
 ): string | null {
   const duplicateRecords = records
     .filter(
-      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+      (r) =>
+        r.purpose_id === record.purpose_id &&
+        r.status === record.status &&
+        r.token === record.token,
     )
     .map((el) => el.rowNumber);
 

@@ -145,6 +145,7 @@ function enrichSuccessfulPurpose(
     consumerId: fullPurpose.consumer_id,
     requestsCount: record.requests_count,
     tracingId: tracing.tracingId,
+    token: record.token,
     status: record.status,
     producerId: eService.producer_id,
     eserviceId: eService.eservice_id,
