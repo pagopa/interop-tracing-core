@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "develop"
-      - "main"
     tags:
       - "*"
     paths:
@@ -30,7 +29,7 @@ jobs:
     name: Build and Push
     needs: [find_dockerfiles]
     runs-on: ubuntu-latest
-    environment: dev          
+    environment: ecr
     permissions:                
       contents: read
       id-token: write
