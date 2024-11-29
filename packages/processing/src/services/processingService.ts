@@ -187,8 +187,8 @@ export async function checkRecords(
         tracingId: tracing.tracingId,
         version: tracing.version,
         purposeId: record.purpose_id,
-        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
-        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
+        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE,
+        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} and token ${record.token} has already delcared at rows: ${duplicateRecords}.`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
