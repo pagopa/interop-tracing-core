@@ -20,14 +20,14 @@ export function processMessage(
       serviceName: config.applicationName,
       correlationId: generateId<CorrelationId>(),
     };
+    const messageValue = message.value?.toString();
 
     try {
-      if (!message.value) {
+      if (!messageValue) {
         throw kafkaMissingMessageValue(config.kafkaTopic);
       }
-      const eserviceEvent = decodeOutboundEServiceEvent(
-        message.value.toString(),
-      );
+
+      const eserviceEvent = decodeOutboundEServiceEvent(messageValue);
 
       const loggerInstance = logger({
         ...ctx,
@@ -50,7 +50,7 @@ export function processMessage(
         `Message was processed. Partition number: ${partition}. Offset: ${message.offset}`,
       );
     } catch (error: unknown) {
-      throw errorMapper(error, logger(ctx));
+      throw errorMapper(error, logger(ctx), messageValue);
     }
   };
 }

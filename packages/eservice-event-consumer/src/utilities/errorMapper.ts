@@ -9,13 +9,13 @@ import { Logger } from "pagopa-interop-tracing-commons";
 
 type LocalErrorCodes = ErrorCodes | CommonErrorCodes;
 
-export const errorMapper = (error: unknown, logger: Logger) =>
+export const errorMapper = (error: unknown, logger: Logger, message?: string) =>
   match<unknown, InternalError<LocalErrorCodes>>(error)
     .with(P.instanceOf(InternalError<LocalErrorCodes>), (error) => {
-      logger.error(error);
+      logger.error(`${error}. Kafka message: ${message}`);
       throw error;
     })
     .otherwise((error: unknown) => {
-      logger.error(error);
+      logger.error(`${error}. Kafka message: ${message}`);
       throw genericInternalError(`${error}`);
     });
