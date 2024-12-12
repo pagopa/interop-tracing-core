@@ -121,6 +121,7 @@ export const getDescriptorV2 = (
   createdAt: 1n,
   dailyCallsPerConsumer: 100,
   dailyCallsTotal: 100,
+  rejectionReasons: [],
   docs: [],
   serverUrls: ["http://test.com"],
   state: EServiceDescriptorStateV2.DRAFT,

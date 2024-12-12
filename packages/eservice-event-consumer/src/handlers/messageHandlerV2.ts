@@ -76,6 +76,13 @@ export async function handleMessageV2(
           "EServiceDescriptorSuspended",
           "EServiceDraftDescriptorUpdated",
           "EServiceDescriptorAttributesUpdated",
+          "EServiceDescriptorSubmittedByDelegate",
+          "EServiceDescriptorApprovedByDelegator",
+          "EServiceDescriptorRejectedByDelegator",
+          "EServiceIsDelegableEnabled",
+          "EServiceIsDelegableDisabled",
+          "EServiceIsClientAccessDelegableEnabled",
+          "EServiceIsClientAccessDelegableDisabled",
         ),
       },
       async (evt) => {
