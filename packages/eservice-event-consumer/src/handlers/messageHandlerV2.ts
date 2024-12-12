@@ -75,6 +75,7 @@ export async function handleMessageV2(
           "EServiceDescriptorPublished",
           "EServiceDescriptorSuspended",
           "EServiceDraftDescriptorUpdated",
+          "EServiceDescriptorAttributesUpdated",
         ),
       },
       async (evt) => {
