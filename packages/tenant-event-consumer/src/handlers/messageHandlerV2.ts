@@ -71,6 +71,9 @@ export async function handleMessageV2(
           "MaintenanceTenantPromotedToCertifier",
           "TenantDelegatedProducerFeatureAdded",
           "TenantDelegatedProducerFeatureRemoved",
+          "TenantDelegatedConsumerFeatureAdded",
+          "TenantCertifiedAttributeAssigned",
+          "TenantDelegatedConsumerFeatureRemoved",
         ),
       },
       async (evt) => {
