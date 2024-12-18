@@ -79,6 +79,23 @@ const operationsRouter = (
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
+  operationsRouter.post("/delegations", async (req, res) => {
+    try {
+      const delegation = await operationsService.saveDelegation(
+        req.body,
+        logger(req.ctx),
+      );
+      return res.status(204).json(delegation).end();
+    } catch (error) {
+      const errorRes = makeApiProblem(
+        error,
+        errorMapper,
+        logger(req.ctx),
+        req.ctx.correlationId,
+      );
+      return res.status(errorRes.status).json(errorRes).end();
+    }
+  });
 
   operationsRouter.delete("/eservices/:eserviceId", async (req, res) => {
     try {

@@ -6,6 +6,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
+  Delegation,
   Eservice,
   Purpose,
   PurposeError,
@@ -498,6 +499,32 @@ export function dbServiceBuilder(db: DB) {
         await db.none(deleteTenantQuery, [data.id]);
       } catch (error) {
         throw dbServiceErrorMapper("deleteTenant", error);
+      }
+    },
+
+    async saveDelegation(data: Delegation): Promise<void> {
+      try {
+        const upsertDelegationQuery = `
+          INSERT INTO ${config.dbSchemaName}.delegations (
+            id, 
+            delegate_id,
+            eservice_id, 
+            state
+          ) VALUES ($1, $2, $3, $4)
+            ON CONFLICT (id) 
+            DO UPDATE SET 
+            eservice_id = EXCLUDED.eservice_id,
+            state = EXCLUDED.state
+        `;
+
+        await db.none(upsertDelegationQuery, [
+          data.id,
+          data.delegate_id,
+          data.eservice_id,
+          data.state,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveDelegation", error);
       }
     },
   };
