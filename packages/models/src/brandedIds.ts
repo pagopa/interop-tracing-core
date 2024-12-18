@@ -19,13 +19,17 @@ export type EserviceId = z.infer<typeof EserviceId>;
 export const CorrelationId = z.string().uuid().brand("CorrelationId");
 export type CorrelationId = z.infer<typeof CorrelationId>;
 
+export const DelegationId = z.string().uuid().brand("DelegationId");
+export type DelegationId = z.infer<typeof DelegationId>;
+
 type IDS =
   | TenantId
   | PurposeId
   | TracingId
   | PurposeErrorId
   | EserviceId
-  | CorrelationId;
+  | CorrelationId
+  | DelegationId;
 
 // This function is used to generate a new ID for a new object
 // it infers the type of the ID based on how is used the result
