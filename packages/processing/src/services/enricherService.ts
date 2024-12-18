@@ -88,8 +88,8 @@ export function dbServiceBuilder(db: DB) {
               );
               if (
                 !tenantEservice &&
-                tenantDelegations.every(
-                  ({ delegate_id }) => delegate_id !== tracing.tenantId,
+                !tenantDelegations.some(
+                  ({ delegate_id }) => delegate_id === tracing.tenantId,
                 ) &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
