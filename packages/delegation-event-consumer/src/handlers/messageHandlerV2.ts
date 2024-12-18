@@ -1,8 +1,4 @@
-import {
-  DelegationEventV2,
-  DelegationKindV2,
-  DelegationStateV2,
-} from "@pagopa/interop-outbound-models";
+import { DelegationEventV2 } from "@pagopa/interop-outbound-models";
 import { Logger, AppContext } from "pagopa-interop-tracing-commons";
 import {
   correlationIdToHeader,
@@ -12,8 +8,10 @@ import { P, match } from "ts-pattern";
 import { config } from "../utilities/config.js";
 import { OperationsService } from "../services/operationsService.js";
 import {
+  DelegationKindV2,
   delegationState,
   DelegationState,
+  DelegationStateV2,
 } from "../models/domain/delegation.js";
 
 export async function handleMessageV2(
@@ -25,7 +23,12 @@ export async function handleMessageV2(
   await match(event)
     .with(
       {
-        type: P.union("DelegationApproved", "DelegationRevoked"),
+        type: P.union(
+          "ProducerDelegationSubmitted",
+          "ProducerDelegationApproved",
+          "ProducerDelegationSubmitted",
+          "ProducerDelegationRevoked",
+        ),
       },
       async (evt) => {
         const { delegation } = evt.data;
@@ -33,7 +36,7 @@ export async function handleMessageV2(
           throw kafkaMessageMissingData(config.kafkaTopic, event.type);
         }
 
-        if (delegation.kind === DelegationKindV2.DELEGATED_PRODUCER) {
+        if (delegation.kind === DelegationKindV2.DELEGATED_CONSUMER) {
           await operationsService.saveDelegation(
             { ...correlationIdToHeader(ctx.correlationId) },
             {
@@ -50,7 +53,7 @@ export async function handleMessageV2(
 
     .with(
       {
-        type: P.union("DelegationSubmitted", "DelegationRejected"),
+        type: P.union("ProducerDelegationRejected"),
       },
       async (evt) => {
         logger.info(`Skip event ${evt.type} (not relevant)`);

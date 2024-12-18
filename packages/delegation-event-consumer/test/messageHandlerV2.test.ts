@@ -32,7 +32,7 @@ import {
   DelegationKindV2,
   DelegationStateV2,
   DelegationV2,
-} from "@pagopa/interop-outbound-models";
+} from "../src/models/domain/delegation.js";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -48,33 +48,16 @@ describe("Message handler V2 test", () => {
   describe("DelegationApproved Event", () => {
     it("save a new Delegation for DelegationApproved event should return a successfully response", async () => {
       const delegationId = generateId<DelegationId>();
-      const delegationV2: DelegationV2 = DelegationV2.create({
+      const delegationV2: DelegationV2 = {
         id: delegationId,
         delegatorId: generateId<TenantId>(),
         delegateId: generateId<TenantId>(),
         eserviceId: generateId<EserviceId>(),
+        kind: DelegationKindV2.DELEGATED_CONSUMER,
         createdAt: BigInt(Date.now()),
         submittedAt: BigInt(Date.now()),
-        state: DelegationStateV2.WAITING_FOR_APPROVAL,
-        kind: DelegationKindV2.DELEGATED_PRODUCER,
-        contract: {
-          id: "contract_identifier",
-          name: "Service Contract",
-          prettyName: "Service Contract Name",
-          contentType: "application/pdf",
-          createdAt: BigInt(Date.now()),
-        },
-        stamps: {
-          submission: {
-            who: "submission_identifier",
-            when: BigInt(Date.now()),
-          },
-          activation: {
-            who: "activation_identifier",
-            when: BigInt(Date.now()),
-          },
-        },
-      });
+        state: DelegationStateV2.ACTIVE,
+      };
 
       const delegationV2Event = approvedDelegationEventV2(
         delegationV2,
@@ -115,7 +98,7 @@ describe("Message handler V2 test", () => {
     });
 
     it("save a new Delegation for DelegationApproved event should return an exception errorSaveDelegation with validation body error", async () => {
-      const delegationV2: DelegationV2 = DelegationV2.create({
+      const delegationV2: DelegationV2 = {
         id: "invalid uuid",
         delegatorId: generateId<TenantId>(),
         delegateId: generateId<TenantId>(),
@@ -123,25 +106,8 @@ describe("Message handler V2 test", () => {
         createdAt: BigInt(Date.now()),
         submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.WAITING_FOR_APPROVAL,
-        kind: DelegationKindV2.DELEGATED_PRODUCER,
-        contract: {
-          id: "contract_identifier",
-          name: "Service Contract",
-          prettyName: "Service Contract Name",
-          contentType: "application/pdf",
-          createdAt: BigInt(Date.now()),
-        },
-        stamps: {
-          submission: {
-            who: "submission_identifier",
-            when: BigInt(Date.now()),
-          },
-          activation: {
-            who: "activation_identifier",
-            when: BigInt(Date.now()),
-          },
-        },
-      });
+        kind: DelegationKindV2.DELEGATED_CONSUMER,
+      };
 
       const delegationV2Event = approvedDelegationEventV2(
         delegationV2,
@@ -173,7 +139,7 @@ describe("Message handler V2 test", () => {
 
     it("save a new Delegation for DelegationApproved event should return generic exception errorSaveDelegation", async () => {
       const delegationId = generateId<DelegationId>();
-      const delegationV2: DelegationV2 = DelegationV2.create({
+      const delegationV2 = {
         id: delegationId,
         delegatorId: undefined,
         delegateId: undefined,
@@ -181,11 +147,11 @@ describe("Message handler V2 test", () => {
         createdAt: BigInt(Date.now()),
         submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.WAITING_FOR_APPROVAL,
-        kind: DelegationKindV2.DELEGATED_PRODUCER,
-      });
+        kind: DelegationKindV2.DELEGATED_CONSUMER,
+      };
 
       const delegationV2Event = approvedDelegationEventV2(
-        delegationV2,
+        delegationV2 as any,
         generateId(),
       );
 
@@ -214,7 +180,7 @@ describe("Message handler V2 test", () => {
   describe("DelegationRevoked Event", () => {
     it("update a Delegation state for DelegationRevoked event should return a successfully response", async () => {
       const delegationId = generateId<DelegationId>();
-      const delegationV2: DelegationV2 = DelegationV2.create({
+      const delegationV2: DelegationV2 = {
         id: delegationId,
         delegatorId: generateId<TenantId>(),
         delegateId: generateId<TenantId>(),
@@ -222,25 +188,8 @@ describe("Message handler V2 test", () => {
         createdAt: BigInt(Date.now()),
         submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.REVOKED,
-        kind: DelegationKindV2.DELEGATED_PRODUCER,
-        contract: {
-          id: "contract_identifier",
-          name: "Service Contract",
-          prettyName: "Service Contract Name",
-          contentType: "application/pdf",
-          createdAt: BigInt(Date.now()),
-        },
-        stamps: {
-          submission: {
-            who: "submission_identifier",
-            when: BigInt(Date.now()),
-          },
-          activation: {
-            who: "activation_identifier",
-            when: BigInt(Date.now()),
-          },
-        },
-      });
+        kind: DelegationKindV2.DELEGATED_CONSUMER,
+      };
 
       vi.spyOn(apiClient, "saveDelegation").mockResolvedValueOnce(undefined);
 
@@ -259,7 +208,7 @@ describe("Message handler V2 test", () => {
 
     it("update a Delegation for DelegationRevoked event should return an exception errorSaveDelegation", async () => {
       const delegationId = generateId<DelegationId>();
-      const delegationV2: DelegationV2 = DelegationV2.create({
+      const delegationV2: DelegationV2 = {
         id: delegationId,
         delegatorId: generateId<TenantId>(),
         delegateId: generateId<TenantId>(),
@@ -268,24 +217,7 @@ describe("Message handler V2 test", () => {
         submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.REVOKED,
         kind: DelegationKindV2.DELEGATED_PRODUCER,
-        contract: {
-          id: "contract_identifier",
-          name: "Service Contract",
-          prettyName: "Service Contract Name",
-          contentType: "application/pdf",
-          createdAt: BigInt(Date.now()),
-        },
-        stamps: {
-          submission: {
-            who: "submission_identifier",
-            when: BigInt(Date.now()),
-          },
-          activation: {
-            who: "activation_identifier",
-            when: BigInt(Date.now()),
-          },
-        },
-      });
+      };
 
       const apiClientError = mockApiClientError(500, "Internal server error");
 
@@ -313,10 +245,7 @@ describe("Message handler V2 test", () => {
     it("invoking handleMessageV2 should ignore specific event types and log an info message for each ignored event", async () => {
       const spy = vi.spyOn(genericLogger, "info");
 
-      const events = [
-        { type: "DelegationSubmitted" },
-        { type: "DelegationRejected" },
-      ];
+      const events = [{ type: "ProducerDelegationRejected" }];
 
       for (const event of events) {
         await handleMessageV2(

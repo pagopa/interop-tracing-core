@@ -1,16 +1,14 @@
 import { AxiosError, AxiosRequestHeaders } from "axios";
-import {
-  DelegationV2,
-  DelegationEventV2,
-} from "@pagopa/interop-outbound-models";
+import { DelegationEventV2 } from "@pagopa/interop-outbound-models";
 import { generateId } from "pagopa-interop-tracing-models";
+import { DelegationV2 } from "../src/models/domain/delegation.js";
 
 export const approvedDelegationEventV2 = (
   delegationV2: DelegationV2 | undefined,
   stream_id?: string,
   version?: number,
 ): DelegationEventV2 => ({
-  type: "DelegationApproved",
+  type: "ProducerDelegationApproved",
   timestamp: new Date(),
   event_version: 2,
   version: version || 1,
@@ -25,7 +23,7 @@ export const revokedDelegationEventV2 = (
   stream_id?: string,
   version?: number,
 ): DelegationEventV2 => ({
-  type: "DelegationRevoked",
+  type: "ProducerDelegationRevoked",
   timestamp: new Date(),
   event_version: 2,
   version: version || 1,
