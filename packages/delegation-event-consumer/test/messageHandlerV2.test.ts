@@ -151,7 +151,7 @@ describe("Message handler V2 test", () => {
       };
 
       const delegationV2Event = approvedDelegationEventV2(
-        delegationV2 as any,
+        delegationV2 as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         generateId(),
       );
 
