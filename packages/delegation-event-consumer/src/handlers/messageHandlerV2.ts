@@ -47,6 +47,10 @@ export async function handleMessageV2(
             },
             logger,
           );
+        } else {
+          logger.info(
+            `Skip event: Delegation kind - ${delegation.kind} - is not relevant`,
+          );
         }
       },
     )
