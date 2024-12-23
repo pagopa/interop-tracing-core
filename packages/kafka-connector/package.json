@@ -23,6 +23,6 @@
     "ts-pattern": "5.1.2"
   },
   "devDependencies": {
-    "typescript": "5.5.3"
+    "typescript": "5.5.2"
   }
 }
