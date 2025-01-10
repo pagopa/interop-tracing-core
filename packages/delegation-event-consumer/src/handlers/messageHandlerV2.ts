@@ -1,4 +1,8 @@
-import { DelegationEventV2 } from "@pagopa/interop-outbound-models";
+import {
+  DelegationEventV2,
+  DelegationKindV2,
+  DelegationStateV2,
+} from "@pagopa/interop-outbound-models";
 import { Logger, AppContext } from "pagopa-interop-tracing-commons";
 import {
   correlationIdToHeader,
@@ -8,10 +12,8 @@ import { P, match } from "ts-pattern";
 import { config } from "../utilities/config.js";
 import { OperationsService } from "../services/operationsService.js";
 import {
-  DelegationKindV2,
   delegationState,
   DelegationState,
-  DelegationStateV2,
 } from "../models/domain/delegation.js";
 
 export async function handleMessageV2(

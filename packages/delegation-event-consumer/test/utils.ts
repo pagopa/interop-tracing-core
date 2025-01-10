@@ -1,7 +1,9 @@
 import { AxiosError, AxiosRequestHeaders } from "axios";
-import { DelegationEventV2 } from "@pagopa/interop-outbound-models";
+import {
+  DelegationEventV2,
+  DelegationV2,
+} from "@pagopa/interop-outbound-models";
 import { generateId } from "pagopa-interop-tracing-models";
-import { DelegationV2 } from "../src/models/domain/delegation.js";
 
 export const approvedDelegationEventV2 = (
   delegationV2: DelegationV2 | undefined,
