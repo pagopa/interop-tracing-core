@@ -1,8 +1,11 @@
-import { DelegationEventV2 } from "@pagopa/interop-outbound-models";
+import {
+  DelegationEventV2,
+  DelegationStateV2,
+  DelegationKindV2,
+} from "@pagopa/interop-outbound-models";
 import { randomUUID } from "crypto";
 import { match } from "ts-pattern";
 import { z } from "zod";
-
 const streamIdV2 = randomUUID();
 const producerIdV2 = randomUUID();
 const delegateeIdV2 = randomUUID();
@@ -22,8 +25,8 @@ export const ProducerDelegationSubmitted: DelegationEventV2 = {
       eserviceId: eserviceIdV2,
       createdAt: "1" as any,
       submittedAt: "1" as any,
-      state: "PENDING" as any,
-      kind: "DELEGATED_CONSUMER" as any,
+      state: DelegationStateV2.ACTIVE,
+      kind: DelegationKindV2.DELEGATED_CONSUMER,
     },
   },
 };
@@ -34,7 +37,7 @@ export const ProducerDelegationApproved: DelegationEventV2 = {
   data: {
     delegation: {
       ...ProducerDelegationSubmitted.data.delegation!,
-      state: "APPROVED" as any,
+      state: DelegationStateV2.ACTIVE,
     },
   },
 };
@@ -46,7 +49,7 @@ export const ProducerDelegationRejected: DelegationEventV2 = {
     delegation: {
       ...ProducerDelegationSubmitted.data.delegation!,
       rejectionReason: "Insufficient permissions for approval",
-      state: "REJECTED" as any,
+      state: DelegationStateV2.REJECTED,
     },
   },
 };
@@ -57,7 +60,7 @@ export const ProducerDelegationRevoked: DelegationEventV2 = {
   data: {
     delegation: {
       ...ProducerDelegationSubmitted.data.delegation!,
-      state: "REVOKED" as any,
+      state: DelegationStateV2.REVOKED,
     },
   },
 };
