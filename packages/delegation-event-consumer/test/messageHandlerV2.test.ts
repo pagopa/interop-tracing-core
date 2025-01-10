@@ -29,10 +29,10 @@ import {
   errorSaveDelegation,
 } from "../src/models/domain/errors.js";
 import {
+  DelegationV2,
   DelegationKindV2,
   DelegationStateV2,
-  DelegationV2,
-} from "../src/models/domain/delegation.js";
+} from "@pagopa/interop-outbound-models";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
