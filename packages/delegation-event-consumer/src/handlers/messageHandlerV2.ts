@@ -51,7 +51,7 @@ export async function handleMessageV2(
           );
         } else {
           logger.info(
-            `Skip event: Delegation kind - ${delegation.kind} - is not relevant`,
+            `Skip event: Delegation ${delegation.id} with kind - ${delegation.kind} - is not relevant`,
           );
         }
       },
