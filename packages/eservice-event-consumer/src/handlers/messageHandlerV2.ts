@@ -21,6 +21,7 @@ export async function handleMessageV2(
           "EServiceAdded",
           "EServiceCloned",
           "EServiceDescriptionUpdated",
+          "EServiceNameUpdated",
         ),
       },
       async (evt) => {
@@ -75,6 +76,10 @@ export async function handleMessageV2(
           "EServiceDescriptorPublished",
           "EServiceDescriptorSuspended",
           "EServiceDraftDescriptorUpdated",
+          "EServiceDescriptorAttributesUpdated",
+          "EServiceDescriptorSubmittedByDelegate",
+          "EServiceDescriptorApprovedByDelegator",
+          "EServiceDescriptorRejectedByDelegator",
         ),
       },
       async (evt) => {
