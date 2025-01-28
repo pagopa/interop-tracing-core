@@ -5,8 +5,8 @@
   "type": "module",
   "main": "dist",
   "scripts": {
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:autofix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint ./src ",
+    "lint:autofix": "eslint ./src   --fix",
     "format:check": "prettier --check src",
     "format:write": "prettier --write src",
     "check": "tsc --project tsconfig.check.json",
@@ -23,6 +23,7 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "globals": "15.14.0",
     "@types/node": "20.3.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.2"

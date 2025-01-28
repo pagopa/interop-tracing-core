@@ -1,4 +1,3 @@
-/* eslint-disable no-constant-condition */
 import {
   SQSClient,
   ReceiveMessageCommand,
@@ -16,7 +15,7 @@ const serializeError = (error: unknown): string => {
   try {
     return JSON.stringify(error, Object.getOwnPropertyNames(error));
   } catch (e) {
-    return `${error}`;
+    return `${error} - ${e}`;
   }
 };
 

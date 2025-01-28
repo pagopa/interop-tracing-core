@@ -68,7 +68,6 @@ const getKafkaConfig = (config: KafkaConsumerConfig): KafkaConfig => {
         sasl: {
           mechanism: "oauthbearer",
           oauthBearerProvider: () =>
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             oauthBearerTokenProvider(config.awsRegion!, genericLogger),
         },
       };

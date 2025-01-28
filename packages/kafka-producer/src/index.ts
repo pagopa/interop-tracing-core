@@ -29,7 +29,6 @@ app.use("/purposes", purposeRouter);
 app.use("/delegations", delegationRouter);
 
 app.listen(port, () => {
-  // eslint-disable-next-line no-console
   console.log(
     `Kafka-producer topics: [${config.kafkaTopics}] listening on port: ${port}`,
   );

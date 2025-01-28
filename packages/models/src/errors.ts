@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import { P, match } from "ts-pattern";
 import { ZodError, z } from "zod";
 import { CorrelationId } from "./brandedIds.js";

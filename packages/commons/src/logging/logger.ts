@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import winston from "winston";
 import { LoggerConfig } from "../config/loggerConfig.js";
 
@@ -23,7 +22,6 @@ const config: LoggerConfig = parsedLoggerConfig.success
     };
 
 if (!parsedLoggerConfig.success) {
-  // eslint-disable-next-line no-console
   console.log(
     `No LOG_LEVEL env var: defaulting log level to "${config.logLevel}"`,
   );
