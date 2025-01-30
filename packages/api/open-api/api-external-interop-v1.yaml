@@ -308,7 +308,7 @@ components:
             <br>
             `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,4e1234e6-31d1-41a4-811d-a0c3d1b70aad,404,100`
       required:
         - file
     ReplaceTracingResponse:
