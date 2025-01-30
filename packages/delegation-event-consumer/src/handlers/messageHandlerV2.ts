@@ -59,7 +59,13 @@ export async function handleMessageV2(
 
     .with(
       {
-        type: P.union("ProducerDelegationRejected"),
+        type: P.union(
+          "ProducerDelegationRejected",
+          "ConsumerDelegationSubmitted",
+          "ConsumerDelegationApproved",
+          "ConsumerDelegationRejected",
+          "ConsumerDelegationRevoked",
+        ),
       },
       async (evt) => {
         logger.info(`Skip event ${evt.type} (not relevant)`);
