@@ -7,8 +7,8 @@
   "scripts": {
     "test": "vitest --config ./test/vitest.config.ts",
     "test:it": "vitest db --config ./test/vitest.config.ts",
-    "lint": "eslint ./src  ",
-    "lint:autofix": "eslint ./src   --fix",
+    "lint": "eslint .  ",
+    "lint:autofix": "eslint . --fix",
     "format:check": "prettier --check src",
     "format:write": "prettier --write src",
     "start": "node --watch --no-warnings --loader ts-node/esm -r 'dotenv-flow/config' ./src/index.ts",
@@ -20,9 +20,9 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/dotenv-flow": "3.3.3",
-    "@types/node": "20.3.1",
-    "@typescript-eslint/eslint-plugin": "8.21.0",
-    "@typescript-eslint/parser": "8.21.0",
+    "@types/node": "20.10.0",
+    "@typescript-eslint/eslint-plugin": "8.22.0",
+    "@typescript-eslint/parser": "8.22.0",
     "eslint": "9.18.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-prettier": "5.0.0",

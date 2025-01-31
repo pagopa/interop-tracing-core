@@ -1,6 +1,6 @@
-import tsParser from "@typescript-eslint/parser";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
 import prettierPlugin from "eslint-plugin-prettier";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import eslintRecommended from "@eslint/js";
 import { configs as tsConfigs } from "@typescript-eslint/eslint-plugin";
 import prettierConfig from "eslint-config-prettier";
@@ -8,13 +8,16 @@ import globals from "globals";
 
 export default [
   {
-    files: ["**/*.ts", "**/*.tsx"],
     ignores: [
+      "**/dist/**",
       "**/dist",
-      "**/node_modules",
+      "**/node_modules/**",
       "**/src/model/generated/*.ts",
       "vitest.config.ts",
     ],
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -49,8 +52,18 @@ export default [
       "@typescript-eslint/await-thenable": "off",
       "no-redeclare": "off",
       "no-import-assign": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "error",
+      "no-unused-vars": "off",
+      "no-console": "error",
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "max-classes-per-file": ["error", 1],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ];

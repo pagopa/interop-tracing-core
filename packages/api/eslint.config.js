@@ -10,6 +10,7 @@ export default [
   {
     files: ["**/*.ts", "**/*.tsx"],
     ignores: [
+      "**/dist/**",
       "**/dist",
       "**/node_modules",
       "**/src/model/generated/*.ts",
@@ -49,10 +50,20 @@ export default [
       "@typescript-eslint/naming-convention": "off",
       "@typescript-eslint/no-use-before-define": "off",
       "@typescript-eslint/await-thenable": "off",
-      "no-redeclare": "off",
       "no-import-assign": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "error",
+      "no-redeclare": "off",
+      "no-unused-vars": "off",
+      "no-console": "error",
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "max-classes-per-file": ["error", 1],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ];

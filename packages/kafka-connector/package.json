@@ -9,7 +9,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "lint": "eslint ./src  ",
+    "lint": "eslint .  ",
     "build": "tsc"
   },
   "keywords": [],
