@@ -6,6 +6,7 @@ CREATE TABLE traces.traces (
     submitter_id UUID,
     date TIMESTAMP NOT NULL,
     purpose_id UUID,
+    token UUID,
     purpose_name VARCHAR(255),
     status INTEGER,
     requests_count INTEGER,

@@ -277,9 +277,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,99382e29-b0cf-412b-a060-72e421b6d167,404,100`
         date:
           type: string
           pattern: ^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$
@@ -306,9 +306,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,4e1234e6-31d1-41a4-811d-a0c3d1b70aad,404,100`
       required:
         - file
     ReplaceTracingResponse:
@@ -330,9 +330,9 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,status,requests_count`
+            `date,purpose_id,token,status,requests_count`
             <br>
-            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,404,100`
+            `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,99382e29-b0cf-412b-a060-72e421b6d167,404,100`
       required:
         - file
     RecoverTracingResponse:
