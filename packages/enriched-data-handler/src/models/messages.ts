@@ -14,6 +14,7 @@ export const TracingEnriched = z.object({
   purposeId: z.string(),
   purposeName: z.string(),
   status: z.coerce.number(),
+  token: z.string(),
   requestsCount: z.string(),
   eserviceId: z.string(),
   consumerId: z.string(),
