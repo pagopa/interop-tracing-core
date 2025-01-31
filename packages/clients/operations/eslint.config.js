@@ -10,6 +10,7 @@ export default [
   {
     ignores: [
       "**/dist/**",
+      "eslint.config.js",
       "**/dist",
       "**/node_modules/**",
       "**/src/model/generated/*.ts",

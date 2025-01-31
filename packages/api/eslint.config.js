@@ -11,6 +11,7 @@ export default [
     files: ["**/*.ts", "**/*.tsx"],
     ignores: [
       "**/dist/**",
+      "eslint.config.js",
       "**/dist",
       "**/node_modules",
       "**/src/model/generated/*.ts",
