@@ -277,7 +277,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,token,status,requests_count`
+            `date,purpose_id,token_id,status,requests_count`
             <br>
             `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,99382e29-b0cf-412b-a060-72e421b6d167,404,100`
         date:
@@ -306,7 +306,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,token,status,requests_count`
+            `date,purpose_id,token_id,status,requests_count`
             <br>
             `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,4e1234e6-31d1-41a4-811d-a0c3d1b70aad,404,100`
       required:
@@ -330,7 +330,7 @@ components:
             <br><br>
             Example format:
             <br>
-            `date,purpose_id,token,status,requests_count`
+            `date,purpose_id,token_id,status,requests_count`
             <br>
             `2023-05-01,0e1114e6-31d1-41a4-811d-a0c3d1b70bbf,99382e29-b0cf-412b-a060-72e421b6d167,404,100`
       required:

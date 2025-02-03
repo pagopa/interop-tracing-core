@@ -2,12 +2,12 @@ import { Readable } from "stream";
 import { TracingRecordSchema } from "../src/models/db.js";
 
 export const mockBodyStream = (records: TracingRecordSchema[]): Readable => {
-  const csvHeaders = "date,purpose_id,status,token,requests_count,rowNumber";
+  const csvHeaders = "date,purpose_id,status,token_id,requests_count,rowNumber";
   const mockCsvData = [
     csvHeaders,
     ...records.map(
       (record) =>
-        `${record.date},${record.purpose_id},${record.status},${record.token},${record.requests_count},${record.rowNumber}`,
+        `${record.date},${record.purpose_id},${record.status},${record.token_id},${record.requests_count},${record.rowNumber}`,
     ),
   ].join("\n");
 

@@ -13,7 +13,7 @@ export function dbServiceBuilder(db: DB) {
       try {
         const queryText = `
           INSERT INTO ${config.dbSchemaName}.traces (
-            id, tracing_id, date, purpose_id, token, purpose_name, status, requests_count, eservice_id,
+            id, tracing_id, date, purpose_id, token_id, purpose_name, status, requests_count, eservice_id,
             consumer_id, consumer_origin, consumer_name, consumer_external_id,
             producer_id, producer_name, producer_origin, producer_external_id, submitter_id
            ) 
@@ -36,7 +36,7 @@ export function dbServiceBuilder(db: DB) {
             tracingId,
             record.date,
             record.purposeId,
-            record.token,
+            record.token_id,
             record.purposeName,
             record.status,
             record.requestsCount,
