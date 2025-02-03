@@ -7,7 +7,7 @@ const TraceSchema = z.object({
   date: z.coerce.string(),
   purpose_id: z.string().uuid(),
   purpose_name: z.string().max(255),
-  token: z.string(),
+  token_id: z.string(),
   status: z.number().int(),
   requests_count: z.number().int(),
   eservice_id: z.string().uuid(),
