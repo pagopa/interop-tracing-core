@@ -69,6 +69,8 @@ export async function handleMessageV2(
           "WaitingForApprovalPurposeVersionDeleted",
           "PurposeVersionRejected",
           "PurposeCloned",
+          "PurposeVersionArchivedByRevokedDelegation",
+          "PurposeDeletedByRevokedDelegation",
         ),
       },
       async () => {

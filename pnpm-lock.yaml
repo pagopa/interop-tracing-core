@@ -850,8 +850,8 @@ importers:
   packages/purpose-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: ^1.0.0
-        version: 1.0.4
+        specifier: 1.4.1
+        version: 1.4.1
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -999,8 +999,8 @@ importers:
   packages/tenant-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: ^1.0.0
-        version: 1.0.4
+        specifier: ^1.4.1
+        version: 1.4.1
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
