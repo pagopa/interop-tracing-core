@@ -13,6 +13,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import {
   cancelTracingStateAndVersionError,
+  invalidTracingDate,
   resolveApiProblem,
   updateTracingStateError,
 } from "../model/domain/errors.js";
@@ -41,6 +42,18 @@ const tracingRouter =
     router
       .post("/tracings/submit", async (req, res) => {
         try {
+          const tracingDate = new Date(req.body.date);
+          const today = new Date();
+
+          tracingDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+
+          if (tracingDate >= today) {
+            throw invalidTracingDate(
+              `The tracing date is invalid. Please provide a past date, earlier than today.`,
+            );
+          }
+
           const result = await operationsService.submitTracing(
             {
               ...organizationIdToHeader(req.ctx.authData.organizationId),
@@ -94,7 +107,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         } finally {
           if (req.body?.file) {
@@ -130,7 +143,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -164,7 +177,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -220,7 +233,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       })
@@ -276,7 +289,7 @@ const tracingRouter =
             })
             .end();
         } catch (error) {
-          const errorRes = resolveApiProblem(error, logger(req.ctx));
+          const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
         }
       });

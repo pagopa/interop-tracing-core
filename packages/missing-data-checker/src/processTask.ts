@@ -6,13 +6,16 @@ import {
   TimeFormat,
   changeDateFormat,
 } from "pagopa-interop-tracing-commons";
-import { v4 as uuidv4 } from "uuid";
 import { logger } from "pagopa-interop-tracing-commons";
-import { correlationIdToHeader } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  correlationIdToHeader,
+  generateId,
+} from "pagopa-interop-tracing-models";
 
 export async function processTask(service: OperationsService): Promise<void> {
-  const rootCorrelationId: string = uuidv4();
-  let batchCorrelationId: string = uuidv4();
+  const rootCorrelationId: CorrelationId = generateId<CorrelationId>();
+  let batchCorrelationId: CorrelationId = generateId<CorrelationId>();
 
   const date = changeDateFormat(
     new Date(
@@ -52,7 +55,7 @@ export async function processTask(service: OperationsService): Promise<void> {
       for await (const id of tenants.results) {
         const ctx: AppContext = {
           serviceName: config.applicationName,
-          correlationId: uuidv4(),
+          correlationId: generateId<CorrelationId>(),
         };
 
         try {
@@ -73,7 +76,7 @@ export async function processTask(service: OperationsService): Promise<void> {
 
       totalCount = tenants.totalCount;
       offset += limit;
-      batchCorrelationId = uuidv4();
+      batchCorrelationId = generateId<CorrelationId>();
     } while (offset < totalCount);
 
     logger({

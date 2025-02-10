@@ -1,10 +1,15 @@
-import { generateId } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  generateId,
+  TenantId,
+  TracingId,
+} from "pagopa-interop-tracing-models";
 
 export const mockTracingFromCsv = {
-  tracingId: generateId(),
+  tracingId: generateId<TracingId>(),
   version: 1,
-  tenantId: generateId(),
-  correlationId: generateId(),
+  tenantId: generateId<TenantId>(),
+  correlationId: generateId<CorrelationId>(),
   date: "2024-09-07",
 };
 
@@ -15,6 +20,7 @@ export const mockEnrichedPurposes = [
     purposeId: generateId(),
     purposeName: "Purpose 1",
     status: 200,
+    token_id: generateId(),
     requestsCount: "50",
     eserviceId: generateId(),
     consumerId: generateId(),
@@ -32,6 +38,7 @@ export const mockEnrichedPurposes = [
     purposeId: generateId(),
     purposeName: "Purpose 1",
     status: 500,
+    token_id: generateId(),
     requestsCount: "3",
     eserviceId: generateId(),
     consumerId: generateId(),

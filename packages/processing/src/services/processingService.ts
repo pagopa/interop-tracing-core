@@ -187,8 +187,8 @@ export async function checkRecords(
         tracingId: tracing.tracingId,
         version: tracing.version,
         purposeId: record.purpose_id,
-        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_NOT_UNIQUE,
-        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} has already delcared at rows: ${duplicateRecords}.`,
+        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE,
+        message: `status: Duplicate status found. The current row number ${record.rowNumber} with status ${record.status} and token_id ${record.token_id} has already delcared at rows: ${duplicateRecords}.`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
@@ -202,6 +202,7 @@ function parseErrorMessage(issue: ZodIssue) {
   const errorCode = match(issue.path[0])
     .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
     .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
+    .with("token_id", () => PurposeErrorCodes.INVALID_TOKEN)
     .with("date", () => PurposeErrorCodes.INVALID_DATE)
     .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
     .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
@@ -240,7 +241,10 @@ function getDuplicatePurposesRow(
 ): string | null {
   const duplicateRecords = records
     .filter(
-      (r) => r.purpose_id === record.purpose_id && r.status === record.status,
+      (r) =>
+        r.purpose_id === record.purpose_id &&
+        r.status === record.status &&
+        r.token_id === record.token_id,
     )
     .map((el) => el.rowNumber);
 

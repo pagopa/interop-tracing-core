@@ -11,6 +11,7 @@ export const mockTracingRecords: TracingRecordSchema[] = [
     date: "2024-12-12",
     purpose_id: "123e4567-e89b-12d3-a456-426614174000",
     status: 200,
+    token_id: generateId(),
     requests_count: "10",
     rowNumber: 1,
   },
@@ -18,6 +19,7 @@ export const mockTracingRecords: TracingRecordSchema[] = [
     date: "2024-12-12",
     purpose_id: "223e4567-e89b-12d3-a456-426614174001",
     status: 204,
+    token_id: generateId(),
     requests_count: "5",
     rowNumber: 2,
   },
@@ -25,6 +27,7 @@ export const mockTracingRecords: TracingRecordSchema[] = [
     date: "2024-12-12",
     purpose_id: "223e4567-e89b-12d3-a456-426614174001",
     status: 404,
+    token_id: generateId(),
     requests_count: "50",
     rowNumber: 3,
   },
@@ -165,8 +168,8 @@ export const SqsMockMessageForS3 = {
     "AQEB7xMhTS53grQoCzQKeyFrtoosWTcfXvsLs4uD91OPQV14BvzSQ4MxX5UTJ+5KZDP4h/k+pxd3qjgmpujopBAQLzlGVg1Gb0cXBE88Z0pdXK33383CMpuTf9RmfKtTBCgBmJId2iFplBj73QVXlWRDP7JL9z1XuFTPKTsJVvpyB7jsBXLLRkPlQSWdxwtvM7ZIc5TZcvz7JTaSn0sxS0AO06I/sMPavdGRi8fyPn2a1d/m35NczQ2YWdxi2sGDE337LltaSCYTCVSyk6iq23SdwvICWF/dxxqqQXxWiM8rPmTsyUeS/ly287A1XyEtC9cx5zLNqbCwTDXnRIZaaetrZ8y0yeKY+Z3xxbuvqI8bBpwOHMhMAla7dCS9tZMJpud7tXtrvsTbRBD+oV291vl9+A==",
 };
 const eservice_id = generateId() as string;
-const eservice_idNotAssociated = generateId() as string;
-const tenant_id = "123e4567-e89b-12d3-a456-426614174001";
+export const tenant_id = generateId();
+export const tenant_id2 = generateId();
 const purposeId = generateId() as string;
 const purposeId2 = generateId() as string;
 
@@ -177,6 +180,7 @@ export const mockMessage: TracingFromS3KeyPathDto = {
   correlationId: "8fa62e67-92bf-48f8-a9e1-4e73a37c4682",
   tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
 };
+
 export const purposeData = {
   id: purposeId,
   consumerId: tenant_id,
@@ -187,7 +191,7 @@ export const purposeData = {
 export const purposeDataWithWrongEservice = {
   id: purposeId2,
   consumerId: tenant_id,
-  eserviceId: eservice_idNotAssociated,
+  eserviceId: generateId(),
   purposeTitle: "purpose title",
 };
 
@@ -198,8 +202,8 @@ export const eServiceData = {
 };
 
 export const eServiceDataNotAssociated = {
-  eserviceId: eservice_idNotAssociated,
-  producerId: tenant_id as string,
+  eserviceId: generateId(),
+  producerId: tenant_id2,
   name: "eservice name",
 };
 
@@ -218,6 +222,7 @@ export const errorPurposesWithInvalidPurposeId = [
     status: 200,
     requests_count: 10,
     purposeName: "",
+    token_id: generateId(),
     eserviceId: eServiceData.eserviceId,
     producerId: eServiceData.producerId,
     rowNumber: 1,
@@ -227,6 +232,7 @@ export const errorPurposesWithInvalidPurposeId = [
     purpose_id: generateId() as string,
     status: 404,
     requests_count: 5,
+    token_id: generateId(),
     purposeName: "",
     eserviceId: eServiceData.eserviceId,
     producerId: eServiceData.producerId,
@@ -240,6 +246,7 @@ export const errorPurposesWithInvalidEserviceId = [
     status: 200,
     requests_count: 10,
     purposeName: "",
+    token_id: generateId(),
     eserviceId: null,
     producerId: eServiceData.producerId,
     rowNumber: 1,
@@ -249,6 +256,7 @@ export const errorPurposesWithInvalidEserviceId = [
     purpose_id: purposeId2,
     status: 404,
     requests_count: 5,
+    token_id: generateId(),
     purposeName: "",
     eserviceId: null,
     producerId: eServiceData.producerId,
@@ -262,6 +270,7 @@ export const validPurpose = [
     status: 200,
     requests_count: 10,
     purposeName: "",
+    token_id: generateId(),
     eserviceId: eServiceData.eserviceId,
     producerId: eServiceData.producerId,
     rowNumber: 1,
@@ -272,18 +281,20 @@ export const validPurpose = [
     status: 404,
     requests_count: 5,
     purposeName: "",
+    token_id: generateId(),
     eserviceId: eServiceData.eserviceId,
     producerId: eServiceData.producerId,
     rowNumber: 2,
   },
 ];
-
+const purposeIdNotAssociated = generateId();
 export const validPurposeNotAssociated = [
   {
     date: "2024-12-12",
-    purpose_id: purposeId,
+    purpose_id: purposeIdNotAssociated,
     status: 200,
     requests_count: 10,
+    token_id: generateId(),
     purposeName: "",
     eserviceId: eServiceDataNotAssociated.eserviceId,
     producerId: eServiceDataNotAssociated.producerId,
@@ -291,9 +302,10 @@ export const validPurposeNotAssociated = [
   },
   {
     date: "2024-12-12",
-    purpose_id: purposeId,
+    purpose_id: purposeIdNotAssociated,
     status: 404,
     requests_count: 5,
+    token_id: generateId(),
     purposeName: "",
     eserviceId: eServiceDataNotAssociated.eserviceId,
     producerId: eServiceDataNotAssociated.producerId,
@@ -312,6 +324,7 @@ export const mockEnrichedPurposes = [
     consumerName: "consumer name",
     producerName: "consumer name",
     date: "2024-12-12",
+    token_id: generateId(),
     purposeId: "123e4567-e89b-12d3-a456-426614174001",
     status: 200,
     requestsCount: 10,
@@ -330,6 +343,7 @@ export const mockEnrichedPurposes = [
     consumerName: "consumer name",
     producerName: "consumer name",
     date: "2024-12-12",
+    token_id: generateId(),
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     status: 404,
     requestsCount: 5,
@@ -354,6 +368,7 @@ export const validEnrichedPurpose = [
     purposeId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     requestsCount: 10,
     tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
+    token_id: generateId(),
     consumerId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     consumerName: "comune",
     consumerOrigin: "pagoPa",
@@ -374,6 +389,7 @@ export const validEnrichedPurpose = [
     rowNumber: 2,
     purposeId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     requestsCount: 5,
+    token_id: generateId(),
     tracingId: "87dcfab8-3161-430b-97db-7787a77a7a3d",
     consumerId: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
     consumerName: "comune",

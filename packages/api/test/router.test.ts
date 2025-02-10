@@ -18,6 +18,7 @@ import {
   tracingNotFound,
   tracingState,
   organizationIdToHeader,
+  CorrelationId,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -40,6 +41,7 @@ import {
 import { NextFunction, Response, Request } from "express";
 import { mockOperationsApiClientError } from "./utils.js";
 import {
+  invalidTracingDate,
   makeApiProblem,
   writeObjectS3BucketError,
 } from "../src/model/domain/errors.js";
@@ -69,7 +71,7 @@ app.use(contextMiddleware(config.applicationName));
 configureMulterEndpoints(app);
 
 const mockAppCtx = {
-  correlationId: generateId(),
+  correlationId: generateId<CorrelationId>(),
   authData: {
     organizationId: generateId(),
   },
@@ -187,6 +189,44 @@ describe("Tracing Router", () => {
         tracingAlreadyExists(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
+      );
+
+      const operationsApiClientError =
+        mockOperationsApiClientError(apiErrorMock);
+
+      vi.spyOn(operationsApiClient, "submitTracing").mockRejectedValue(
+        operationsApiClientError,
+      );
+
+      const originalFilename: string = "testfile.txt";
+      const response = await tracingApiClient
+        .post("/tracings/submit")
+        .attach("file", mockFile, originalFilename)
+        .field("date", mockSubmitTracingResponse.date)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.text).contains(errorMessage);
+      expect(response.status).toBe(400);
+    });
+
+    it("should return a 400 Bad Request error if the provided tracing date is not a past date", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        version: 1,
+        errors: false,
+      };
+
+      const errorMessage = `The tracing date is invalid. Please provide a past date, earlier than today.`;
+      const apiErrorMock = makeApiProblem(
+        invalidTracingDate(errorMessage),
+        errorMapper,
+        genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -456,6 +496,7 @@ describe("Tracing Router", () => {
         tracingRecoverCannotBeUpdated(mockRecoverTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -490,6 +531,7 @@ describe("Tracing Router", () => {
         tracingNotFound(mockRecoverTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -621,6 +663,7 @@ describe("Tracing Router", () => {
         genericInternalError(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -735,6 +778,7 @@ describe("Tracing Router", () => {
         tracingReplaceCannotBeUpdated(mockReplaceTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -769,6 +813,7 @@ describe("Tracing Router", () => {
         tracingNotFound(mockReplaceTracingResponse.tracingId),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =
@@ -898,6 +943,7 @@ describe("Tracing Router", () => {
         genericInternalError(errorMessage),
         errorMapper,
         genericLogger,
+        mockAppCtx.correlationId,
       );
 
       const operationsApiClientError =

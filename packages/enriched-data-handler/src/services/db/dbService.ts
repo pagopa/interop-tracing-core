@@ -13,12 +13,12 @@ export function dbServiceBuilder(db: DB) {
       try {
         const queryText = `
           INSERT INTO ${config.dbSchemaName}.traces (
-            id, tracing_id, date, purpose_id, purpose_name, status, requests_count, eservice_id,
+            id, tracing_id, date, purpose_id, token_id, purpose_name, status, requests_count, eservice_id,
             consumer_id, consumer_origin, consumer_name, consumer_external_id,
             producer_id, producer_name, producer_origin, producer_external_id, submitter_id
            ) 
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
             ) 
             ON CONFLICT DO NOTHING
             RETURNING id;
@@ -36,6 +36,7 @@ export function dbServiceBuilder(db: DB) {
             tracingId,
             record.date,
             record.purposeId,
+            record.token_id,
             record.purposeName,
             record.status,
             record.requestsCount,

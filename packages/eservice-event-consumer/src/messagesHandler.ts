@@ -1,9 +1,12 @@
 import { AppContext, logger } from "pagopa-interop-tracing-commons";
-import { kafkaMissingMessageValue } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  generateId,
+  kafkaMissingMessageValue,
+} from "pagopa-interop-tracing-models";
 import { OperationsService } from "./services/operationsService.js";
 import { errorMapper } from "./utilities/errorMapper.js";
 import { config } from "./utilities/config.js";
-import { v4 as uuidv4 } from "uuid";
 import { EachMessagePayload } from "kafkajs";
 import { match } from "ts-pattern";
 import { decodeOutboundEServiceEvent } from "@pagopa/interop-outbound-models";
@@ -15,16 +18,16 @@ export function processMessage(
   return async ({ message, partition }: EachMessagePayload): Promise<void> => {
     const ctx: AppContext = {
       serviceName: config.applicationName,
-      correlationId: uuidv4(),
+      correlationId: generateId<CorrelationId>(),
     };
+    const messageValue = message.value?.toString();
 
     try {
-      if (!message.value) {
+      if (!messageValue) {
         throw kafkaMissingMessageValue(config.kafkaTopic);
       }
-      const eserviceEvent = decodeOutboundEServiceEvent(
-        message.value.toString(),
-      );
+
+      const eserviceEvent = decodeOutboundEServiceEvent(messageValue);
 
       const loggerInstance = logger({
         ...ctx,
@@ -47,7 +50,7 @@ export function processMessage(
         `Message was processed. Partition number: ${partition}. Offset: ${message.offset}`,
       );
     } catch (error: unknown) {
-      throw errorMapper(error, logger(ctx));
+      throw errorMapper(error, logger(ctx), messageValue);
     }
   };
 }

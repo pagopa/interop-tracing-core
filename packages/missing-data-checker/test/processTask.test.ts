@@ -10,12 +10,15 @@ import {
   OperationsService,
   operationsServiceBuilder,
 } from "../src/services/operationsService.js";
-import { v4 as uuidv4 } from "uuid";
 import {
   ErrorCodes,
   errorGetTenantsWithMissingTracings,
 } from "../src/model/domain/errors.js";
-import { InternalError } from "pagopa-interop-tracing-models";
+import {
+  generateId,
+  InternalError,
+  TenantId,
+} from "pagopa-interop-tracing-models";
 
 describe("Process task test", async () => {
   const apiClient = createApiClient(config.operationsBaseUrl);
@@ -29,7 +32,7 @@ describe("Process task test", async () => {
   it("invoke processTask should call getTenantsWithMissingTracings 1 time and saveMissingTracing 2 times", async () => {
     const mockResponseGetTenantsWithMissingTracings: ApiGetTenantsWithMissingTracingsResponse =
       {
-        results: [uuidv4(), uuidv4()],
+        results: [generateId<TenantId>(), generateId<TenantId>()],
         totalCount: 2,
       };
 

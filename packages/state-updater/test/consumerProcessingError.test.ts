@@ -11,9 +11,11 @@ import {
   decodeSQSPurposeErrorMessage,
 } from "../src/model/models.js";
 import {
+  CorrelationId,
   InternalError,
   UpdateTracingStateDto,
   tracingState,
+  unsafeBrandId,
 } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
 import { v4 as uuidv4 } from "uuid";
@@ -47,7 +49,7 @@ describe("Consumer processing error queue test", () => {
     const attributes = decodeSQSMessageCorrelationId(validMessage);
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
+      correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
       messageId: validMessage.MessageId,
     };
 
@@ -76,7 +78,7 @@ describe("Consumer processing error queue test", () => {
     );
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
-      correlationId: attributes.correlationId,
+      correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
       messageId: purposeErrorWithTracingUpdateState.MessageId,
     };
 

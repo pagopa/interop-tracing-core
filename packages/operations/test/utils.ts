@@ -1,5 +1,6 @@
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import {
+  Delegation,
   Eservice,
   Purpose,
   PurposeError,
@@ -39,6 +40,19 @@ export async function findTenantById(
     `;
 
   return await db.oneOrNone(selectTenantQuery, [id]);
+}
+
+export async function findDelegationById(
+  id: string,
+  db: DB,
+): Promise<Delegation | null> {
+  const selectDelegationQuery = `
+      SELECT * 
+      FROM ${config.dbSchemaName}.delegations
+      WHERE id = $1
+    `;
+
+  return await db.oneOrNone(selectDelegationQuery, [id]);
 }
 
 export async function addPurposeError(

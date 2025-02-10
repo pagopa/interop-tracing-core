@@ -21,6 +21,7 @@ export const TracingRecordSchema = z.object({
         message: `Invalid HTTP status code`,
       },
     ),
+  token_id: z.string().uuid(),
   requests_count: requestsCountPipe(z.number().nonnegative()),
   rowNumber: z.coerce.number(),
 });
@@ -30,5 +31,21 @@ export const EserviceSchema = z.object({
   producer_id: z.string(),
 });
 
+export const DelegationStateEnum = z.enum([
+  "WAITING_FOR_APPROVAL",
+  "ACTIVE",
+  "REJECTED",
+  "REVOKED",
+]);
+
+export const DelegationSchema = z.object({
+  id: z.string().uuid(),
+  delegate_id: z.string().uuid(),
+  eservice_id: z.string().uuid(),
+  state: DelegationStateEnum,
+});
+
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
 export type EserviceSchema = z.infer<typeof EserviceSchema>;
+export type DelegationSchema = z.infer<typeof DelegationSchema>;
+export type DelegationStateEnum = z.infer<typeof DelegationStateEnum>;

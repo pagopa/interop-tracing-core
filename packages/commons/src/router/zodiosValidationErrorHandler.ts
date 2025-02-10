@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { WithZodiosContext } from "@zodios/express";
-import { ExpressContext, logger } from "../index.js";
+import { ExpressContext, fromAppContext, logger } from "../index.js";
 
 const makeApiProblem = makeApiProblemBuilder({});
 interface ZodValidationError {
@@ -22,7 +22,7 @@ export function zodiosValidationErrorToApiProblem(
   next: NextFunction,
 ): void {
   if (!zodError) return next();
-
+  const ctx = fromAppContext(req.ctx);
   const detail = `Incorrect value for ${zodError.context}`;
   const errors = zodError.error.map((e) => fromZodIssue(e));
 
@@ -33,6 +33,7 @@ export function zodiosValidationErrorToApiProblem(
         badRequestError(detail, errors),
         () => constants.HTTP_STATUS_BAD_REQUEST,
         logger({ ...req.ctx }),
+        ctx.correlationId,
       ),
     )
     .send();

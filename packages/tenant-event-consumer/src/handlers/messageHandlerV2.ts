@@ -17,7 +17,11 @@ export async function handleMessageV2(
   await match(event)
     .with(
       {
-        type: P.union("TenantOnboarded", "TenantOnboardDetailsUpdated"),
+        type: P.union(
+          "TenantOnboarded",
+          "TenantOnboardDetailsUpdated",
+          "MaintenanceTenantUpdated",
+        ),
       },
       async (evt) => {
         const { tenant } = evt.data;

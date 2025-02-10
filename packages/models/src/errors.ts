@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { P, match } from "ts-pattern";
 import { ZodError, z } from "zod";
+import { CorrelationId } from "./brandedIds.js";
 
 export const ProblemError = z.object({
   code: z.string(),
@@ -60,10 +61,11 @@ export class InternalError<T> extends Error {
   }
 }
 
-export type MakeApiProblemFn<T extends string> = (
+type MakeApiProblemFn<T extends string> = (
   error: unknown,
   httpMapper: (apiError: ApiError<T | CommonErrorCodes>) => number,
   logger: { error: (message: string) => void; warn: (message: string) => void },
+  correlationId: CorrelationId,
 ) => Problem;
 
 export const makeProblemLogString = (
@@ -78,10 +80,10 @@ export function makeApiProblemBuilder<T extends string>(errors: {
   [K in T]: string;
 }): MakeApiProblemFn<T> {
   const allErrors = { ...errorCodes, ...errors };
-  return (error, httpMapper, logger) => {
+  return (error, httpMapper, logger, correlationId) => {
     const makeProblem = (
       httpStatus: number,
-      { title, detail, correlationId, errors }: ApiError<T | CommonErrorCodes>,
+      { title, detail, errors }: ApiError<T | CommonErrorCodes>,
     ): Problem => ({
       type: "about:blank",
       title,

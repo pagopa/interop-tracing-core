@@ -12,7 +12,11 @@ import {
   decodeSQSPurposeErrorMessage,
   decodeSQSUpdateTracingStateMessage,
 } from "../src/model/models.js";
-import { InternalError } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  InternalError,
+  unsafeBrandId,
+} from "pagopa-interop-tracing-models";
 import {
   ErrorCodes,
   errorProcessingSavePurposeError,
@@ -51,7 +55,7 @@ describe("Operations service test", () => {
       const attributes = decodeSQSMessageCorrelationId(validMessage);
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: attributes.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
         messageId: validMessage.MessageId,
       };
 
@@ -75,7 +79,7 @@ describe("Operations service test", () => {
       const attributes = decodeSQSMessageCorrelationId(validMessage);
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: attributes.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
         messageId: validMessage.MessageId,
       };
 
@@ -112,7 +116,7 @@ describe("Operations service test", () => {
       const attributes = decodeSQSMessageCorrelationId(validMessage);
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: attributes.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
         messageId: validMessage.MessageId,
       };
 
@@ -138,7 +142,7 @@ describe("Operations service test", () => {
       const attributes = decodeSQSMessageCorrelationId(validMessage);
       const ctx: WithSQSMessageId<AppContext> = {
         serviceName: config.applicationName,
-        correlationId: attributes.correlationId,
+        correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
         messageId: validMessage.MessageId,
       };
 

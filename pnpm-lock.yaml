@@ -90,8 +90,8 @@ importers:
         specifier: workspace:*
         version: link:../clients/operations
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -157,8 +157,8 @@ importers:
         specifier: workspace:*
         version: link:../clients/operations
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -212,8 +212,8 @@ importers:
         specifier: 1.18.1
         version: 1.18.1
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -273,8 +273,8 @@ importers:
         specifier: 11.7.8
         version: 11.7.8
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -328,81 +328,11 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
 
-  packages/enriched-data-handler:
-    dependencies:
-      '@aws-sdk/client-s3':
-        specifier: 3.600.0
-        version: 3.600.0
-      '@tsconfig/node-lts':
-        specifier: 20.1.0
-        version: 20.1.0
-      csv-parser:
-        specifier: 3.0.0
-        version: 3.0.0
-      dotenv-flow:
-        specifier: 3.3.0
-        version: 3.3.0
-      pagopa-interop-tracing-commons:
-        specifier: workspace:*
-        version: link:../commons
-      pagopa-interop-tracing-models:
-        specifier: workspace:*
-        version: link:../models
-      ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
-      uuid:
-        specifier: 10.0.0
-        version: 10.0.0
-      zod:
-        specifier: 3.23.8
-        version: 3.23.8
-    devDependencies:
-      '@types/dotenv-flow':
-        specifier: 3.3.3
-        version: 3.3.3
-      '@types/node':
-        specifier: 20.3.1
-        version: 20.3.1
-      '@types/uuid':
-        specifier: 9.0.8
-        version: 9.0.8
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.1.3))(eslint@8.49.0)(typescript@5.1.3)
-      '@typescript-eslint/parser':
-        specifier: 6.21.0
-        version: 6.21.0(eslint@8.49.0)(typescript@5.1.3)
-      eslint:
-        specifier: 8.49.0
-        version: 8.49.0
-      eslint-config-prettier:
-        specifier: 9.0.0
-        version: 9.0.0(eslint@8.49.0)
-      eslint-plugin-prettier:
-        specifier: 5.0.0
-        version: 5.0.0(eslint-config-prettier@9.0.0(eslint@8.49.0))(eslint@8.49.0)(prettier@3.0.3)
-      prettier:
-        specifier: 3.0.3
-        version: 3.0.3
-      testcontainers:
-        specifier: 10.2.2
-        version: 10.2.2
-      ts-node:
-        specifier: 10.9.2
-        version: 10.9.2(@types/node@20.3.1)(typescript@5.1.3)
-      typescript:
-        specifier: 5.1.3
-        version: 5.1.3
-      vitest:
-        specifier: 0.33.0
-        version: 0.33.0
-
-  packages/eservice-event-consumer:
+  packages/delegation-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.4.1
-        version: 1.4.1
+        specifier: 1.3.2
+        version: 1.3.2
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -477,6 +407,155 @@ importers:
         specifier: 0.33.0
         version: 0.33.0
 
+  packages/enriched-data-handler:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.600.0
+        version: 3.600.0
+      '@tsconfig/node-lts':
+        specifier: 20.1.0
+        version: 20.1.0
+      csv-parser:
+        specifier: 3.0.0
+        version: 3.0.0
+      dotenv-flow:
+        specifier: 3.3.0
+        version: 3.3.0
+      pagopa-interop-tracing-commons:
+        specifier: workspace:*
+        version: link:../commons
+      pagopa-interop-tracing-models:
+        specifier: workspace:*
+        version: link:../models
+      ts-pattern:
+        specifier: 5.4.0
+        version: 5.4.0
+      uuid:
+        specifier: 10.0.0
+        version: 10.0.0
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/dotenv-flow':
+        specifier: 3.3.3
+        version: 3.3.3
+      '@types/node':
+        specifier: 20.3.1
+        version: 20.3.1
+      '@types/uuid':
+        specifier: 9.0.8
+        version: 9.0.8
+      '@typescript-eslint/eslint-plugin':
+        specifier: 6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.5.2))(eslint@8.49.0)(typescript@5.5.2)
+      '@typescript-eslint/parser':
+        specifier: 6.21.0
+        version: 6.21.0(eslint@8.49.0)(typescript@5.5.2)
+      eslint:
+        specifier: 8.49.0
+        version: 8.49.0
+      eslint-config-prettier:
+        specifier: 9.0.0
+        version: 9.0.0(eslint@8.49.0)
+      eslint-plugin-prettier:
+        specifier: 5.0.0
+        version: 5.0.0(eslint-config-prettier@9.0.0(eslint@8.49.0))(eslint@8.49.0)(prettier@3.0.3)
+      prettier:
+        specifier: 3.0.3
+        version: 3.0.3
+      testcontainers:
+        specifier: 10.2.2
+        version: 10.2.2
+      ts-node:
+        specifier: 10.9.2
+        version: 10.9.2(@types/node@20.3.1)(typescript@5.5.2)
+      typescript:
+        specifier: 5.5.2
+        version: 5.5.2
+      vitest:
+        specifier: 0.33.0
+        version: 0.33.0
+
+  packages/eservice-event-consumer:
+    dependencies:
+      '@pagopa/interop-outbound-models':
+        specifier: 1.4.1
+        version: 1.4.1
+      '@tsconfig/node-lts':
+        specifier: 20.1.0
+        version: 20.1.0
+      '@zodios/core':
+        specifier: 10.9.6
+        version: 10.9.6(axios@1.6.7)(zod@3.23.8)
+      axios:
+        specifier: 1.6.7
+        version: 1.6.7
+      dotenv-flow:
+        specifier: 3.3.0
+        version: 3.3.0
+      kafka-connector:
+        specifier: workspace:*
+        version: link:../kafka-connector
+      kafkajs:
+        specifier: 2.2.4
+        version: 2.2.4
+      pagopa-interop-tracing-commons:
+        specifier: workspace:*
+        version: link:../commons
+      pagopa-interop-tracing-models:
+        specifier: workspace:*
+        version: link:../models
+      pagopa-interop-tracing-operations-client:
+        specifier: workspace:*
+        version: link:../clients/operations
+      ts-pattern:
+        specifier: 5.4.0
+        version: 5.4.0
+      uuid:
+        specifier: 10.0.0
+        version: 10.0.0
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/dotenv-flow':
+        specifier: 3.3.3
+        version: 3.3.3
+      '@types/node':
+        specifier: 20.3.1
+        version: 20.3.1
+      '@types/uuid':
+        specifier: 9.0.8
+        version: 9.0.8
+      '@typescript-eslint/eslint-plugin':
+        specifier: 6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.5.2))(eslint@8.49.0)(typescript@5.5.2)
+      '@typescript-eslint/parser':
+        specifier: 6.21.0
+        version: 6.21.0(eslint@8.49.0)(typescript@5.5.2)
+      eslint:
+        specifier: 8.49.0
+        version: 8.49.0
+      eslint-config-prettier:
+        specifier: 9.0.0
+        version: 9.0.0(eslint@8.49.0)
+      eslint-plugin-prettier:
+        specifier: 5.0.0
+        version: 5.0.0(eslint-config-prettier@9.0.0(eslint@8.49.0))(eslint@8.49.0)(prettier@3.0.3)
+      prettier:
+        specifier: 3.0.3
+        version: 3.0.3
+      ts-node:
+        specifier: 10.9.2
+        version: 10.9.2(@types/node@20.3.1)(typescript@5.5.2)
+      typescript:
+        specifier: 5.5.2
+        version: 5.5.2
+      vitest:
+        specifier: 0.33.0
+        version: 0.33.0
+
   packages/kafka-connector:
     dependencies:
       aws-msk-iam-sasl-signer-js:
@@ -496,8 +575,8 @@ importers:
         version: 5.1.2
     devDependencies:
       typescript:
-        specifier: 5.5.3
-        version: 5.5.3
+        specifier: 5.5.2
+        version: 5.5.2
 
   packages/kafka-producer:
     dependencies:
@@ -517,8 +596,8 @@ importers:
         specifier: workspace:*
         version: link:../commons
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -603,8 +682,8 @@ importers:
         specifier: workspace:*
         version: link:../clients/operations
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -652,8 +731,8 @@ importers:
         specifier: 9.0.8
         version: 9.0.8
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -722,8 +801,8 @@ importers:
         specifier: 11.7.8
         version: 11.7.8
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -795,8 +874,8 @@ importers:
         specifier: workspace:*
         version: link:../models
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -953,8 +1032,8 @@ importers:
         specifier: workspace:*
         version: link:../clients/operations
       ts-pattern:
-        specifier: 5.1.2
-        version: 5.1.2
+        specifier: 5.4.0
+        version: 5.4.0
       uuid:
         specifier: 10.0.0
         version: 10.0.0
@@ -2799,6 +2878,7 @@ packages:
   eslint@8.49.0:
     resolution: {integrity: sha512-jw03ENfm6VJI0jA9U+8H5zfl5b+FvuU3YYvZRdZHOlU2ggJkxrlkJH4HcDrZpj6YwD8kuYqvQM8LyesoazrSOQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -4001,18 +4081,8 @@ packages:
     engines: {node: '>=4.2.0'}
     hasBin: true
 
-  typescript@5.1.3:
-    resolution: {integrity: sha512-XH627E9vkeqhlZFQuL+UsyAXEnibT0kWR2FWONlr4sTjvxyJYnyefgrkyECLzM5NenmKzRAy2rR/OlYLA1HkZw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.5.2:
     resolution: {integrity: sha512-NcRtPEOsPFFWjobJEtfihkLCZCXZt/os3zf8nTxjVH3RvTSxjrCamJpbExGvYOF+tFHc3pA65qpdwPbzjohhew==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
-  typescript@5.5.3:
-    resolution: {integrity: sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -6506,26 +6576,6 @@ snapshots:
 
   '@types/uuid@9.0.8': {}
 
-  '@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.1.3))(eslint@8.49.0)(typescript@5.1.3)':
-    dependencies:
-      '@eslint-community/regexpp': 4.11.1
-      '@typescript-eslint/parser': 6.21.0(eslint@8.49.0)(typescript@5.1.3)
-      '@typescript-eslint/scope-manager': 6.21.0
-      '@typescript-eslint/type-utils': 6.21.0(eslint@8.49.0)(typescript@5.1.3)
-      '@typescript-eslint/utils': 6.21.0(eslint@8.49.0)(typescript@5.1.3)
-      '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.7
-      eslint: 8.49.0
-      graphemer: 1.4.0
-      ignore: 5.3.2
-      natural-compare: 1.4.0
-      semver: 7.6.3
-      ts-api-utils: 1.3.0(typescript@5.1.3)
-    optionalDependencies:
-      typescript: 5.1.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.5.2))(eslint@8.49.0)(typescript@5.5.2)':
     dependencies:
       '@eslint-community/regexpp': 4.11.1
@@ -6543,19 +6593,6 @@ snapshots:
       ts-api-utils: 1.3.0(typescript@5.5.2)
     optionalDependencies:
       typescript: 5.5.2
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/parser@6.21.0(eslint@8.49.0)(typescript@5.1.3)':
-    dependencies:
-      '@typescript-eslint/scope-manager': 6.21.0
-      '@typescript-eslint/types': 6.21.0
-      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.1.3)
-      '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.7
-      eslint: 8.49.0
-    optionalDependencies:
-      typescript: 5.1.3
     transitivePeerDependencies:
       - supports-color
 
@@ -6577,18 +6614,6 @@ snapshots:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/visitor-keys': 6.21.0
 
-  '@typescript-eslint/type-utils@6.21.0(eslint@8.49.0)(typescript@5.1.3)':
-    dependencies:
-      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.1.3)
-      '@typescript-eslint/utils': 6.21.0(eslint@8.49.0)(typescript@5.1.3)
-      debug: 4.3.7
-      eslint: 8.49.0
-      ts-api-utils: 1.3.0(typescript@5.1.3)
-    optionalDependencies:
-      typescript: 5.1.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/type-utils@6.21.0(eslint@8.49.0)(typescript@5.5.2)':
     dependencies:
       '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.5.2)
@@ -6602,21 +6627,6 @@ snapshots:
       - supports-color
 
   '@typescript-eslint/types@6.21.0': {}
-
-  '@typescript-eslint/typescript-estree@6.21.0(typescript@5.1.3)':
-    dependencies:
-      '@typescript-eslint/types': 6.21.0
-      '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.7
-      globby: 11.1.0
-      is-glob: 4.0.3
-      minimatch: 9.0.3
-      semver: 7.6.3
-      ts-api-utils: 1.3.0(typescript@5.1.3)
-    optionalDependencies:
-      typescript: 5.1.3
-    transitivePeerDependencies:
-      - supports-color
 
   '@typescript-eslint/typescript-estree@6.21.0(typescript@5.5.2)':
     dependencies:
@@ -6632,20 +6642,6 @@ snapshots:
       typescript: 5.5.2
     transitivePeerDependencies:
       - supports-color
-
-  '@typescript-eslint/utils@6.21.0(eslint@8.49.0)(typescript@5.1.3)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.0(eslint@8.49.0)
-      '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
-      '@typescript-eslint/scope-manager': 6.21.0
-      '@typescript-eslint/types': 6.21.0
-      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.1.3)
-      eslint: 8.49.0
-      semver: 7.6.3
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   '@typescript-eslint/utils@6.21.0(eslint@8.49.0)(typescript@5.5.2)':
     dependencies:
@@ -7897,7 +7893,7 @@ snapshots:
       pastable: 2.2.1
       prettier: 2.8.8
       tanu: 0.1.13
-      ts-pattern: 5.2.0
+      ts-pattern: 5.4.0
       whence: 2.0.1
       zod: 3.23.8
     transitivePeerDependencies:
@@ -8441,24 +8437,6 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  ts-node@10.9.2(@types/node@20.3.1)(typescript@5.1.3):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.11
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 20.3.1
-      acorn: 8.12.1
-      acorn-walk: 8.3.4
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.1.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-
   ts-node@10.9.2(@types/node@20.3.1)(typescript@5.5.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -8545,11 +8523,7 @@ snapshots:
 
   typescript@4.9.5: {}
 
-  typescript@5.1.3: {}
-
   typescript@5.5.2: {}
-
-  typescript@5.5.3: {}
 
   ufo@1.5.4: {}
 

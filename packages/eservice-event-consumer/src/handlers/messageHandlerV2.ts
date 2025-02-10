@@ -21,6 +21,7 @@ export async function handleMessageV2(
           "EServiceAdded",
           "EServiceCloned",
           "EServiceDescriptionUpdated",
+          "EServiceNameUpdated",
         ),
       },
       async (evt) => {

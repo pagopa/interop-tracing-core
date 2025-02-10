@@ -17,6 +17,7 @@ export const EnrichedPurpose = z.object({
   purposeName: z.string(),
   date: z.string(),
   purposeId: z.string().uuid(),
+  token_id: z.string().uuid(),
   status: z.coerce.number(),
   requestsCount: z.coerce.number(),
   rowNumber: z.number(),

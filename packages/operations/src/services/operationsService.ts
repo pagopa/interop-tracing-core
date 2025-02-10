@@ -35,6 +35,7 @@ import {
   ApiSaveTenantResponse,
   ApiDeleteTenantParams,
   ApiDeleteTenantResponse,
+  ApiSaveDelegationPayload,
 } from "pagopa-interop-tracing-operations-client";
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
@@ -276,6 +277,11 @@ export function operationsServiceBuilder(dbService: DBService) {
     ): Promise<ApiGetTracingErrorsResponse> {
       logger.info(`Get purposes errors for tracingId: ${params.tracingId}`);
 
+      const tracing = await dbService.findTracingById(params.tracingId);
+      if (!tracing) {
+        throw tracingNotFound(params.tracingId);
+      }
+
       const data = await dbService.getTracingErrors({
         ...filters,
         tracing_id: params.tracingId,
@@ -361,6 +367,22 @@ export function operationsServiceBuilder(dbService: DBService) {
       const purposeId = params.purposeId;
       logger.info(`Deleting purpose with id ${purposeId}`);
       return await dbService.deletePurpose(purposeId);
+    },
+
+    async saveDelegation(
+      payload: ApiSaveDelegationPayload,
+      logger: Logger,
+    ): Promise<void> {
+      logger.info(
+        `Upsert delegation with delegationId: ${payload.delegationId}`,
+      );
+
+      await dbService.saveDelegation({
+        id: payload.id,
+        delegate_id: payload.delegateId,
+        eservice_id: payload.eserviceId,
+        state: payload.state,
+      });
     },
   };
 }

@@ -13,9 +13,12 @@ import {
   getMockPurpose,
   getMockPurposeVersion,
 } from "./utils.js";
-import { v4 as uuidv4 } from "uuid";
 import { AppContext, genericLogger } from "pagopa-interop-tracing-commons";
-import { kafkaMessageMissingData } from "pagopa-interop-tracing-models";
+import {
+  CorrelationId,
+  generateId,
+  kafkaMessageMissingData,
+} from "pagopa-interop-tracing-models";
 import { handleMessageV2 } from "../src/handlers/messageHandlerV2.js";
 import { PurposeV2, PurposeVersionV2 } from "@pagopa/interop-outbound-models";
 import { errorInvalidVersion } from "../src/models/domain/errors.js";
@@ -28,7 +31,7 @@ describe("Operations service test", () => {
 
   const ctx: AppContext = {
     serviceName: config.applicationName,
-    correlationId: uuidv4(),
+    correlationId: generateId<CorrelationId>(),
   };
 
   describe("PurposeActivated Event", () => {
