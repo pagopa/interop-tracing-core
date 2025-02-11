@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pagopa/interop-outbound-models": "1.3.2",
+    "@pagopa/interop-outbound-models": "1.4.1",
     "@zodios/core": "10.9.6",
     "dotenv-flow": "3.3.0",
     "kafka-connector": "workspace:*",
