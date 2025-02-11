@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as express from "express";
 import { ServiceContext } from "../context/context.js";
 import { LoggerMetadata, logger } from "./index.js";

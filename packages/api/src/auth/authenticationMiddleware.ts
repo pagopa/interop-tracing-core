@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { ZodiosRouterContextRequestHandler } from "@zodios/express";
 import {
   makeApiProblemBuilder,

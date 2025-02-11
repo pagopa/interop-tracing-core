@@ -9,7 +9,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint .  ",
     "build": "tsc"
   },
   "keywords": [],
@@ -23,6 +23,7 @@
     "ts-pattern": "5.1.2"
   },
   "devDependencies": {
+    "globals": "15.14.0",
     "typescript": "5.5.2"
   }
 }

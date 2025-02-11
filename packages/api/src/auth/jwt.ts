@@ -53,7 +53,7 @@ const getKey = async (
     try {
       const signingKey = await client.getSigningKey(kid);
       return signingKey.getPublicKey();
-    } catch (error) {
+    } catch (_error) {
       // Continue to the next client
       logger.debug(`Skip Jwks client`);
     }

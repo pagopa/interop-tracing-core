@@ -60,7 +60,7 @@ const tenantAuthorizerMiddleware =
       return (
         res
           .status(problem.status)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .json(problem as any)
           .end()
       );
