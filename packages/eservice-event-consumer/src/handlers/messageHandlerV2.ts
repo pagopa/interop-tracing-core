@@ -83,7 +83,6 @@ export async function handleMessageV2(
           "EServiceIsConsumerDelegableEnabled",
           "EServiceIsConsumerDelegableDisabled",
           "EServiceIsClientAccessDelegableEnabled",
-          "EServiceNameUpdated",
           "EServiceIsClientAccessDelegableDisabled",
         ),
       },

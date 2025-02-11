@@ -128,7 +128,6 @@ export const getDescriptorV2 = (
   version: 1n,
   voucherLifespan: 100,
   ...partialDescriptorV2,
-  rejectionReasons: [],
 });
 
 export const createV2Event = (
