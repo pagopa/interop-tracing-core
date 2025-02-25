@@ -1,10 +1,11 @@
 import * as express from "express";
 import { ServiceContext } from "../context/context.js";
-import { LoggerMetadata, logger } from "./index.js";
+import { LoggerMetadata, genericLogger, logger } from "./index.js";
 import { AuthData } from "../auth/index.js";
 
 export function loggerMiddleware(serviceName: string): express.RequestHandler {
   return (req, res, next): void => {
+    genericLogger.info(`Incoming Request: ${req.method} ${req.url}`);
     const context = (
       req as express.Request & {
         ctx?: ServiceContext<{
