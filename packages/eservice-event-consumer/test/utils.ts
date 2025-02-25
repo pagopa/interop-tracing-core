@@ -113,7 +113,7 @@ export const createEserviceAddedEventV2 = (
 });
 
 export const getDescriptorV2 = (
-  partialDescriptorV2?: Partial<EServiceDescriptorV2>,
+  partialDescriptorV2: Partial<EServiceDescriptorV2>,
 ): EServiceDescriptorV2 => ({
   id: generateId(),
   agreementApprovalPolicy: AgreementApprovalPolicyV2.AUTOMATIC,
