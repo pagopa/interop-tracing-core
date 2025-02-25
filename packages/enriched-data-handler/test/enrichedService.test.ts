@@ -204,16 +204,14 @@ describe("Enriched Service", () => {
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
-      mockTracingFromCsv.tracingId,
-        mockEnrichedPurposes,
-        expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-          {
-            tracingId: mockTracingFromCsv.tracingId,
-            version: mockTracingFromCsv.version,
-            state: tracingState.completed,
-          },
-          mockAppCtx,
-        );
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
   });
 });

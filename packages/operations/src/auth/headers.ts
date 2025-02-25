@@ -28,7 +28,7 @@ export const getRequesterAuthData = (
       .otherwise(() => {
         return undefined;
       });
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 };

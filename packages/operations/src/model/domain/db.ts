@@ -35,7 +35,7 @@ export const TracingSchema = z.object({
   errors: z.boolean(),
 });
 
-const UpdateTracingStateSchema = z.object({
+export const UpdateTracingStateSchema = z.object({
   tracing_id: z.string().uuid(),
   state: TracingState,
 });

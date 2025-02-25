@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import winston from "winston";
 import { LoggerConfig } from "../config/loggerConfig.js";
 

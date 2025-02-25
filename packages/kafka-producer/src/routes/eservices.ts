@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import express, { Router } from "express";
 import {
   EserviceEventTypeV1,

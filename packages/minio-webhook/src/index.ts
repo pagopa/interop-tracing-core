@@ -36,5 +36,6 @@ app.post("/webhook/:queue", async (req: Request, res: Response) => {
 });
 
 app.listen(config.port, () => {
+  // eslint-disable-next-line no-console
   console.log(`Minio Webhook server running on port ${config.port}`);
 });

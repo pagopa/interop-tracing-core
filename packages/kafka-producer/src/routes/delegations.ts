@@ -19,6 +19,8 @@ delegationRouter.get("/V2/:typeId", async (req, res, next) => {
 
     return;
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const delegationEvent = getDelegationEventV2ByType(typeEvent.data!);
   const message = produceDelegationEvent(delegationEvent);
 
