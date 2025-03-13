@@ -25,7 +25,6 @@ export const ProducerDelegationSubmitted: DelegationEventV2 = {
       delegateId: delegateeIdV2,
       eserviceId: eserviceIdV2,
       createdAt: "1" as any,
-      submittedAt: "1" as any,
       state: DelegationStateV2.ACTIVE,
       kind: DelegationKindV2.DELEGATED_CONSUMER,
     },

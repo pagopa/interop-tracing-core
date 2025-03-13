@@ -55,7 +55,6 @@ describe("Message handler V2 test", () => {
         eserviceId: generateId<EserviceId>(),
         kind: DelegationKindV2.DELEGATED_CONSUMER,
         createdAt: BigInt(Date.now()),
-        submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.ACTIVE,
       };
 
@@ -104,7 +103,6 @@ describe("Message handler V2 test", () => {
         delegateId: generateId<TenantId>(),
         eserviceId: generateId<EserviceId>(),
         createdAt: BigInt(Date.now()),
-        submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.WAITING_FOR_APPROVAL,
         kind: DelegationKindV2.DELEGATED_CONSUMER,
       };
@@ -186,7 +184,6 @@ describe("Message handler V2 test", () => {
         delegateId: generateId<TenantId>(),
         eserviceId: generateId<EserviceId>(),
         createdAt: BigInt(Date.now()),
-        submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.REVOKED,
         kind: DelegationKindV2.DELEGATED_CONSUMER,
       };
@@ -214,7 +211,6 @@ describe("Message handler V2 test", () => {
         delegateId: generateId<TenantId>(),
         eserviceId: generateId<EserviceId>(),
         createdAt: BigInt(Date.now()),
-        submittedAt: BigInt(Date.now()),
         state: DelegationStateV2.REVOKED,
         kind: DelegationKindV2.DELEGATED_PRODUCER,
       };
