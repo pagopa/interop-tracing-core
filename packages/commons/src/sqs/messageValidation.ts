@@ -2,9 +2,18 @@ import { sqsMessageNotValid } from "pagopa-interop-tracing-models";
 import { Message } from "./sqs.js";
 import { genericLogger } from "../index.js";
 
-type WhitelistedEvent = "ObjectCreated";
+type WhitelistedEvent =
+  | "ObjectCreated"
+  | "ObjectCreated:Put"
+  | "ObjectCreated:Post"
+  | "ObjectCreated:Copy";
 
-const validEvents: WhitelistedEvent[] = ["ObjectCreated"];
+const validEvents: WhitelistedEvent[] = [
+  "ObjectCreated",
+  "ObjectCreated:Put",
+  "ObjectCreated:Post",
+  "ObjectCreated:Copy",
+];
 
 type EventValidation = "ValidEvent" | "InvalidEvent";
 
@@ -25,7 +34,7 @@ export const validateSqsMessage = (message: Message): EventValidation => {
       const record = body.Records[0];
       const eventName = record?.eventName;
 
-      if (eventName && validEvents.some((ev) => eventName.includes(ev))) {
+      if (eventName && validEvents.includes(eventName)) {
         return "ValidEvent";
       } else {
         genericLogger.warn(`Skipping event - ${eventName}`);
