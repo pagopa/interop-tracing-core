@@ -6,7 +6,10 @@ import { genericLogger } from "pagopa-interop-tracing-commons";
 const app = express();
 app.use(express.json());
 
-const normalizeEventData = (eventData: any): any => {
+const normalizeEventData = (eventData: {
+  EventName: string;
+  Records: { eventName: string }[];
+}) => {
   if (!eventData) return eventData;
 
   if (eventData.EventName?.startsWith("s3:")) {
