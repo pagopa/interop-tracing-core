@@ -25,7 +25,7 @@ export const validateSqsMessage = (message: Message): EventValidation => {
       const record = body.Records[0];
       const eventName = record?.eventName;
 
-      if (eventName && validEvents.includes(eventName)) {
+      if (eventName && validEvents.some((ev) => eventName.includes(ev))) {
         return "ValidEvent";
       } else {
         genericLogger.warn(`Skipping event - ${eventName}`);
