@@ -17,7 +17,7 @@ export const validateSqsMessage = (message: Message): EventValidation => {
     const body = JSON.parse(message.Body);
 
     if (body.Event === "s3:TestEvent") {
-      genericLogger.info(`s3:TestEvent detected`);
+      genericLogger.warn(`Skipping event - ${body.Event}`);
       return "InvalidEvent";
     }
 

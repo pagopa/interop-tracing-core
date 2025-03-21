@@ -65,11 +65,9 @@ const processQueue = async (
 
           await match(result)
             .with("InvalidEvent", async () => {
-              genericLogger.info(`Deleting message - invalid event detected.`);
               await deleteMessage(sqsClient, config.queueUrl, receiptHandle);
             })
             .with("ValidEvent", async () => {
-              genericLogger.info("Processing valid event.");
               await consumerHandler(message);
               await deleteMessage(sqsClient, config.queueUrl, receiptHandle);
             })
