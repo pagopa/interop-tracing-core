@@ -6,6 +6,30 @@ import { genericLogger } from "pagopa-interop-tracing-commons";
 const app = express();
 app.use(express.json());
 
+const normalizeEventData = (eventData: {
+  EventName: string;
+  Records: { eventName: string }[];
+}) => {
+  if (!eventData) return eventData;
+
+  if (eventData.EventName?.startsWith("s3:")) {
+    eventData.EventName = eventData.EventName.slice(3);
+  }
+
+  if (Array.isArray(eventData.Records)) {
+    eventData.Records = eventData.Records.map(
+      (record: { eventName: string }) => ({
+        ...record,
+        eventName: record.eventName?.startsWith("s3:")
+          ? record.eventName.slice(3)
+          : record.eventName,
+      }),
+    );
+  }
+
+  return eventData;
+};
+
 app.post("/webhook/:queue", async (req: Request, res: Response) => {
   try {
     genericLogger.info(
@@ -15,9 +39,10 @@ app.post("/webhook/:queue", async (req: Request, res: Response) => {
     );
 
     const queueUrl = `${config.elasticMQ}/${req.params.queue}`;
+    const normalizedEvent = normalizeEventData(req.body);
     const body = new URLSearchParams({
       Action: "SendMessage",
-      MessageBody: JSON.stringify(req.body),
+      MessageBody: JSON.stringify(normalizedEvent),
     });
     const response = await axios.post(queueUrl, body.toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

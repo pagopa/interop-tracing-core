@@ -124,6 +124,7 @@ const errorCodes = {
   kafkaMessageProcessError: "KAFKA_MESSAGE_PROCESS_ERROR",
   kafkaMessageValueError: "KAFKA_MESSAGE_VALUE_ERROR",
   kafkaMessageMissingData: "KAFKA_MESSAGE_MISSING_DATA",
+  sqsMessageNotValid: "SQS_MESSAGE_NOT_VALID",
 } as const;
 
 export type CommonErrorCodes = keyof typeof errorCodes;
@@ -151,6 +152,15 @@ export function genericInternalError(
 ): InternalError<CommonErrorCodes> {
   return new InternalError({
     code: "genericError",
+    detail: details,
+  });
+}
+
+export function sqsMessageNotValid(
+  details: string,
+): InternalError<CommonErrorCodes> {
+  return new InternalError({
+    code: "sqsMessageNotValid",
     detail: details,
   });
 }
