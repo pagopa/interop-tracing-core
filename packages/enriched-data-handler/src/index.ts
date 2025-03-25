@@ -15,6 +15,7 @@ import {
   SQS,
   fileManagerBuilder,
   initDB,
+  logger,
 } from "pagopa-interop-tracing-commons";
 
 const dbInstance = initDB({
@@ -58,8 +59,11 @@ await SQS.runConsumer(
   sqsClient,
   {
     queueUrl: config.sqsEnrichedUploadEndpoint,
-    consumerPollingTimeout: config.consumerPollingTimeout,
+    maxNumberOfMessages: config.maxNumberOfMessages,
+    waitTimeSeconds: config.waitTimeSeconds,
+    visibilityTimeout: config.visibilityTimeout,
     serviceName: config.applicationName,
   },
   processEnrichedStateMessage(enrichedService),
+  logger({ serviceName: config.applicationName }),
 );

@@ -3,6 +3,7 @@ import {
   SQS,
   fileManagerBuilder,
   initDB,
+  logger,
 } from "pagopa-interop-tracing-commons";
 import { processMessage } from "./messageHandler.js";
 import { dbServiceBuilder } from "./services/enricherService.js";
@@ -57,8 +58,11 @@ await SQS.runConsumer(
   sqsClient,
   {
     queueUrl: config.sqsTracingUploadEndpoint,
-    consumerPollingTimeout: config.consumerPollingTimeout,
+    maxNumberOfMessages: config.maxNumberOfMessages,
+    waitTimeSeconds: config.waitTimeSeconds,
+    visibilityTimeout: config.visibilityTimeout,
     serviceName: config.applicationName,
   },
   processMessage(processingService),
+  logger({ serviceName: config.applicationName }),
 );
