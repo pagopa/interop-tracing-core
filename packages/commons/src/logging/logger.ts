@@ -36,10 +36,10 @@ const logFormat = (
 ) => {
   const serviceLogPart = serviceName ? `[${serviceName}]` : undefined;
   const tenantLogPart = authData?.tenantId
-    ? `[TID=${authData?.tenantId}]`
+    ? `[TID=${authData.tenantId}]`
     : undefined;
   const organizationLogPart = authData?.organizationId
-    ? `[OID=${authData?.organizationId}]`
+    ? `[OID=${authData.organizationId}]`
     : undefined;
   const messageLogPart = messageId ? `[MID=${messageId}]` : undefined;
   const correlationLogPart = correlationId
