@@ -7,7 +7,7 @@ import {
   SQSClientConfig,
   SendMessageCommandInput,
 } from "@aws-sdk/client-sqs";
-import { genericLogger, logger } from "../logging/index.js";
+import { genericLogger, Logger } from "../logging/index.js";
 import { ConsumerConfig } from "../config/consumerConfig.js";
 import { InternalError } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
@@ -36,11 +36,13 @@ const processQueue = async (
   sqsClient: SQSClient,
   config: { queueUrl: string; runUntilQueueIsEmpty?: boolean } & ConsumerConfig,
   consumerHandler: (messagePayload: Message) => Promise<void>,
+  loggerInstance: Logger,
 ): Promise<void> => {
   const command = new ReceiveMessageCommand({
     QueueUrl: config.queueUrl,
-    WaitTimeSeconds: config.consumerPollingTimeout,
-    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: config.waitTimeSeconds,
+    MaxNumberOfMessages: config.maxNumberOfMessages,
+    VisibilityTimeout: config.visibilityTimeout,
     MessageAttributeNames: ["All"],
   });
 
@@ -73,7 +75,7 @@ const processQueue = async (
             })
             .exhaustive();
         } catch (e) {
-          genericLogger.error(
+          loggerInstance.error(
             `Unexpected error consuming message: ${JSON.stringify(
               message,
             )}. QueueUrl: ${config.queueUrl}. ${e}`,
@@ -93,15 +95,14 @@ export const runConsumer = async (
     runUntilQueueIsEmpty?: boolean;
   } & ConsumerConfig,
   consumerHandler: (messagePayload: Message) => Promise<void>,
+  loggerInstance: Logger,
 ): Promise<void> => {
-  logger({ serviceName: config.serviceName }).info(
-    `Consumer processing on Queue: ${config.queueUrl}`,
-  );
+  loggerInstance.info(`Consumer processing on Queue: ${config.queueUrl}`);
 
   try {
-    await processQueue(sqsClient, config, consumerHandler);
+    await processQueue(sqsClient, config, consumerHandler, loggerInstance);
   } catch (e) {
-    logger({ serviceName: config.serviceName }).error(
+    loggerInstance.error(
       `Generic error occurs processing Queue: ${
         config.queueUrl
       }. Details: ${serializeError(e)}`,
@@ -109,7 +110,7 @@ export const runConsumer = async (
     await processExit();
   }
 
-  logger({ serviceName: config.serviceName }).info(
+  loggerInstance.info(
     `Queue processing Completed for Queue: ${config.queueUrl}`,
   );
 };

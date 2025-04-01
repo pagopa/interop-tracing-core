@@ -1,4 +1,4 @@
-import { SQS } from "pagopa-interop-tracing-commons";
+import { logger, SQS } from "pagopa-interop-tracing-commons";
 import { config } from "./utilities/config.js";
 import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import {
@@ -25,18 +25,24 @@ await Promise.all([
     sqsClient,
     {
       queueUrl: config.sqsEndpointProcessingErrorQueue,
-      consumerPollingTimeout: config.consumerPollingTimeout,
+      maxNumberOfMessages: config.maxNumberOfMessages,
+      waitTimeSeconds: config.waitTimeSeconds,
+      visibilityTimeout: config.visibilityTimeout,
       serviceName: config.applicationName,
     },
     processPurposeErrorMessage(OperationsService),
+    logger({ serviceName: config.applicationName }),
   ),
   SQS.runConsumer(
     sqsClient,
     {
       queueUrl: config.sqsEndpointEnricherStateQueue,
-      consumerPollingTimeout: config.consumerPollingTimeout,
+      maxNumberOfMessages: config.maxNumberOfMessages,
+      waitTimeSeconds: config.waitTimeSeconds,
+      visibilityTimeout: config.visibilityTimeout,
       serviceName: config.applicationName,
     },
     processTracingStateMessage(OperationsService),
+    logger({ serviceName: config.applicationName }),
   ),
 ]);
