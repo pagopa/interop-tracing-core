@@ -38,9 +38,10 @@ export const validateSqsMessage = (message: Message): EventValidation => {
         return "ValidEvent";
       } else {
         genericLogger.warn(`Skipping event - ${eventName}`);
+        return "InvalidEvent";
       }
     }
-    return "InvalidEvent";
+    return "ValidEvent";
   } catch (error) {
     throw sqsMessageNotValid(`${error}`);
   }
