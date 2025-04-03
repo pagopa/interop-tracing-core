@@ -57,10 +57,9 @@ export const processingServiceBuilder = (
         const csvData: TracingRecordSchema[] =
           await parseCSV(enrichedDataObject);
 
-        const tracingRecords = csvData.map((csv, index) => ({
-          ...csv,
-          rowNumber: index + 1,
-        }));
+        const tracingRecords = csvData.map((csv, index) => {
+          return { ...csv, rowNumber: index + 1 };
+        });
 
         if (!tracingRecords || tracingRecords.length === 0) {
           const noRecordsError = getPurposeError(
