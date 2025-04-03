@@ -64,7 +64,7 @@ export const processingServiceBuilder = (
         if (!tracingRecords || tracingRecords.length === 0) {
           const noRecordsError = getPurposeError(
             tracing,
-            "INVALID_CSV",
+            PurposeErrorCodes.INVALID_CSV,
             "No records found on CSV",
           );
           await sendPurposeErrors(
@@ -84,7 +84,7 @@ export const processingServiceBuilder = (
 
           const headerError = getPurposeError(
             tracing,
-            "INVALID_CSV_HEADERS",
+            PurposeErrorCodes.INVALID_CSV_HEADERS,
             errorMessage,
           );
           await sendPurposeErrors([headerError], tracing, producerService, ctx);
@@ -98,7 +98,7 @@ export const processingServiceBuilder = (
         if (hasSemiColonSeparator) {
           const delimiterError = getPurposeError(
             tracing,
-            "INVALID_DELIMITER",
+            PurposeErrorCodes.INVALID_DELIMITER,
             `Invalid delimiter found on csv`,
           );
           await sendPurposeErrors(
