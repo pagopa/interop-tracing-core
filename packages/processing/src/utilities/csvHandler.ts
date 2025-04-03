@@ -2,6 +2,7 @@ import csv from "csv-parser";
 import { Readable } from "stream";
 import { TracingRecordSchema } from "../models/db.js";
 import { EnrichedPurpose } from "../models/csv.js";
+import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
 
 export async function parseCSV(
   stream: Readable,
@@ -69,3 +70,27 @@ export function generateCSV(
 
   return `${header}\n${rows}`;
 }
+
+export const expectedHeaders = [
+  "date",
+  "purpose_id",
+  "requests_count",
+  "rowNumber",
+  "status",
+  "token_id",
+];
+
+export const getPurposeError = (
+  { tracingId, version }: TracingFromS3KeyPathDto,
+  errorCode: string,
+  message: string,
+) => {
+  return {
+    tracingId,
+    version,
+    errorCode,
+    purposeId: "",
+    message,
+    rowNumber: 0,
+  };
+};
