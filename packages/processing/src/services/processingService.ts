@@ -57,7 +57,15 @@ export const processingServiceBuilder = (
         });
 
         if (!tracingRecords || tracingRecords.length === 0) {
-          throw new Error(`No record found for key ${bucketS3Key}`);
+          const csvData = generateCSV([], tracing.tenantId);
+          const input = Buffer.from(csvData);
+          await fileManager.writeObject(
+            input,
+            "text/csv",
+            bucketS3Key,
+            config.bucketEnrichedS3Name,
+          );
+          return;
         }
 
         const hasSemiColonSeparator = tracingRecords.some((trace) => {

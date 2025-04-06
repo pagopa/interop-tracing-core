@@ -301,6 +301,34 @@ describe("Processing Service", () => {
       expect(fileManager.writeObject).toHaveBeenCalledTimes(0);
     });
 
+    it("should call writeObject when csv is empty", async () => {
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(mockBodyStream([]));
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
+      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
+        undefined,
+      );
+      await processingService.processTracing(mockMessage, mockAppCtx);
+
+      const csvData = generateCSV([], generateId<TracingId>());
+      const input = Buffer.from(csvData);
+      const bucketS3Key = fileManager.buildS3Key(
+        mockMessage.tenantId,
+        mockMessage.date,
+        mockMessage.tracingId,
+        mockMessage.version,
+        mockMessage.correlationId,
+      );
+
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        input,
+        "text/csv",
+        bucketS3Key,
+        config.bucketEnrichedS3Name,
+      );
+
+      expect(producerService.sendErrorMessage).toHaveBeenCalledTimes(0);
+    });
+
     it("should call writeObject when there are no error purposes", async () => {
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
         mockEnrichedPurposes,

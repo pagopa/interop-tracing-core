@@ -48,7 +48,18 @@ export const enrichedServiceBuilder = (
           await parseCSV(enrichedDataObject);
 
         if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
-          throw new Error(`No record found for key ${s3KeyPath}`);
+          logger(ctx).info(
+            `No data in CSV for tracingId: ${tracing.tracingId}. Skipping trace insertion.`,
+          );
+          await producerService.sendTracingUpdateStateMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              state: tracingState.completed,
+            },
+            ctx,
+          );
+          return;
         }
 
         const tracesInserted = await dbService.insertTraces(
