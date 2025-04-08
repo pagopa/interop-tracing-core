@@ -213,5 +213,24 @@ describe("Enriched Service", () => {
         mockAppCtx,
       );
     });
+    it("should send update 'COMPLETED' if CSV has no records", async () => {
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(mockBodyStream([]));
+
+      const sendUpdateStateSpy = vi.spyOn(
+        producerService,
+        "sendTracingUpdateStateMessage",
+      );
+
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockTracingFromCsv.tracingId,
+          version: mockTracingFromCsv.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
+    });
   });
 });

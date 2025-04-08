@@ -62,16 +62,13 @@ export const processingServiceBuilder = (
         });
 
         if (!tracingRecords || tracingRecords.length === 0) {
-          const noRecordsError = getPurposeError(
-            tracing,
-            PurposeErrorCodes.INVALID_CSV,
-            "No records found on CSV",
-          );
-          await sendPurposeErrors(
-            [noRecordsError],
-            tracing,
-            producerService,
-            ctx,
+          const csvData = generateCSV([], tracing.tenantId);
+          const input = Buffer.from(csvData);
+          await fileManager.writeObject(
+            input,
+            "text/csv",
+            bucketS3Key,
+            config.bucketEnrichedS3Name,
           );
           return;
         }
