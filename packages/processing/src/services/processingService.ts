@@ -4,7 +4,12 @@ import {
   genericInternalError,
 } from "pagopa-interop-tracing-models";
 
-import { generateCSV, parseCSV } from "../utilities/csvHandler.js";
+import {
+  expectedHeaders,
+  generateCSV,
+  getPurposeError,
+  parseCSV,
+} from "../utilities/csvHandler.js";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
@@ -57,7 +62,33 @@ export const processingServiceBuilder = (
         });
 
         if (!tracingRecords || tracingRecords.length === 0) {
-          throw new Error(`No record found for key ${bucketS3Key}`);
+          const noRecordsError = getPurposeError(
+            tracing,
+            PurposeErrorCodes.INVALID_CSV,
+            "No records found on CSV",
+          );
+          await sendPurposeErrors(
+            [noRecordsError],
+            tracing,
+            producerService,
+            ctx,
+          );
+          return;
+        }
+
+        const actualHeaders = Object.keys(tracingRecords[0]);
+        if (expectedHeaders.join(",") !== actualHeaders.sort().join(",")) {
+          const errorMessage = `CSV headers invalid. Expected [${expectedHeaders.join(
+            ",",
+          )}] but got [${actualHeaders.join(",")}]`;
+
+          const headerError = getPurposeError(
+            tracing,
+            PurposeErrorCodes.INVALID_CSV_HEADERS,
+            errorMessage,
+          );
+          await sendPurposeErrors([headerError], tracing, producerService, ctx);
+          return;
         }
 
         const hasSemiColonSeparator = tracingRecords.some((trace) => {
@@ -65,7 +96,18 @@ export const processingServiceBuilder = (
         });
 
         if (hasSemiColonSeparator) {
-          throw new Error(`Invalid delimiter found on csv at ${bucketS3Key}`);
+          const delimiterError = getPurposeError(
+            tracing,
+            PurposeErrorCodes.INVALID_DELIMITER,
+            `Invalid delimiter found on csv`,
+          );
+          await sendPurposeErrors(
+            [delimiterError],
+            tracing,
+            producerService,
+            ctx,
+          );
+          return;
         }
 
         const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
