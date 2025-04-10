@@ -1,0 +1,90 @@
+import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
+import {
+  TracingFromS3KeyPathDto,
+  SavePurposeErrorDto,
+} from "pagopa-interop-tracing-models";
+import { match } from "ts-pattern";
+import { ZodIssue } from "zod";
+import { TracingRecordSchema } from "../models/db.js";
+
+function buildDuplicateMap(
+  records: TracingRecordSchema[],
+): Record<string, number[]> {
+  return records.reduce(
+    (acc, record) => {
+      const key = `${record.purpose_id}#${record.status}#${record.token_id}`;
+      acc[key] = acc[key] || [];
+      acc[key].push(record.rowNumber);
+      return acc;
+    },
+    {} as Record<string, number[]>,
+  );
+}
+
+export async function checkRecords(
+  records: TracingRecordSchema[],
+  tracing: TracingFromS3KeyPathDto,
+): Promise<SavePurposeErrorDto[]> {
+  const errorsRecord: SavePurposeErrorDto[] = [];
+  const duplicateMap = buildDuplicateMap(records);
+  for (const record of records) {
+    const result = TracingRecordSchema.safeParse(record);
+    if (result.error) {
+      for (const issue of result.error.issues) {
+        const parsedError = parseErrorMessage(issue);
+        errorsRecord.push({
+          tracingId: tracing.tracingId,
+          version: tracing.version,
+          errorCode: parsedError.errorCode,
+          purposeId: record.purpose_id,
+          message: parsedError.message,
+          rowNumber: record.rowNumber,
+          updateTracingState: false,
+        });
+      }
+    }
+
+    if (record.date !== tracing.date) {
+      errorsRecord.push({
+        tracingId: tracing.tracingId,
+        version: tracing.version,
+        errorCode: PurposeErrorCodes.INVALID_DATE,
+        purposeId: record.purpose_id,
+        message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
+        rowNumber: record.rowNumber,
+        updateTracingState: false,
+      });
+    }
+
+    const key = `${record.purpose_id}#${record.status}#${record.token_id}`;
+    const duplicateRecords = duplicateMap[key];
+    if (duplicateRecords && duplicateRecords.length > 1) {
+      errorsRecord.push({
+        tracingId: tracing.tracingId,
+        version: tracing.version,
+        purposeId: record.purpose_id,
+        errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE,
+        message: `Duplicate status found. The current row number ${
+          record.rowNumber
+        } with status ${record.status} and token_id ${
+          record.token_id
+        } has already been declared at rows: ${duplicateRecords.join(",")}.`,
+        rowNumber: record.rowNumber,
+        updateTracingState: false,
+      });
+    }
+  }
+  return errorsRecord;
+}
+
+function parseErrorMessage(issue: ZodIssue) {
+  const errorCode = match(issue.path[0])
+    .with("status", () => PurposeErrorCodes.INVALID_STATUS_CODE)
+    .with("purpose_id", () => PurposeErrorCodes.INVALID_PURPOSE)
+    .with("token_id", () => PurposeErrorCodes.INVALID_TOKEN)
+    .with("date", () => PurposeErrorCodes.INVALID_DATE)
+    .with("requests_count", () => PurposeErrorCodes.INVALID_REQUEST_COUNT)
+    .otherwise(() => PurposeErrorCodes.INVALID_ROW_SCHEMA);
+
+  return { message: `${issue.path[0]}: ${issue.message}`, errorCode };
+}
