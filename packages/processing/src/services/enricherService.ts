@@ -1,10 +1,4 @@
-import {
-  AppContext,
-  DB,
-  PurposeErrorCodes,
-  WithSQSMessageId,
-  logger,
-} from "pagopa-interop-tracing-commons";
+import { DB, PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import { getEnrichedPurposeError } from "../models/errors.js";
 import {
   TracingRecordSchema,
@@ -23,15 +17,10 @@ export function dbServiceBuilder(db: DB) {
     async getEnrichedPurpose(
       records: TracingRecordSchema[],
       tracing: TracingFromS3KeyPathDto,
-      ctx: WithSQSMessageId<AppContext>,
     ): Promise<EnrichedPurposeResult> {
       try {
         const fullRecordPromises = records.map(
           async (record: TracingRecordSchema) => {
-            logger(ctx).info(
-              `Get enriched purpose ${record.purpose_id}, for tracingId: ${tracing.tracingId}`,
-            );
-
             const consumer = await db.oneOrNone<{
               name: string;
               origin: string;

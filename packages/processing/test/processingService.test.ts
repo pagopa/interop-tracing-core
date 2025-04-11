@@ -282,7 +282,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
-        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.filter((item) => {
         if (PurposeErrorMessageArray.safeParse(item).success) {
@@ -345,7 +344,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         [],
         mockMessage,
-        mockAppCtx,
       );
 
       await processingService.processTracing(mockMessage, mockAppCtx);
@@ -459,7 +457,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurpose,
         mockMessage,
-        mockAppCtx,
       );
 
       const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
@@ -470,7 +467,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         errorPurposesWithInvalidPurposeId,
         mockMessage,
-        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.flat().filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -494,7 +490,6 @@ describe("Processing Service", () => {
         await dbService.getEnrichedPurpose(
           errorPurposesWithInvalidEserviceId,
           mockMessage,
-          mockAppCtx,
         );
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
@@ -507,14 +502,10 @@ describe("Processing Service", () => {
     it("should return getEnrichedPurposeError if consumer is not found", async () => {
       try {
         const invalidConsumer = generateId();
-        await dbService.getEnrichedPurpose(
-          validPurpose,
-          {
-            ...mockMessage,
-            ...{ tenantId: invalidConsumer },
-          },
-          mockAppCtx,
-        );
+        await dbService.getEnrichedPurpose(validPurpose, {
+          ...mockMessage,
+          ...{ tenantId: invalidConsumer },
+        });
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(
@@ -542,7 +533,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
-        mockAppCtx,
       );
       const purposeErrorsFiltered = enrichedPurposes.flat().filter((item) => {
         if (PurposeErrorMessage.safeParse(item).success) {
@@ -575,7 +565,6 @@ describe("Processing Service", () => {
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         validPurposeNotAssociated,
         mockMessage,
-        mockAppCtx,
       );
 
       const safeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
