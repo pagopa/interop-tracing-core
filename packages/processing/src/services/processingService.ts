@@ -142,12 +142,10 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   const validRecords = tracingRecords.filter(
     (record) => !invalidRows.has(record.rowNumber),
   );
-
-  enrichedPurposes = await dbService.getEnrichedPurpose(
-    validRecords,
-    tracing,
-    ctx,
+  logger(ctx).info(
+    `Get enriched purposes, for tracingId: ${tracing.tracingId}`,
   );
+  enrichedPurposes = await dbService.getEnrichedPurpose(validRecords, tracing);
 
   const purposeErrors: PurposeErrorMessageArray = formalErrors;
 
@@ -159,7 +157,13 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   });
 
   if (purposeErrors && purposeErrors.length > 0) {
+    logger(ctx).info(
+      `${purposeErrors.length} purpose errors found, for tracingId: ${tracing.tracingId}, sending error messages`,
+    );
     await sendPurposeErrors(purposeErrors, tracing, producerService, ctx);
+    logger(ctx).info(
+      `Purpose errors messages sent, for tracingId: ${tracing.tracingId}`,
+    );
   } else {
     const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
 
@@ -170,6 +174,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
     }
 
     if (purposeEnriched.data) {
+      logger(ctx).info(`Inserting enriched CSV on path: ${bucketS3Key}`);
       const csvData = generateCSV(purposeEnriched.data, tracing.tenantId);
       const input = Buffer.from(csvData);
       await fileManager.writeObject(
@@ -178,6 +183,7 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
         bucketS3Key,
         config.bucketEnrichedS3Name,
       );
+      logger(ctx).info(`Finish inserting enriched CSV on path: ${bucketS3Key}`);
     }
   }
 }
@@ -205,6 +211,9 @@ async function sendPurposeErrors(
     return producerService.sendErrorMessage(purposeError, ctx);
   });
   await Promise.all(errorMessagePromises);
+  logger(ctx).info(
+    `PurposeError messages sent on queue for tracingId: ${tracing.tracingId}.`,
+  );
 }
 
 export type ProcessingService = ReturnType<typeof processingServiceBuilder>;
