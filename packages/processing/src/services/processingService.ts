@@ -194,23 +194,31 @@ async function sendPurposeErrors(
   producerService: ProducerService,
   ctx: WithSQSMessageId<AppContext>,
 ) {
-  const sortedPurposeErrors = purposeErrors.sort(
-    (a, b) => a.rowNumber - b.rowNumber,
-  );
+  const sortedErrors = purposeErrors.sort((a, b) => a.rowNumber - b.rowNumber);
+  const BATCH_SIZE = config.batchSize;
 
-  const errorMessagePromises = sortedPurposeErrors.map((record, index) => {
-    const purposeError = {
-      tracingId: tracing.tracingId,
-      version: tracing.version,
-      errorCode: record.errorCode,
-      purposeId: record.purposeId,
-      message: record.message,
-      rowNumber: record.rowNumber,
-      updateTracingState: index === purposeErrors.length - 1,
-    };
-    return producerService.sendErrorMessage(purposeError, ctx);
-  });
-  await Promise.all(errorMessagePromises);
+  for (let i = 0; i < sortedErrors.length; i += BATCH_SIZE) {
+    const batch = sortedErrors.slice(i, i + BATCH_SIZE);
+
+    const promises = batch.map((record, index) => {
+      const globalIndex = i + index;
+      return producerService.sendErrorMessage(
+        {
+          tracingId: tracing.tracingId,
+          version: tracing.version,
+          errorCode: record.errorCode,
+          purposeId: record.purposeId,
+          message: record.message,
+          rowNumber: record.rowNumber,
+          updateTracingState: globalIndex === sortedErrors.length - 1,
+        },
+        ctx,
+      );
+    });
+
+    await Promise.all(promises);
+  }
+
   logger(ctx).info(
     `PurposeError messages sent on queue for tracingId: ${tracing.tracingId}.`,
   );

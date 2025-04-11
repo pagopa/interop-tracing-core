@@ -21,6 +21,7 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
         APPLICATION_NAME: z.string(),
         SQS_ENDPOINT: z.string().nullish(),
         S3_ENRICHED_BUCKET_NAME: z.string(),
+        BATCH_SIZE: z.coerce.number().default(500),
       })
       .transform((c) => ({
         sqsTracingUploadEndpoint: c.SQS_TRACING_UPLOAD_ENDPOINT,
@@ -28,6 +29,7 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
         applicationName: c.APPLICATION_NAME,
         sqsEndpoint: c.SQS_ENDPOINT,
         bucketEnrichedS3Name: c.S3_ENRICHED_BUCKET_NAME,
+        batchSize: c.BATCH_SIZE,
       })),
   );
 
