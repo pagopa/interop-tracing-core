@@ -10,7 +10,6 @@ import {
 } from "vitest";
 import {
   ProcessingService,
-  checkRecords,
   processingServiceBuilder,
   writeEnrichedTracingOrSendPurposeErrors,
 } from "../src/services/processingService.js";
@@ -83,6 +82,7 @@ import {
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingEnriched } from "../src/models/tracing.js";
 import { mockBodyStream } from "./fileManager.js";
+import { checkRecords } from "../src/utilities/checkCSVFormalErrors.js";
 
 describe("Processing Service", () => {
   const sqsClient: SQS.SQSClient = SQS.instantiateClient({
