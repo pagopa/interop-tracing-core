@@ -21,6 +21,16 @@ function buildDuplicateMap(
   );
 }
 
+const formatDuplicateRecords = (records: number[]): string => {
+  const count = records.length;
+  if (count > 10) {
+    const displayed = records.slice(0, 10).join(",");
+    const remaining = count - 10;
+    return `${displayed} ... and ${remaining} more`;
+  }
+  return records.join(",");
+};
+
 export async function checkRecords(
   records: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
@@ -68,7 +78,9 @@ export async function checkRecords(
           record.rowNumber
         } with status ${record.status} and token_id ${
           record.token_id
-        } has already been declared at rows: ${duplicateRecords.join(",")}.`,
+        } has already been declared at rows: ${formatDuplicateRecords(
+          duplicateRecords,
+        )}.`,
         rowNumber: record.rowNumber,
         updateTracingState: false,
       });
