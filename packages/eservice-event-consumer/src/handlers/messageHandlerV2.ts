@@ -92,6 +92,8 @@ export async function handleMessageV2(
           "EServiceDescriptorDocumentDeletedByTemplateUpdate",
           "EServiceNameUpdatedByTemplateUpdate",
           "EServiceDescriptorAgreementApprovalPolicyUpdated",
+          "EServiceSignalHubEnabled",
+          "EServiceSignalHubDisabled",
         ),
       },
       async (evt) => {
