@@ -37,18 +37,8 @@ export function dbServiceBuilder(db: DB) {
             record.date,
             record.purposeId,
             record.token_id,
-            record.purposeName,
             record.status,
             record.requestsCount,
-            record.eserviceId,
-            record.consumerId,
-            record.consumerOrigin,
-            record.consumerName,
-            record.consumerExternalId,
-            record.producerId,
-            record.producerName,
-            record.producerOrigin,
-            record.producerExternalId,
             record.submitterId,
           ];
           return { query: queryText, values };
