@@ -16,6 +16,7 @@ import {
   initDB,
   FileManager,
   fileManagerBuilder,
+  DBContext,
 } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
@@ -69,7 +70,14 @@ describe("Enriched Service", () => {
       schema: config.dbSchemaName,
       useSSL: config.dbUseSSL,
     });
-    dbService = dbServiceBuilder(dbInstance);
+    const connection = await dbInstance.connect();
+
+    const dbContext: DBContext = {
+      conn: connection,
+      pgp: dbInstance.$config.pgp,
+    };
+
+    dbService = dbServiceBuilder(dbInstance, dbContext);
     fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
     producerService = producerServiceBuilder(sqsClient);
 

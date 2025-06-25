@@ -6,7 +6,7 @@ services:
     volumes:
       - ../packages/operations/test/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../packages/enriched-data-handler/test/init-db.sql:/docker-entrypoint-initdb.d/02-init.sql
-    image: postgres:14
+    image: postgres:15
     ports:
       - 55000:5432
     environment:

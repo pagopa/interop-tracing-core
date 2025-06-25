@@ -11,12 +11,14 @@ import { config } from "./utilities/config.js";
 import { processEnrichedStateMessage } from "./messageHandler.js";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import {
+  DBContext,
   FileManager,
   SQS,
   fileManagerBuilder,
   initDB,
   logger,
 } from "pagopa-interop-tracing-commons";
+import { setupDbServiceBuilder } from "./utilities/setupDbService.js";
 
 const dbInstance = initDB({
   username: config.dbUsername,
@@ -27,6 +29,15 @@ const dbInstance = initDB({
   schema: config.dbSchemaName,
   useSSL: config.dbUseSSL,
 });
+
+const connection = await dbInstance.connect();
+
+await setupDbServiceBuilder(connection).setupStagingTables(["traces"]);
+
+const dbContext: DBContext = {
+  conn: connection,
+  pgp: dbInstance.$config.pgp,
+};
 
 const s3ClientConfig: S3ClientConfig = {
   endpoint: config.s3CustomServer
@@ -48,9 +59,8 @@ const fileManager: FileManager = fileManagerBuilder(
   config.bucketEnrichedS3Name,
 );
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
-
 const enrichedService: EnrichedService = enrichedServiceBuilder(
-  dbServiceBuilder(dbInstance),
+  dbServiceBuilder(dbInstance, dbContext),
   producerService,
   fileManager,
 );

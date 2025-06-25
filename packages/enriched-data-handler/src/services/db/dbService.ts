@@ -1,60 +1,78 @@
+import { DB, DBContext } from "pagopa-interop-tracing-commons";
 import { generateId } from "pagopa-interop-tracing-models";
-import { DB } from "pagopa-interop-tracing-commons";
-import { TracingEnriched } from "../../models/messages.js";
-import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import {
+  TracingEnriched,
+  TracingEnrichedSchema,
+} from "../../models/messages.js";
 import { config } from "../../utilities/config.js";
+import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import { batchMessages } from "../../utilities/batchHelper.js";
+import {
+  buildColumnSet,
+  generateMergeQuery,
+} from "../../utilities/sqlQueryHelper.js";
 
-export function dbServiceBuilder(db: DB) {
+export function dbServiceBuilder(db: DB, conn: DBContext) {
+  const stagingTableName = `traces_staging`;
+
   return {
+    async setupStagingTables(): Promise<void> {
+      try {
+        const query = `
+              CREATE TEMPORARY TABLE IF NOT EXISTS traces_staging (
+                LIKE ${config.dbSchemaName}.traces
+              );
+            `;
+        return db.query(query);
+      } catch (error: unknown) {
+        throw dbServiceErrorMapper("setupStagingTables", error);
+      }
+    },
+
     async insertTraces(
       tracingId: string,
       records: TracingEnriched[],
     ): Promise<{ id: string }[]> {
       try {
-        const queryText = `
-          INSERT INTO ${config.dbSchemaName}.traces (
-            id, tracing_id, date, purpose_id, token_id, purpose_name, status, requests_count, eservice_id,
-            consumer_id, consumer_origin, consumer_name, consumer_external_id,
-            producer_id, producer_name, producer_origin, producer_external_id, submitter_id
-           ) 
-            VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
-            ) 
-            ON CONFLICT DO NOTHING
-            RETURNING id;
-        `;
-
-        const deleteTracesQuery = `
+        const result = await db.tx(async (t) => {
+          const deleteTracesQuery = `
           DELETE FROM ${config.dbSchemaName}.traces
-          WHERE tracing_id = $1
-          RETURNING id
+          WHERE tracing_id = $1;
         `;
+          await t.none(deleteTracesQuery, [tracingId]);
 
-        const insertPromises = records.map((record) => {
-          const values = [
-            generateId(),
-            tracingId,
-            record.date,
-            record.purposeId,
-            record.token_id,
-            record.status,
-            record.requestsCount,
-            record.submitterId,
-          ];
-          return { query: queryText, values };
-        });
+          const recordsWithIds: (TracingEnriched & { id: string })[] =
+            records.map((record) => ({
+              ...record,
+              id: generateId(),
+            }));
 
-        return await db.tx(async (t) => {
-          await db.manyOrNone(deleteTracesQuery, [tracingId]);
+          const cs = buildColumnSet(conn.pgp, TracingEnrichedSchema);
 
-          const results = [];
-          for (const { query, values } of insertPromises) {
-            const result = await t.one<{ id: string }>(query, values);
-            results.push(result);
+          for (const batch of batchMessages(recordsWithIds, 500)) {
+            await t.none(
+              conn.pgp.helpers.insert(
+                batch,
+                cs,
+                `${config.dbSchemaName}.${stagingTableName}`,
+              ),
+            );
           }
-          return results;
+
+          const mergeQuery = generateMergeQuery(
+            TracingEnrichedSchema,
+            config.dbSchemaName,
+            ["tracingId"],
+          );
+          await t.none(mergeQuery);
+
+          await t.none(
+            `TRUNCATE TABLE ${config.dbSchemaName}.${stagingTableName};`,
+          );
+          return recordsWithIds.map((r) => ({ id: r.id }));
         });
-      } catch (error) {
+        return result;
+      } catch (error: unknown) {
         throw dbServiceErrorMapper("insertTraces", error);
       }
     },
