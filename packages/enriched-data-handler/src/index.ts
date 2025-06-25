@@ -32,12 +32,12 @@ const dbInstance = initDB({
 
 const connection = await dbInstance.connect();
 
-await setupDbServiceBuilder(connection).setupStagingTables(["traces"]);
-
 const dbContext: DBContext = {
   conn: connection,
   pgp: dbInstance.$config.pgp,
 };
+
+await setupDbServiceBuilder(dbContext.conn).setupStagingTables(["traces"]);
 
 const s3ClientConfig: S3ClientConfig = {
   endpoint: config.s3CustomServer
@@ -60,7 +60,7 @@ const fileManager: FileManager = fileManagerBuilder(
 );
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const enrichedService: EnrichedService = enrichedServiceBuilder(
-  dbServiceBuilder(dbInstance, dbContext),
+  dbServiceBuilder(dbContext),
   producerService,
   fileManager,
 );

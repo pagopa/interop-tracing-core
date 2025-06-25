@@ -32,6 +32,7 @@ import { StartedTestContainer } from "testcontainers";
 import { insertTracesError } from "../src/models/errors.js";
 import { mockBodyStream } from "./fileManger.js";
 import { parseCSV } from "../src/utilities/csvHandler.js";
+import { setupDbServiceBuilder } from "../src/utilities/setupDbService.js";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
@@ -76,8 +77,9 @@ describe("Enriched Service", () => {
       conn: connection,
       pgp: dbInstance.$config.pgp,
     };
+    await setupDbServiceBuilder(dbContext.conn).setupStagingTables(["traces"]);
 
-    dbService = dbServiceBuilder(dbInstance, dbContext);
+    dbService = dbServiceBuilder(dbContext);
     fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
     producerService = producerServiceBuilder(sqsClient);
 

@@ -10,7 +10,6 @@ export function* batchMessages<T>(
   array: T[],
   batchSize: number,
 ): Generator<T[]> {
-  // eslint-disable-next-line functional/no-let
   for (let i = 0; i < array.length; i += batchSize) {
     yield array.slice(i, i + batchSize);
   }

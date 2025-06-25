@@ -1,4 +1,4 @@
-import { DB, DBContext } from "pagopa-interop-tracing-commons";
+import { DBContext } from "pagopa-interop-tracing-commons";
 import { generateId } from "pagopa-interop-tracing-models";
 import {
   TracingEnriched,
@@ -12,7 +12,7 @@ import {
   generateMergeQuery,
 } from "../../utilities/sqlQueryHelper.js";
 
-export function dbServiceBuilder(db: DB, conn: DBContext) {
+export function dbServiceBuilder(db: DBContext) {
   const stagingTableName = `traces_staging`;
 
   return {
@@ -23,7 +23,7 @@ export function dbServiceBuilder(db: DB, conn: DBContext) {
                 LIKE ${config.dbSchemaName}.traces
               );
             `;
-        return db.query(query);
+        return db.conn.query(query);
       } catch (error: unknown) {
         throw dbServiceErrorMapper("setupStagingTables", error);
       }
@@ -34,7 +34,7 @@ export function dbServiceBuilder(db: DB, conn: DBContext) {
       records: TracingEnriched[],
     ): Promise<{ id: string }[]> {
       try {
-        const result = await db.tx(async (t) => {
+        const result = await db.conn.tx(async (t) => {
           const deleteTracesQuery = `
           DELETE FROM ${config.dbSchemaName}.traces
           WHERE tracing_id = $1;
@@ -44,18 +44,16 @@ export function dbServiceBuilder(db: DB, conn: DBContext) {
           const recordsWithIds: (TracingEnriched & { id: string })[] =
             records.map((record) => ({
               ...record,
+              tracingId,
               id: generateId(),
+              createdAt: new Date(),
             }));
 
-          const cs = buildColumnSet(conn.pgp, TracingEnrichedSchema);
+          const cs = buildColumnSet(db.pgp, TracingEnrichedSchema);
 
           for (const batch of batchMessages(recordsWithIds, 500)) {
             await t.none(
-              conn.pgp.helpers.insert(
-                batch,
-                cs,
-                `${config.dbSchemaName}.${stagingTableName}`,
-              ),
+              db.pgp.helpers.insert(batch, cs, `${stagingTableName}`),
             );
           }
 
@@ -66,9 +64,7 @@ export function dbServiceBuilder(db: DB, conn: DBContext) {
           );
           await t.none(mergeQuery);
 
-          await t.none(
-            `TRUNCATE TABLE ${config.dbSchemaName}.${stagingTableName};`,
-          );
+          await t.none(`TRUNCATE TABLE ${stagingTableName};`);
           return recordsWithIds.map((r) => ({ id: r.id }));
         });
         return result;

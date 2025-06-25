@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable max-params */
-/* eslint-disable functional/immutable-data */
 import { z } from "zod";
 import { ColumnSet, IColumnDescriptor, IMain, ITask } from "pg-promise";
 
@@ -24,15 +21,19 @@ export function generateMergeQuery<T extends z.ZodRawShape>(
 ): string {
   const keys = Object.keys(tableSchema.shape);
 
-  const updateSet = keys.map((k) => `${k} = source.${k}`).join(",\n    ");
+  const updateSet = keys
+    .map((k) => `${toSnakeCase(String(k))} = source.${toSnakeCase(String(k))}`)
+    .join(",\n    ");
 
-  const columns = keys.join(", ");
-  const values = keys.map((k) => `source.${k}`).join(", ");
+  const columns = keys.map((k) => toSnakeCase(String(k))).join(", ");
+  const values = keys.map((k) => `source.${toSnakeCase(String(k))}`).join(", ");
 
   const onCondition = keysOn
     .map(
       (key) =>
-        `${schemaName}.${"traces"}.${String(key)} = source.${String(key)}`,
+        `${schemaName}.${"traces"}.${toSnakeCase(
+          String(key),
+        )} = source.${toSnakeCase(String(key))}`,
     )
     .join(" AND ");
 
@@ -66,22 +67,16 @@ export const buildColumnSet = <T extends z.ZodRawShape>(
   pgp: IMain,
   schema: z.ZodObject<T>,
 ): ColumnSet<z.infer<typeof schema>> => {
-  try {
-    const keys = Object.keys(schema.shape) as Array<
-      keyof z.infer<typeof schema>
-    >;
+  const keys = Object.keys(schema.shape) as Array<keyof z.infer<typeof schema>>;
 
-    const columns = keys.map((prop) => ({
-      name: toSnakeCase(String(prop)), // Conversione diretta qui!
-      init: ({ source }: IColumnDescriptor<z.infer<typeof schema>>) =>
-        source[prop],
-    }));
-    return new pgp.helpers.ColumnSet(columns, {
-      table: { table: `${"traces"}_${"staging"}` },
-    });
-  } catch (error) {
-    throw error;
-  }
+  const columns = keys.map((prop) => ({
+    name: toSnakeCase(String(prop)), // Conversione diretta qui!
+    init: ({ source }: IColumnDescriptor<z.infer<typeof schema>>) =>
+      source[prop],
+  }));
+  return new pgp.helpers.ColumnSet(columns, {
+    table: { table: `${"traces"}_${"staging"}` },
+  });
 };
 /**
  * Purge obsolete rows in target tables by deleting based on staging data.
@@ -101,7 +96,7 @@ export async function cleaningTargetTables(t: ITask<unknown>, id: string) {
 
   const deleteQuery = `
     DELETE FROM ${config.dbSchemaName}.${"traces"} AS target
-    USING ${config.dbSchemaName}.${"traces"}_${"staging"} AS source
+    USING ${"traces"}_${"staging"} AS source
     WHERE target.${tracingIdColumnName} = source.id
       AND source.id = $1;
   `.trim();
