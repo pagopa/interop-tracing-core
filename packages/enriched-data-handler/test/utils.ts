@@ -24,7 +24,11 @@ export async function getTraces(
   `;
 
   const rows = await db.manyOrNone<TracingEnrichedSchema>(query, values);
-  return rows.map((row) => camelcaseKeys(row));
+  return rows.map((row) =>
+    camelcaseKeys(row, {
+      exclude: ["token_id"] as const,
+    }),
+  );
 }
 
 export function snakeCaseMapper(key: string): string {
