@@ -19,7 +19,8 @@ import {
   logger,
 } from "pagopa-interop-tracing-commons";
 import { setupDbServiceBuilder } from "./utilities/setupDbService.js";
-
+import { retryConnection } from "./services/db/connection.js";
+import { TracingTable } from "./services/db/traces.js";
 const dbInstance = initDB({
   username: config.dbUsername,
   password: config.dbPassword,
@@ -37,7 +38,17 @@ const dbContext: DBContext = {
   pgp: dbInstance.$config.pgp,
 };
 
-await setupDbServiceBuilder(dbContext.conn).setupStagingTables(["traces"]);
+await retryConnection(
+  dbInstance,
+  dbContext,
+  config,
+  async (db) => {
+    await setupDbServiceBuilder(db.conn).setupStagingTables([
+      TracingTable.Traces,
+    ]);
+  },
+  logger({ serviceName: config.applicationName }),
+);
 
 const s3ClientConfig: S3ClientConfig = {
   endpoint: config.s3CustomServer
@@ -49,7 +60,7 @@ const s3ClientConfig: S3ClientConfig = {
 };
 const s3client: S3Client = new S3Client(s3ClientConfig);
 
-const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+const sqsClient: SQS.SQSClient = SQS.instantiateClient({
   region: config.awsRegion,
   ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
 });

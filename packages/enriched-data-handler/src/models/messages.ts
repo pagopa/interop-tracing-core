@@ -13,7 +13,7 @@ export const TracingEnriched = z.object({
   date: z.string(),
   purposeId: z.string(),
   status: z.coerce.number(),
-  tokenId: z.string(),
+  token_id: z.string(),
   requestsCount: z.string(),
 });
 

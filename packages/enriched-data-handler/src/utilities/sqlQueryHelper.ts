@@ -4,22 +4,25 @@ import { ColumnSet, IColumnDescriptor, IMain, ITask } from "pg-promise";
 import { config } from "./config.js";
 
 /**
- * Generates a MERGE SQL query
+ * Generates a MERGE SQL query for efficient upsert operations.
+ * This query handles both inserting new records and updating existing ones
+ * based on a specified ON condition.
  *
- * @param tableSchema - A Zod object schema refering to the table model from which to extract the list of keys.
- * @param schemaName - The target db schema name.
- * @param tableName - The  target table name.
- * @param keysOn - The column keys from the schema used in the ON condition of the MERGE.
- * @param stagingPartialTableName - Optional staging table name for partial upserts; if provided,
- * only the columns present in this table will be merged (e.g., for updating specific fields).
- * @returns The generated MERGE SQL query as a string.
+ * @template T - The Zod object schema shape defining the table structure.
+ * @param tableSchema - A Zod object schema representing the structure of the data.
+ * @param schemaName - The database schema name where the target table resides.
+ * @param tableName - The name of the target table for the MERGE operation.
+ * @param keysOn - An array of column keys used in the ON condition to identify matching rows.
+ * @returns The generated MERGE SQL query string.
  */
 export function generateMergeQuery<T extends z.ZodRawShape>(
   tableSchema: z.ZodObject<T>,
   schemaName: string,
   keysOn: Array<keyof T>,
+  tableName: string,
 ): string {
   const keys = Object.keys(tableSchema.shape);
+  const stagingTableName = `${tableName}_${config.mergeTableSuffix}`;
 
   const updateSet = keys
     .map((k) => `${toSnakeCase(String(k))} = source.${toSnakeCase(String(k))}`)
@@ -31,15 +34,15 @@ export function generateMergeQuery<T extends z.ZodRawShape>(
   const onCondition = keysOn
     .map(
       (key) =>
-        `${schemaName}.${"traces"}.${toSnakeCase(
+        `${schemaName}.${tableName}.${toSnakeCase(
           String(key),
         )} = source.${toSnakeCase(String(key))}`,
     )
     .join(" AND ");
 
   return `
-        MERGE INTO ${schemaName}.${"traces"}
-        USING ${"traces"}_staging AS source
+        MERGE INTO ${schemaName}.${tableName}
+        USING ${stagingTableName} AS source
         ON ${onCondition}
         WHEN MATCHED THEN
           UPDATE SET
@@ -49,58 +52,54 @@ export function generateMergeQuery<T extends z.ZodRawShape>(
           VALUES (${values});
       `;
 }
+
 export type ColumnValue = string | number | Date | undefined | null | boolean;
 
 /**
- * Builds a pg-promise ColumnSet for performing bulk insert/update operations on a given table.
- *
- * This function maps the fields of a Zod schema to database columns using a snake_case naming strategy,
- * which allows pg-promise to efficiently generate SQL for bulk operations.
+ * Builds a pg-promise ColumnSet for bulk insert/update operations.
+ * This function maps Zod schema fields to database columns using snake_case,
+ * facilitating efficient SQL generation by pg-promise for batch operations.
  *
  * @template T - The Zod object schema shape describing the table structure.
- * @param pgp - The pg-promise main instance used to create the ColumnSet.
- * @param tableName - The logical name of the database table (without suffixes).
- * @param schema - The Zod schema representing the shape of the data to persist.
- * @returns A pg-promise ColumnSet object with mapped columns for bulk operations.
+ * @param pgp - The pg-promise main instance.
+ * @param tableName - The logical name of the database table (e.g., 'users', 'products').
+ * @param schema - The Zod schema representing the shape of the data to be persisted.
+ * @returns A pg-promise ColumnSet object configured for the specified table and schema.
  */
 export const buildColumnSet = <T extends z.ZodRawShape>(
   pgp: IMain,
+  tableName: string,
   schema: z.ZodObject<T>,
 ): ColumnSet<z.infer<typeof schema>> => {
   const keys = Object.keys(schema.shape) as Array<keyof z.infer<typeof schema>>;
+  const stagingTableName = `${tableName}_${config.mergeTableSuffix}`;
 
   const columns = keys.map((prop) => ({
-    name: toSnakeCase(String(prop)), // Conversione diretta qui!
+    name: toSnakeCase(String(prop)),
     init: ({ source }: IColumnDescriptor<z.infer<typeof schema>>) =>
       source[prop],
   }));
   return new pgp.helpers.ColumnSet(columns, {
-    table: { table: `${"traces"}_${"staging"}` },
+    table: { table: stagingTableName },
   });
 };
-/**
- * Purge obsolete rows in target tables by deleting based on staging data.
- *
- * This operation deletes any row in each target table that has the same key as a staging row
- * but a lower metadata_version, ensuring outdated records are removed.
- *
- * @param t - The pg-promise transaction object.
- * @param id - The key to match rows on during the delete.
- * @param targetTableNames - A list of target table names to apply the delete.
- * @param stagingTableName - The name of the staging table containing columns used for deleting condition.
- */
-export async function cleaningTargetTables(t: ITask<unknown>, id: string) {
-  const quoteColumn = (c: string) => `"${c}"`;
 
-  const tracingIdColumnName = quoteColumn(toSnakeCase("tracingId"));
+export async function deleteTargetTable<
+  T extends z.ZodRawShape,
+  K extends keyof T,
+>(
+  t: ITask<unknown>,
+  targetTable: string,
+  id: string,
+  columnToMatch: K,
+  _schema: z.ZodObject<T>,
+) {
+  const columnName = toSnakeCase(String(columnToMatch));
 
   const deleteQuery = `
-    DELETE FROM ${config.dbSchemaName}.${"traces"} AS target
-    USING ${"traces"}_${"staging"} AS source
-    WHERE target.${tracingIdColumnName} = source.id
-      AND source.id = $1;
+    DELETE FROM ${config.dbSchemaName}.${targetTable}
+    WHERE ${columnName} = $1
   `.trim();
-
   await t.none(deleteQuery, [id]);
 }
 

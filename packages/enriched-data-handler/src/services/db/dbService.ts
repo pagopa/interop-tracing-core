@@ -9,18 +9,21 @@ import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { batchMessages } from "../../utilities/batchHelper.js";
 import {
   buildColumnSet,
+  deleteTargetTable,
   generateMergeQuery,
 } from "../../utilities/sqlQueryHelper.js";
+import { TracingTable } from "../db/traces.js";
 
 export function dbServiceBuilder(db: DBContext) {
-  const stagingTableName = `traces_staging`;
+  const targetTableName = TracingTable.Traces;
+  const stagingTableName = `${targetTableName}_${config.mergeTableSuffix}`;
 
   return {
     async setupStagingTables(): Promise<void> {
       try {
         const query = `
-              CREATE TEMPORARY TABLE IF NOT EXISTS traces_staging (
-                LIKE ${config.dbSchemaName}.traces
+              CREATE TEMPORARY TABLE IF NOT EXISTS ${stagingTableName} (
+                LIKE ${config.dbSchemaName}.${targetTableName}
               );
             `;
         return db.conn.query(query);
@@ -29,45 +32,48 @@ export function dbServiceBuilder(db: DBContext) {
       }
     },
 
-    async insertTraces(
-      tracingId: string,
-      records: TracingEnriched[],
-    ): Promise<{ id: string }[]> {
+    async insertTraces(tracingId: string, records: TracingEnriched[]) {
       try {
-        const result = await db.conn.tx(async (t) => {
-          const deleteTracesQuery = `
-          DELETE FROM ${config.dbSchemaName}.traces
-          WHERE tracing_id = $1;
-        `;
-          await t.none(deleteTracesQuery, [tracingId]);
+        await db.conn.tx(async (t) => {
+          await deleteTargetTable(
+            t,
+            targetTableName,
+            tracingId,
+            "tracingId",
+            TracingEnrichedSchema,
+          );
 
-          const recordsWithIds: (TracingEnriched & { id: string })[] =
-            records.map((record) => ({
-              ...record,
-              tracingId,
-              id: generateId(),
-              createdAt: new Date(),
-            }));
+          const traces: TracingEnrichedSchema[] = records.map((record) => ({
+            ...record,
+            tracingId,
+            id: generateId(),
+            createdAt: new Date().toISOString(),
+          }));
 
-          const cs = buildColumnSet(db.pgp, TracingEnrichedSchema);
+          const cs = buildColumnSet(
+            db.pgp,
+            targetTableName,
+            TracingEnrichedSchema,
+          );
 
-          for (const batch of batchMessages(recordsWithIds, 500)) {
-            await t.none(
-              db.pgp.helpers.insert(batch, cs, `${stagingTableName}`),
-            );
+          for (const batch of batchMessages(
+            traces,
+            config.dbMessagesToInsertPerBatch,
+          )) {
+            await t.none(db.pgp.helpers.insert(batch, cs, stagingTableName));
           }
 
           const mergeQuery = generateMergeQuery(
             TracingEnrichedSchema,
             config.dbSchemaName,
             ["tracingId"],
+            targetTableName,
           );
+
           await t.none(mergeQuery);
 
           await t.none(`TRUNCATE TABLE ${stagingTableName};`);
-          return recordsWithIds.map((r) => ({ id: r.id }));
         });
-        return result;
       } catch (error: unknown) {
         throw dbServiceErrorMapper("insertTraces", error);
       }
