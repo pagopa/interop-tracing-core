@@ -34,7 +34,7 @@ import { insertTracesError } from "../src/models/errors.js";
 import { mockBodyStream } from "./fileManger.js";
 import { parseCSV } from "../src/utilities/csvHandler.js";
 import { setupDbServiceBuilder } from "../src/utilities/setupDbService.js";
-import { TracingTable } from "../src/services/db/traces.js";
+import { TracingTable } from "../src/models/traces.js";
 import { retryConnection } from "../src/services/db/connection.js";
 import { getTraces } from "./utils.js";
 
@@ -111,7 +111,7 @@ describe("Enriched Service", () => {
         .spyOn(fileManager, "readObject")
         .mockResolvedValue(mockBodyStream(mockEnrichedTracing));
 
-      await dbService.insertTraces(
+      await dbService.ingestTraces(
         mockTracingFromCsv.tracingId,
         mockEnrichedTracing,
       );
@@ -146,14 +146,14 @@ describe("Enriched Service", () => {
         ...trace,
         purposeId: newPurposeId,
       }));
-      await dbService.insertTraces(commonTracingId, mockEnrichedTracing);
+      await dbService.ingestTraces(commonTracingId, mockEnrichedTracing);
 
       let recordsAfterFirstInsert = await getTraces(dbContext.conn, {
         tracingId: commonTracingId,
       });
       expect(recordsAfterFirstInsert).toHaveLength(2);
 
-      await dbService.insertTraces(commonTracingId, [
+      await dbService.ingestTraces(commonTracingId, [
         mockNewEnrichedPurposes[0],
       ]);
 
@@ -171,7 +171,7 @@ describe("Enriched Service", () => {
       const invalidMessage = { tracingId: generateId() };
 
       const readObjectSpy = vi.spyOn(fileManager, "readObject");
-      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const insertTracingSpy = vi.spyOn(dbService, "ingestTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",
@@ -193,7 +193,7 @@ describe("Enriched Service", () => {
       const readObjectSpy = vi
         .spyOn(fileManager, "readObject")
         .mockResolvedValue(mockBodyStream([]));
-      const insertTracingSpy = vi.spyOn(dbService, "insertTraces");
+      const insertTracingSpy = vi.spyOn(dbService, "ingestTraces");
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",
@@ -216,7 +216,7 @@ describe("Enriched Service", () => {
         .spyOn(fileManager, "readObject")
         .mockResolvedValue(mockBodyStream(mockEnrichedTracing));
       const insertTracingSpy = vi
-        .spyOn(dbService, "insertTraces")
+        .spyOn(dbService, "ingestTraces")
         .mockRejectedValue(insertTracesError(``));
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
@@ -246,7 +246,7 @@ describe("Enriched Service", () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
         mockBodyStream(mockEnrichedTracing),
       );
-      vi.spyOn(dbService, "insertTraces").mockReturnValue(Promise.resolve());
+      vi.spyOn(dbService, "ingestTraces").mockReturnValue(Promise.resolve());
       const sendUpdateStateSpy = vi.spyOn(
         producerService,
         "sendTracingUpdateStateMessage",

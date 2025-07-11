@@ -7,7 +7,7 @@ export function setupDbServiceBuilder(conn: DBConnection) {
       await Promise.all(
         tableNames.map((tableName) => {
           const query = `
-                CREATE TEMPORARY TABLE IF NOT EXISTS ${tableName}_${"staging"} (
+                CREATE TEMPORARY TABLE IF NOT EXISTS ${tableName}_${config.mergeTableSuffix} (
                   LIKE ${config.dbSchemaName}.${tableName}
                 );
               `;

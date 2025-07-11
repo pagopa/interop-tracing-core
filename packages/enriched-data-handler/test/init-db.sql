@@ -9,5 +9,5 @@ CREATE TABLE traces.traces (
     token_id VARCHAR(36),
     status INTEGER,
     requests_count INTEGER,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

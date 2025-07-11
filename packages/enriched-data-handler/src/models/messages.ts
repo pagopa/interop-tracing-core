@@ -19,7 +19,6 @@ export const TracingEnriched = z.object({
 
 export const TracingEnrichedSchema = TracingEnriched.extend({
   id: z.string(),
-  createdAt: z.string(),
   tracingId: z.string(),
 });
 

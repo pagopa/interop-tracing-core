@@ -20,7 +20,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { setupDbServiceBuilder } from "./utilities/setupDbService.js";
 import { retryConnection } from "./services/db/connection.js";
-import { TracingTable } from "./services/db/traces.js";
+import { TracingTable } from "./models/traces.js";
 const dbInstance = initDB({
   username: config.dbUsername,
   password: config.dbPassword,

@@ -62,7 +62,7 @@ export const enrichedServiceBuilder = (
           return;
         }
 
-        await dbService.insertTraces(tracing.tracingId, enrichedTracingRecords);
+        await dbService.ingestTraces(tracing.tracingId, enrichedTracingRecords);
 
         await producerService.sendTracingUpdateStateMessage(
           {
