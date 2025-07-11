@@ -4,7 +4,6 @@ import { generateId } from "pagopa-interop-tracing-models";
 import { ITask } from "pg-promise";
 import { TracingEnriched, TracingEnrichedSchema } from "../models/messages.js";
 import { TracingTable } from "../models/traces.js";
-import { batchMessages } from "../utilities/batchHelper.js";
 import {
   deleteTargetTable,
   buildColumnSet,
@@ -37,13 +36,7 @@ export function tracesRepository(db: DBContext) {
       }));
 
       const cs = buildColumnSet(db.pgp, targetTableName, TracingEnrichedSchema);
-
-      for (const batch of batchMessages(
-        traces,
-        config.dbMessagesToInsertPerBatch,
-      )) {
-        await tx.none(db.pgp.helpers.insert(batch, cs, stagingTableName));
-      }
+      await tx.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
     },
 
     async mergeTraces(tx: ITask<unknown>) {
