@@ -62,23 +62,16 @@ export const enrichedServiceBuilder = (
           return;
         }
 
-        const tracesInserted = await dbService.insertTraces(
-          tracing.tracingId,
-          enrichedTracingRecords,
-        );
+        await dbService.ingestTraces(tracing.tracingId, enrichedTracingRecords);
 
-        if (tracesInserted.length > 0) {
-          await producerService.sendTracingUpdateStateMessage(
-            {
-              tracingId: tracing.tracingId,
-              version: tracing.version,
-              state: tracingState.completed,
-            },
-            ctx,
-          );
-        } else {
-          throw new Error("No traces were inserted");
-        }
+        await producerService.sendTracingUpdateStateMessage(
+          {
+            tracingId: tracing.tracingId,
+            version: tracing.version,
+            state: tracingState.completed,
+          },
+          ctx,
+        );
       } catch (error: unknown) {
         throw insertEnrichedTraceError(
           `Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,

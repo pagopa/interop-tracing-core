@@ -11,13 +11,16 @@ import { config } from "./utilities/config.js";
 import { processEnrichedStateMessage } from "./messageHandler.js";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import {
+  DBContext,
   FileManager,
   SQS,
   fileManagerBuilder,
   initDB,
   logger,
 } from "pagopa-interop-tracing-commons";
-
+import { setupDbServiceBuilder } from "./utilities/setupDbService.js";
+import { retryConnection } from "./services/db/connection.js";
+import { TracingTable } from "./models/traces.js";
 const dbInstance = initDB({
   username: config.dbUsername,
   password: config.dbPassword,
@@ -27,6 +30,25 @@ const dbInstance = initDB({
   schema: config.dbSchemaName,
   useSSL: config.dbUseSSL,
 });
+
+const connection = await dbInstance.connect();
+
+const dbContext: DBContext = {
+  conn: connection,
+  pgp: dbInstance.$config.pgp,
+};
+
+await retryConnection(
+  dbInstance,
+  dbContext,
+  config,
+  async (db) => {
+    await setupDbServiceBuilder(db.conn).setupStagingTables([
+      TracingTable.Traces,
+    ]);
+  },
+  logger({ serviceName: config.applicationName }),
+);
 
 const s3ClientConfig: S3ClientConfig = {
   endpoint: config.s3CustomServer
@@ -38,7 +60,7 @@ const s3ClientConfig: S3ClientConfig = {
 };
 const s3client: S3Client = new S3Client(s3ClientConfig);
 
-const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
+const sqsClient: SQS.SQSClient = SQS.instantiateClient({
   region: config.awsRegion,
   ...(config.sqsEndpoint ? { endpoint: config.sqsEndpoint } : {}),
 });
@@ -48,9 +70,8 @@ const fileManager: FileManager = fileManagerBuilder(
   config.bucketEnrichedS3Name,
 );
 const producerService: ProducerService = producerServiceBuilder(sqsClient);
-
 const enrichedService: EnrichedService = enrichedServiceBuilder(
-  dbServiceBuilder(dbInstance),
+  dbServiceBuilder(dbContext),
   producerService,
   fileManager,
 );

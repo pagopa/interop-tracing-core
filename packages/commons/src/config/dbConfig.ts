@@ -11,6 +11,11 @@ export const DbConfig = z
     DB_USE_SSL: z
       .enum(["true", "false"])
       .transform((value) => value === "true"),
+    DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
+    DB_CONNECTION_RETRIES: z.coerce.number().default(10),
+    DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
+    DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
+    DB_MESSAGES_TO_INSERT_PER_BATCH: z.coerce.number().default(500),
   })
   .transform((c) => ({
     dbHost: c.DB_HOST,
@@ -20,6 +25,11 @@ export const DbConfig = z
     dbPort: c.DB_PORT,
     dbSchemaName: c.DB_SCHEMA_NAME,
     dbUseSSL: c.DB_USE_SSL,
+    dbMaxConnectionPool: c.DB_MAX_CONNECTION_POOL,
+    dbConnectionRetries: c.DB_CONNECTION_RETRIES,
+    dbConnectionMinTimeout: c.DB_CONNECTION_MIN_TIMEOUT,
+    dbConnectionMaxTimeout: c.DB_CONNECTION_MAX_TIMEOUT,
+    dbMessagesToInsertPerBatch: c.DB_MESSAGES_TO_INSERT_PER_BATCH,
   }));
 
 export type DbConfig = z.infer<typeof DbConfig>;
