@@ -46,6 +46,8 @@ import {
   tracingReplaceCannotBeUpdated,
   tracingNotFound,
   tracingState,
+  unauthorizedError,
+  TenantId,
 } from "pagopa-interop-tracing-models";
 import {
   TracingErrorsContentResponse,
@@ -84,6 +86,7 @@ export function operationsServiceBuilder(dbService: DBService) {
 
     async recoverTracing(
       params: ApiRecoverTracingParams,
+      requestorId: TenantId,
       logger: Logger,
     ): Promise<ApiRecoverTracingResponse> {
       logger.info(`Recover data for tracingId: ${params.tracingId}`);
@@ -91,6 +94,10 @@ export function operationsServiceBuilder(dbService: DBService) {
       const tracing = await dbService.findTracingById(params.tracingId);
       if (!tracing) {
         throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.tenant_id !== requestorId) {
+        throw unauthorizedError("Tenant is not the owner of the tracing");
       }
 
       if (
@@ -114,8 +121,10 @@ export function operationsServiceBuilder(dbService: DBService) {
         previousState: tracing.state,
       };
     },
+
     async replaceTracing(
       params: ApiReplaceTracingParams,
+      requestorId: TenantId,
       logger: Logger,
     ): Promise<ApiReplaceTracingResponse> {
       logger.info(`Recover data for tracingId: ${params.tracingId}`);
@@ -123,6 +132,10 @@ export function operationsServiceBuilder(dbService: DBService) {
       const tracing = await dbService.findTracingById(params.tracingId);
       if (!tracing) {
         throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.tenant_id !== requestorId) {
+        throw unauthorizedError("Tenant is not the owner of the tracing");
       }
 
       if (tracing.state !== tracingState.completed) {
@@ -273,6 +286,7 @@ export function operationsServiceBuilder(dbService: DBService) {
     async getTracingErrors(
       filters: ApiGetTracingErrorsQuery,
       params: ApiGetTracingErrorsParams,
+      requestorId: TenantId,
       logger: Logger,
     ): Promise<ApiGetTracingErrorsResponse> {
       logger.info(`Get purposes errors for tracingId: ${params.tracingId}`);
@@ -280,6 +294,10 @@ export function operationsServiceBuilder(dbService: DBService) {
       const tracing = await dbService.findTracingById(params.tracingId);
       if (!tracing) {
         throw tracingNotFound(params.tracingId);
+      }
+
+      if (tracing.tenant_id !== requestorId) {
+        throw unauthorizedError("Tenant is not the owner of the tracing");
       }
 
       const data = await dbService.getTracingErrors({

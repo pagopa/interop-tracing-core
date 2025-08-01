@@ -33,6 +33,7 @@ import {
   tracingState,
   tracingReplaceCannotBeUpdated,
   EserviceId,
+  unauthorizedError,
 } from "pagopa-interop-tracing-models";
 import { StartedTestContainer } from "testcontainers";
 import {
@@ -509,6 +510,7 @@ describe("database test", () => {
         const result = await operationsService.getTracingErrors(
           query,
           params,
+          tenantId,
           genericLogger,
         );
 
@@ -559,6 +561,7 @@ describe("database test", () => {
         const result = await operationsService.getTracingErrors(
           query,
           params,
+          tenantId,
           genericLogger,
         );
 
@@ -583,6 +586,7 @@ describe("database test", () => {
           await operationsService.getTracingErrors(
             query,
             params,
+            tenantId,
             genericLogger,
           );
         } catch (e) {
@@ -605,8 +609,46 @@ describe("database test", () => {
         };
 
         expect(
-          operationsService.getTracingErrors(query, params, genericLogger),
+          operationsService.getTracingErrors(
+            query,
+            params,
+            tenantId,
+            genericLogger,
+          ),
         ).rejects.toThrowError(tracingNotFound(params.tracingId));
+      });
+
+      it("searching should throw an unauthorized error when the requestor is not the owner of the tracing", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.pending,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        await expect(
+          operationsService.getTracingErrors(
+            query,
+            params,
+            secondTenantId,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(
+          unauthorizedError("Tenant is not the owner of the tracing"),
+        );
       });
     });
 
@@ -769,6 +811,7 @@ describe("database test", () => {
           {
             tracingId: tracing.id,
           },
+          tenantId,
           genericLogger,
         );
 
@@ -786,6 +829,7 @@ describe("database test", () => {
             {
               tracingId: tracindId,
             },
+            tenantId,
             genericLogger,
           ),
         ).rejects.toThrowError(tracingNotFound(tracindId));
@@ -808,6 +852,7 @@ describe("database test", () => {
             {
               tracingId: tracing.id,
             },
+            tenantId,
             genericLogger,
           ),
         ).rejects.toThrowError(tracingRecoverCannotBeUpdated(tracing.id));
@@ -819,6 +864,7 @@ describe("database test", () => {
             {
               tracingId: "invalid_uuid",
             },
+            tenantId,
             genericLogger,
           );
         } catch (e) {
@@ -827,6 +873,31 @@ describe("database test", () => {
           expect(error.message).toContain("Database query failed");
           expect(error.code).toBe("genericError");
         }
+      });
+
+      it("should throw an unauthorized error when the requestor is not the owner of the tracing", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+
+        await expect(
+          operationsService.recoverTracing(
+            {
+              tracingId: tracing.id,
+            },
+            secondTenantId,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(
+          unauthorizedError("Tenant is not the owner of the tracing"),
+        );
       });
     });
 
@@ -846,6 +917,7 @@ describe("database test", () => {
           {
             tracingId: tracing.id,
           },
+          tenantId,
           genericLogger,
         );
 
@@ -863,6 +935,7 @@ describe("database test", () => {
             {
               tracingId: tracindId,
             },
+            tenantId,
             genericLogger,
           ),
         ).rejects.toThrowError(tracingNotFound(tracindId));
@@ -885,6 +958,7 @@ describe("database test", () => {
             {
               tracingId: tracing.id,
             },
+            tenantId,
             genericLogger,
           ),
         ).rejects.toThrowError(tracingReplaceCannotBeUpdated(tracing.id));
@@ -896,6 +970,7 @@ describe("database test", () => {
             {
               tracingId: "invalid_uuid",
             },
+            tenantId,
             genericLogger,
           );
         } catch (e) {
@@ -904,6 +979,31 @@ describe("database test", () => {
           expect(error.message).toContain("Database query failed");
           expect(error.code).toBe("genericError");
         }
+      });
+
+      it("should throw an unauthorized error when the requestor is not the owner of the tracing", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.error,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+
+        await expect(
+          operationsService.replaceTracing(
+            {
+              tracingId: tracing.id,
+            },
+            secondTenantId,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(
+          unauthorizedError("Tenant is not the owner of the tracing"),
+        );
       });
     });
 
@@ -923,6 +1023,7 @@ describe("database test", () => {
           {
             tracingId: tracing.id,
           },
+          tenantId,
           genericLogger,
         );
 

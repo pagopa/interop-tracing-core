@@ -120,6 +120,7 @@ const operationsRouter = (
       try {
         const tracing = await operationsService.recoverTracing(
           req.params,
+          req.ctx.authData.tenantId,
           logger(req.ctx),
         );
         return res.status(200).json(tracing).end();
@@ -162,6 +163,7 @@ const operationsRouter = (
     try {
       const tracing = await operationsService.replaceTracing(
         req.params,
+        req.ctx.authData.tenantId,
         logger(req.ctx),
       );
       return res.status(200).json(tracing).end();
@@ -348,6 +350,7 @@ const operationsRouter = (
         const tracingErrors = await operationsService.getTracingErrors(
           req.query,
           req.params,
+          req.ctx.authData.tenantId,
           logger(req.ctx),
         );
 
