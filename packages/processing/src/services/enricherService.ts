@@ -68,20 +68,24 @@ export function dbServiceBuilder(db: DB) {
                 );
               }
 
-              const tenantEservice = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM ${config.dbSchemaName}.eservices WHERE producer_id = $1 AND eservice_id = $2`,
-                [tracing.tenantId, eService.eservice_id],
-              );
+              const isEserviceOwnedBySubmitter =
+                await db.oneOrNone<EserviceSchema>(
+                  `SELECT 1 FROM ${config.dbSchemaName}.eservices WHERE producer_id = $1 AND eservice_id = $2`,
+                  [tracing.tenantId, eService.eservice_id],
+                );
 
-              const tenantDelegations = await db.manyOrNone<DelegationSchema>(
-                `SELECT * FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2`,
-                [eService.eservice_id, delegationState.active],
-              );
+              const isSubmitterDelegatedForEservice =
+                await db.oneOrNone<DelegationSchema>(
+                  `SELECT 1 FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2 AND delegate_id = $3`,
+                  [
+                    eService.eservice_id,
+                    delegationState.active,
+                    tracing.tenantId,
+                  ],
+                );
               if (
-                !tenantEservice &&
-                !tenantDelegations.some(
-                  ({ delegate_id }) => delegate_id === tracing.tenantId,
-                ) &&
+                !isEserviceOwnedBySubmitter &&
+                !isSubmitterDelegatedForEservice &&
                 fullPurpose.consumer_id !== tracing.tenantId
               ) {
                 return [
