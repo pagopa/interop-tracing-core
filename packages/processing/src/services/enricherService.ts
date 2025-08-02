@@ -83,10 +83,14 @@ export function dbServiceBuilder(db: DB) {
                     tracing.tenantId,
                   ],
                 );
+
+              const isSubmitterConsumerForPurpose =
+                fullPurpose.consumer_id === tracing.tenantId;
+
               if (
                 !isEserviceOwnedBySubmitter &&
                 !isSubmitterDelegatedForEservice &&
-                fullPurpose.consumer_id !== tracing.tenantId
+                !isSubmitterConsumerForPurpose
               ) {
                 return [
                   {
