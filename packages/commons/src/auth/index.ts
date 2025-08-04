@@ -6,7 +6,7 @@ export const RequesterAuthData = z.object({
 export type RequesterAuthData = z.infer<typeof RequesterAuthData>;
 
 export const TenantAuthData = z.object({
-  tenantId: z.string().uuid(),
+  tenantId: z.string().uuid().brand("TenantId"),
 });
 export type TenantAuthData = z.infer<typeof TenantAuthData>;
 

@@ -79,6 +79,7 @@ const operationsRouter = (
       return res.status(errorRes.status).json(errorRes).end();
     }
   });
+
   operationsRouter.post("/delegations", async (req, res) => {
     try {
       const delegation = await operationsService.saveDelegation(
@@ -119,6 +120,7 @@ const operationsRouter = (
       try {
         const tracing = await operationsService.recoverTracing(
           req.params,
+          req.ctx.authData.tenantId,
           logger(req.ctx),
         );
         return res.status(200).json(tracing).end();
@@ -161,6 +163,7 @@ const operationsRouter = (
     try {
       const tracing = await operationsService.replaceTracing(
         req.params,
+        req.ctx.authData.tenantId,
         logger(req.ctx),
       );
       return res.status(200).json(tracing).end();
@@ -275,28 +278,6 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.post(
-    "/tenants/:tenantId/tracings/missing",
-    async (req, res) => {
-      try {
-        await operationsService.saveMissingTracing(
-          req.params,
-          req.body,
-          logger(req.ctx),
-        );
-        return res.status(204).end();
-      } catch (error) {
-        const errorRes = makeApiProblem(
-          error,
-          errorMapper,
-          logger(req.ctx),
-          req.ctx.correlationId,
-        );
-        return res.status(errorRes.status).json(errorRes).end();
-      }
-    },
-  );
-
   operationsRouter.get("/tenants/tracings/missing", async (req, res) => {
     try {
       const tenants = await operationsService.getTenantsWithMissingTracings(
@@ -369,6 +350,7 @@ const operationsRouter = (
         const tracingErrors = await operationsService.getTracingErrors(
           req.query,
           req.params,
+          req.ctx.authData.tenantId,
           logger(req.ctx),
         );
 
