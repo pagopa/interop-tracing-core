@@ -1,6 +1,5 @@
 import helmet from "helmet";
 import express from "express";
-import cors, { CorsOptions } from "cors";
 import {
   FileManager,
   contextMiddleware,
@@ -61,8 +60,6 @@ app.use(
   }),
 );
 
-app.use(cors());
-
 app.use(
   helmet.hsts({
     includeSubDomains: true,
@@ -74,16 +71,9 @@ app.use(helmet.noSniff());
 app.use(helmet.xssFilter());
 app.use(helmet.frameguard({ action: "deny" }));
 
-const corsOptions: CorsOptions = {
-  origin: config.corsOriginAllowed,
-  methods: ["POST", "PUT", "GET", "OPTIONS", "DELETE"],
-  allowedHeaders: "*",
-};
-
 app.use(healthRouter);
 app.use(queryParamsMiddleware);
 app.use(express.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
 app.use(contextMiddleware(config.applicationName));
 app.use(loggerMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
