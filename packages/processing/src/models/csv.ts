@@ -9,12 +9,12 @@ export const Eservice = z.object({
 
 export const EnrichedPurpose = z.object({
   tracingId: z.string(),
-  producerOrigin: z.string(),
-  producerExternalId: z.string(),
+  producerOrigin: z.string().transform(stripCommas),
+  producerExternalId: z.string().transform(stripCommas),
   producerName: z.string().transform(stripCommas),
   consumerId: z.string(),
-  consumerExternalId: z.string(),
-  consumerOrigin: z.string(),
+  consumerExternalId: z.string().transform(stripCommas),
+  consumerOrigin: z.string().transform(stripCommas),
   consumerName: z.string().transform(stripCommas),
   purposeName: z.string().transform(stripCommas),
   date: z.string(),
