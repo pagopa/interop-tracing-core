@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const stripCommas = (val: string) => val.replace(/,/g, "").trim();
+
 export const Eservice = z.object({
   eserviceId: z.string(),
   producerId: z.string(),
@@ -9,12 +11,12 @@ export const EnrichedPurpose = z.object({
   tracingId: z.string(),
   producerOrigin: z.string(),
   producerExternalId: z.string(),
-  producerName: z.string(),
+  producerName: z.string().transform(stripCommas),
   consumerId: z.string(),
   consumerExternalId: z.string(),
   consumerOrigin: z.string(),
-  consumerName: z.string(),
-  purposeName: z.string(),
+  consumerName: z.string().transform(stripCommas),
+  purposeName: z.string().transform(stripCommas),
   date: z.string(),
   purposeId: z.string().uuid(),
   token_id: z.string().uuid(),
