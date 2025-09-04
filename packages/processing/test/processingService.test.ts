@@ -585,5 +585,32 @@ describe("Processing Service", () => {
         }
       });
     });
+    it("should correctly handle commas within a field during CSV generation", async () => {
+      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue(
+        mockEnrichedPurposes,
+      );
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
+      );
+      vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
+
+      await processingService.processTracing(mockMessage, mockAppCtx);
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        [],
+        mockMessage,
+      );
+      const purposeEnriched = EnrichedPurposeArray.parse(enrichedPurposes);
+
+      const csv = generateCSV(purposeEnriched, mockMessage.tenantId);
+      const parsedCsv = await parseCSVFromString(csv);
+      expect(parsedCsv).toBeDefined();
+      parsedCsv.forEach((item, index) => {
+        if (index) {
+          // skipping index 0 because is csv header
+          const validationResult = TracingEnriched.safeParse(item);
+          expect(validationResult.success).toBe(true);
+        }
+      });
+    });
   });
 });
