@@ -27,6 +27,10 @@ COPY ./packages/clients/operations /app/packages/clients/operations
 RUN pnpm build
 RUN rm -rf /app/packages/delegation-event-consumer/dist/test
 
+RUN groupadd -r app && useradd -rm -g app app
+RUN chown -R app:app /app && chmod -R 700 /app
+USER app
+
 WORKDIR /app/packages/delegation-event-consumer
 
 CMD [ "node", "." ]

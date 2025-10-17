@@ -22,6 +22,10 @@ COPY ./packages/models /app/packages/models
 RUN pnpm build
 RUN rm -rf /app/packages/processing/dist/test
 
+RUN groupadd -r app && useradd -rm -g app app
+RUN chown -R app:app /app && chmod -R 700 /app
+USER app
+
 WORKDIR /app/packages/processing
 
 CMD [ "node", "." ]
