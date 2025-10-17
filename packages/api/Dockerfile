@@ -26,6 +26,10 @@ RUN pnpm build
 
 RUN rm -rf /app/packages/api/dist/test
 
+RUN groupadd -r app && useradd -rm -g app app
+RUN chown -R app:app /app && chmod -R 700 /app
+USER app
+
 WORKDIR /app/packages/api
 
 CMD [ "node", "." ]
