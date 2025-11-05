@@ -71,6 +71,8 @@ export async function handleMessageV2(
           "PurposeCloned",
           "PurposeVersionArchivedByRevokedDelegation",
           "PurposeDeletedByRevokedDelegation",
+          "RiskAnalysisDocumentGenerated",
+          "RiskAnalysisSignedDocumentGenerated",
         ),
       },
       async () => {

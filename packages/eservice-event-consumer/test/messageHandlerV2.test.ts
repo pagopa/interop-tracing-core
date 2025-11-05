@@ -227,6 +227,8 @@ describe("Message handler V2 test", () => {
         { type: "EServiceDescriptorPublished" },
         { type: "EServiceDescriptorSuspended" },
         { type: "EServiceDraftDescriptorUpdated" },
+        { type: "EServicePersonalDataFlagUpdatedAfterPublication" },
+        { type: "EServicePersonalDataFlagUpdatedByTemplateUpdate" },
       ];
 
       for (const event of events) {
