@@ -6,8 +6,6 @@ import {
 } from "../src/services/operationsService.js";
 import { config } from "../src/utilities/config.js";
 import {
-  createAPurposeEventV2,
-  createAPurposeVersionEventV2,
   createPurposeActivatedEventV2,
   generateID,
   getMockPurpose,
@@ -20,7 +18,11 @@ import {
   kafkaMessageMissingData,
 } from "pagopa-interop-tracing-models";
 import { handleMessageV2 } from "../src/handlers/messageHandlerV2.js";
-import { PurposeV2, PurposeVersionV2 } from "@pagopa/interop-outbound-models";
+import {
+  PurposeEventV2,
+  PurposeV2,
+  PurposeVersionV2,
+} from "@pagopa/interop-outbound-models";
 import { errorInvalidVersion } from "../src/models/domain/errors.js";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
@@ -81,67 +83,6 @@ describe("Operations service test", () => {
       );
     });
 
-    it("Should ignore these events: PurposeAdded, DraftPurposeUpdated, PurposeWaitingForApproval, DraftPurposeDeleted, WaitingForApprovalPurposeDeleted, NewPurposeVersionActivated, PurposeVersionActivated, PurposeVersionUnsuspendedByProducer, PurposeVersionUnsuspendedByConsumer, PurposeVersionSuspendedByProducer, PurposeVersionSuspendedByConsumer, NewPurposeVersionWaitingForApproval, PurposeVersionOverQuotaUnsuspended, PurposeArchived", async () => {
-      const mockPurposeV2 = getMockPurpose() as PurposeV2;
-      const mockPurposeVersionV2 = getMockPurposeVersion() as PurposeVersionV2;
-      const savePurposeSpy = vi
-        .spyOn(apiClient, "savePurpose")
-        .mockResolvedValueOnce(undefined);
-
-      const eventTypes = [
-        "PurposeAdded",
-        "DraftPurposeUpdated",
-        "PurposeWaitingForApproval",
-        "DraftPurposeDeleted",
-        "WaitingForApprovalPurposeDeleted",
-      ] as const;
-
-      const eventVersionTypes = [
-        "NewPurposeVersionActivated",
-        "PurposeVersionActivated",
-        "PurposeVersionUnsuspendedByProducer",
-        "PurposeVersionUnsuspendedByConsumer",
-        "PurposeVersionSuspendedByProducer",
-        "PurposeVersionSuspendedByConsumer",
-        "NewPurposeVersionWaitingForApproval",
-        "PurposeVersionOverQuotaUnsuspended",
-        "PurposeArchived",
-        "WaitingForApprovalPurposeVersionDeleted",
-        "PurposeVersionRejected",
-        "PurposeCloned",
-      ] as const;
-
-      const purpose: PurposeV2 = {
-        ...mockPurposeV2,
-        versions: [mockPurposeVersionV2],
-      };
-
-      for (const eventType of eventTypes) {
-        const purposeEventV2 = createAPurposeEventV2(eventType, purpose);
-        await handleMessageV2(
-          purposeEventV2,
-          operationsService,
-          ctx,
-          genericLogger,
-        );
-        expect(savePurposeSpy).not.toBeCalled();
-      }
-
-      for (const eventVersionType of eventVersionTypes) {
-        const purposeEventV2 = createAPurposeVersionEventV2(
-          eventVersionType,
-          purpose,
-        );
-        await handleMessageV2(
-          purposeEventV2,
-          operationsService,
-          ctx,
-          genericLogger,
-        );
-        expect(savePurposeSpy).not.toBeCalled();
-      }
-    });
-
     it("Should throw errorInvalidVersion if versions has no valid state", async () => {
       const mockPurposeV2 = getMockPurpose() as PurposeV2;
       const purpose: PurposeV2 = {
@@ -167,6 +108,58 @@ describe("Operations service test", () => {
           `Missing valid version within versions Array for purposeId ${purpose.id}`,
         ),
       );
+    });
+  });
+
+  describe("Purpose Events to be ignored", () => {
+    it("invoking handleMessageV2 should ignore specific event types and log an info message for each ignored event", async () => {
+      const spy = vi.spyOn(genericLogger, "info");
+
+      const events: Pick<PurposeEventV2, "type">[] = [
+        { type: "NewPurposeVersionActivated" },
+        { type: "PurposeVersionActivated" },
+        { type: "PurposeVersionUnsuspendedByProducer" },
+        { type: "PurposeVersionUnsuspendedByConsumer" },
+        { type: "PurposeVersionSuspendedByProducer" },
+        { type: "PurposeVersionSuspendedByConsumer" },
+        { type: "PurposeVersionOverQuotaUnsuspended" },
+        { type: "PurposeArchived" },
+        { type: "PurposeAdded" },
+        { type: "DraftPurposeUpdated" },
+        { type: "PurposeWaitingForApproval" },
+        { type: "DraftPurposeDeleted" },
+        { type: "WaitingForApprovalPurposeDeleted" },
+        { type: "NewPurposeVersionWaitingForApproval" },
+        { type: "WaitingForApprovalPurposeVersionDeleted" },
+        { type: "PurposeVersionRejected" },
+        { type: "PurposeCloned" },
+        { type: "PurposeVersionArchivedByRevokedDelegation" },
+        { type: "PurposeDeletedByRevokedDelegation" },
+        { type: "RiskAnalysisDocumentGenerated" },
+        { type: "RiskAnalysisSignedDocumentGenerated" },
+      ];
+
+      for (const event of events) {
+        await handleMessageV2(
+          {
+            event_version: 2,
+            version: 1,
+            type: event.type,
+            timestamp: new Date(),
+            stream_id: "1",
+            data: {},
+          } as PurposeEventV2,
+          operationsService,
+          ctx,
+          genericLogger,
+        );
+
+        expect(spy).toHaveBeenCalledWith(
+          `Skip event ${event.type} (not relevant)`,
+        );
+      }
+
+      expect(spy).toHaveBeenCalledTimes(events.length);
     });
   });
 });
