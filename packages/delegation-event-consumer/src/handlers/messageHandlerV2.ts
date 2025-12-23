@@ -65,6 +65,8 @@ export async function handleMessageV2(
           "ConsumerDelegationApproved",
           "ConsumerDelegationRejected",
           "ConsumerDelegationRevoked",
+          "DelegationContractGenerated",
+          "DelegationSignedContractGenerated",
         ),
       },
       async (evt) => {

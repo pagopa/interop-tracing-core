@@ -21,7 +21,7 @@ import {
 } from "pagopa-interop-tracing-models";
 import { handleMessageV2 } from "../src/handlers/messageHandlerV2.js";
 import { ErrorCodes, errorSaveTenant } from "../src/models/domain/errors.js";
-import { TenantV2 } from "@pagopa/interop-outbound-models";
+import { TenantEventV2, TenantV2 } from "@pagopa/interop-outbound-models";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -221,11 +221,11 @@ describe("Message handler V2 test", () => {
     });
   });
 
-  describe("Events to be ignored", () => {
+  describe("Tenant Events to be ignored", () => {
     it("invoking handleMessageV2 should ignore specific event types and log an info message for each ignored event", async () => {
       const spy = vi.spyOn(genericLogger, "info");
 
-      const events = [
+      const events: Pick<TenantEventV2, "type">[] = [
         { type: "TenantCertifiedAttributeAssigned" },
         { type: "TenantCertifiedAttributeRevoked" },
         { type: "TenantDeclaredAttributeAssigned" },
@@ -243,11 +243,11 @@ describe("Message handler V2 test", () => {
           {
             event_version: 2,
             version: 1,
-            type: event.type as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            type: event.type,
             timestamp: new Date(),
             stream_id: "1",
             data: {},
-          },
+          } as TenantEventV2,
           operationsService,
           ctx,
           genericLogger,

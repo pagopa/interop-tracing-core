@@ -94,6 +94,8 @@ export async function handleMessageV2(
           "EServiceDescriptorAgreementApprovalPolicyUpdated",
           "EServiceSignalHubEnabled",
           "EServiceSignalHubDisabled",
+          "EServicePersonalDataFlagUpdatedAfterPublication",
+          "EServicePersonalDataFlagUpdatedByTemplateUpdate",
         ),
       },
       async (evt) => {

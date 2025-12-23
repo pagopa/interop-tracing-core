@@ -21,7 +21,10 @@ import {
 } from "pagopa-interop-tracing-models";
 import { handleMessageV2 } from "../src/handlers/messageHandlerV2.js";
 import { ErrorCodes, errorSaveEservice } from "../src/models/domain/errors.js";
-import { EServiceDescriptorStateV2 } from "@pagopa/interop-outbound-models";
+import {
+  EServiceDescriptorStateV2,
+  EServiceEventV2,
+} from "@pagopa/interop-outbound-models";
 
 const apiClient = createApiClient(config.operationsBaseUrl);
 
@@ -205,11 +208,11 @@ describe("Message handler V2 test", () => {
     });
   });
 
-  describe("Events to be ignored", () => {
-    it("invoking handleMessageV1 should ignore specific event types and log an info message for each ignored event", async () => {
+  describe("Eservice Events to be ignored", () => {
+    it("invoking handleMessageV2 should ignore specific event types and log an info message for each ignored event", async () => {
       const spy = vi.spyOn(genericLogger, "info");
 
-      const events = [
+      const events: Pick<EServiceEventV2, "type">[] = [
         { type: "EServiceDescriptorDocumentAdded" },
         { type: "EServiceDescriptorDocumentDeleted" },
         { type: "EServiceDescriptorDocumentUpdated" },
@@ -227,6 +230,8 @@ describe("Message handler V2 test", () => {
         { type: "EServiceDescriptorPublished" },
         { type: "EServiceDescriptorSuspended" },
         { type: "EServiceDraftDescriptorUpdated" },
+        { type: "EServicePersonalDataFlagUpdatedAfterPublication" },
+        { type: "EServicePersonalDataFlagUpdatedByTemplateUpdate" },
       ];
 
       for (const event of events) {
@@ -234,11 +239,11 @@ describe("Message handler V2 test", () => {
           {
             event_version: 2,
             version: 1,
-            type: event.type as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            type: event.type,
             timestamp: new Date(),
             stream_id: "1",
             data: {},
-          },
+          } as EServiceEventV2,
           operationsService,
           ctx,
           genericLogger,
