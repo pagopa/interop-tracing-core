@@ -159,24 +159,28 @@ const operationsRouter = (
     },
   );
 
-  operationsRouter.post("/tracings/:tracingId/replace", async (req, res) => {
-    try {
-      const tracing = await operationsService.replaceTracing(
-        req.params,
-        req.ctx.authData.tenantId,
-        logger(req.ctx),
-      );
-      return res.status(200).json(tracing).end();
-    } catch (error) {
-      const errorRes = makeApiProblem(
-        error,
-        errorMapper,
-        logger(req.ctx),
-        req.ctx.correlationId,
-      );
-      return res.status(errorRes.status).json(errorRes).end();
-    }
-  });
+  operationsRouter.post(
+    "/tracings/:tracingId/replace",
+    tenantAuthorizerMiddleware(),
+    async (req, res) => {
+      try {
+        const tracing = await operationsService.replaceTracing(
+          req.params,
+          req.ctx.authData.tenantId,
+          logger(req.ctx),
+        );
+        return res.status(200).json(tracing).end();
+      } catch (error) {
+        const errorRes = makeApiProblem(
+          error,
+          errorMapper,
+          logger(req.ctx),
+          req.ctx.correlationId,
+        );
+        return res.status(errorRes.status).json(errorRes).end();
+      }
+    },
+  );
 
   operationsRouter.post(
     "/tracings/:tracingId/versions/:version/state",
