@@ -116,8 +116,6 @@ describe("Operations service test", () => {
       const spy = vi.spyOn(genericLogger, "info");
 
       const events: Pick<PurposeEventV2, "type">[] = [
-        { type: "NewPurposeVersionActivated" },
-        { type: "PurposeVersionActivated" },
         { type: "PurposeVersionUnsuspendedByProducer" },
         { type: "PurposeVersionUnsuspendedByConsumer" },
         { type: "PurposeVersionSuspendedByProducer" },

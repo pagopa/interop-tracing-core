@@ -22,7 +22,11 @@ export async function handleMessageV2(
   await match(event)
     .with(
       {
-        type: P.union("PurposeActivated"),
+        type: P.union(
+          "PurposeActivated",
+          "PurposeVersionActivated",
+          "NewPurposeVersionActivated",
+        ),
       },
       async (evt) => {
         if (!evt.data.purpose) {
@@ -52,8 +56,6 @@ export async function handleMessageV2(
     .with(
       {
         type: P.union(
-          "NewPurposeVersionActivated",
-          "PurposeVersionActivated",
           "PurposeVersionUnsuspendedByProducer",
           "PurposeVersionUnsuspendedByConsumer",
           "PurposeVersionSuspendedByProducer",
