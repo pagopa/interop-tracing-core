@@ -1,4 +1,4 @@
-import { DBContext } from "pagopa-interop-tracing-commons";
+import { DBConnection, DBContext } from "pagopa-interop-tracing-commons";
 import { generateId } from "pagopa-interop-tracing-models";
 
 import { ITask } from "pg-promise";
@@ -16,19 +16,11 @@ export function tracesRepository(db: DBContext) {
   const stagingTableName = `${targetTableName}_${config.mergeTableSuffix}`;
 
   return {
-    async insertToStaging(
-      tx: ITask<unknown>,
+    async insertTracesToStaging(
+      conn: DBConnection,
       tracingId: string,
       records: TracingEnriched[],
     ) {
-      await deleteTargetTable(
-        tx,
-        targetTableName,
-        tracingId,
-        "tracingId",
-        TracingEnrichedSchema,
-      );
-
       const traces: TracingEnrichedSchema[] = records.map((record) => ({
         ...record,
         tracingId,
@@ -36,10 +28,20 @@ export function tracesRepository(db: DBContext) {
       }));
 
       const cs = buildColumnSet(db.pgp, targetTableName, TracingEnrichedSchema);
-      await tx.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
+      await conn.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
     },
 
-    async mergeTraces(tx: ITask<unknown>) {
+    async deleteOldTracesFromTarget(tx: ITask<unknown>, tracingId: string) {
+      await deleteTargetTable(
+        tx,
+        targetTableName,
+        tracingId,
+        "tracingId",
+        TracingEnrichedSchema,
+      );
+    },
+
+    async mergeTracesToTarget(tx: ITask<unknown>) {
       const mergeQuery = generateMergeQuery(
         TracingEnrichedSchema,
         config.dbSchemaName,
@@ -49,7 +51,7 @@ export function tracesRepository(db: DBContext) {
       await tx.none(mergeQuery);
     },
 
-    async cleanTraces(tx: ITask<unknown>) {
+    async cleanStaging(tx: ITask<unknown>) {
       await tx.none(`TRUNCATE TABLE ${stagingTableName};`);
     },
   };

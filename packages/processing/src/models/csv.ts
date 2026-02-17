@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-const stripCommas = (val: string) => val.replace(/,/g, "").trim();
+export const expectedInputCSVHeaders = [
+  "date",
+  "purpose_id",
+  "requests_count",
+  "status",
+  "token_id",
+];
 
 export const Eservice = z.object({
   eserviceId: z.string(),
@@ -9,14 +15,14 @@ export const Eservice = z.object({
 
 export const EnrichedPurpose = z.object({
   tracingId: z.string(),
-  producerOrigin: z.string().transform(stripCommas),
-  producerExternalId: z.string().transform(stripCommas),
-  producerName: z.string().transform(stripCommas),
+  producerOrigin: z.string(),
+  producerExternalId: z.string(),
+  producerName: z.string(),
   consumerId: z.string(),
-  consumerExternalId: z.string().transform(stripCommas),
-  consumerOrigin: z.string().transform(stripCommas),
-  consumerName: z.string().transform(stripCommas),
-  purposeName: z.string().transform(stripCommas),
+  consumerExternalId: z.string(),
+  consumerOrigin: z.string(),
+  consumerName: z.string(),
+  purposeName: z.string(),
   date: z.string(),
   purposeId: z.string().uuid(),
   token_id: z.string().uuid(),

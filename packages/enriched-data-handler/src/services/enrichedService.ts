@@ -3,13 +3,13 @@ import {
   FileManager,
   WithSQSMessageId,
   logger,
+  parseCSV,
 } from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
 import { ProducerService } from "./producerService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
 import { tracingState } from "pagopa-interop-tracing-models";
-import { parseCSV } from "../utilities/csvHandler.js";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
@@ -44,25 +44,30 @@ export const enrichedServiceBuilder = (
         );
 
         const enrichedDataObject = await fileManager.readObject(s3KeyPath);
-        const enrichedTracingRecords: TracingEnriched[] =
-          await parseCSV(enrichedDataObject);
 
-        if (!enrichedTracingRecords || enrichedTracingRecords.length === 0) {
+        let tracingHasData = false;
+
+        await parseCSV<TracingEnriched>(
+          enrichedDataObject,
+          async (enrichedTracingRecords) => {
+            if (enrichedTracingRecords.length === 0) return;
+
+            tracingHasData = true;
+
+            await dbService.insertToStaging(
+              tracing.tracingId,
+              enrichedTracingRecords,
+            );
+          },
+        );
+
+        if (!tracingHasData) {
           logger(ctx).info(
             `No data in CSV for tracingId: ${tracing.tracingId}. Skipping trace insertion.`,
           );
-          await producerService.sendTracingUpdateStateMessage(
-            {
-              tracingId: tracing.tracingId,
-              version: tracing.version,
-              state: tracingState.completed,
-            },
-            ctx,
-          );
-          return;
         }
 
-        await dbService.ingestTraces(tracing.tracingId, enrichedTracingRecords);
+        await dbService.finalizeMergeToTarget(tracing.tracingId);
 
         await producerService.sendTracingUpdateStateMessage(
           {

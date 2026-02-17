@@ -12,7 +12,10 @@ import {
 } from "pagopa-interop-tracing-models";
 import { config } from "../utilities/config.js";
 
-type EnrichedPurposeResult = (PurposeErrorMessage[] | EnrichedPurpose)[];
+type EnrichedPurposeResult = {
+  enriched: EnrichedPurpose[];
+  errors: PurposeErrorMessage[];
+};
 
 export function dbServiceBuilder(db: DB) {
   return {
@@ -21,115 +24,122 @@ export function dbServiceBuilder(db: DB) {
       tracing: TracingFromS3KeyPathDto,
     ): Promise<EnrichedPurposeResult> {
       try {
-        const fullRecordPromises = records.map(
-          async (record: TracingRecordSchema) => {
-            const consumer = await db.oneOrNone<{
-              name: string;
-              origin: string;
-              external_id: string;
-            }>(
-              `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
-              [tracing.tenantId],
-            );
+        const enriched: EnrichedPurpose[] = [];
+        const errors: PurposeErrorMessage[] = [];
 
-            if (!consumer) {
-              throw new Error(
-                `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
-              );
-            }
-
-            const fullPurpose = await db.oneOrNone<{
-              purpose_title: string;
-              eservice_id: string;
-              consumer_id: string;
-            }>(
-              `SELECT purpose_title, eservice_id, consumer_id FROM ${config.dbSchemaName}.purposes WHERE id = $1`,
-              [record.purpose_id],
-            );
-
-            if (!fullPurpose) {
-              return [
-                {
-                  purposeId: record.purpose_id,
-                  errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
-                  message: `purpose_id: Invalid purpose id ${record.purpose_id}.`,
-                  rowNumber: record.rowNumber,
-                },
-              ];
-            } else {
-              const eService = await db.oneOrNone<EserviceSchema>(
-                `SELECT * FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1`,
-                [fullPurpose.eservice_id],
-              );
-
-              if (!eService) {
-                throw new Error(
-                  `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
-                );
-              }
-
-              const isEserviceOwnedBySubmitter =
-                await db.oneOrNone<EserviceSchema>(
-                  `SELECT 1 FROM ${config.dbSchemaName}.eservices WHERE producer_id = $1 AND eservice_id = $2`,
-                  [tracing.tenantId, eService.eservice_id],
-                );
-
-              const isSubmitterDelegatedForEservice =
-                await db.oneOrNone<DelegationSchema>(
-                  `SELECT 1 FROM ${config.dbSchemaName}.delegations WHERE eservice_id = $1 AND state = $2 AND delegate_id = $3`,
-                  [
-                    eService.eservice_id,
-                    delegationState.active,
-                    tracing.tenantId,
-                  ],
-                );
-
-              const isSubmitterConsumerForPurpose =
-                fullPurpose.consumer_id === tracing.tenantId;
-
-              if (
-                !isEserviceOwnedBySubmitter &&
-                !isSubmitterDelegatedForEservice &&
-                !isSubmitterConsumerForPurpose
-              ) {
-                return [
-                  {
-                    purposeId: record.purpose_id,
-                    errorCode:
-                      PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
-                    message: `purpose_id: Invalid purpose id ${record.purpose_id}.`,
-                    rowNumber: record.rowNumber,
-                  },
-                ];
-              }
-
-              const producer = await db.oneOrNone<{
-                name: string;
-                origin: string;
-                external_id: string;
-              }>(
-                `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
-                [eService.producer_id],
-              );
-              if (!producer) {
-                throw new Error(
-                  `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
-                );
-              }
-
-              return enrichSuccessfulPurpose(
-                record,
-                tracing,
-                eService,
-                fullPurpose,
-                consumer,
-                producer,
-              );
-            }
-          },
+        const consumer = await db.oneOrNone<{
+          name: string;
+          origin: string;
+          external_id: string;
+        }>(
+          `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants 
+            WHERE id = $1`,
+          [tracing.tenantId],
         );
 
-        return await Promise.all(fullRecordPromises);
+        if (!consumer) {
+          throw new Error(
+            `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}.`,
+          );
+        }
+
+        const purposeIds = [...new Set(records.map((r) => r.purpose_id))];
+
+        const purposes = await db.any<{
+          id: string;
+          purpose_title: string;
+          eservice_id: string;
+          consumer_id: string;
+        }>(
+          `SELECT id, purpose_title, eservice_id, consumer_id FROM ${config.dbSchemaName}.purposes 
+            WHERE id = ANY($1::uuid[])`,
+          [purposeIds],
+        );
+
+        const purposesMap = new Map(purposes.map((p) => [p.id, p]));
+
+        const eserviceIds = [...new Set(purposes.map((p) => p.eservice_id))];
+
+        const eservices = await db.any<EserviceSchema>(
+          `SELECT * FROM ${config.dbSchemaName}.eservices 
+            WHERE eservice_id = ANY($1::uuid[])`,
+          [eserviceIds],
+        );
+
+        const eserviceMap = new Map(eservices.map((e) => [e.eservice_id, e]));
+
+        const delegations = await db.any<DelegationSchema>(
+          `SELECT eservice_id FROM ${config.dbSchemaName}.delegations 
+            WHERE state = $1 AND delegate_id = $2`,
+          [delegationState.active, tracing.tenantId],
+        );
+
+        const delegatedSet = new Set(delegations.map((d) => d.eservice_id));
+
+        const producerIds = [...new Set(eservices.map((e) => e.producer_id))];
+
+        const producers = await db.any(
+          `SELECT id, name, origin, external_id FROM ${config.dbSchemaName}.tenants 
+            WHERE id = ANY($1::uuid[])`,
+          [producerIds],
+        );
+
+        const producerMap = new Map(producers.map((p) => [p.id, p]));
+
+        for (const record of records) {
+          const fullPurpose = purposesMap.get(record.purpose_id);
+          if (!fullPurpose) {
+            errors.push({
+              purposeId: record.purpose_id,
+              errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
+              message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
+              rowNumber: record.rowNumber,
+            });
+            continue;
+          }
+
+          const eService = eserviceMap.get(fullPurpose.eservice_id);
+          if (!eService) {
+            continue;
+          }
+
+          const isEserviceOwnedBySubmitter =
+            eService.producer_id === tracing.tenantId;
+          const isSubmitterDelegatedForEservice = delegatedSet.has(
+            eService.eservice_id,
+          );
+          const isSubmitterConsumerForPurpose =
+            fullPurpose.consumer_id === tracing.tenantId;
+
+          if (
+            !isEserviceOwnedBySubmitter &&
+            !isSubmitterDelegatedForEservice &&
+            !isSubmitterConsumerForPurpose
+          ) {
+            errors.push({
+              purposeId: record.purpose_id,
+              errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+              message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
+              rowNumber: record.rowNumber,
+            });
+            continue;
+          }
+
+          const producer = producerMap.get(eService.producer_id);
+
+          enriched.push(
+            enrichSuccessfulPurpose(
+              record,
+              tracing,
+              eService,
+              fullPurpose,
+              consumer,
+              producer,
+            ),
+          );
+        }
+
+        return { enriched, errors };
       } catch (error: unknown) {
         throw getEnrichedPurposeError(`${error}`);
       }
