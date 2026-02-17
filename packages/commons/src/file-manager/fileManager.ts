@@ -27,7 +27,7 @@ export const fileManagerBuilder = (
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameWriteError(
-            "Bucket S3 name is required for write operation.",
+            "Bucket S3 name is required for write object operation.",
           );
         }
         const putObjectParams = {
@@ -80,7 +80,7 @@ export const fileManagerBuilder = (
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameWriteError(
-            "Bucket S3 name is required for write operation.",
+            "Bucket S3 name is required for write stream operation.",
           );
         }
         const upload = new Upload({
@@ -95,7 +95,7 @@ export const fileManagerBuilder = (
 
         await upload.done();
       } catch (error: unknown) {
-        throw fileManagerWriteError(`Error writing object to S3: ${error}`);
+        throw fileManagerWriteError(`Error writing stream to S3: ${error}`);
       }
     },
 
