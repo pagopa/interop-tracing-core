@@ -81,6 +81,12 @@ export const enrichedServiceBuilder = (
         throw insertEnrichedTraceError(
           `Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,
         );
+      } finally {
+        try {
+          await dbService.cleanStaging();
+        } catch (cleanupError) {
+          logger(ctx).error(`Error during staging cleanup: ${cleanupError}`);
+        }
       }
     },
   };

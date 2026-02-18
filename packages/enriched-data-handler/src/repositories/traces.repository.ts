@@ -51,8 +51,8 @@ export function tracesRepository(db: DBContext) {
       await tx.none(mergeQuery);
     },
 
-    async cleanStaging(tx: ITask<unknown>) {
-      await tx.none(`TRUNCATE TABLE ${stagingTableName};`);
+    async cleanStaging(conn: DBConnection) {
+      await conn.none(`TRUNCATE TABLE ${stagingTableName};`);
     },
   };
 }

@@ -20,10 +20,17 @@ export function dbServiceBuilder(db: DBContext) {
         await db.conn.tx(async (t) => {
           await repository.deleteOldTracesFromTarget(t, tracingId);
           await repository.mergeTracesToTarget(t);
-          await repository.cleanStaging(t);
         });
       } catch (error: unknown) {
         throw dbServiceErrorMapper("finalizeMergeToTarget", error);
+      }
+    },
+
+    async cleanStaging() {
+      try {
+        await repository.cleanStaging(db.conn);
+      } catch (error: unknown) {
+        throw dbServiceErrorMapper("cleanStaging", error);
       }
     },
   };
