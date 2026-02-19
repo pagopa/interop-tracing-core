@@ -131,7 +131,7 @@ export const processingServiceBuilder = (
 
             if (errors.length > 0) {
               tracingHasErrors = true;
-              return await handlePurposeErrors(
+              return await sendPurposeErrors(
                 errors,
                 tracing,
                 producerService,
@@ -146,6 +146,10 @@ export const processingServiceBuilder = (
         );
 
         if (tracingHasErrors) {
+          logger(ctx).info(
+            `UpdateTracingState message sent on queue for tracingId: ${tracing.tracingId} with state ERROR.`,
+          );
+
           await producerService.sendErrorMessage(
             {
               tracingId: tracing.tracingId,
@@ -217,23 +221,6 @@ export async function processEnrichmentChunk(
   };
 }
 
-export async function handlePurposeErrors(
-  errors: PurposeErrorMessage[],
-  tracing: TracingFromS3KeyPathDto,
-  producerService: ProducerService,
-  ctx: WithSQSMessageId<AppContext>,
-): Promise<void> {
-  logger(ctx).info(
-    `${errors.length} purpose errors found, for tracingId: ${tracing.tracingId}, sending error messages`,
-  );
-
-  await sendPurposeErrors(errors, tracing, producerService, ctx);
-
-  logger(ctx).info(
-    `Purpose errors messages sent, for tracingId: ${tracing.tracingId}`,
-  );
-}
-
 async function sendPurposeErrors(
   purposeErrors: PurposeErrorMessage[],
   tracing: TracingFromS3KeyPathDto,
@@ -265,7 +252,7 @@ async function sendPurposeErrors(
   }
 
   logger(ctx).info(
-    `PurposeError messages sent on queue for tracingId: ${tracing.tracingId}.`,
+    `Sent ${purposeErrors.length} PurposeError messages to the queue for tracingId: ${tracing.tracingId}.`,
   );
 }
 
