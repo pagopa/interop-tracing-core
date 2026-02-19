@@ -146,10 +146,6 @@ export const processingServiceBuilder = (
         );
 
         if (tracingHasErrors) {
-          logger(ctx).info(
-            `UpdateTracingState message sent on queue for tracingId: ${tracing.tracingId} with state ERROR.`,
-          );
-
           await producerService.sendErrorMessage(
             {
               tracingId: tracing.tracingId,
@@ -162,6 +158,10 @@ export const processingServiceBuilder = (
             },
             ctx,
           );
+
+          logger(ctx).info(
+            `UpdateTracingState message sent on queue for tracingId: ${tracing.tracingId} with state ERROR.`,
+          );
         } else {
           const uploadTracingCsv = fileManager.writeStream(
             tracingCsv.getStream(),
@@ -173,6 +173,10 @@ export const processingServiceBuilder = (
           tracingCsv.close();
 
           await uploadTracingCsv;
+
+          logger(ctx).info(
+            `Tracing CSV uploaded successfully for tracingId: ${tracing.tracingId} to bucket ${config.bucketEnrichedS3Name}`,
+          );
         }
       } catch (error: unknown) {
         throw processTracingError(
