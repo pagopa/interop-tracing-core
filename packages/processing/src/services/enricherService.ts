@@ -4,6 +4,8 @@ import {
   TracingRecordSchema,
   EserviceSchema,
   DelegationSchema,
+  TenantSchema,
+  PurposeSchema,
 } from "../models/db.js";
 import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
 import {
@@ -27,11 +29,9 @@ export function dbServiceBuilder(db: DB) {
         const enriched: EnrichedPurpose[] = [];
         const errors: PurposeErrorMessage[] = [];
 
-        const consumer = await db.oneOrNone<{
-          name: string;
-          origin: string;
-          external_id: string;
-        }>(
+        const consumer = await db.oneOrNone<
+          Pick<TenantSchema, "name" | "origin" | "external_id">
+        >(
           `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants 
             WHERE id = $1`,
           [tracing.tenantId],
@@ -45,12 +45,12 @@ export function dbServiceBuilder(db: DB) {
 
         const purposeIds = [...new Set(records.map((r) => r.purpose_id))];
 
-        const purposes = await db.any<{
-          id: string;
-          purpose_title: string;
-          eservice_id: string;
-          consumer_id: string;
-        }>(
+        const purposes = await db.any<
+          Pick<
+            PurposeSchema,
+            "id" | "purpose_title" | "eservice_id" | "consumer_id"
+          >
+        >(
           `SELECT id, purpose_title, eservice_id, consumer_id FROM ${config.dbSchemaName}.purposes 
             WHERE id = ANY($1::uuid[])`,
           [purposeIds],
@@ -78,7 +78,9 @@ export function dbServiceBuilder(db: DB) {
 
         const producerIds = [...new Set(eservices.map((e) => e.producer_id))];
 
-        const producers = await db.any(
+        const producers = await db.any<
+          Pick<TenantSchema, "id" | "name" | "origin" | "external_id">
+        >(
           `SELECT id, name, origin, external_id FROM ${config.dbSchemaName}.tenants 
             WHERE id = ANY($1::uuid[])`,
           [producerIds],
@@ -100,7 +102,9 @@ export function dbServiceBuilder(db: DB) {
 
           const eService = eserviceMap.get(fullPurpose.eservice_id);
           if (!eService) {
-            continue;
+            throw new Error(
+              `Eservice ${fullPurpose.eservice_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+            );
           }
 
           const isEserviceOwnedBySubmitter =
@@ -126,6 +130,11 @@ export function dbServiceBuilder(db: DB) {
           }
 
           const producer = producerMap.get(eService.producer_id);
+          if (!producer) {
+            throw new Error(
+              `Producer ${eService.producer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+            );
+          }
 
           enriched.push(
             enrichSuccessfulPurpose(
@@ -151,13 +160,12 @@ function enrichSuccessfulPurpose(
   record: TracingRecordSchema,
   tracing: TracingFromS3KeyPathDto,
   eService: EserviceSchema,
-  fullPurpose: {
-    purpose_title: string;
-    eservice_id: string;
-    consumer_id: string;
-  },
-  tenant: { name: string; origin: string; external_id: string },
-  producer: { name: string; origin: string; external_id: string },
+  fullPurpose: Pick<
+    PurposeSchema,
+    "id" | "purpose_title" | "eservice_id" | "consumer_id"
+  >,
+  tenant: Pick<TenantSchema, "name" | "origin" | "external_id">,
+  producer: Pick<TenantSchema, "id" | "name" | "origin" | "external_id">,
 ): EnrichedPurpose {
   return {
     ...record,
