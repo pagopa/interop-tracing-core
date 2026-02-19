@@ -30,6 +30,8 @@ export const processingServiceBuilder = (
       tracing: TracingFromS3KeyPathDto,
       ctx: WithSQSMessageId<AppContext>,
     ) {
+      const tracingCsv = new CsvWriter(tracing.tenantId);
+
       try {
         logger(ctx).info(
           `Reading and processing file for tracingId: ${tracing.tracingId}`,
@@ -48,8 +50,6 @@ export const processingServiceBuilder = (
         let tracingHasErrors = false;
         let headersChecked = false;
         let tracingRowNumber = 0;
-
-        const tracingCsv = new CsvWriter(tracing.tenantId);
 
         await parseCSV<TracingRecordSchema>(
           enrichedDataObject,
@@ -143,7 +143,20 @@ export const processingServiceBuilder = (
           },
         );
 
-        if (!tracingHasErrors) {
+        if (tracingHasErrors) {
+          await producerService.sendErrorMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              errorCode: "",
+              purposeId: "",
+              message: "Tracing processed with errors",
+              rowNumber: 0,
+              updateTracingState: true,
+            },
+            ctx,
+          );
+        } else {
           const uploadTracingCsv = fileManager.writeStream(
             tracingCsv.getStream(),
             "text/csv",
@@ -159,6 +172,9 @@ export const processingServiceBuilder = (
         throw processTracingError(
           `Error processing tracing for tracingId: ${tracing.tracingId}. Details: ${error}`,
         );
+      } finally {
+        // Ensure the CSV stream is always closed even if errors occurred or the upload was skipped due errors
+        tracingCsv.close();
       }
     },
   };
@@ -228,8 +244,7 @@ async function sendPurposeErrors(
   for (let i = 0; i < sortedErrors.length; i += BATCH_SIZE) {
     const batch = sortedErrors.slice(i, i + BATCH_SIZE);
 
-    const promises = batch.map((record, index) => {
-      const globalIndex = i + index;
+    const promises = batch.map((record) => {
       return producerService.sendErrorMessage(
         {
           tracingId: tracing.tracingId,
@@ -238,7 +253,7 @@ async function sendPurposeErrors(
           purposeId: record.purposeId,
           message: record.message,
           rowNumber: record.rowNumber,
-          updateTracingState: globalIndex === sortedErrors.length - 1,
+          updateTracingState: false,
         },
         ctx,
       );
