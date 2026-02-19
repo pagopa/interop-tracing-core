@@ -65,6 +65,7 @@ export const processingServiceBuilder = (
                 actualHeaders.every((h, i) => h === sortedExpectedHeaders[i]);
 
               if (!headersMatch) {
+                tracingHasErrors = true;
                 const expectedStr = sortedExpectedHeaders.join(",");
                 const actualStr = actualHeaders.join(",");
                 const headerError: PurposeErrorMessage = {
@@ -89,6 +90,7 @@ export const processingServiceBuilder = (
               );
 
               if (hasSemiColonSeparator) {
+                tracingHasErrors = true;
                 const delimiterError: PurposeErrorMessage = {
                   rowNumber: 0,
                   purposeId: "",
