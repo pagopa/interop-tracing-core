@@ -4,7 +4,7 @@ import { EnrichedPurpose } from "../models/csv.js";
 export class CsvWriter {
   private readonly csvStream = new PassThrough();
   private recordsCount = 0;
-  private readonly tenantId: string;
+  private readonly submitterId: string;
 
   private readonly columns = [
     "tracingId",
@@ -26,8 +26,8 @@ export class CsvWriter {
     "producerExternalId",
   ];
 
-  constructor(tenantId: string) {
-    this.tenantId = tenantId;
+  constructor(submitterId: string) {
+    this.submitterId = submitterId;
     this.csvStream.write(this.columns.join(",") + "\n");
   }
 
@@ -35,7 +35,7 @@ export class CsvWriter {
     for (const record of records) {
       const row = [
         record.tracingId,
-        this.tenantId,
+        this.submitterId,
         record.date,
         record.purposeId,
         record.purposeName,
