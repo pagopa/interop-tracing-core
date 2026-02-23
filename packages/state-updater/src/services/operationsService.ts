@@ -66,7 +66,7 @@ export const operationsServiceBuilder = (
         );
 
         logger(ctx).info(
-          `Saving purpose error with purposeId ${data.purposeId} rowNumber ${data.rowNumber} for tracingId: ${data.tracingId}, version: ${data.version}`,
+          `Saving purpose error with purposeId "${data.purposeId}" rowNumber ${data.rowNumber} for tracingId: ${data.tracingId}, version: ${data.version}`,
         );
       } catch (error: unknown) {
         throw errorProcessingSavePurposeError(

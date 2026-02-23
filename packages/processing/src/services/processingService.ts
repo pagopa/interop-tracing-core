@@ -1,14 +1,4 @@
-import {
-  TracingFromS3KeyPathDto,
-  genericInternalError,
-} from "pagopa-interop-tracing-models";
-
-import {
-  expectedHeaders,
-  generateCSV,
-  getPurposeError,
-  parseCSV,
-} from "../utilities/csvHandler.js";
+import { TracingFromS3KeyPathDto } from "pagopa-interop-tracing-models";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
 import {
@@ -17,16 +7,18 @@ import {
   PurposeErrorCodes,
   WithSQSMessageId,
   logger,
+  parseCSV,
 } from "pagopa-interop-tracing-commons";
 import { TracingRecordSchema } from "../models/db.js";
 import {
-  EnrichedPurposeArray,
+  EnrichedPurpose,
+  expectedInputCSVHeaders,
   PurposeErrorMessage,
-  PurposeErrorMessageArray,
 } from "../models/csv.js";
 import { processTracingError } from "../models/errors.js";
 import { config } from "../utilities/config.js";
 import { checkRecords } from "../utilities/checkCSVFormalErrors.js";
+import { CsvWriter } from "../utilities/csvWriter.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -38,6 +30,8 @@ export const processingServiceBuilder = (
       tracing: TracingFromS3KeyPathDto,
       ctx: WithSQSMessageId<AppContext>,
     ) {
+      const tracingCsv = new CsvWriter(tracing.tenantId);
+
       try {
         logger(ctx).info(
           `Reading and processing file for tracingId: ${tracing.tracingId}`,
@@ -50,89 +44,162 @@ export const processingServiceBuilder = (
           tracing.version,
           tracing.correlationId,
         );
+
         const enrichedDataObject = await fileManager.readObject(bucketS3Key);
-        const csvData: TracingRecordSchema[] =
-          await parseCSV(enrichedDataObject);
-        const tracingRecords = csvData.map((csv, index) => {
-          return { ...csv, rowNumber: index + 1 };
-        });
-        if (!tracingRecords || tracingRecords.length === 0) {
-          const csvData = generateCSV([], tracing.tenantId);
-          const input = Buffer.from(csvData);
-          await fileManager.writeObject(
-            input,
+
+        let tracingHasErrors = false;
+        let headersChecked = false;
+        let tracingRowNumber = 0;
+
+        await parseCSV<TracingRecordSchema>(
+          enrichedDataObject,
+          async (tracingRecords, stopProcess) => {
+            if (tracingRecords.length === 0) return;
+
+            if (!headersChecked) {
+              const actualHeaders = Object.keys(tracingRecords[0]).sort();
+              const sortedExpectedHeaders = [...expectedInputCSVHeaders].sort();
+
+              const headersMatch =
+                actualHeaders.length === sortedExpectedHeaders.length &&
+                actualHeaders.every((h, i) => h === sortedExpectedHeaders[i]);
+
+              if (!headersMatch) {
+                tracingHasErrors = true;
+                const expectedStr = sortedExpectedHeaders.join(",");
+                const actualStr = actualHeaders.join(",");
+                const headerError: PurposeErrorMessage = {
+                  rowNumber: 0,
+                  purposeId: "",
+                  errorCode: PurposeErrorCodes.INVALID_CSV_HEADERS,
+                  message: `CSV headers invalid. Expected [${expectedStr}] but got [${actualStr}]`,
+                };
+
+                await sendPurposeErrors(
+                  [headerError],
+                  tracing,
+                  producerService,
+                  ctx,
+                );
+
+                return stopProcess();
+              }
+
+              const hasSemiColonSeparator = tracingRecords.some((trace) =>
+                Object.keys(trace).some((k) => k.includes(";")),
+              );
+
+              if (hasSemiColonSeparator) {
+                tracingHasErrors = true;
+                const delimiterError: PurposeErrorMessage = {
+                  rowNumber: 0,
+                  purposeId: "",
+                  errorCode: PurposeErrorCodes.INVALID_DELIMITER,
+                  message: `Invalid delimiter found on csv`,
+                };
+
+                await sendPurposeErrors(
+                  [delimiterError],
+                  tracing,
+                  producerService,
+                  ctx,
+                );
+
+                return stopProcess();
+              }
+
+              headersChecked = true;
+            }
+
+            tracingRecords.forEach((row) => {
+              tracingRowNumber++;
+              row.rowNumber = tracingRowNumber;
+            });
+
+            const formalErrorsRecords = await checkRecords(
+              tracingRecords,
+              tracing,
+            );
+
+            const { enrichedRows, errors } = await processEnrichmentChunk(
+              dbService,
+              tracingRecords,
+              tracing,
+              formalErrorsRecords,
+              ctx,
+            );
+
+            if (errors.length > 0) {
+              tracingHasErrors = true;
+              return await sendPurposeErrors(
+                errors,
+                tracing,
+                producerService,
+                ctx,
+              );
+            }
+
+            if (enrichedRows.length > 0) {
+              tracingCsv.writeBatch(enrichedRows);
+            }
+          },
+        );
+
+        if (tracingHasErrors) {
+          await producerService.sendErrorMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              errorCode: "",
+              purposeId: "",
+              message: "Tracing processed with errors",
+              rowNumber: 0,
+              updateTracingState: true,
+            },
+            ctx,
+          );
+
+          logger(ctx).info(
+            `UpdateTracingState message sent on queue for tracingId: ${tracing.tracingId} with state ERROR.`,
+          );
+        } else {
+          const uploadTracingCsv = fileManager.writeStream(
+            tracingCsv.getStream(),
             "text/csv",
             bucketS3Key,
             config.bucketEnrichedS3Name,
           );
-          return;
-        }
 
-        const actualHeaders = Object.keys(tracingRecords[0]);
-        if (expectedHeaders.join(",") !== actualHeaders.sort().join(",")) {
-          const errorMessage = `CSV headers invalid. Expected [${expectedHeaders.join(
-            ",",
-          )}] but got [${actualHeaders.join(",")}]`;
+          tracingCsv.close();
 
-          const headerError = getPurposeError(
-            tracing,
-            PurposeErrorCodes.INVALID_CSV_HEADERS,
-            errorMessage,
+          await uploadTracingCsv;
+
+          logger(ctx).info(
+            `Tracing CSV uploaded successfully for tracingId: ${tracing.tracingId} to bucket ${config.bucketEnrichedS3Name}`,
           );
-          await sendPurposeErrors([headerError], tracing, producerService, ctx);
-          return;
         }
-
-        const hasSemiColonSeparator = tracingRecords.some((trace) => {
-          return JSON.stringify(Object.keys(trace)).includes(";");
-        });
-
-        if (hasSemiColonSeparator) {
-          const delimiterError = getPurposeError(
-            tracing,
-            PurposeErrorCodes.INVALID_DELIMITER,
-            `Invalid delimiter found on csv`,
-          );
-          await sendPurposeErrors(
-            [delimiterError],
-            tracing,
-            producerService,
-            ctx,
-          );
-          return;
-        }
-        const formalErrorsRecords = await checkRecords(tracingRecords, tracing);
-
-        await writeEnrichedTracingOrSendPurposeErrors(
-          fileManager,
-          producerService,
-          dbService,
-          tracingRecords,
-          bucketS3Key,
-          tracing,
-          formalErrorsRecords,
-          ctx,
-        );
       } catch (error: unknown) {
         throw processTracingError(
           `Error processing tracing for tracingId: ${tracing.tracingId}. Details: ${error}`,
         );
+      } finally {
+        // Ensure the CSV stream is always closed even if errors occurred or the upload was skipped due errors
+        tracingCsv.close();
       }
     },
   };
 };
 
-export async function writeEnrichedTracingOrSendPurposeErrors(
-  fileManager: FileManager,
-  producerService: ProducerService,
+export async function processEnrichmentChunk(
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
-  bucketS3Key: string,
   tracing: TracingFromS3KeyPathDto,
   formalErrors: PurposeErrorMessage[],
   ctx: WithSQSMessageId<AppContext>,
-) {
-  let enrichedPurposes = [];
+): Promise<{
+  enrichedRows: EnrichedPurpose[];
+  errors: PurposeErrorMessage[];
+}> {
   const invalidRows = new Set(
     formalErrors
       .filter((error) => error.errorCode === PurposeErrorCodes.INVALID_PURPOSE)
@@ -142,50 +209,20 @@ export async function writeEnrichedTracingOrSendPurposeErrors(
   const validRecords = tracingRecords.filter(
     (record) => !invalidRows.has(record.rowNumber),
   );
+
   logger(ctx).info(
     `Get enriched purposes, for tracingId: ${tracing.tracingId}`,
   );
-  enrichedPurposes = await dbService.getEnrichedPurpose(validRecords, tracing);
 
-  const purposeErrors: PurposeErrorMessageArray = formalErrors;
+  const { enriched, errors } = await dbService.getEnrichedPurpose(
+    validRecords,
+    tracing,
+  );
 
-  enrichedPurposes.forEach((item) => {
-    const purposeError = PurposeErrorMessageArray.safeParse(item).data;
-    if (purposeError) {
-      purposeErrors.push(...purposeError);
-    }
-  });
-
-  if (purposeErrors && purposeErrors.length > 0) {
-    logger(ctx).info(
-      `${purposeErrors.length} purpose errors found, for tracingId: ${tracing.tracingId}, sending error messages`,
-    );
-    await sendPurposeErrors(purposeErrors, tracing, producerService, ctx);
-    logger(ctx).info(
-      `Purpose errors messages sent, for tracingId: ${tracing.tracingId}`,
-    );
-  } else {
-    const purposeEnriched = EnrichedPurposeArray.safeParse(enrichedPurposes);
-
-    if (purposeEnriched.error) {
-      throw genericInternalError(
-        `Error processing enriched purpose ${purposeEnriched.error.message}`,
-      );
-    }
-
-    if (purposeEnriched.data) {
-      logger(ctx).info(`Inserting enriched CSV on path: ${bucketS3Key}`);
-      const csvData = generateCSV(purposeEnriched.data, tracing.tenantId);
-      const input = Buffer.from(csvData);
-      await fileManager.writeObject(
-        input,
-        "text/csv",
-        bucketS3Key,
-        config.bucketEnrichedS3Name,
-      );
-      logger(ctx).info(`Finish inserting enriched CSV on path: ${bucketS3Key}`);
-    }
-  }
+  return {
+    enrichedRows: enriched,
+    errors: [...formalErrors, ...errors],
+  };
 }
 
 async function sendPurposeErrors(
@@ -200,8 +237,7 @@ async function sendPurposeErrors(
   for (let i = 0; i < sortedErrors.length; i += BATCH_SIZE) {
     const batch = sortedErrors.slice(i, i + BATCH_SIZE);
 
-    const promises = batch.map((record, index) => {
-      const globalIndex = i + index;
+    const promises = batch.map((record) => {
       return producerService.sendErrorMessage(
         {
           tracingId: tracing.tracingId,
@@ -210,7 +246,7 @@ async function sendPurposeErrors(
           purposeId: record.purposeId,
           message: record.message,
           rowNumber: record.rowNumber,
-          updateTracingState: globalIndex === sortedErrors.length - 1,
+          updateTracingState: false,
         },
         ctx,
       );
@@ -220,7 +256,7 @@ async function sendPurposeErrors(
   }
 
   logger(ctx).info(
-    `PurposeError messages sent on queue for tracingId: ${tracing.tracingId}.`,
+    `Sent ${purposeErrors.length} PurposeError messages to the queue for tracingId: ${tracing.tracingId}.`,
   );
 }
 

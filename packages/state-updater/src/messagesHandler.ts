@@ -65,8 +65,6 @@ export function processPurposeErrorMessage(
 
     try {
       const purposeError = decodeSQSPurposeErrorMessage(message);
-      await service.savePurposeError(purposeError, ctx);
-
       if (purposeError.updateTracingState) {
         await service.updateTracingState(
           {
@@ -76,6 +74,8 @@ export function processPurposeErrorMessage(
           },
           ctx,
         );
+      } else {
+        await service.savePurposeError(purposeError, ctx);
       }
     } catch (error: unknown) {
       throw errorMapper(

@@ -10,13 +10,13 @@ export const TracingEnriched = z.object({
   requestsCount: z.string(),
   eserviceId: z.string(),
   consumerId: z.string(),
-  consumerOrigin: z.string(),
-  consumerName: z.string(),
-  consumerExternalId: z.string(),
+  consumerOrigin: z.string().optional(),
+  consumerName: z.string().optional(),
+  consumerExternalId: z.string().optional(),
   producerId: z.string(),
-  producerName: z.string(),
-  producerOrigin: z.string(),
-  producerExternalId: z.string(),
+  producerName: z.string().optional(),
+  producerOrigin: z.string().optional(),
+  producerExternalId: z.string().optional(),
 });
 
 export type TracingEnriched = z.infer<typeof TracingEnriched>;

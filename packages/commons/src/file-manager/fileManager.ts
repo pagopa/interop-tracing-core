@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import {
   fileManagerBucketS3NameReadError,
   fileManagerBucketS3NameWriteError,
@@ -26,7 +27,7 @@ export const fileManagerBuilder = (
       try {
         if (!bucketS3Name) {
           throw fileManagerBucketS3NameWriteError(
-            "Bucket S3 name is required for write operation.",
+            "Bucket S3 name is required for write object operation.",
           );
         }
         const putObjectParams = {
@@ -67,6 +68,34 @@ export const fileManagerBuilder = (
         return s3Object.Body as Readable;
       } catch (error: unknown) {
         throw fileManagerReadError(`Failed to read object: ${error}`);
+      }
+    },
+
+    async writeStream(
+      data: Readable,
+      contentType: string,
+      bucketS3Key: string,
+      bucketEnrichedS3Name?: string,
+    ): Promise<void> {
+      try {
+        if (!bucketS3Name) {
+          throw fileManagerBucketS3NameWriteError(
+            "Bucket S3 name is required for write stream operation.",
+          );
+        }
+        const upload = new Upload({
+          client: s3Client,
+          params: {
+            Bucket: bucketEnrichedS3Name ?? bucketS3Name,
+            Key: bucketS3Key,
+            Body: data,
+            ContentType: contentType,
+          },
+        });
+
+        await upload.done();
+      } catch (error: unknown) {
+        throw fileManagerWriteError(`Error writing stream to S3: ${error}`);
       }
     },
 
