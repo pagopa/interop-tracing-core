@@ -8,5 +8,6 @@ export * from "./router/zodiosValidationErrorHandler.js";
 export * from "./sqs/index.js";
 export * from "./constants/index.js";
 export * from "./utils/date.js";
+export * from "./utils/csvHandler.js";
 export * from "./auth/index.js";
 export * from "./file-manager/index.js";
