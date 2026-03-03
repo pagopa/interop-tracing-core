@@ -39,6 +39,23 @@ export const DelegationSchema = z.object({
   state: DelegationState,
 });
 
+export const TenantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().optional(),
+  origin: z.string().optional(),
+  external_id: z.string().optional(),
+  deleted: z.boolean(),
+});
+
+export const PurposeSchema = z.object({
+  id: z.string().uuid(),
+  consumer_id: z.string().uuid(),
+  eservice_id: z.string().uuid(),
+  purpose_title: z.string(),
+});
+
 export type TracingRecordSchema = z.infer<typeof TracingRecordSchema>;
 export type EserviceSchema = z.infer<typeof EserviceSchema>;
 export type DelegationSchema = z.infer<typeof DelegationSchema>;
+export type TenantSchema = z.infer<typeof TenantSchema>;
+export type PurposeSchema = z.infer<typeof PurposeSchema>;

@@ -38,7 +38,7 @@ describe("Consumer processing error queue test", () => {
     vi.restoreAllMocks();
   });
 
-  it("given valid message, method should call savePurposeError", async () => {
+  it("given valid message with updateTracingState=false, method should call savePurposeError only", async () => {
     const validMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
@@ -61,10 +61,12 @@ describe("Consumer processing error queue test", () => {
       decodeSQSPurposeErrorMessage(validMessage),
       ctx,
     );
+
+    expect(mockOperationsService.updateTracingState).not.toHaveBeenCalled();
   });
 
-  it("given valid message, method should call savePurposeError and updateTracingState", async () => {
-    const purposeErrorWithTracingUpdateState: SQS.Message = {
+  it("given valid message with updateTracingState=true, should call updateTracingState only", async () => {
+    const message: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
       Body: JSON.stringify(
@@ -73,18 +75,15 @@ describe("Consumer processing error queue test", () => {
       MessageAttributes: correlationIdMessageAttribute,
     };
 
-    const attributes = decodeSQSMessageCorrelationId(
-      purposeErrorWithTracingUpdateState,
-    );
+    const attributes = decodeSQSMessageCorrelationId(message);
+
     const ctx: WithSQSMessageId<AppContext> = {
       serviceName: config.applicationName,
       correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
-      messageId: purposeErrorWithTracingUpdateState.MessageId,
+      messageId: message.MessageId,
     };
 
-    const purposeErrorPayload = decodeSQSPurposeErrorMessage(
-      purposeErrorWithTracingUpdateState,
-    );
+    const purposeErrorPayload = decodeSQSPurposeErrorMessage(message);
 
     const updateTracingStatePayload: UpdateTracingStateDto = {
       tracingId: purposeErrorPayload.tracingId,
@@ -92,25 +91,14 @@ describe("Consumer processing error queue test", () => {
       state: tracingState.error,
     };
 
-    await processPurposeErrorMessage(mockOperationsService)(
-      purposeErrorWithTracingUpdateState,
-    );
-
-    expect(mockOperationsService.savePurposeError).toHaveBeenCalledWith(
-      purposeErrorPayload,
-      ctx,
-    );
+    await processPurposeErrorMessage(mockOperationsService)(message);
 
     expect(mockOperationsService.updateTracingState).toHaveBeenCalledWith(
       updateTracingStatePayload,
       ctx,
     );
 
-    expect(async () => {
-      await processPurposeErrorMessage(mockOperationsService)(
-        purposeErrorWithTracingUpdateState,
-      );
-    }).not.toThrowError();
+    expect(mockOperationsService.savePurposeError).not.toHaveBeenCalled();
   });
 
   it("given invalid message, method should throw an error", async () => {

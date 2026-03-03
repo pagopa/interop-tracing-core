@@ -6,13 +6,15 @@ type WhitelistedEvent =
   | "ObjectCreated"
   | "ObjectCreated:Put"
   | "ObjectCreated:Post"
-  | "ObjectCreated:Copy";
+  | "ObjectCreated:Copy"
+  | "ObjectCreated:CompleteMultipartUpload";
 
 const validEvents: WhitelistedEvent[] = [
   "ObjectCreated",
   "ObjectCreated:Put",
   "ObjectCreated:Post",
   "ObjectCreated:Copy",
+  "ObjectCreated:CompleteMultipartUpload",
 ];
 
 type EventValidation = "ValidEvent" | "InvalidEvent";
