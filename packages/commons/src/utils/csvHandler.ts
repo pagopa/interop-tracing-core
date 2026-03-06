@@ -30,8 +30,6 @@ export async function parseCSV<T>(
     if (!isProcessStopped && chunk.length > 0) {
       await onChunk(chunk, stopProcessing);
     }
-  } catch (err) {
-    throw err;
   } finally {
     parser.destroy();
   }
