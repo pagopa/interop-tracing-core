@@ -1,6 +1,5 @@
 import csv from "csv-parser";
 import { Readable } from "stream";
-
 export async function parseCSV<T>(
   stream: Readable,
   onChunk: (rows: T[], stopProcessing: () => void) => Promise<void>,
@@ -13,7 +12,6 @@ export async function parseCSV<T>(
 
   const stopProcessing = () => {
     isProcessStopped = true;
-    parser.destroy();
   };
 
   try {
@@ -24,6 +22,7 @@ export async function parseCSV<T>(
 
       if (chunk.length >= CHUNK_SIZE) {
         await onChunk(chunk, stopProcessing);
+        if (isProcessStopped) break;
         chunk = [];
       }
     }
@@ -32,7 +31,8 @@ export async function parseCSV<T>(
       await onChunk(chunk, stopProcessing);
     }
   } catch (err) {
-    parser.destroy();
     throw err;
+  } finally {
+    parser.destroy();
   }
 }
