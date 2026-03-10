@@ -45,7 +45,6 @@ export function tracesRepository(db: DBContext) {
       const mergeQuery = generateMergeQuery(
         TracingEnrichedSchema,
         config.dbSchemaName,
-        ["tracingId"],
         targetTableName,
       );
       await tx.none(mergeQuery);

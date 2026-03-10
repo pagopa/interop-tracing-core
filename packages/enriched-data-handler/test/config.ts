@@ -3,7 +3,7 @@ import { resolve } from "path";
 import { GenericContainer } from "testcontainers";
 
 export const TEST_POSTGRES_DB_PORT = 5432;
-export const TEST_POSTGRES_DB_IMAGE = "postgres:15";
+export const TEST_POSTGRES_DB_IMAGE = "postgres:14";
 
 export const postgreSQLContainer = (config: DbConfig): GenericContainer => {
   return new GenericContainer(TEST_POSTGRES_DB_IMAGE)
