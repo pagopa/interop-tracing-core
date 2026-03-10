@@ -1,7 +1,6 @@
 version: "3"
 name: pagopa-interop-tracing
 services:
-  
   postgres:
     volumes:
       - ../packages/operations/test/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
