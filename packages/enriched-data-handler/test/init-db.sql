@@ -11,3 +11,6 @@ CREATE TABLE tracing.traces (
     requests_count INTEGER,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- PostgreSQL only
+CREATE INDEX IF NOT EXISTS idx_tracing_traces_tracing_id ON tracing.traces (tracing_id);
