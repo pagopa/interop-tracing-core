@@ -4,53 +4,30 @@ import { ColumnSet, IColumnDescriptor, IMain, ITask } from "pg-promise";
 import { config } from "./config.js";
 
 /**
- * Generates a MERGE SQL query for efficient upsert operations.
- * This query handles both inserting new records and updating existing ones
- * based on a specified ON condition.
+ * Generates an INSERT query that inserts new records from a staging table
+ * into the target table.
  *
- * @template T - The Zod object schema shape defining the table structure.
- * @param tableSchema - A Zod object schema representing the structure of the data.
- * @param schemaName - The database schema name where the target table resides.
- * @param tableName - The name of the target table for the MERGE operation.
- * @param keysOn - An array of column keys used in the ON condition to identify matching rows.
- * @returns The generated MERGE SQL query string.
+ * @param tableSchema - A Zod object schema refering to the table model from which to extract the list of keys.
+ * @param schemaName - The target db schema name.
+ * @param tableName - The staging and target table name.
  */
 export function generateMergeQuery<T extends z.ZodRawShape>(
   tableSchema: z.ZodObject<T>,
   schemaName: string,
-  keysOn: Array<keyof T>,
   tableName: string,
 ): string {
   const keys = Object.keys(tableSchema.shape);
+
   const stagingTableName = `${tableName}_${config.mergeTableSuffix}`;
+  const targetTableName = `${schemaName}.${tableName}`;
 
-  const updateSet = keys
-    .map((k) => `${toSnakeCase(String(k))} = source.${toSnakeCase(String(k))}`)
-    .join(",\n    ");
-
-  const columns = keys.map((k) => toSnakeCase(String(k))).join(", ");
-  const values = keys.map((k) => `source.${toSnakeCase(String(k))}`).join(", ");
-
-  const onCondition = keysOn
-    .map(
-      (key) =>
-        `${schemaName}.${tableName}.${toSnakeCase(
-          String(key),
-        )} = source.${toSnakeCase(String(key))}`,
-    )
-    .join(" AND ");
+  const columnList = keys.map((k) => toSnakeCase(String(k))).join(", ");
 
   return `
-        MERGE INTO ${schemaName}.${tableName}
-        USING ${stagingTableName} AS source
-        ON ${onCondition}
-        WHEN MATCHED THEN
-          UPDATE SET
-            ${updateSet}
-        WHEN NOT MATCHED THEN
-          INSERT (${columns})
-          VALUES (${values});
-      `;
+    INSERT INTO ${targetTableName} (${columnList})
+    SELECT ${keys.map((k) => `s.${toSnakeCase(String(k))}`).join(", ")}
+    FROM ${stagingTableName} s;
+`;
 }
 
 export type ColumnValue = string | number | Date | undefined | null | boolean;

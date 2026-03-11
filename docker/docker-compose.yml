@@ -1,20 +1,6 @@
 version: "3"
 name: pagopa-interop-tracing
 services:
-  
-  postgres-15:
-    volumes:
-      - ../packages/operations/test/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ../packages/enriched-data-handler/test/init-db.sql:/docker-entrypoint-initdb.d/02-init.sql
-    image: postgres:15
-    ports:
-      - 55001:5432
-    environment:
-      POSTGRES_DB: tracing_db
-      POSTGRES_USER: mydbuser
-      POSTGRES_PASSWORD: mypassword
-    command: -c 'max_connections=512' -c 'wal_level=logical'
-
   postgres:
     volumes:
       - ../packages/operations/test/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
