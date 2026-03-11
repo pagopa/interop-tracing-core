@@ -8,7 +8,7 @@ export function setupDbServiceBuilder(conn: DBConnection) {
         tableNames.map((tableName) => {
           const query = `
                 CREATE TEMPORARY TABLE IF NOT EXISTS ${tableName}_${config.mergeTableSuffix} (
-                  LIKE ${config.dbSchemaName}.${tableName}
+                  LIKE ${config.dbSchemaName}.${tableName} INCLUDING DEFAULTS
                 );
               `;
           return conn.query(query);
