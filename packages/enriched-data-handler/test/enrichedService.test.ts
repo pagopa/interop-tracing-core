@@ -5,13 +5,8 @@ import {
 } from "../src/services/enrichedService.js";
 import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
-  ProducerService,
-  producerServiceBuilder,
-} from "../src/services/producerService.js";
-import {
   AppContext,
   DB,
-  SQS,
   WithSQSMessageId,
   initDB,
   FileManager,
@@ -21,11 +16,7 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { S3Client } from "@aws-sdk/client-s3";
 import { config } from "../src/utilities/config.js";
-import {
-  InternalError,
-  generateId,
-  tracingState,
-} from "pagopa-interop-tracing-models";
+import { InternalError, generateId } from "pagopa-interop-tracing-models";
 import { mockEnrichedTracing, mockTracingFromCsv } from "./constants.js";
 import { postgreSQLContainer } from "./config.js";
 import { StartedTestContainer } from "testcontainers";
@@ -40,7 +31,6 @@ import { TracingFromCsv } from "../src/models/messages.js";
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
-  let producerService: ProducerService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
   let fileManager: FileManager;
@@ -53,8 +43,6 @@ describe("Enriched Service", () => {
   };
 
   const s3client = new S3Client({ region: config.awsRegion });
-  const sqsClient = SQS.instantiateClient({ region: config.awsRegion });
-
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
   });
@@ -94,13 +82,8 @@ describe("Enriched Service", () => {
 
     dbService = dbServiceBuilder(dbContext);
     fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
-    producerService = producerServiceBuilder(sqsClient);
 
-    enrichedService = enrichedServiceBuilder(
-      dbService,
-      producerService,
-      fileManager,
-    );
+    enrichedService = enrichedServiceBuilder(dbService, fileManager);
   });
 
   describe("insertEnrichedTrace", () => {
@@ -109,10 +92,6 @@ describe("Enriched Service", () => {
         mockBodyStream(mockEnrichedTracing),
       );
 
-      const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendTracingUpdateStateMessage")
-        .mockResolvedValue();
-
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
       const insertedRecords = await getTraces(dbContext.conn, {
@@ -120,15 +99,6 @@ describe("Enriched Service", () => {
       });
 
       expect(insertedRecords).toHaveLength(mockEnrichedTracing.length);
-
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-        {
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        },
-        mockAppCtx,
-      );
     });
 
     it("should delete old records when inserting new ones for the same tracingId", async () => {
@@ -185,10 +155,6 @@ describe("Enriched Service", () => {
 
       const readObjectSpy = vi.spyOn(fileManager, "readObject");
       const insertTracingSpy = vi.spyOn(dbService, "insertToStaging");
-      const sendUpdateStateSpy = vi.spyOn(
-        producerService,
-        "sendTracingUpdateStateMessage",
-      );
       try {
         await enrichedService.insertEnrichedTrace(
           invalidMessage as unknown as TracingFromCsv,
@@ -198,28 +164,13 @@ describe("Enriched Service", () => {
         expect(e).toBeInstanceOf(InternalError);
         expect(readObjectSpy).not.toHaveBeenCalled();
         expect(insertTracingSpy).not.toHaveBeenCalled();
-        expect(sendUpdateStateSpy).not.toHaveBeenCalled();
       }
     });
 
-    it("should send COMPLETED even if CSV has no records", async () => {
+    it("should handle empty CSV without errors", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(mockBodyStream([]));
 
-      const sendUpdateStateSpy = vi.spyOn(
-        producerService,
-        "sendTracingUpdateStateMessage",
-      );
-
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
-
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
-        {
-          tracingId: mockTracingFromCsv.tracingId,
-          version: mockTracingFromCsv.version,
-          state: tracingState.completed,
-        },
-        mockAppCtx,
-      );
     });
 
     it("should not send update if DB insert fails", async () => {
@@ -231,16 +182,9 @@ describe("Enriched Service", () => {
         insertTracesError(""),
       );
 
-      const sendUpdateStateSpy = vi.spyOn(
-        producerService,
-        "sendTracingUpdateStateMessage",
-      );
-
       await expect(
         enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx),
       ).rejects.toBeInstanceOf(InternalError);
-
-      expect(sendUpdateStateSpy).not.toHaveBeenCalled();
     });
   });
 });
