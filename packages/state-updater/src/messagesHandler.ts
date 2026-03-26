@@ -4,7 +4,7 @@ import {
   WithSQSMessageId,
   logger,
 } from "pagopa-interop-tracing-commons";
-import { OperationsService } from "./services/operationsService.js";
+import { TracingStoreDbService } from "./services/tracingStoreDbService.js";
 import {
   decodeSQSMessageCorrelationId,
   decodeSQSPurposeErrorMessage,
@@ -19,7 +19,7 @@ import {
 import { config } from "./utilities/config.js";
 
 export function processTracingStateMessage(
-  service: OperationsService,
+  service: TracingStoreDbService,
 ): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message): Promise<void> => {
     const decodedAttributeMessage = decodeSQSMessageCorrelationId(message);
@@ -51,7 +51,7 @@ export function processTracingStateMessage(
 }
 
 export function processPurposeErrorMessage(
-  service: OperationsService,
+  service: TracingStoreDbService,
 ): (message: SQS.Message) => Promise<void> {
   return async (message: SQS.Message): Promise<void> => {
     const decodedAttributeMessage = decodeSQSMessageCorrelationId(message);

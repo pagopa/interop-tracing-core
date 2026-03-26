@@ -1,11 +1,6 @@
-import { ZodiosInstance } from "@zodios/core";
-import {
-  Api,
-  ApiSavePurposeErrorResponse,
-  ApiUpdateTracingStateResponse,
-} from "pagopa-interop-tracing-operations-client";
 import {
   AppContext,
+  DB,
   WithSQSMessageId,
   logger,
 } from "pagopa-interop-tracing-commons";
@@ -16,27 +11,25 @@ import {
 import {
   SavePurposeErrorDto,
   UpdateTracingStateDto,
-  correlationIdToHeader,
+  generateId,
 } from "pagopa-interop-tracing-models";
+import { config } from "../utilities/config.js";
 
-export const operationsServiceBuilder = (
-  operationsApiClient: ZodiosInstance<Api>,
-) => {
+export const tracingStoreDbServiceBuilder = (db: DB) => {
   return {
     async updateTracingState(
       data: UpdateTracingStateDto,
       ctx: WithSQSMessageId<AppContext>,
-    ): Promise<ApiSavePurposeErrorResponse> {
+    ): Promise<void> {
       try {
-        await operationsApiClient.updateTracingState(
-          {
-            state: data.state,
-          },
-          {
-            headers: { ...correlationIdToHeader(ctx.correlationId) },
-            params: { tracingId: data.tracingId, version: data.version },
-          },
-        );
+        const updateTracingStateQuery = `
+          UPDATE ${config.dbSchemaName}.tracings
+            SET state = $1,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+          RETURNING id`;
+
+        await db.one(updateTracingStateQuery, [data.state, data.tracingId]);
 
         logger(ctx).info(
           `Updating tracing state to "${data.state}" for tracingId: ${data.tracingId}, version: ${data.version}`,
@@ -50,20 +43,24 @@ export const operationsServiceBuilder = (
     async savePurposeError(
       data: SavePurposeErrorDto,
       ctx: WithSQSMessageId<AppContext>,
-    ): Promise<ApiUpdateTracingStateResponse> {
+    ): Promise<void> {
       try {
-        await operationsApiClient.savePurposeError(
-          {
-            purposeId: data.purposeId,
-            errorCode: data.errorCode,
-            message: data.message,
-            rowNumber: data.rowNumber,
-          },
-          {
-            headers: { ...correlationIdToHeader(ctx.correlationId) },
-            params: { tracingId: data.tracingId, version: data.version },
-          },
-        );
+        const insertPurposeErrorQuery = `
+          INSERT INTO ${config.dbSchemaName}.purposes_errors
+            (id, tracing_id, version, purpose_id, error_code, message, row_number)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING id;
+        `;
+
+        await db.one(insertPurposeErrorQuery, [
+          generateId(),
+          data.tracingId,
+          data.version,
+          data.purposeId,
+          data.errorCode,
+          data.message,
+          data.rowNumber,
+        ]);
 
         logger(ctx).info(
           `Saving purpose error with purposeId "${data.purposeId}" rowNumber ${data.rowNumber} for tracingId: ${data.tracingId}, version: ${data.version}`,
@@ -79,4 +76,6 @@ export const operationsServiceBuilder = (
   };
 };
 
-export type OperationsService = ReturnType<typeof operationsServiceBuilder>;
+export type TracingStoreDbService = ReturnType<
+  typeof tracingStoreDbServiceBuilder
+>;

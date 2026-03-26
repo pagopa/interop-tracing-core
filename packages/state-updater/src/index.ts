@@ -1,19 +1,26 @@
-import { logger, SQS } from "pagopa-interop-tracing-commons";
+import { initDB, logger, SQS } from "pagopa-interop-tracing-commons";
 import { config } from "./utilities/config.js";
-import { createApiClient } from "pagopa-interop-tracing-operations-client";
 import {
   processPurposeErrorMessage,
   processTracingStateMessage,
 } from "./messagesHandler.js";
 import {
-  OperationsService,
-  operationsServiceBuilder,
-} from "./services/operationsService.js";
+  TracingStoreDbService,
+  tracingStoreDbServiceBuilder,
+} from "./services/tracingStoreDbService.js";
 
-const operationsApiClient = createApiClient(config.operationsBaseUrl);
+const tracingStoreDb = initDB({
+  username: config.dbUsername,
+  password: config.dbPassword,
+  host: config.dbHost,
+  port: config.dbPort,
+  database: config.dbName,
+  schema: config.dbSchemaName,
+  useSSL: config.dbUseSSL,
+});
 
-const OperationsService: OperationsService =
-  operationsServiceBuilder(operationsApiClient);
+const tracingStoreDbService: TracingStoreDbService =
+  tracingStoreDbServiceBuilder(tracingStoreDb);
 
 const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
   region: config.awsRegion,
@@ -30,7 +37,7 @@ await Promise.all([
       visibilityTimeout: config.visibilityTimeout,
       serviceName: config.applicationName,
     },
-    processPurposeErrorMessage(OperationsService),
+    processPurposeErrorMessage(tracingStoreDbService),
     logger({ serviceName: config.applicationName }),
   ),
   SQS.runConsumer(
@@ -42,7 +49,7 @@ await Promise.all([
       visibilityTimeout: config.visibilityTimeout,
       serviceName: config.applicationName,
     },
-    processTracingStateMessage(OperationsService),
+    processTracingStateMessage(tracingStoreDbService),
     logger({ serviceName: config.applicationName }),
   ),
 ]);
