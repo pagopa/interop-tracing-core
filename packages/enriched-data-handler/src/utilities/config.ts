@@ -22,9 +22,6 @@ const TracingStoreDbConfig = z
     TRACING_STORE_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
     TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
     TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
-    TRACING_STORE_DB_MESSAGES_TO_INSERT_PER_BATCH: z.coerce
-      .number()
-      .default(500),
   })
   .transform((c) => ({
     tracingStoreDbHost: c.TRACING_STORE_DB_HOST,
@@ -40,8 +37,6 @@ const TracingStoreDbConfig = z
       c.TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT,
     tracingStoreDbConnectionMaxTimeout:
       c.TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT,
-    tracingStoreDbMessagesToInsertPerBatch:
-      c.TRACING_STORE_DB_MESSAGES_TO_INSERT_PER_BATCH,
   }));
 
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
