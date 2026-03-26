@@ -2,12 +2,9 @@ import {
   ApiGetTracingsResponse,
   ApiRecoverTracingResponse,
   ApiReplaceTracingResponse,
-  ApiSavePurposeErrorResponse,
   ApiSubmitTracingResponse,
   ApiUpdateTracingStateResponse,
   ApiGetTracingErrorsResponse,
-  ApiSavePurposeErrorPayload,
-  ApiSavePurposeErrorParams,
   ApiUpdateTracingStateParams,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
@@ -40,7 +37,6 @@ import {
 import { Logger } from "pagopa-interop-tracing-commons";
 import { DBService } from "./db/dbService.js";
 import {
-  PurposeErrorId,
   generateId,
   tracingRecoverCannotBeUpdated,
   tracingReplaceCannotBeUpdated,
@@ -194,26 +190,6 @@ export function operationsServiceBuilder(dbService: DBService) {
       await dbService.updateTracingState({
         tracing_id: params.tracingId,
         state: payload.state,
-      });
-    },
-
-    async savePurposeError(
-      params: ApiSavePurposeErrorParams,
-      payload: ApiSavePurposeErrorPayload,
-      logger: Logger,
-    ): Promise<ApiSavePurposeErrorResponse> {
-      logger.info(
-        `Save purpose error for tracingId: ${params.tracingId}, version: ${params.version}`,
-      );
-
-      await dbService.savePurposeError({
-        id: generateId<PurposeErrorId>(),
-        tracing_id: params.tracingId,
-        version: params.version,
-        purpose_id: payload.purposeId,
-        error_code: payload.errorCode,
-        message: payload.message,
-        row_number: payload.rowNumber,
       });
     },
 

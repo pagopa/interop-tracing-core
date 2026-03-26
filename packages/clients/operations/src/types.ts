@@ -123,24 +123,6 @@ export type ApiCancelTracingStateAndVersionResponse = ZodiosResponseByPath<
   "/tracings/:tracingId/cancel"
 >;
 
-export type ApiSavePurposeErrorPayload = ZodiosBodyByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/versions/:version/errors"
->;
-
-export type ApiSavePurposeErrorResponse = ZodiosResponseByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/versions/:version/errors"
->;
-
-export type ApiSavePurposeErrorParams = ZodiosPathParamsByPath<
-  Api,
-  "post",
-  "/tracings/:tracingId/versions/:version/errors"
->;
-
 export type ApiDeletePurposesErrorsHeaders = ZodiosHeaderParamsByPath<
   Api,
   "delete",
