@@ -123,9 +123,10 @@ describe("Enriched Service", () => {
       const insertTracingSpy = vi.spyOn(dbService, "insertToStaging");
       const finalizeMergeSpy = vi.spyOn(dbService, "finalizeMergeToTarget");
 
-      vi.spyOn(tracingStoreDbService, "getTracingVersion").mockResolvedValueOnce(
-        mockTracingFromCsv.version + 1,
-      );
+      vi.spyOn(
+        tracingStoreDbService,
+        "getTracingVersion",
+      ).mockResolvedValueOnce(mockTracingFromCsv.version + 1);
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
