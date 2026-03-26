@@ -14,8 +14,18 @@ export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
     })
     .withCopyFilesToContainer([
       {
-        source: resolve(__dirname, "init-db.sql"),
-        target: "/docker-entrypoint-initdb.d/01-init.sql",
+        source: resolve(
+          __dirname,
+          "../../../docker/tracing-store-db/init-db.sql",
+        ),
+        target: "/docker-entrypoint-initdb.d/01-init-schema.sql",
+      },
+      {
+        source: resolve(
+          __dirname,
+          "../../../docker/tracing-store-db/init-db-seed.sql",
+        ),
+        target: "/docker-entrypoint-initdb.d/02-init-seed.sql",
       },
     ])
     .withExposedPorts(TEST_POSTGRES_DB_PORT);

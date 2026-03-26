@@ -14,7 +14,10 @@ export const postgreSQLContainer = (config: DbConfig): GenericContainer => {
     })
     .withCopyFilesToContainer([
       {
-        source: resolve(__dirname, "init-db.sql"),
+        source: resolve(
+          __dirname,
+          "../../../docker/tracing-store-db/init-db.sql",
+        ),
         target: "/docker-entrypoint-initdb.d/01-init.sql",
       },
     ])
