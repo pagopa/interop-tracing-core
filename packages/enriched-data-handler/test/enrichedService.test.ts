@@ -4,6 +4,7 @@ import {
   enrichedServiceBuilder,
 } from "../src/services/enrichedService.js";
 import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
+import { TracingStoreDBService } from "../src/services/db/tracingStoreDbService.js";
 import {
   AppContext,
   DB,
@@ -27,10 +28,12 @@ import { TracingTable } from "../src/models/traces.js";
 import { retryConnection } from "../src/services/db/connection.js";
 import { getTraces } from "./utils.js";
 import { TracingFromCsv } from "../src/models/messages.js";
+import { beforeEach } from "vitest";
 
 describe("Enriched Service", () => {
   let enrichedService: EnrichedService;
   let dbService: DBService;
+  let tracingStoreDbService: TracingStoreDBService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let dbInstance: DB;
   let fileManager: FileManager;
@@ -83,7 +86,21 @@ describe("Enriched Service", () => {
     dbService = dbServiceBuilder(dbContext);
     fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
 
-    enrichedService = enrichedServiceBuilder(dbService, fileManager);
+    tracingStoreDbService = {
+      getTracingVersion: vi.fn().mockResolvedValue(null),
+    };
+
+    enrichedService = enrichedServiceBuilder(
+      dbService,
+      fileManager,
+      tracingStoreDbService,
+    );
+  });
+
+  beforeEach(() => {
+    vi.spyOn(tracingStoreDbService, "getTracingVersion").mockResolvedValue(
+      mockTracingFromCsv.version,
+    );
   });
 
   describe("insertEnrichedTrace", () => {
@@ -99,6 +116,22 @@ describe("Enriched Service", () => {
       });
 
       expect(insertedRecords).toHaveLength(mockEnrichedTracing.length);
+    });
+
+    it("should skip insert when message version is older than current version", async () => {
+      const readObjectSpy = vi.spyOn(fileManager, "readObject");
+      const insertTracingSpy = vi.spyOn(dbService, "insertToStaging");
+      const finalizeMergeSpy = vi.spyOn(dbService, "finalizeMergeToTarget");
+
+      vi.spyOn(tracingStoreDbService, "getTracingVersion").mockResolvedValueOnce(
+        mockTracingFromCsv.version + 1,
+      );
+
+      await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
+
+      expect(readObjectSpy).not.toHaveBeenCalled();
+      expect(insertTracingSpy).not.toHaveBeenCalled();
+      expect(finalizeMergeSpy).not.toHaveBeenCalled();
     });
 
     it("should delete old records when inserting new ones for the same tracingId", async () => {
