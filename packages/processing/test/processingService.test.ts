@@ -46,6 +46,7 @@ import {
   CorrelationId,
   InternalError,
   generateId,
+  tracingState,
   unsafeBrandId,
 } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/models/errors.js";
@@ -274,7 +275,7 @@ describe("Processing Service", () => {
       dbService.getEnrichedPurpose = originalGetEnrichedPurpose;
     });
 
-    it("should call writeStream when there are no error purposes", async () => {
+    it("should write CSV and update state to COMPLETED when there are no error purposes", async () => {
       vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue({
         enriched: mockEnrichedPurposes,
         errors: [],
@@ -291,11 +292,22 @@ describe("Processing Service", () => {
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
       );
+      const sendUpdateStateSpy = vi
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
+        .mockResolvedValue(undefined);
 
       await processingService.processTracing(mockMessage, mockAppCtx);
 
       expect(writeStreamSpy).toHaveBeenCalledTimes(1);
       expect(producerService.sendErrorMessage).not.toHaveBeenCalled();
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockMessage.tracingId,
+          version: mockMessage.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
 
     it("should call writeStream when csv is empty", async () => {
@@ -308,6 +320,9 @@ describe("Processing Service", () => {
       vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
         undefined,
       );
+      const sendUpdateStateSpy = vi
+        .spyOn(producerService, "sendTracingUpdateStateMessage")
+        .mockResolvedValue(undefined);
 
       await processingService.processTracing(mockMessage, mockAppCtx);
 
@@ -329,6 +344,14 @@ describe("Processing Service", () => {
       expect(bucket).toBe(config.bucketEnrichedS3Name);
 
       expect(producerService.sendErrorMessage).not.toHaveBeenCalled();
+      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+        {
+          tracingId: mockMessage.tracingId,
+          version: mockMessage.version,
+          state: tracingState.completed,
+        },
+        mockAppCtx,
+      );
     });
   });
 
