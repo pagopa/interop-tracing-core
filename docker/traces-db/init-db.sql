@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS tracing;
+CREATE SCHEMA IF NOT EXISTS traces;
 
-CREATE TABLE tracing.traces (
+CREATE TABLE traces.traces (
     id VARCHAR(36) PRIMARY KEY,
     tracing_id VARCHAR(36),
     submitter_id VARCHAR(36),
