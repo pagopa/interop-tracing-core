@@ -409,8 +409,8 @@ describe("Processing Service", () => {
         errorPurposesWithInvalidPurposeId,
         mockMessage,
       );
-      const purposeErrors = enrichedPurposes.errors.filter((item) =>
-        PurposeErrorCsvRow.safeParse(item).success,
+      const purposeErrors = enrichedPurposes.errors.filter(
+        (item) => PurposeErrorCsvRow.safeParse(item).success,
       );
 
       purposeErrors.forEach((item) => {
@@ -467,8 +467,8 @@ describe("Processing Service", () => {
         validPurposeNotAssociated,
         mockMessage,
       );
-      const purposeErrors = enrichedPurposes.errors.filter((item) =>
-        PurposeErrorCsvRow.safeParse(item).success,
+      const purposeErrors = enrichedPurposes.errors.filter(
+        (item) => PurposeErrorCsvRow.safeParse(item).success,
       );
 
       purposeErrors.forEach((item) => {
