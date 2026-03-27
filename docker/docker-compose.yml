@@ -3,8 +3,9 @@ name: pagopa-interop-tracing
 services:
   postgres:
     volumes:
-      - ../packages/operations/test/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ../packages/enriched-data-handler/test/init-db.sql:/docker-entrypoint-initdb.d/02-init.sql
+      - ./tracing-store-db/init-db.sql:/docker-entrypoint-initdb.d/01-init-schema.sql
+      - ./tracing-store-db/init-db-seed.sql:/docker-entrypoint-initdb.d/02-init-seed.sql
+      - ./traces-db/init-db.sql:/docker-entrypoint-initdb.d/03-init-traces.sql
     image: postgres:14
     ports:
       - 55000:5432
