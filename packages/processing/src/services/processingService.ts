@@ -144,7 +144,7 @@ export const processingServiceBuilder = (
         );
 
         if (tracingHasErrors) {
-          const uploadTracingErrorsCsv = await fileManager.writeStream(
+          const uploadTracingErrorsCsv = fileManager.writeStream(
             tracingErrorsCsv.getStream(),
             "text/csv",
             bucketS3Key,
