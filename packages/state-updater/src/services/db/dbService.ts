@@ -2,7 +2,6 @@ import { DB, getCopyClient } from "pagopa-interop-tracing-commons";
 import { from as copyFrom } from "pg-copy-streams";
 import { pipeline } from "node:stream/promises";
 import type { Readable, Writable } from "node:stream";
-import { errorProcessingUpdateTracingState } from "../../model/domain/errors.js";
 import {
   UpdateTracingStateDto,
   errorsCsvMapping,
@@ -12,20 +11,14 @@ import { config } from "../../utilities/config.js";
 export function dbServiceBuilder(db: DB) {
   return {
     async updateTracingState(data: UpdateTracingStateDto): Promise<void> {
-      try {
-        const updateTracingStateQuery = `
+      const updateTracingStateQuery = `
           UPDATE ${config.dbSchemaName}.tracings
             SET state = $1,
                 updated_at = CURRENT_TIMESTAMP
           WHERE id = $2
           RETURNING id`;
 
-        await db.one(updateTracingStateQuery, [data.state, data.tracingId]);
-      } catch (error: unknown) {
-        throw errorProcessingUpdateTracingState(
-          `Error updating tracingId: ${data.tracingId}, version: ${data.version}. Details: ${error}`,
-        );
-      }
+      await db.one(updateTracingStateQuery, [data.state, data.tracingId]);
     },
 
     async copyPurposeErrorsFromStream(stream: Readable): Promise<void> {

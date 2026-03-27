@@ -116,7 +116,7 @@ describe("Tracing store DB service test", () => {
       await expect(
         tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).rejects.toMatchObject({
-        code: "errorProcessingSavePurposeError",
+        code: "errorProcessingCopyPurposeErrors",
         message: expect.stringContaining("Error copying purpose errors"),
       });
 
