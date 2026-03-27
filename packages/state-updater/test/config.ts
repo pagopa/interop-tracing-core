@@ -9,9 +9,7 @@ export const TEST_POSTGRES_DB_WITH_AWS_S3_IMAGE = "postgres:14";
 export const TEST_MINIO_IMAGE =
   "quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z";
 
-export const postgreSQLContainer = (
-  config: DbConfig,
-): GenericContainer =>
+export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
   new GenericContainer(TEST_POSTGRES_DB_WITH_AWS_S3_IMAGE)
     .withEnvironment({
       POSTGRES_DB: config.dbName,
@@ -22,14 +20,14 @@ export const postgreSQLContainer = (
       {
         source: resolve(
           __dirname,
-          "../../../docker/tracing-store-db/init-db.sql",
+          "../../../docker/tracing-store-db/init-db.sql"
         ),
         target: "/docker-entrypoint-initdb.d/01-init-schema.sql",
       },
       {
         source: resolve(
           __dirname,
-          "../../../docker/tracing-store-db/init-db-seed.sql",
+          "../../../docker/tracing-store-db/init-db-seed.sql"
         ),
         target: "/docker-entrypoint-initdb.d/02-init-seed.sql",
       },
@@ -37,7 +35,7 @@ export const postgreSQLContainer = (
     .withExposedPorts(TEST_POSTGRES_DB_PORT);
 
 export const minioContainer = (
-  config: TracingStateUpdateConfig,
+  config: TracingStateUpdateConfig
 ): GenericContainer =>
   new GenericContainer(TEST_MINIO_IMAGE)
     .withEnvironment({
