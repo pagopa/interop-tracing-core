@@ -7,8 +7,11 @@ import {
   TenantSchema,
   PurposeSchema,
 } from "../models/db.js";
-import { PurposeErrorMessage } from "../models/csv.js";
-import { EnrichedPurposeCsvRow } from "pagopa-interop-tracing-models";
+import {
+  EnrichedPurposeCsvRow,
+  PurposeErrorCsvRow,
+  generateId,
+} from "pagopa-interop-tracing-models";
 import {
   delegationState,
   TracingFromS3KeyPathDto,
@@ -17,7 +20,7 @@ import { config } from "../utilities/config.js";
 
 type EnrichedPurposeResult = {
   enriched: EnrichedPurposeCsvRow[];
-  errors: PurposeErrorMessage[];
+  errors: PurposeErrorCsvRow[];
 };
 
 export function dbServiceBuilder(db: DB) {
@@ -28,7 +31,7 @@ export function dbServiceBuilder(db: DB) {
     ): Promise<EnrichedPurposeResult> {
       try {
         const enriched: EnrichedPurposeCsvRow[] = [];
-        const errors: PurposeErrorMessage[] = [];
+        const errors: PurposeErrorCsvRow[] = [];
 
         const consumer = await db.oneOrNone<
           Pick<TenantSchema, "name" | "origin" | "external_id">
@@ -93,6 +96,9 @@ export function dbServiceBuilder(db: DB) {
           const fullPurpose = purposesMap.get(record.purpose_id);
           if (!fullPurpose) {
             errors.push({
+              id: generateId(),
+              tracingId: tracing.tracingId,
+              version: tracing.version,
               purposeId: record.purpose_id,
               errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
               message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
@@ -122,6 +128,9 @@ export function dbServiceBuilder(db: DB) {
             !isSubmitterConsumerForPurpose
           ) {
             errors.push({
+              id: generateId(),
+              tracingId: tracing.tracingId,
+              version: tracing.version,
               purposeId: record.purpose_id,
               errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
               message: `purpose_id: Invalid purpose id ${record.purpose_id}`,

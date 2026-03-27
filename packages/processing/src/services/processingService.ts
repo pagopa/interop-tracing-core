@@ -13,7 +13,7 @@ import {
   parseCSV,
 } from "pagopa-interop-tracing-commons";
 import { TracingRecordSchema } from "../models/db.js";
-import { expectedInputCSVHeaders, PurposeErrorMessage } from "../models/csv.js";
+import { expectedInputCSVHeaders } from "../models/csv.js";
 import {
   EnrichedPurposeCsvRow,
   PurposeErrorCsvRow,
@@ -79,16 +79,17 @@ export const processingServiceBuilder = (
                 tracingHasErrors = true;
                 const expectedStr = sortedExpectedHeaders.join(",");
                 const actualStr = actualHeaders.join(",");
-                const headerError: PurposeErrorMessage = {
-                  rowNumber: 0,
+                const headerError: PurposeErrorCsvRow = {
+                  id: generateId(),
+                  tracingId: tracing.tracingId,
+                  version: tracing.version,
                   purposeId: "",
                   errorCode: PurposeErrorCodes.INVALID_CSV_HEADERS,
                   message: `CSV headers invalid. Expected [${expectedStr}] but got [${actualStr}]`,
+                  rowNumber: 0,
                 };
 
-                tracingErrorsCsv.writeBatch([
-                  mapPurposeErrorToCsvRow(headerError, tracing),
-                ]);
+                tracingErrorsCsv.writeBatch([headerError]);
 
                 return stopProcess();
               }
@@ -99,16 +100,17 @@ export const processingServiceBuilder = (
 
               if (hasSemiColonSeparator) {
                 tracingHasErrors = true;
-                const delimiterError: PurposeErrorMessage = {
-                  rowNumber: 0,
+                const delimiterError: PurposeErrorCsvRow = {
+                  id: generateId(),
+                  tracingId: tracing.tracingId,
+                  version: tracing.version,
                   purposeId: "",
                   errorCode: PurposeErrorCodes.INVALID_DELIMITER,
                   message: `Invalid delimiter found on csv`,
+                  rowNumber: 0,
                 };
 
-                tracingErrorsCsv.writeBatch([
-                  mapPurposeErrorToCsvRow(delimiterError, tracing),
-                ]);
+                tracingErrorsCsv.writeBatch([delimiterError]);
 
                 return stopProcess();
               }
@@ -136,9 +138,7 @@ export const processingServiceBuilder = (
 
             if (errors.length > 0) {
               tracingHasErrors = true;
-              tracingErrorsCsv.writeBatch(
-                errors.map((e) => mapPurposeErrorToCsvRow(e, tracing)),
-              );
+              tracingErrorsCsv.writeBatch(errors);
             } else {
               tracingCsv.writeBatch(enrichedRows);
             }
@@ -212,11 +212,11 @@ export async function processEnrichmentChunk(
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-  formalErrors: PurposeErrorMessage[],
+  formalErrors: PurposeErrorCsvRow[],
   ctx: WithSQSMessageId<AppContext>,
 ): Promise<{
   enrichedRows: EnrichedPurposeCsvRow[];
-  errors: PurposeErrorMessage[];
+  errors: PurposeErrorCsvRow[];
 }> {
   const invalidRows = new Set(
     formalErrors
@@ -240,21 +240,6 @@ export async function processEnrichmentChunk(
   return {
     enrichedRows: enriched,
     errors: [...formalErrors, ...errors],
-  };
-}
-
-function mapPurposeErrorToCsvRow(
-  error: PurposeErrorMessage,
-  tracing: TracingFromS3KeyPathDto,
-): PurposeErrorCsvRow {
-  return {
-    id: generateId(),
-    tracingId: tracing.tracingId,
-    version: tracing.version,
-    purposeId: error.purposeId,
-    errorCode: error.errorCode,
-    message: error.message,
-    rowNumber: error.rowNumber,
   };
 }
 

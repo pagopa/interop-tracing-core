@@ -73,10 +73,7 @@ import {
   eServiceDataNotAssociated,
   tenant_id,
 } from "./costants.js";
-import {
-  PurposeErrorMessage,
-  PurposeErrorMessageArray,
-} from "../src/models/csv.js";
+import { PurposeErrorCsvRow } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingEnriched } from "../src/models/tracing.js";
 import { mockBodyStream } from "./fileManager.js";
@@ -412,19 +409,11 @@ describe("Processing Service", () => {
         errorPurposesWithInvalidPurposeId,
         mockMessage,
       );
-      const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
-        if (PurposeErrorMessage.safeParse(item).success) {
-          return item;
-        } else {
-          return null;
-        }
-      });
-
-      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-        purposeErrorsFiltered,
+      const purposeErrors = enrichedPurposes.errors.filter((item) =>
+        PurposeErrorCsvRow.safeParse(item).success,
       );
 
-      purposeErrors?.forEach((item) => {
+      purposeErrors.forEach((item) => {
         expect(item.errorCode).toBe("PURPOSE_NOT_FOUND");
       });
     });
@@ -478,19 +467,11 @@ describe("Processing Service", () => {
         validPurposeNotAssociated,
         mockMessage,
       );
-      const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
-        if (PurposeErrorMessage.safeParse(item).success) {
-          return item;
-        } else {
-          return null;
-        }
-      });
-
-      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-        purposeErrorsFiltered,
+      const purposeErrors = enrichedPurposes.errors.filter((item) =>
+        PurposeErrorCsvRow.safeParse(item).success,
       );
 
-      purposeErrors?.forEach((item) => {
+      purposeErrors.forEach((item) => {
         expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
       });
     });

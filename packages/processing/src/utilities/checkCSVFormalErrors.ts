@@ -1,7 +1,8 @@
 import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
-  PurposeError,
+  PurposeErrorCsvRow,
+  generateId,
 } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
 import { ZodIssue } from "zod";
@@ -34,8 +35,8 @@ const formatDuplicateRecords = (records: number[]): string => {
 export async function checkRecords(
   records: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-): Promise<PurposeError[]> {
-  const errorsRecord: PurposeError[] = [];
+): Promise<PurposeErrorCsvRow[]> {
+  const errorsRecord: PurposeErrorCsvRow[] = [];
   const duplicateMap = buildDuplicateMap(records);
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
@@ -43,6 +44,7 @@ export async function checkRecords(
       for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);
         errorsRecord.push({
+          id: generateId(),
           tracingId: tracing.tracingId,
           version: tracing.version,
           errorCode: parsedError.errorCode,
@@ -55,6 +57,7 @@ export async function checkRecords(
 
     if (record.date !== tracing.date) {
       errorsRecord.push({
+        id: generateId(),
         tracingId: tracing.tracingId,
         version: tracing.version,
         errorCode: PurposeErrorCodes.INVALID_DATE,
@@ -68,6 +71,7 @@ export async function checkRecords(
     const duplicateRecords = duplicateMap[key];
     if (duplicateRecords && duplicateRecords.length > 1) {
       errorsRecord.push({
+        id: generateId(),
         tracingId: tracing.tracingId,
         version: tracing.version,
         purposeId: record.purpose_id,
