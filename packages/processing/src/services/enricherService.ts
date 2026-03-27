@@ -7,7 +7,8 @@ import {
   TenantSchema,
   PurposeSchema,
 } from "../models/db.js";
-import { EnrichedPurpose, PurposeErrorMessage } from "../models/csv.js";
+import { PurposeErrorMessage } from "../models/csv.js";
+import { EnrichedPurposeCsvRow } from "pagopa-interop-tracing-models";
 import {
   delegationState,
   TracingFromS3KeyPathDto,
@@ -15,7 +16,7 @@ import {
 import { config } from "../utilities/config.js";
 
 type EnrichedPurposeResult = {
-  enriched: EnrichedPurpose[];
+  enriched: EnrichedPurposeCsvRow[];
   errors: PurposeErrorMessage[];
 };
 
@@ -26,7 +27,7 @@ export function dbServiceBuilder(db: DB) {
       tracing: TracingFromS3KeyPathDto,
     ): Promise<EnrichedPurposeResult> {
       try {
-        const enriched: EnrichedPurpose[] = [];
+        const enriched: EnrichedPurposeCsvRow[] = [];
         const errors: PurposeErrorMessage[] = [];
 
         const consumer = await db.oneOrNone<
@@ -166,7 +167,7 @@ function enrichSuccessfulPurpose(
   >,
   tenant: Pick<TenantSchema, "name" | "origin" | "external_id">,
   producer: Pick<TenantSchema, "id" | "name" | "origin" | "external_id">,
-): EnrichedPurpose {
+): EnrichedPurposeCsvRow {
   return {
     ...record,
     purposeId: record.purpose_id,

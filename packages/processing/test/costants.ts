@@ -1,6 +1,6 @@
 import {
   generateId,
-  SavePurposeErrorDto,
+  PurposeError,
   TracingFromS3KeyPathDto,
 } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -101,7 +101,7 @@ export const mockFormalErrors = [
     errorCode: PurposeErrorCodes.INVALID_REQUEST_COUNT,
   },
 ];
-export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
+export const mockErrorPurposes: Partial<PurposeError>[] = [
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: 1,
@@ -109,7 +109,6 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 12,
-    updateTracingState: false,
   },
   {
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
@@ -118,7 +117,6 @@ export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 13,
-    updateTracingState: false,
   },
 ];
 

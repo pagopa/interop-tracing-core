@@ -2,7 +2,6 @@ import { InternalError } from "pagopa-interop-tracing-models";
 
 export const errorCodes = {
   decodeSQSEventMessageError: "DECODE_SQS_EVENT_MESSAGE_ERROR",
-  sendMessagePurposeError: "SEND_MESSAGE_PURPOSE_ERROR",
   sendTracingUpdateStateMessageError: "SEND_TRACING_UPDATE_STATE_MESSAGE_ERROR",
   readObjectBucketS3Error: "READ_OBJECT_BUCKET_S3_ERROR",
   writeObjectBucketS3Error: "WRITE_OBJECT_BUCKET_S3_ERROR",
@@ -18,15 +17,6 @@ export function decodeSQSEventMessageError(
   return new InternalError({
     detail: `${detail}`,
     code: "decodeSQSEventMessageError",
-  });
-}
-
-export function sendMessagePurposeError(
-  detail: string,
-): InternalError<ErrorCodes> {
-  return new InternalError({
-    detail: `${detail}`,
-    code: "sendMessagePurposeError",
   });
 }
 

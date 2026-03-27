@@ -1,6 +1,40 @@
 import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
-import { tracingState } from "pagopa-interop-tracing-models";
+import {
+  errorsCsvMapping,
+  generateId,
+  tracingState,
+} from "pagopa-interop-tracing-models";
+
+export const writePurposeErrorsCsv = async (
+  tracingId: string,
+  fileManager: {
+    writeObject: (
+      input: Buffer,
+      contentType: string,
+      bucketS3Key: string,
+      bucketEnrichedS3Name?: string,
+    ) => Promise<void>;
+  },
+  s3Key: string,
+  errorCount = 1,
+): Promise<void> => {
+  const csvHeader = Object.keys(errorsCsvMapping).join(",");
+  const rows = Array.from({ length: errorCount }, (_, i) =>
+    [
+      generateId(),
+      tracingId,
+      1,
+      generateId(),
+      "INVALID_ROW_SCHEMA",
+      "INVALID_ROW_SCHEMA",
+      12 + i,
+    ].join(","),
+  );
+  const csvBody = [csvHeader, ...rows].join("\n");
+
+  await fileManager.writeObject(Buffer.from(csvBody), "text/csv", s3Key);
+};
 
 export async function addTenant(
   db: DB,

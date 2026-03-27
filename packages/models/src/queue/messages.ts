@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TracingState } from "../tracing/tracing.js";
+import { tracingState, TracingState } from "../tracing/tracing.js";
 
 export const UpdateTracingStateDto = z.object({
   tracingId: z.string().uuid(),
@@ -8,16 +8,20 @@ export const UpdateTracingStateDto = z.object({
 });
 export type UpdateTracingStateDto = z.infer<typeof UpdateTracingStateDto>;
 
-export const SavePurposeErrorDto = z.object({
-  tracingId: z.string().uuid(),
-  purposeId: z.string(),
-  version: z.coerce.number(),
-  errorCode: z.string(),
-  message: z.string(),
-  rowNumber: z.coerce.number(),
-  updateTracingState: z.boolean(),
+export const UpdateTracingStateCompletedDto = UpdateTracingStateDto.extend({
+  state: z.literal(tracingState.completed),
 });
-export type SavePurposeErrorDto = z.infer<typeof SavePurposeErrorDto>;
+
+export const UpdateTracingStateWithErrorsCsvDto = UpdateTracingStateDto.extend({
+  state: z.literal(tracingState.error),
+  errorsCsvPath: z.string(),
+});
+
+export const ProcessingResultDto = z.union([
+  UpdateTracingStateCompletedDto,
+  UpdateTracingStateWithErrorsCsvDto,
+]);
+export type ProcessingResultDto = z.infer<typeof ProcessingResultDto>;
 
 export const TracingFromS3KeyPathDto = z.object({
   tenantId: z.string(),

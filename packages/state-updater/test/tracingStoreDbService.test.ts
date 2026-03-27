@@ -1,38 +1,57 @@
 import {
-  AppContext,
   DB,
-  WithSQSMessageId,
+  FileManager,
+  fileManagerBuilder,
   initDB,
 } from "pagopa-interop-tracing-commons";
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import {
-  TracingStoreDbService,
-  tracingStoreDbServiceBuilder,
-} from "../src/services/tracingStoreDbService.js";
+  describe,
+  expect,
+  it,
+  beforeAll,
+  afterAll,
+  afterEach,
+  vi,
+} from "vitest";
+import { dbServiceBuilder, DBService } from "../src/services/db/dbService.js";
+import {
+  tracingStoreServiceBuilder,
+  TracingStoreService,
+} from "../src/services/tracingStoreService.js";
 import { config } from "../src/utilities/config.js";
-import { StartedTestContainer } from "testcontainers";
-import { postgreSQLContainer } from "./config.js";
+import { Network, StartedNetwork, StartedTestContainer } from "testcontainers";
+import {
+  minioContainer,
+  postgreSQLContainer,
+  TEST_MINIO_PORT,
+} from "./config.js";
 import {
   addTenant,
   addTracing,
   findPurposeErrors,
   findTracingById,
+  writePurposeErrorsCsv,
 } from "./utils.js";
 import {
-  CorrelationId,
   TenantId,
   TracingId,
   generateId,
   tracingState,
-  unsafeBrandId,
 } from "pagopa-interop-tracing-models";
-import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import { DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
+import { Readable } from "node:stream";
 
 describe("Tracing store DB service test", () => {
   let dbInstance: DB;
+  let tracingStoreService: TracingStoreService;
   let startedPostgreSqlContainer: StartedTestContainer;
-  let tracingStoreDbService: TracingStoreDbService;
+  let startedMinioContainer: StartedTestContainer;
+  let startedNetwork: StartedNetwork;
+  let s3Key: string;
+  let fileManager: FileManager;
+
+  let s3client: S3Client;
 
   const tenantId: TenantId = generateId<TenantId>();
   const tracingId: TracingId = generateId<TracingId>();
@@ -40,18 +59,42 @@ describe("Tracing store DB service test", () => {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = truncatedTo(yesterday, DateUnit.DAYS);
 
-  const mockCtx: WithSQSMessageId<AppContext> = {
-    serviceName: config.applicationName,
-    messageId: "12345",
-    correlationId: unsafeBrandId<CorrelationId>(generateId<CorrelationId>()),
-  };
-
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
+    await startedMinioContainer.stop();
+    await startedNetwork.stop();
+  });
+
+  afterEach(async () => {
+    await dbInstance.none(`TRUNCATE ${config.dbSchemaName}.purposes_errors;`);
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
+    startedNetwork = await new Network().start();
+    startedMinioContainer = await minioContainer(
+      config,
+      startedNetwork,
+    ).start();
+
+    // S3 client runs on host, so use the mapped port on localhost.
+    const minioPort = startedMinioContainer.getMappedPort(TEST_MINIO_PORT);
+    const s3ClientConfig: S3ClientConfig = {
+      endpoint: `http://127.0.0.1:${minioPort}`,
+      forcePathStyle: true,
+      logger: config.logLevel === "debug" ? console : undefined,
+      region: config.awsRegion,
+    };
+    s3client = new S3Client(s3ClientConfig);
+
+    fileManager = fileManagerBuilder(
+      s3client,
+      config.bucketTracingErrorsS3Name,
+    );
+
+    startedPostgreSqlContainer = await postgreSQLContainer(
+      config,
+      startedNetwork,
+    ).start();
     config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
 
     dbInstance = initDB({
@@ -64,7 +107,15 @@ describe("Tracing store DB service test", () => {
       useSSL: config.dbUseSSL,
     });
 
-    tracingStoreDbService = tracingStoreDbServiceBuilder(dbInstance);
+    const dbService: DBService = dbServiceBuilder(dbInstance);
+    tracingStoreService = tracingStoreServiceBuilder(dbService, fileManager);
+    s3Key = fileManager.buildS3Key(
+      generateId(),
+      "2024-01-01",
+      tracingId,
+      1,
+      generateId(),
+    );
 
     await addTenant(dbInstance, {
       id: tenantId,
@@ -82,47 +133,56 @@ describe("Tracing store DB service test", () => {
       version: 1,
       errors: false,
     });
-  });
+  }, 120000);
 
-  describe("savePurposeError", () => {
-    it("should create a new purpose error successfully", async () => {
+  describe("copyPurposeErrorsFromS3", () => {
+    it("should copy CSV from S3 and insert purpose errors", async () => {
+      const expectedErrors = 10_000;
+      await writePurposeErrorsCsv(
+        tracingId,
+        fileManager,
+        s3Key,
+        expectedErrors,
+      );
+
       await expect(
-        tracingStoreDbService.savePurposeError(
-          {
-            tracingId,
-            version: 1,
-            purposeId: generateId(),
-            errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-            message: "INVALID_ROW_SCHEMA",
-            rowNumber: 12,
-            updateTracingState: false,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).resolves.not.toThrow();
 
       const errors = await findPurposeErrors(dbInstance, tracingId);
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.length).toBe(expectedErrors);
+    }, 30000);
+
+    it("should read object with key from errorsCsvPath", async () => {
+      await writePurposeErrorsCsv(tracingId, fileManager, s3Key);
+      const readSpy = vi.spyOn(fileManager, "readObject");
+
+      await expect(
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+      ).resolves.not.toThrow();
+
+      expect(readSpy).toHaveBeenCalledWith(s3Key);
+      readSpy.mockRestore();
     });
 
-    it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
+    it("should throw an error when copy fails", async () => {
+      const failingStream = new Readable({
+        read() {
+          this.destroy(new Error("copy failed"));
+        },
+      });
+      const readSpy = vi
+        .spyOn(fileManager, "readObject")
+        .mockResolvedValueOnce(failingStream);
+
       await expect(
-        tracingStoreDbService.savePurposeError(
-          {
-            tracingId: generateId<TracingId>(),
-            version: 1,
-            purposeId: generateId(),
-            errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-            message: "INVALID_ROW_SCHEMA",
-            rowNumber: 12,
-            updateTracingState: false,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).rejects.toMatchObject({
         code: "errorProcessingSavePurposeError",
-        message: expect.stringContaining("purposes_errors_tracing_id_fkey"),
+        message: expect.stringContaining("Error copying purpose errors"),
       });
+
+      readSpy.mockRestore();
     });
   });
 
@@ -139,14 +199,11 @@ describe("Tracing store DB service test", () => {
       });
 
       await expect(
-        tracingStoreDbService.updateTracingState(
-          {
-            tracingId: newTracingId,
-            version: 1,
-            state: tracingState.completed,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.updateTracingState({
+          tracingId: newTracingId,
+          version: 1,
+          state: tracingState.completed,
+        }),
       ).resolves.not.toThrow();
 
       const result = await findTracingById(dbInstance, newTracingId);
@@ -166,14 +223,11 @@ describe("Tracing store DB service test", () => {
       });
 
       await expect(
-        tracingStoreDbService.updateTracingState(
-          {
-            tracingId: generateId<TracingId>(),
-            version: 1,
-            state: tracingState.completed,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.updateTracingState({
+          tracingId: generateId<TracingId>(),
+          version: 1,
+          state: tracingState.completed,
+        }),
       ).rejects.toMatchObject({
         code: "errorProcessingUpdateTracingState",
         message: expect.stringContaining("queryResultErrorCode.noData"),

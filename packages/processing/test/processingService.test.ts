@@ -46,6 +46,8 @@ import {
   CorrelationId,
   InternalError,
   generateId,
+  EnrichedPurposeCsvRowArray,
+  createEnrichedCsvMapping,
   tracingState,
   unsafeBrandId,
 } from "pagopa-interop-tracing-models";
@@ -72,7 +74,6 @@ import {
   tenant_id,
 } from "./costants.js";
 import {
-  EnrichedPurposeArray,
   PurposeErrorMessage,
   PurposeErrorMessageArray,
 } from "../src/models/csv.js";
@@ -289,18 +290,14 @@ describe("Processing Service", () => {
         .spyOn(fileManager, "writeStream")
         .mockResolvedValueOnce(undefined);
 
-      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
-        undefined,
-      );
-      const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendTracingUpdateStateMessage")
+      const sendResultSpy = vi
+        .spyOn(producerService, "sendProcessingResultMessage")
         .mockResolvedValue(undefined);
 
       await processingService.processTracing(mockMessage, mockAppCtx);
 
       expect(writeStreamSpy).toHaveBeenCalledTimes(1);
-      expect(producerService.sendErrorMessage).not.toHaveBeenCalled();
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+      expect(sendResultSpy).toHaveBeenCalledWith(
         {
           tracingId: mockMessage.tracingId,
           version: mockMessage.version,
@@ -317,11 +314,8 @@ describe("Processing Service", () => {
         .spyOn(fileManager, "writeStream")
         .mockResolvedValueOnce(undefined);
 
-      vi.spyOn(producerService, "sendErrorMessage").mockResolvedValue(
-        undefined,
-      );
-      const sendUpdateStateSpy = vi
-        .spyOn(producerService, "sendTracingUpdateStateMessage")
+      const sendResultSpy = vi
+        .spyOn(producerService, "sendProcessingResultMessage")
         .mockResolvedValue(undefined);
 
       await processingService.processTracing(mockMessage, mockAppCtx);
@@ -343,8 +337,7 @@ describe("Processing Service", () => {
       expect(key).toBe(bucketS3Key);
       expect(bucket).toBe(config.bucketEnrichedS3Name);
 
-      expect(producerService.sendErrorMessage).not.toHaveBeenCalled();
-      expect(sendUpdateStateSpy).toHaveBeenCalledWith(
+      expect(sendResultSpy).toHaveBeenCalledWith(
         {
           tracingId: mockMessage.tracingId,
           version: mockMessage.version,
@@ -355,7 +348,7 @@ describe("Processing Service", () => {
     });
   });
 
-  describe("sendErrorMessage", () => {
+  describe("checkRecords", () => {
     it("should send error messages when all records don't pass formal check", async () => {
       vi.spyOn(fileManager, "readObject").mockResolvedValue(
         mockBodyStream(wrongMockTracingRecords),
@@ -398,199 +391,181 @@ describe("Processing Service", () => {
       expect(purposeIdNotValid.length).toBeGreaterThan(0);
       expect(requestsCountNotValid.length).toBeGreaterThan(0);
     });
+  });
 
-    it("only last message should have updateTracingState true", async () => {
-      vi.spyOn(fileManager, "readObject").mockResolvedValue(
-        mockBodyStream(wrongMockTracingRecords),
+  describe("getEnrichedPurpose", () => {
+    const delegationId = tenant_id;
+    it("should return a type of EnrichedPurpose if purpose is valid", async () => {
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurpose,
+        mockMessage,
       );
 
-      const sendErrorMessageSpy = vi
-        .spyOn(producerService, "sendErrorMessage")
-        .mockResolvedValue(undefined);
+      const safeEnriched = EnrichedPurposeCsvRowArray.safeParse(
+        enrichedPurposes.enriched,
+      );
+      expect(safeEnriched.success).toBe(true);
+    });
 
-      await processingService.processTracing(mockMessage, mockAppCtx);
+    it("should return errorCode PURPOSE_NOT_FOUND if purpose is not found", async () => {
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        errorPurposesWithInvalidPurposeId,
+        mockMessage,
+      );
+      const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
+        }
+      });
 
-      const calls = sendErrorMessageSpy.mock.calls;
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
 
-      expect(calls.length).toBeGreaterThan(0);
+      purposeErrors?.forEach((item) => {
+        expect(item.errorCode).toBe("PURPOSE_NOT_FOUND");
+      });
+    });
 
-      for (let i = 0; i < calls.length - 1; i++) {
-        expect(calls[i][0].updateTracingState).toBe(false);
+    it("should return getEnrichedPurposeError if eservice is not found", async () => {
+      try {
+        await dbService.getEnrichedPurpose(
+          errorPurposesWithInvalidEserviceId,
+          mockMessage,
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "getEnrichedPurposeError",
+        );
       }
-
-      expect(calls[calls.length - 1][0].updateTracingState).toBe(true);
     });
 
-    describe("getEnrichedPurpose", () => {
-      const delegationId = tenant_id;
-      it("should return a type of EnrichedPurpose if purpose is valid", async () => {
-        const enrichedPurposes = await dbService.getEnrichedPurpose(
-          validPurpose,
-          mockMessage,
-        );
-
-        const safeEnriched = EnrichedPurposeArray.safeParse(
-          enrichedPurposes.enriched,
-        );
-        expect(safeEnriched.success).toBe(true);
-      });
-
-      it("should return errorCode PURPOSE_NOT_FOUND if purpose is not found", async () => {
-        const enrichedPurposes = await dbService.getEnrichedPurpose(
-          errorPurposesWithInvalidPurposeId,
-          mockMessage,
-        );
-        const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
-          if (PurposeErrorMessage.safeParse(item).success) {
-            return item;
-          } else {
-            return null;
-          }
+    it("should return getEnrichedPurposeError if consumer is not found", async () => {
+      try {
+        const invalidConsumer = generateId();
+        await dbService.getEnrichedPurpose(validPurpose, {
+          ...mockMessage,
+          ...{ tenantId: invalidConsumer },
         });
-
-        const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-          purposeErrorsFiltered,
+      } catch (error) {
+        expect(error).toBeInstanceOf(InternalError);
+        expect((error as InternalError<ErrorCodes>).code).toBe(
+          "getEnrichedPurposeError",
         );
+      }
+    });
 
-        purposeErrors?.forEach((item) => {
-          expect(item.errorCode).toBe("PURPOSE_NOT_FOUND");
-        });
-      });
+    it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegation", async () => {
+      await insertDelegation(
+        {
+          id: generateId(),
+          delegate_id: delegationId,
+          eservice_id: validPurposeNotAssociated[0].eserviceId,
+          state: "REVOKED",
+        },
+        dbInstance,
+      );
 
-      it("should return getEnrichedPurposeError if eservice is not found", async () => {
-        try {
-          await dbService.getEnrichedPurpose(
-            errorPurposesWithInvalidEserviceId,
-            mockMessage,
-          );
-        } catch (error) {
-          expect(error).toBeInstanceOf(InternalError);
-          expect((error as InternalError<ErrorCodes>).code).toBe(
-            "getEnrichedPurposeError",
-          );
+      await addNotAssociatedPurposeAndTenant(
+        validPurposeNotAssociated[0],
+        dbInstance,
+      );
+
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurposeNotAssociated,
+        mockMessage,
+      );
+      const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
+        if (PurposeErrorMessage.safeParse(item).success) {
+          return item;
+        } else {
+          return null;
         }
       });
 
-      it("should return getEnrichedPurposeError if consumer is not found", async () => {
-        try {
-          const invalidConsumer = generateId();
-          await dbService.getEnrichedPurpose(validPurpose, {
-            ...mockMessage,
-            ...{ tenantId: invalidConsumer },
-          });
-        } catch (error) {
-          expect(error).toBeInstanceOf(InternalError);
-          expect((error as InternalError<ErrorCodes>).code).toBe(
-            "getEnrichedPurposeError",
-          );
-        }
-      });
+      const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
+        purposeErrorsFiltered,
+      );
 
-      it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegation", async () => {
-        await insertDelegation(
-          {
-            id: generateId(),
-            delegate_id: delegationId,
-            eservice_id: validPurposeNotAssociated[0].eserviceId,
-            state: "REVOKED",
-          },
-          dbInstance,
-        );
-
-        await addNotAssociatedPurposeAndTenant(
-          validPurposeNotAssociated[0],
-          dbInstance,
-        );
-
-        const enrichedPurposes = await dbService.getEnrichedPurpose(
-          validPurposeNotAssociated,
-          mockMessage,
-        );
-        const purposeErrorsFiltered = enrichedPurposes.errors.filter((item) => {
-          if (PurposeErrorMessage.safeParse(item).success) {
-            return item;
-          } else {
-            return null;
-          }
-        });
-
-        const { data: purposeErrors } = PurposeErrorMessageArray.safeParse(
-          purposeErrorsFiltered,
-        );
-
-        purposeErrors?.forEach((item) => {
-          expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
-        });
-      });
-
-      it("should success if tenant is not a consumer or a producer but a delegate", async () => {
-        await insertDelegation(
-          {
-            id: generateId(),
-            delegate_id: delegationId,
-            eservice_id: validPurposeNotAssociated[0].eserviceId,
-            state: "ACTIVE",
-          },
-          dbInstance,
-        );
-
-        const enrichedPurposes = await dbService.getEnrichedPurpose(
-          validPurposeNotAssociated,
-          mockMessage,
-        );
-
-        const safeEnriched = EnrichedPurposeArray.safeParse(
-          enrichedPurposes.enriched,
-        );
-        expect(safeEnriched.success).toBe(true);
+      purposeErrors?.forEach((item) => {
+        expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
       });
     });
 
-    describe("generateCsv", () => {
-      it("should generate a TracingEnriched object from csv", async () => {
-        const tracingCsv = new CsvWriter(mockMessage.tenantId);
+    it("should success if tenant is not a consumer or a producer but a delegate", async () => {
+      await insertDelegation(
+        {
+          id: generateId(),
+          delegate_id: delegationId,
+          eservice_id: validPurposeNotAssociated[0].eserviceId,
+          state: "ACTIVE",
+        },
+        dbInstance,
+      );
 
-        tracingCsv.writeBatch(validEnrichedPurpose);
-        tracingCsv.close();
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        validPurposeNotAssociated,
+        mockMessage,
+      );
 
-        const csvContent = await text(tracingCsv.getStream());
+      const safeEnriched = EnrichedPurposeCsvRowArray.safeParse(
+        enrichedPurposes.enriched,
+      );
+      expect(safeEnriched.success).toBe(true);
+    });
+  });
 
-        const parsedCsv = await parseCSVFromString(csvContent);
+  describe("generateCsv", () => {
+    it("should generate a TracingEnriched object from csv", async () => {
+      const tracingCsv = new CsvWriter(
+        createEnrichedCsvMapping(mockMessage.tenantId),
+      );
 
-        expect(parsedCsv).toBeDefined();
+      tracingCsv.writeBatch(validEnrichedPurpose);
+      tracingCsv.close();
 
-        parsedCsv.forEach((item, index) => {
-          if (index) {
-            // skipping index 0 because is csv header
-            const validationResult = TracingEnriched.safeParse(item);
-            expect(validationResult.success).toBe(true);
-          }
-        });
+      const csvContent = await text(tracingCsv.getStream());
+
+      const parsedCsv = await parseCSVFromString(csvContent);
+
+      expect(parsedCsv).toBeDefined();
+
+      parsedCsv.forEach((item, index) => {
+        if (index) {
+          // skipping index 0 because is csv header
+          const validationResult = TracingEnriched.safeParse(item);
+          expect(validationResult.success).toBe(true);
+        }
       });
+    });
 
-      it("should correctly handle commas within a field during CSV generation", async () => {
-        const tracingCsv = new CsvWriter(mockMessage.tenantId);
+    it("should correctly handle commas within a field during CSV generation", async () => {
+      const tracingCsv = new CsvWriter(
+        createEnrichedCsvMapping(mockMessage.tenantId),
+      );
 
-        tracingCsv.writeBatch([
-          {
-            ...validEnrichedPurpose[0],
-            purposeName: "name,with,commas",
-          },
-        ]);
+      tracingCsv.writeBatch([
+        {
+          ...validEnrichedPurpose[0],
+          purposeName: "name,with,commas",
+        },
+      ]);
 
-        tracingCsv.close();
+      tracingCsv.close();
 
-        const csvContent = await text(tracingCsv.getStream());
-        const parsedCsv = await parseCSVFromString(csvContent);
+      const csvContent = await text(tracingCsv.getStream());
+      const parsedCsv = await parseCSVFromString(csvContent);
 
-        expect(parsedCsv).toBeDefined();
-        parsedCsv.forEach((item, index) => {
-          if (index) {
-            // skipping index 0 because is csv header
-            const validationResult = TracingEnriched.safeParse(item);
-            expect(validationResult.success).toBe(true);
-          }
-        });
+      expect(parsedCsv).toBeDefined();
+      parsedCsv.forEach((item, index) => {
+        if (index) {
+          // skipping index 0 because is csv header
+          const validationResult = TracingEnriched.safeParse(item);
+          expect(validationResult.success).toBe(true);
+        }
       });
     });
   });

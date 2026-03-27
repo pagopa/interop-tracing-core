@@ -1,12 +1,20 @@
-import { GenericContainer } from "testcontainers";
+import { GenericContainer, StartedNetwork } from "testcontainers";
 import { resolve } from "path";
 import { DbConfig } from "pagopa-interop-tracing-commons";
+import { TracingStateUpdateConfig } from "../src/utilities/config.js";
 
 export const TEST_POSTGRES_DB_PORT = 5432;
-export const TEST_POSTGRES_DB_IMAGE = "postgres:14";
+export const TEST_MINIO_PORT = 9000;
+export const TEST_POSTGRES_DB_WITH_AWS_S3_IMAGE = "postgres:14";
+export const TEST_MINIO_IMAGE =
+  "quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z";
 
-export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
-  new GenericContainer(TEST_POSTGRES_DB_IMAGE)
+export const postgreSQLContainer = (
+  config: DbConfig,
+  network: StartedNetwork,
+): GenericContainer =>
+  new GenericContainer(TEST_POSTGRES_DB_WITH_AWS_S3_IMAGE)
+    .withNetwork(network)
     .withEnvironment({
       POSTGRES_DB: config.dbName,
       POSTGRES_USER: config.dbUsername,
@@ -29,3 +37,22 @@ export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
       },
     ])
     .withExposedPorts(TEST_POSTGRES_DB_PORT);
+
+export const minioContainer = (
+  config: TracingStateUpdateConfig,
+  network: StartedNetwork,
+): GenericContainer =>
+  new GenericContainer(TEST_MINIO_IMAGE)
+    .withNetwork(network)
+    .withNetworkAliases("minio")
+    .withEnvironment({
+      MINIO_ROOT_USER: "test-aws-key",
+      MINIO_ROOT_PASSWORD: "test-aws-secret",
+      MINIO_SITE_REGION: "eu-central-1",
+    })
+    .withEntrypoint(["sh", "-c"])
+    .withCommand([
+      `mkdir -p /data/${config.bucketTracingErrorsS3Name} &&
+       /usr/bin/minio server /data`,
+    ])
+    .withExposedPorts(TEST_MINIO_PORT);

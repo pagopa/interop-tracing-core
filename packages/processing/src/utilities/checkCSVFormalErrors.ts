@@ -1,7 +1,7 @@
 import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
-  SavePurposeErrorDto,
+  PurposeError,
 } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
 import { ZodIssue } from "zod";
@@ -34,8 +34,8 @@ const formatDuplicateRecords = (records: number[]): string => {
 export async function checkRecords(
   records: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-): Promise<SavePurposeErrorDto[]> {
-  const errorsRecord: SavePurposeErrorDto[] = [];
+): Promise<PurposeError[]> {
+  const errorsRecord: PurposeError[] = [];
   const duplicateMap = buildDuplicateMap(records);
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
@@ -49,7 +49,6 @@ export async function checkRecords(
           purposeId: record.purpose_id,
           message: parsedError.message,
           rowNumber: record.rowNumber,
-          updateTracingState: false,
         });
       }
     }
@@ -62,7 +61,6 @@ export async function checkRecords(
         purposeId: record.purpose_id,
         message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
         rowNumber: record.rowNumber,
-        updateTracingState: false,
       });
     }
 
@@ -82,7 +80,6 @@ export async function checkRecords(
           duplicateRecords,
         )}.`,
         rowNumber: record.rowNumber,
-        updateTracingState: false,
       });
     }
   }

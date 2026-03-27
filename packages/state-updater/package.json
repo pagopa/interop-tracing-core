@@ -19,6 +19,8 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@aws-sdk/client-s3": "3.887.0",
+    "@types/pg-copy-streams": "1.2.2",
     "@testcontainers/postgresql": "10.2.2",
     "@types/dotenv-flow": "3.3.3",
     "@types/node": "20.10.0",
@@ -40,6 +42,7 @@
     "dotenv-flow": "3.3.0",
     "pagopa-interop-tracing-commons": "workspace:*",
     "pagopa-interop-tracing-models": "workspace:*",
+    "pg-copy-streams": "7.0.0",
     "ts-pattern": "5.4.0",
     "uuid": "10.0.0",
     "zod": "3.23.8"
