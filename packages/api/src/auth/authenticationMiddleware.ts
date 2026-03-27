@@ -3,8 +3,10 @@ import {
   makeApiProblemBuilder,
   missingBearer,
   missingHeader,
+  unauthorizedError,
 } from "pagopa-interop-tracing-models";
 import { P, match } from "ts-pattern";
+import { readAuthDataFromJwtToken, verifyJwtToken } from "./jwt.js";
 import { z } from "zod";
 import { Logger, logger } from "pagopa-interop-tracing-commons";
 import { LocalExpressContext } from "../context/index.js";
@@ -34,14 +36,12 @@ export const authenticationMiddleware: ZodiosRouterContextRequestHandler<
       );
       throw missingBearer;
     }
-    //const jwtToken = authorizationHeader[1];
-    // const valid = await verifyJwtToken(jwtToken, logger);
-    //if (!valid) {
-    // throw unauthorizedError("Invalid token");
-    //}
-    req.ctx.authData = {
-      organizationId: "1b361d49-33f4-4f1e-a88b-4e12661f2300",
-    };
+    const jwtToken = authorizationHeader[1];
+    const valid = await verifyJwtToken(jwtToken, logger);
+    if (!valid) {
+      throw unauthorizedError("Invalid token");
+    }
+    req.ctx.authData = readAuthDataFromJwtToken(jwtToken);
     next();
   };
 
