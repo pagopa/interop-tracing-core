@@ -20,14 +20,14 @@ export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
       {
         source: resolve(
           __dirname,
-          "../../../docker/tracing-store-db/init-db.sql"
+          "../../../docker/tracing-store-db/init-db.sql",
         ),
         target: "/docker-entrypoint-initdb.d/01-init-schema.sql",
       },
       {
         source: resolve(
           __dirname,
-          "../../../docker/tracing-store-db/init-db-seed.sql"
+          "../../../docker/tracing-store-db/init-db-seed.sql",
         ),
         target: "/docker-entrypoint-initdb.d/02-init-seed.sql",
       },
@@ -35,7 +35,7 @@ export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
     .withExposedPorts(TEST_POSTGRES_DB_PORT);
 
 export const minioContainer = (
-  config: TracingStateUpdateConfig
+  config: TracingStateUpdateConfig,
 ): GenericContainer =>
   new GenericContainer(TEST_MINIO_IMAGE)
     .withEnvironment({

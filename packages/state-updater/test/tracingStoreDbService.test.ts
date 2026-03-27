@@ -52,7 +52,7 @@ describe("Tracing store DB service test", () => {
       "2024-01-01",
       tracingId,
       1,
-      generateId()
+      generateId(),
     );
 
     await addTenant(dbInstance, {
@@ -80,11 +80,11 @@ describe("Tracing store DB service test", () => {
         tracingId,
         fileManager,
         s3Key,
-        expectedErrors
+        expectedErrors,
       );
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).resolves.not.toThrow();
 
       const errors = await findPurposeErrors(dbInstance, tracingId);
@@ -96,7 +96,7 @@ describe("Tracing store DB service test", () => {
       const readSpy = vi.spyOn(fileManager, "readObject");
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).resolves.not.toThrow();
 
       expect(readSpy).toHaveBeenCalledWith(s3Key);
@@ -114,7 +114,7 @@ describe("Tracing store DB service test", () => {
         .mockResolvedValueOnce(failingStream);
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).rejects.toMatchObject({
         code: "errorProcessingSavePurposeError",
         message: expect.stringContaining("Error copying purpose errors"),
@@ -141,7 +141,7 @@ describe("Tracing store DB service test", () => {
           tracingId: newTracingId,
           version: 1,
           state: tracingState.completed,
-        })
+        }),
       ).resolves.not.toThrow();
 
       const result = await findTracingById(dbInstance, newTracingId);
@@ -165,7 +165,7 @@ describe("Tracing store DB service test", () => {
           tracingId: generateId<TracingId>(),
           version: 1,
           state: tracingState.completed,
-        })
+        }),
       ).rejects.toMatchObject({
         code: "errorProcessingUpdateTracingState",
         message: expect.stringContaining("queryResultErrorCode.noData"),
