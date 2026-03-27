@@ -1,7 +1,7 @@
 import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
-  PurposeErrorCsvRow,
+  PurposeErrorRow,
   generateId,
 } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
@@ -35,8 +35,8 @@ const formatDuplicateRecords = (records: number[]): string => {
 export async function checkRecords(
   records: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-): Promise<PurposeErrorCsvRow[]> {
-  const errorsRecord: PurposeErrorCsvRow[] = [];
+): Promise<PurposeErrorRow[]> {
+  const errorsRecord: PurposeErrorRow[] = [];
   const duplicateMap = buildDuplicateMap(records);
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);

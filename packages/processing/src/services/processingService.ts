@@ -15,8 +15,8 @@ import {
 import { TracingRecordSchema } from "../models/db.js";
 import { expectedInputCSVHeaders } from "../models/csv.js";
 import {
-  EnrichedPurposeCsvRow,
-  PurposeErrorCsvRow,
+  EnrichedPurposeRow,
+  PurposeErrorRow,
   createEnrichedCsvMapping,
   errorsCsvMapping,
 } from "pagopa-interop-tracing-models";
@@ -39,9 +39,7 @@ export const processingServiceBuilder = (
       const tracingCsv = new CsvWriter(
         createEnrichedCsvMapping(tracing.tenantId),
       );
-      const tracingErrorsCsv = new CsvWriter<PurposeErrorCsvRow>(
-        errorsCsvMapping,
-      );
+      const tracingErrorsCsv = new CsvWriter<PurposeErrorRow>(errorsCsvMapping);
 
       try {
         logger(ctx).info(
@@ -79,7 +77,7 @@ export const processingServiceBuilder = (
                 tracingHasErrors = true;
                 const expectedStr = sortedExpectedHeaders.join(",");
                 const actualStr = actualHeaders.join(",");
-                const headerError: PurposeErrorCsvRow = {
+                const headerError: PurposeErrorRow = {
                   id: generateId(),
                   tracingId: tracing.tracingId,
                   version: tracing.version,
@@ -100,7 +98,7 @@ export const processingServiceBuilder = (
 
               if (hasSemiColonSeparator) {
                 tracingHasErrors = true;
-                const delimiterError: PurposeErrorCsvRow = {
+                const delimiterError: PurposeErrorRow = {
                   id: generateId(),
                   tracingId: tracing.tracingId,
                   version: tracing.version,
@@ -212,11 +210,11 @@ export async function processEnrichmentChunk(
   dbService: DBService,
   tracingRecords: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-  formalErrors: PurposeErrorCsvRow[],
+  formalErrors: PurposeErrorRow[],
   ctx: WithSQSMessageId<AppContext>,
 ): Promise<{
-  enrichedRows: EnrichedPurposeCsvRow[];
-  errors: PurposeErrorCsvRow[];
+  enrichedRows: EnrichedPurposeRow[];
+  errors: PurposeErrorRow[];
 }> {
   const invalidRows = new Set(
     formalErrors

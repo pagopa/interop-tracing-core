@@ -8,8 +8,8 @@ import {
   PurposeSchema,
 } from "../models/db.js";
 import {
-  EnrichedPurposeCsvRow,
-  PurposeErrorCsvRow,
+  EnrichedPurposeRow,
+  PurposeErrorRow,
   generateId,
 } from "pagopa-interop-tracing-models";
 import {
@@ -19,8 +19,8 @@ import {
 import { config } from "../utilities/config.js";
 
 type EnrichedPurposeResult = {
-  enriched: EnrichedPurposeCsvRow[];
-  errors: PurposeErrorCsvRow[];
+  enriched: EnrichedPurposeRow[];
+  errors: PurposeErrorRow[];
 };
 
 export function dbServiceBuilder(db: DB) {
@@ -30,8 +30,8 @@ export function dbServiceBuilder(db: DB) {
       tracing: TracingFromS3KeyPathDto,
     ): Promise<EnrichedPurposeResult> {
       try {
-        const enriched: EnrichedPurposeCsvRow[] = [];
-        const errors: PurposeErrorCsvRow[] = [];
+        const enriched: EnrichedPurposeRow[] = [];
+        const errors: PurposeErrorRow[] = [];
 
         const consumer = await db.oneOrNone<
           Pick<TenantSchema, "name" | "origin" | "external_id">
@@ -176,7 +176,7 @@ function enrichSuccessfulPurpose(
   >,
   tenant: Pick<TenantSchema, "name" | "origin" | "external_id">,
   producer: Pick<TenantSchema, "id" | "name" | "origin" | "external_id">,
-): EnrichedPurposeCsvRow {
+): EnrichedPurposeRow {
   return {
     ...record,
     purposeId: record.purpose_id,

@@ -46,7 +46,7 @@ import {
   CorrelationId,
   InternalError,
   generateId,
-  EnrichedPurposeCsvRowArray,
+  EnrichedPurposeRowArray,
   createEnrichedCsvMapping,
   tracingState,
   unsafeBrandId,
@@ -73,7 +73,7 @@ import {
   eServiceDataNotAssociated,
   tenant_id,
 } from "./costants.js";
-import { PurposeErrorCsvRow } from "pagopa-interop-tracing-models";
+import { PurposeErrorRow } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
 import { TracingEnriched } from "../src/models/tracing.js";
 import { mockBodyStream } from "./fileManager.js";
@@ -398,7 +398,7 @@ describe("Processing Service", () => {
         mockMessage,
       );
 
-      const safeEnriched = EnrichedPurposeCsvRowArray.safeParse(
+      const safeEnriched = EnrichedPurposeRowArray.safeParse(
         enrichedPurposes.enriched,
       );
       expect(safeEnriched.success).toBe(true);
@@ -410,7 +410,7 @@ describe("Processing Service", () => {
         mockMessage,
       );
       const purposeErrors = enrichedPurposes.errors.filter(
-        (item) => PurposeErrorCsvRow.safeParse(item).success,
+        (item) => PurposeErrorRow.safeParse(item).success,
       );
 
       purposeErrors.forEach((item) => {
@@ -468,7 +468,7 @@ describe("Processing Service", () => {
         mockMessage,
       );
       const purposeErrors = enrichedPurposes.errors.filter(
-        (item) => PurposeErrorCsvRow.safeParse(item).success,
+        (item) => PurposeErrorRow.safeParse(item).success,
       );
 
       purposeErrors.forEach((item) => {
@@ -492,7 +492,7 @@ describe("Processing Service", () => {
         mockMessage,
       );
 
-      const safeEnriched = EnrichedPurposeCsvRowArray.safeParse(
+      const safeEnriched = EnrichedPurposeRowArray.safeParse(
         enrichedPurposes.enriched,
       );
       expect(safeEnriched.success).toBe(true);

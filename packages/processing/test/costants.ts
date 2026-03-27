@@ -1,6 +1,6 @@
 import {
   generateId,
-  PurposeErrorCsvRow,
+  PurposeErrorRow,
   TracingFromS3KeyPathDto,
 } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -109,7 +109,7 @@ export const mockFormalErrors = [
     errorCode: PurposeErrorCodes.INVALID_REQUEST_COUNT,
   },
 ];
-export const mockErrorPurposes: Partial<PurposeErrorCsvRow>[] = [
+export const mockErrorPurposes: Partial<PurposeErrorRow>[] = [
   {
     id: generateId(),
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",

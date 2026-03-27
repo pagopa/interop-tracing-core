@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EnrichedPurposeCsvRow = z.object({
+export const EnrichedPurposeRow = z.object({
   tracingId: z.string(),
   producerOrigin: z.string().optional(),
   producerExternalId: z.string().optional(),
@@ -20,14 +20,12 @@ export const EnrichedPurposeCsvRow = z.object({
   producerId: z.string(),
 });
 
-export const EnrichedPurposeCsvRowArray = z.array(EnrichedPurposeCsvRow);
+export const EnrichedPurposeRowArray = z.array(EnrichedPurposeRow);
 
-export type EnrichedPurposeCsvRow = z.infer<typeof EnrichedPurposeCsvRow>;
-export type EnrichedPurposeCsvRowArray = z.infer<
-  typeof EnrichedPurposeCsvRowArray
->;
+export type EnrichedPurposeRow = z.infer<typeof EnrichedPurposeRow>;
+export type EnrichedPurposeRowArray = z.infer<typeof EnrichedPurposeRowArray>;
 
-export const PurposeErrorCsvRow = z.object({
+export const PurposeErrorRow = z.object({
   id: z.string().uuid(),
   tracingId: z.string().uuid(),
   version: z.coerce.number(),
@@ -37,14 +35,14 @@ export const PurposeErrorCsvRow = z.object({
   rowNumber: z.coerce.number(),
 });
 
-export type PurposeErrorCsvRow = z.infer<typeof PurposeErrorCsvRow>;
+export type PurposeErrorRow = z.infer<typeof PurposeErrorRow>;
 
 type CsvMappingValue = string | number | boolean | Date | null | undefined;
 type CsvMapping<Row> = Record<string, (row: Row) => CsvMappingValue>;
 
 export const createEnrichedCsvMapping = (
   submitterId: string,
-): CsvMapping<EnrichedPurposeCsvRow> => ({
+): CsvMapping<EnrichedPurposeRow> => ({
   tracingId: (row) => row.tracingId,
   submitterId: () => submitterId,
   date: (row) => row.date,
@@ -64,7 +62,7 @@ export const createEnrichedCsvMapping = (
   producerExternalId: (row) => row.producerExternalId,
 });
 
-export const errorsCsvMapping: CsvMapping<PurposeErrorCsvRow> = {
+export const errorsCsvMapping: CsvMapping<PurposeErrorRow> = {
   id: (row) => row.id,
   tracing_id: (row) => row.tracingId,
   version: (row) => row.version,
