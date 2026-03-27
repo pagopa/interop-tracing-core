@@ -1,10 +1,4 @@
 import {
-  DB,
-  FileManager,
-  fileManagerBuilder,
-  initDB,
-} from "pagopa-interop-tracing-commons";
-import {
   describe,
   expect,
   it,
@@ -13,23 +7,17 @@ import {
   afterEach,
   vi,
 } from "vitest";
-import { dbServiceBuilder, DBService } from "../src/services/db/dbService.js";
-import {
-  tracingStoreServiceBuilder,
-  TracingStoreService,
-} from "../src/services/tracingStoreService.js";
-import { config } from "../src/utilities/config.js";
-import { StartedTestContainer } from "testcontainers";
-import {
-  minioContainer,
-  postgreSQLContainer,
-  TEST_MINIO_PORT,
-} from "./config.js";
 import {
   addTenant,
   addTracing,
+  dbInstance,
+  fileManager,
   findPurposeErrors,
   findTracingById,
+  truncatePurposeErrors,
+  startedMinioContainer,
+  startedPostgreSqlContainer,
+  tracingStoreService,
   writePurposeErrorsCsv,
 } from "./utils.js";
 import {
@@ -39,73 +27,32 @@ import {
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
-import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import { Readable } from "node:stream";
 
 describe("Tracing store DB service test", () => {
-  let dbInstance: DB;
-  let tracingStoreService: TracingStoreService;
-  let startedPostgreSqlContainer: StartedTestContainer;
-  let startedMinioContainer: StartedTestContainer;
   let s3Key: string;
-  let fileManager: FileManager;
-
-  let s3client: S3Client;
 
   const tenantId: TenantId = generateId<TenantId>();
   const tracingId: TracingId = generateId<TracingId>();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = truncatedTo(yesterday, DateUnit.DAYS);
-
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
     await startedMinioContainer.stop();
   });
 
   afterEach(async () => {
-    await dbInstance.none(`TRUNCATE ${config.dbSchemaName}.purposes_errors;`);
+    await truncatePurposeErrors(dbInstance);
   });
 
   beforeAll(async () => {
-    startedMinioContainer = await minioContainer(config).start();
-
-    // S3 client runs on host, so use the mapped port on localhost.
-    const minioPort = startedMinioContainer.getMappedPort(TEST_MINIO_PORT);
-    const s3ClientConfig: S3ClientConfig = {
-      endpoint: `http://127.0.0.1:${minioPort}`,
-      forcePathStyle: true,
-      logger: config.logLevel === "debug" ? console : undefined,
-      region: config.awsRegion,
-    };
-    s3client = new S3Client(s3ClientConfig);
-
-    fileManager = fileManagerBuilder(
-      s3client,
-      config.bucketTracingErrorsS3Name,
-    );
-
-    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
-    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
-
-    dbInstance = initDB({
-      username: config.dbUsername,
-      password: config.dbPassword,
-      host: config.dbHost,
-      port: config.dbPort,
-      database: config.dbName,
-      schema: config.dbSchemaName,
-      useSSL: config.dbUseSSL,
-    });
-
-    const dbService: DBService = dbServiceBuilder(dbInstance);
-    tracingStoreService = tracingStoreServiceBuilder(dbService, fileManager);
     s3Key = fileManager.buildS3Key(
       generateId(),
       "2024-01-01",
       tracingId,
       1,
-      generateId(),
+      generateId()
     );
 
     await addTenant(dbInstance, {
@@ -133,11 +80,11 @@ describe("Tracing store DB service test", () => {
         tracingId,
         fileManager,
         s3Key,
-        expectedErrors,
+        expectedErrors
       );
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
       ).resolves.not.toThrow();
 
       const errors = await findPurposeErrors(dbInstance, tracingId);
@@ -149,7 +96,7 @@ describe("Tracing store DB service test", () => {
       const readSpy = vi.spyOn(fileManager, "readObject");
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
       ).resolves.not.toThrow();
 
       expect(readSpy).toHaveBeenCalledWith(s3Key);
@@ -167,7 +114,7 @@ describe("Tracing store DB service test", () => {
         .mockResolvedValueOnce(failingStream);
 
       await expect(
-        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key)
       ).rejects.toMatchObject({
         code: "errorProcessingSavePurposeError",
         message: expect.stringContaining("Error copying purpose errors"),
@@ -194,7 +141,7 @@ describe("Tracing store DB service test", () => {
           tracingId: newTracingId,
           version: 1,
           state: tracingState.completed,
-        }),
+        })
       ).resolves.not.toThrow();
 
       const result = await findTracingById(dbInstance, newTracingId);
@@ -218,7 +165,7 @@ describe("Tracing store DB service test", () => {
           tracingId: generateId<TracingId>(),
           version: 1,
           state: tracingState.completed,
-        }),
+        })
       ).rejects.toMatchObject({
         code: "errorProcessingUpdateTracingState",
         message: expect.stringContaining("queryResultErrorCode.noData"),
