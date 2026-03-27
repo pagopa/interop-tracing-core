@@ -19,7 +19,7 @@ import {
   TracingStoreService,
 } from "../src/services/tracingStoreService.js";
 import { config } from "../src/utilities/config.js";
-import { Network, StartedNetwork, StartedTestContainer } from "testcontainers";
+import { StartedTestContainer } from "testcontainers";
 import {
   minioContainer,
   postgreSQLContainer,
@@ -47,7 +47,6 @@ describe("Tracing store DB service test", () => {
   let tracingStoreService: TracingStoreService;
   let startedPostgreSqlContainer: StartedTestContainer;
   let startedMinioContainer: StartedTestContainer;
-  let startedNetwork: StartedNetwork;
   let s3Key: string;
   let fileManager: FileManager;
 
@@ -62,7 +61,6 @@ describe("Tracing store DB service test", () => {
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
     await startedMinioContainer.stop();
-    await startedNetwork.stop();
   });
 
   afterEach(async () => {
@@ -70,11 +68,7 @@ describe("Tracing store DB service test", () => {
   });
 
   beforeAll(async () => {
-    startedNetwork = await new Network().start();
-    startedMinioContainer = await minioContainer(
-      config,
-      startedNetwork,
-    ).start();
+    startedMinioContainer = await minioContainer(config).start();
 
     // S3 client runs on host, so use the mapped port on localhost.
     const minioPort = startedMinioContainer.getMappedPort(TEST_MINIO_PORT);
@@ -91,10 +85,7 @@ describe("Tracing store DB service test", () => {
       config.bucketTracingErrorsS3Name,
     );
 
-    startedPostgreSqlContainer = await postgreSQLContainer(
-      config,
-      startedNetwork,
-    ).start();
+    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
     config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
 
     dbInstance = initDB({
