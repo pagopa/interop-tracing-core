@@ -5,7 +5,7 @@ if [ ! -f /etc/minio/config_applied ]; then
     echo "Setting up MinIO configuration..."
 
     # Create buckets
-    mkdir -p /data/interop-tracing-bucket /data/interop-tracing-enriched-bucket
+    mkdir -p /data/interop-tracing-bucket /data/interop-tracing-enriched-bucket /data/interop-tracing-errors-bucket
 
     # Start MinIO server in the background (compatibility mode)
     /usr/bin/minio server /data --console-address ":9001" --compat &
@@ -43,6 +43,10 @@ if [ ! -f /etc/minio/config_applied ]; then
 
     if ! mc event add myminio/interop-tracing-enriched-bucket arn:minio:sqs:eu-central-1:interop-tracing-enriched-bucket:webhook --event put --suffix .csv --ignore-existing; then
         echo "Failed to add event subscription for interop-tracing-enriched-bucket."
+    fi
+
+    if ! mc event add myminio/interop-tracing-errors-bucket arn:minio:sqs:eu-central-1:interop-tracing-errors-bucket:webhook --event put --suffix .csv --ignore-existing; then
+        echo "Failed to add event subscription for interop-tracing-errors-bucket."
     fi
 else
     echo "MinIO configuration already applied, skipping setup."
