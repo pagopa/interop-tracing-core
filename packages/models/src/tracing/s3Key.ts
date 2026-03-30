@@ -1,6 +1,6 @@
 import { TracingFromS3KeyPathDto } from "../queue/messages.js";
 
-export function parseS3Key(key: string): TracingFromS3KeyPathDto {
+export function parseTracingS3Key(key: string): TracingFromS3KeyPathDto {
   const parsed = TracingFromS3KeyPathDto.safeParse(
     decodeURIComponent(key)
       .split("/")

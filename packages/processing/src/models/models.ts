@@ -3,7 +3,7 @@ import { SQS } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
   S3BodySchema,
-  parseS3Key,
+  parseTracingS3Key,
 } from "pagopa-interop-tracing-models";
 
 export function decodeSQSEventMessage(
@@ -21,7 +21,7 @@ export function decodeSQSEventMessage(
 
     const key = s3Body.Records[0].s3.object.key;
 
-    return parseS3Key(key);
+    return parseTracingS3Key(key);
   } catch (error: unknown) {
     throw decodeSQSEventMessageError(
       `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Details: ${error}`,

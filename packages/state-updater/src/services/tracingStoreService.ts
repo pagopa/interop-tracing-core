@@ -5,7 +5,7 @@ import {
 } from "../model/domain/errors.js";
 import { DBService } from "./db/dbService.js";
 import {
-  parseS3Key,
+  parseTracingS3Key,
   UpdateTracingStateDto,
 } from "pagopa-interop-tracing-models";
 
@@ -26,7 +26,7 @@ export function tracingStoreServiceBuilder(
 
     async copyPurposeErrorsFromS3(errorsCsvPath: string): Promise<void> {
       try {
-        const { tracingId, version } = parseS3Key(errorsCsvPath);
+        const { tracingId, version } = parseTracingS3Key(errorsCsvPath);
         const s3Stream = await fileManager.readObject(errorsCsvPath);
         await dbService.copyPurposeErrorsFromStream(
           s3Stream,
