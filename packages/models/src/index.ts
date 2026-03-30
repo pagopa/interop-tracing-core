@@ -4,6 +4,7 @@ export * from "./tracing/tracing.js";
 export * from "./tracing/delegation.js";
 export * from "./tracing/purposeError.js";
 export * from "./tracing/csv.js";
+export * from "./tracing/s3Key.js";
 export * from "./notification/notification.js";
 export * from "./queue/messages.js";
 export * from "./headers.js";

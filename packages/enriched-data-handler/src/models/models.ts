@@ -3,6 +3,7 @@ import { SQS } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
   S3BodySchema,
+  parseS3Key,
 } from "pagopa-interop-tracing-models";
 
 export function decodeSQSEventMessage(
@@ -20,27 +21,10 @@ export function decodeSQSEventMessage(
 
     const key = s3Body.Records[0].s3.object.key;
 
-    const parsedResult = TracingFromS3KeyPathDto.safeParse(parseS3Key(key));
-    if (parsedResult.success) {
-      return parsedResult.data;
-    } else {
-      throw new Error(
-        `Error parsing S3 key: ${JSON.stringify(parsedResult.error)}`,
-      );
-    }
+    return parseS3Key(key);
   } catch (error: unknown) {
     throw decodeSQSEventMessageError(
       `Failed to decode SQS S3 event message with MessageId: ${message.MessageId}. Details: ${error}`,
     );
   }
-}
-
-function parseS3Key(key: string): Partial<TracingFromS3KeyPathDto> {
-  return decodeURIComponent(key)
-    .split("/")
-    .map((part) => {
-      const [k, v] = decodeURIComponent(part).split("=");
-      return { [k]: v };
-    })
-    .reduce((acc, obj) => ({ ...acc, ...obj }), {});
 }

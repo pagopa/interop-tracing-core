@@ -4,7 +4,10 @@ import {
   errorProcessingUpdateTracingState,
 } from "../model/domain/errors.js";
 import { DBService } from "./db/dbService.js";
-import { UpdateTracingStateDto } from "pagopa-interop-tracing-models";
+import {
+  parseS3Key,
+  UpdateTracingStateDto,
+} from "pagopa-interop-tracing-models";
 
 export function tracingStoreServiceBuilder(
   dbService: DBService,
@@ -23,8 +26,13 @@ export function tracingStoreServiceBuilder(
 
     async copyPurposeErrorsFromS3(errorsCsvPath: string): Promise<void> {
       try {
+        const { tracingId, version } = parseS3Key(errorsCsvPath);
         const s3Stream = await fileManager.readObject(errorsCsvPath);
-        await dbService.copyPurposeErrorsFromStream(s3Stream);
+        await dbService.copyPurposeErrorsFromStream(
+          s3Stream,
+          tracingId,
+          version,
+        );
       } catch (error: unknown) {
         throw errorProcessingCopyPurposeErrors(
           `Error copying purpose errors from S3 path: ${errorsCsvPath}. Details: ${error}`,

@@ -21,26 +21,47 @@ export function dbServiceBuilder(db: DB) {
       await db.one(updateTracingStateQuery, [data.state, data.tracingId]);
     },
 
-    async copyPurposeErrorsFromStream(stream: Readable): Promise<void> {
+    async copyPurposeErrorsFromStream(
+      stream: Readable,
+      tracingId: string,
+      version: number,
+    ): Promise<void> {
       const purposeErrorCsvColumns = Object.keys(errorsCsvMapping);
       const table = `${config.dbSchemaName}.purposes_errors`;
       const columns = purposeErrorCsvColumns.join(",");
       const copyQuery = `COPY ${table} (${columns}) FROM STDIN WITH (FORMAT csv, HEADER true)`;
 
-      await copyFromStream(copyQuery, stream);
+      const deleteQuery = `
+        DELETE FROM ${config.dbSchemaName}.purposes_errors
+        WHERE tracing_id = $1 AND version = $2
+      `;
+
+      await copyFromStream(copyQuery, stream, deleteQuery, [
+        tracingId,
+        version,
+      ]);
     },
   };
 
   async function copyFromStream(
     copyQuery: string,
     source: Readable,
+    deleteQuery: string,
+    deleteParams: [string, number],
   ): Promise<void> {
     const connection = await db.connect();
     try {
+      await connection.none("BEGIN");
+      await connection.none(deleteQuery, deleteParams);
+
       const client = getCopyClient(connection);
       const copyStream = client.query(copyFrom(copyQuery)) as Writable;
 
       await pipeline(source, copyStream);
+      await connection.none("COMMIT");
+    } catch (error: unknown) {
+      await connection.none("ROLLBACK");
+      throw error;
     } finally {
       connection.done();
     }
