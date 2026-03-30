@@ -6,7 +6,7 @@ import {
   logger,
 } from "pagopa-interop-tracing-commons";
 import { ProcessingResultDto } from "pagopa-interop-tracing-models";
-import { sendTracingUpdateStateMessageError } from "../models/errors.js";
+import { sendProcessingResultMessageError } from "../models/errors.js";
 
 export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
   return {
@@ -16,7 +16,7 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
     ): Promise<void> {
       try {
         logger(ctx).info(
-          `UpdateTracingState message sent on queue for tracingId: ${
+          `Processing result message sent on queue for tracingId: ${
             result.tracingId
           }. Payload: ${JSON.stringify(result)}`,
         );
@@ -28,8 +28,8 @@ export const producerServiceBuilder = (sqsClient: SQS.SQSClient) => {
           ctx.correlationId,
         );
       } catch (error: unknown) {
-        throw sendTracingUpdateStateMessageError(
-          `Error sending tracing update state for tracingId: ${result.tracingId}. Details: ${error}`,
+        throw sendProcessingResultMessageError(
+          `Error sending processing result for tracingId: ${result.tracingId}. Details: ${error}`,
         );
       }
     },
