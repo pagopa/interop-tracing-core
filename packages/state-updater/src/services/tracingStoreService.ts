@@ -1,4 +1,9 @@
-import { FileManager } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  FileManager,
+  checkVersionByFilter,
+  TracingStoreTables,
+} from "pagopa-interop-tracing-commons";
 import {
   errorProcessingCopyPurposeErrors,
   errorProcessingUpdateTracingState,
@@ -8,14 +13,32 @@ import {
   parseTracingS3Key,
   UpdateTracingStateDto,
 } from "pagopa-interop-tracing-models";
+import { config } from "../utilities/config.js";
 
 export function tracingStoreServiceBuilder(
+  db: DB,
   dbService: DBService,
   fileManager: FileManager,
 ) {
   return {
     async updateTracingState(data: UpdateTracingStateDto): Promise<void> {
       try {
+        const shouldProcess = await checkVersionByFilter(
+          db,
+          {
+            schema: config.dbSchemaName,
+            table: TracingStoreTables.tracings,
+            versionColumn: "version",
+            filterColumn: "id",
+            filterValue: data.tracingId,
+          },
+          data.version,
+        );
+
+        if (!shouldProcess) {
+          return;
+        }
+
         await dbService.updateTracingState(data);
       } catch (error: unknown) {
         throw errorProcessingUpdateTracingState(

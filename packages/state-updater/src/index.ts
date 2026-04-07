@@ -39,6 +39,7 @@ const fileManager = fileManagerBuilder(
 
 const dbService: DBService = dbServiceBuilder(tracingStoreDb);
 const tracingStoreService: TracingStoreService = tracingStoreServiceBuilder(
+  tracingStoreDb,
   dbService,
   fileManager,
 );

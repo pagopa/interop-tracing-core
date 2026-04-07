@@ -57,7 +57,7 @@ export const dbInstance: DB = initDB({
 
 export const dbService: DBService = dbServiceBuilder(dbInstance);
 export const tracingStoreService: TracingStoreService =
-  tracingStoreServiceBuilder(dbService, fileManager);
+  tracingStoreServiceBuilder(dbInstance, dbService, fileManager);
 
 export const writePurposeErrorsCsv = async (
   tracingId: string,
