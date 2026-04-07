@@ -56,7 +56,6 @@ import { postgreSQLContainer } from "./config.js";
 import {
   ApiGetTracingErrorsParams,
   ApiGetTracingErrorsQuery,
-  ApiSavePurposeErrorPayload,
   ApiUpdateTracingStatePayload,
   ApiGetTracingsQuery,
   ApiSaveMissingTracingPayload,
@@ -717,79 +716,6 @@ describe("database test", () => {
           expect(error).toBeInstanceOf(Error);
           expect(error.message).toContain("Database query failed");
           expect(error.message).toContain("queryResultErrorCode.noData");
-          expect(error.code).toBe("genericError");
-        }
-      });
-    });
-
-    describe("savePurposeError", () => {
-      it("should create a new purpose error successfully", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const purposeErrorData: ApiSavePurposeErrorPayload = {
-          version: tracingData.version,
-          purposeId: purposeId,
-          errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-          message: `INVALID_ROW_SCHEMA`,
-          rowNumber: 12,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        expect(
-          async () =>
-            await operationsService.savePurposeError(
-              {
-                tracingId: tracing.id,
-                version: tracing.version,
-              },
-              purposeErrorData,
-              genericLogger,
-            ),
-        ).not.toThrowError();
-      });
-
-      it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
-        const tracingData: Tracing = {
-          id: generateId<TracingId>(),
-          tenant_id: tenantId,
-          state: tracingState.pending,
-          date: yesterdayTruncated,
-          version: 1,
-          errors: false,
-        };
-
-        const purposeErrorData: ApiSavePurposeErrorPayload = {
-          version: tracingData.version,
-          purposeId: purposeId,
-          errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-          message: `INVALID_ROW_SCHEMA`,
-          rowNumber: 12,
-        };
-
-        const tracing = await addTracing(tracingData, dbInstance);
-
-        try {
-          await operationsService.savePurposeError(
-            {
-              tracingId: generateId<TracingId>(),
-              version: tracing.version,
-            },
-            purposeErrorData,
-            genericLogger,
-          );
-        } catch (e) {
-          const error = e as InternalError<CommonErrorCodes>;
-          expect(error).toBeInstanceOf(Error);
-          expect(error.message).toContain("Database query failed");
-          expect(error.message).toContain("purposes_errors_tracing_id_fkey");
           expect(error.code).toBe("genericError");
         }
       });
