@@ -34,13 +34,12 @@ export const enrichedServiceBuilder = (
           `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
         );
 
-        const tracingVersionInStore =
-          await tracingStoreDbService.getTracingVersion(tracing.tracingId);
+        const shouldProcess = await tracingStoreDbService.checkTracingVersion(
+          tracing.tracingId,
+          tracing.version,
+        );
 
-        if (tracingVersionInStore > tracing.version) {
-          logger(ctx).info(
-            `Skipping tracingId ${tracing.tracingId}: message version ${tracing.version} is older than current version ${tracingVersionInStore}.`,
-          );
+        if (!shouldProcess) {
           return;
         }
 

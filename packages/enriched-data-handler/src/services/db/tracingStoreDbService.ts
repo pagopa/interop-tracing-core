@@ -1,18 +1,31 @@
-import { DB } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  checkVersionByFilter,
+  TracingStoreTables,
+} from "pagopa-interop-tracing-commons";
 import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 import { config } from "../../utilities/config.js";
 
 export function tracingStoreDbServiceBuilder(db: DB) {
   return {
-    async getTracingVersion(tracingId: string): Promise<number> {
+    async checkTracingVersion(
+      tracingId: string,
+      incomingVersion: number,
+    ): Promise<boolean> {
       try {
-        const { version } = await db.one<{ version: number }>(
-          `SELECT version FROM ${config.tracingStoreDbSchemaName}.tracings WHERE id = $1`,
-          [tracingId],
+        return await checkVersionByFilter(
+          db,
+          {
+            schema: config.tracingStoreDbSchemaName,
+            table: TracingStoreTables.tracings,
+            versionColumn: "version",
+            filterColumn: "id",
+            filterValue: tracingId,
+          },
+          incomingVersion,
         );
-        return version;
       } catch (error: unknown) {
-        throw dbServiceErrorMapper("getTracingVersion", error);
+        throw dbServiceErrorMapper("checkTracingVersion", error);
       }
     },
   };

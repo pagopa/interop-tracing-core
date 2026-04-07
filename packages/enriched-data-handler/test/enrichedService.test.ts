@@ -87,7 +87,7 @@ describe("Enriched Service", () => {
     fileManager = fileManagerBuilder(s3client, config.bucketEnrichedS3Name);
 
     tracingStoreDbService = {
-      getTracingVersion: vi.fn().mockResolvedValue(null),
+      checkTracingVersion: vi.fn().mockResolvedValue(true),
     };
 
     enrichedService = enrichedServiceBuilder(
@@ -98,8 +98,8 @@ describe("Enriched Service", () => {
   });
 
   beforeEach(() => {
-    vi.spyOn(tracingStoreDbService, "getTracingVersion").mockResolvedValue(
-      mockTracingFromCsv.version,
+    vi.spyOn(tracingStoreDbService, "checkTracingVersion").mockResolvedValue(
+      true,
     );
   });
 
@@ -125,8 +125,8 @@ describe("Enriched Service", () => {
 
       vi.spyOn(
         tracingStoreDbService,
-        "getTracingVersion",
-      ).mockResolvedValueOnce(mockTracingFromCsv.version + 1);
+        "checkTracingVersion",
+      ).mockResolvedValueOnce(false);
 
       await enrichedService.insertEnrichedTrace(mockTracingFromCsv, mockAppCtx);
 
