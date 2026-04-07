@@ -13,6 +13,22 @@ export type VersionLookupParams = {
   filterValue: string | number;
 };
 
+/**
+ * @async
+ * @function getVersionByFilter
+ * Read the current version from the DB using a generic schema/table/filter.
+ * @param {DB} db - pg-promise database instance
+ * @param {VersionLookupParams} params - lookup parameters (schema/table/columns/filter)
+ * @returns {Promise<number | null>} - The current version or null if not found
+ * @example
+ * const currentVersion = await getVersionByFilter(db, {
+ *   schema: "tracing_store",
+ *   table: "tracings",
+ *   versionColumn: "version",
+ *   filterColumn: "id",
+ *   filterValue: tracingId,
+ * });
+ */
 export const getVersionByFilter = async (
   db: DB,
   {
@@ -31,6 +47,28 @@ export const getVersionByFilter = async (
   return row?.version ?? null;
 };
 
+/**
+ * @async
+ * @function checkVersionByFilter
+ * Check if the incoming version should be processed by comparing it with the
+ * current version in the DB.
+ * @param {DB} db - pg-promise database instance
+ * @param {VersionLookupParams} params - lookup parameters (schema/table/columns/filter)
+ * @param {number} incomingVersion - incoming message/version number
+ * @returns {Promise<boolean>} - true if the incoming version is not older
+ * @example
+ * const shouldProcess = await checkVersionByFilter(
+ *   db,
+ *   {
+ *     schema: "tracing_store",
+ *     table: "tracings",
+ *     versionColumn: "version",
+ *     filterColumn: "id",
+ *     filterValue: tracingId,
+ *   },
+ *   incomingVersion,
+ * );
+ */
 export const checkVersionByFilter = async (
   db: DB,
   params: VersionLookupParams,
