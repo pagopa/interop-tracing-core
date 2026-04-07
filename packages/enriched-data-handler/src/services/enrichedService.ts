@@ -7,13 +7,10 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
-import { ProducerService } from "./producerService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
-import { tracingState } from "pagopa-interop-tracing-models";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
-  producerService: ProducerService,
   fileManager: FileManager,
 ) => {
   return {
@@ -68,15 +65,6 @@ export const enrichedServiceBuilder = (
         }
 
         await dbService.finalizeMergeToTarget(tracing.tracingId);
-
-        await producerService.sendTracingUpdateStateMessage(
-          {
-            tracingId: tracing.tracingId,
-            version: tracing.version,
-            state: tracingState.completed,
-          },
-          ctx,
-        );
       } catch (error: unknown) {
         throw insertEnrichedTraceError(
           `Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,

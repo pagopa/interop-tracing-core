@@ -19,6 +19,7 @@ import { processTracingError } from "../models/errors.js";
 import { config } from "../utilities/config.js";
 import { checkRecords } from "../utilities/checkCSVFormalErrors.js";
 import { CsvWriter } from "../utilities/csvWriter.js";
+import { tracingState } from "pagopa-interop-tracing-models";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -176,6 +177,15 @@ export const processingServiceBuilder = (
 
           logger(ctx).info(
             `Tracing CSV uploaded successfully for tracingId: ${tracing.tracingId} to bucket ${config.bucketEnrichedS3Name}`,
+          );
+
+          await producerService.sendTracingUpdateStateMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              state: tracingState.completed,
+            },
+            ctx,
           );
         }
       } catch (error: unknown) {

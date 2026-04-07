@@ -18,6 +18,7 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
       .object({
         SQS_TRACING_UPLOAD_ENDPOINT: z.string(),
         SQS_PROCESSING_ERROR_ENDPOINT: z.string(),
+        SQS_ENRICHER_STATE_ENDPOINT: z.string(),
         APPLICATION_NAME: z.string(),
         SQS_ENDPOINT: z.string().nullish(),
         S3_ENRICHED_BUCKET_NAME: z.string(),
@@ -26,6 +27,7 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
       .transform((c) => ({
         sqsTracingUploadEndpoint: c.SQS_TRACING_UPLOAD_ENDPOINT,
         sqsProcessingErrorEndpoint: c.SQS_PROCESSING_ERROR_ENDPOINT,
+        sqsEnricherStateEndpoint: c.SQS_ENRICHER_STATE_ENDPOINT,
         applicationName: c.APPLICATION_NAME,
         sqsEndpoint: c.SQS_ENDPOINT,
         bucketEnrichedS3Name: c.S3_ENRICHED_BUCKET_NAME,

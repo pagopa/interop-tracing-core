@@ -1,9 +1,5 @@
 import { dbServiceBuilder } from "./services/db/dbService.js";
 import {
-  ProducerService,
-  producerServiceBuilder,
-} from "./services/producerService.js";
-import {
   EnrichedService,
   enrichedServiceBuilder,
 } from "./services/enrichedService.js";
@@ -69,10 +65,8 @@ const fileManager: FileManager = fileManagerBuilder(
   s3client,
   config.bucketEnrichedS3Name,
 );
-const producerService: ProducerService = producerServiceBuilder(sqsClient);
 const enrichedService: EnrichedService = enrichedServiceBuilder(
   dbServiceBuilder(dbContext),
-  producerService,
   fileManager,
 );
 
