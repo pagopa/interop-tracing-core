@@ -32,6 +32,16 @@ export function processProcessingResultMessage(
 
     try {
       const result = decodeSQSProcessingResultMessage(message);
+
+      const shouldProcess = await service.checkTracingVersion(
+        result.tracingId,
+        result.version,
+      );
+
+      if (!shouldProcess) {
+        return;
+      }
+
       if (result.state === tracingState.error) {
         await service.copyPurposeErrorsFromS3(result.errorsCsvPath);
       }

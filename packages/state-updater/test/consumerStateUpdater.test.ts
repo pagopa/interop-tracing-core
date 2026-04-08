@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 
 describe("Consumer state updater queue test", () => {
   const mockTracingStoreService = {
+    checkTracingVersion: vi.fn().mockResolvedValue(true),
     copyPurposeErrorsFromS3: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
   };

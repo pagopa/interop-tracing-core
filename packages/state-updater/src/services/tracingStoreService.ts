@@ -21,24 +21,25 @@ export function tracingStoreServiceBuilder(
   fileManager: FileManager,
 ) {
   return {
+    async checkTracingVersion(
+      tracingId: string,
+      incomingVersion: number,
+    ): Promise<boolean> {
+      return await checkVersionByFilter(
+        db,
+        {
+          schema: config.dbSchemaName,
+          table: TracingStoreTables.tracings,
+          versionColumn: "version",
+          filterColumn: "id",
+          filterValue: tracingId,
+        },
+        incomingVersion,
+      );
+    },
+
     async updateTracingState(data: UpdateTracingStateDto): Promise<void> {
       try {
-        const shouldProcess = await checkVersionByFilter(
-          db,
-          {
-            schema: config.dbSchemaName,
-            table: TracingStoreTables.tracings,
-            versionColumn: "version",
-            filterColumn: "id",
-            filterValue: data.tracingId,
-          },
-          data.version,
-        );
-
-        if (!shouldProcess) {
-          return;
-        }
-
         await dbService.updateTracingState(data);
       } catch (error: unknown) {
         throw errorProcessingUpdateTracingState(
