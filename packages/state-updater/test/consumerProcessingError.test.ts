@@ -6,6 +6,7 @@ import { decodeSQSProcessingResultMessage } from "../src/model/models.js";
 import { InternalError } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
 import { v4 as uuidv4 } from "uuid";
+
 describe("Consumer processing result queue test", () => {
   const mockTracingStoreService = {
     checkTracingVersion: vi.fn().mockResolvedValue(true),
