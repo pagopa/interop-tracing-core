@@ -33,11 +33,7 @@ describe("Consumer state updater queue test", () => {
       MessageAttributes: correlationIdMessageAttribute,
     };
 
-    expect(async () => {
-      await processProcessingResultMessage(mockTracingStoreService)(
-        validMessage,
-      );
-    }).not.toThrowError();
+    await processProcessingResultMessage(mockTracingStoreService)(validMessage);
 
     expect(mockTracingStoreService.updateTracingState).toHaveBeenCalledWith(
       decodeSQSProcessingResultMessage(validMessage),
