@@ -46,6 +46,26 @@ describe("Consumer processing result queue test", () => {
     );
   });
 
+  it("given valid ERROR message with stale version, should not copy or update", async () => {
+    mockTracingStoreService.checkTracingVersion.mockResolvedValueOnce(false);
+
+    const validMessage: SQS.Message = {
+      MessageId: "12345",
+      ReceiptHandle: "receipt_handle_id",
+      Body: JSON.stringify(sqsMessages.processingResult.validError),
+      MessageAttributes: correlationIdMessageAttribute,
+    };
+
+    await expect(
+      processProcessingResultMessage(mockTracingStoreService)(validMessage),
+    ).resolves.not.toThrow();
+
+    expect(
+      mockTracingStoreService.copyPurposeErrorsFromS3,
+    ).not.toHaveBeenCalled();
+    expect(mockTracingStoreService.updateTracingState).not.toHaveBeenCalled();
+  });
+
   it("given invalid message, method should throw an error", async () => {
     const invalidMessage = {};
 
