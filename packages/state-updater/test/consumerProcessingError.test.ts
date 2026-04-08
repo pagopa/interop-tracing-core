@@ -71,7 +71,7 @@ describe("Consumer processing result queue test", () => {
 
     try {
       await processProcessingResultMessage(mockTracingStoreService)(
-        invalidMessage as SQS.Message,
+        invalidMessage,
       );
     } catch (error) {
       expect(error).toBeInstanceOf(InternalError);
