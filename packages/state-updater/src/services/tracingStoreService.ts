@@ -25,17 +25,23 @@ export function tracingStoreServiceBuilder(
       tracingId: string,
       incomingVersion: number,
     ): Promise<boolean> {
-      return await checkVersionByFilter(
-        db,
-        {
-          schema: config.dbSchemaName,
-          table: TracingStoreTables.tracings,
-          versionColumn: "version",
-          filterColumn: "id",
-          filterValue: tracingId,
-        },
-        incomingVersion,
-      );
+      try {
+        return await checkVersionByFilter(
+          db,
+          {
+            schema: config.dbSchemaName,
+            table: TracingStoreTables.tracings,
+            versionColumn: "version",
+            filterColumn: "id",
+            filterValue: tracingId,
+          },
+          incomingVersion,
+        );
+      } catch (error: unknown) {
+        throw errorProcessingUpdateTracingState(
+          `Error checking tracing version for tracingId: ${tracingId}, version: ${incomingVersion}. Details: ${error}`,
+        );
+      }
     },
 
     async updateTracingState(data: UpdateTracingStateDto): Promise<void> {
