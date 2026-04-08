@@ -1,70 +1,59 @@
 import {
-  AppContext,
-  DB,
-  WithSQSMessageId,
-  initDB,
-} from "pagopa-interop-tracing-commons";
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
-import {
-  TracingStoreDbService,
-  tracingStoreDbServiceBuilder,
-} from "../src/services/tracingStoreDbService.js";
-import { config } from "../src/utilities/config.js";
-import { StartedTestContainer } from "testcontainers";
-import { postgreSQLContainer } from "./config.js";
+  describe,
+  expect,
+  it,
+  beforeAll,
+  afterAll,
+  afterEach,
+  vi,
+} from "vitest";
 import {
   addTenant,
   addTracing,
+  dbInstance,
+  fileManager,
   findPurposeErrors,
   findTracingById,
+  truncatePurposeErrors,
+  startedMinioContainer,
+  startedPostgreSqlContainer,
+  tracingStoreService,
+  writePurposeErrorsCsv,
 } from "./utils.js";
 import {
-  CorrelationId,
   TenantId,
   TracingId,
   generateId,
   tracingState,
-  unsafeBrandId,
 } from "pagopa-interop-tracing-models";
-import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import { DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
+import { Readable } from "node:stream";
 
 describe("Tracing store DB service test", () => {
-  let dbInstance: DB;
-  let startedPostgreSqlContainer: StartedTestContainer;
-  let tracingStoreDbService: TracingStoreDbService;
+  let s3Key: string;
 
   const tenantId: TenantId = generateId<TenantId>();
   const tracingId: TracingId = generateId<TracingId>();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTruncated = truncatedTo(yesterday, DateUnit.DAYS);
-
-  const mockCtx: WithSQSMessageId<AppContext> = {
-    serviceName: config.applicationName,
-    messageId: "12345",
-    correlationId: unsafeBrandId<CorrelationId>(generateId<CorrelationId>()),
-  };
-
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
+    await startedMinioContainer.stop();
+  });
+
+  afterEach(async () => {
+    await truncatePurposeErrors(dbInstance);
   });
 
   beforeAll(async () => {
-    startedPostgreSqlContainer = await postgreSQLContainer(config).start();
-    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
-
-    dbInstance = initDB({
-      username: config.dbUsername,
-      password: config.dbPassword,
-      host: config.dbHost,
-      port: config.dbPort,
-      database: config.dbName,
-      schema: config.dbSchemaName,
-      useSSL: config.dbUseSSL,
-    });
-
-    tracingStoreDbService = tracingStoreDbServiceBuilder(dbInstance);
+    s3Key = fileManager.buildS3Key(
+      generateId(),
+      "2024-01-01",
+      tracingId,
+      1,
+      generateId(),
+    );
 
     await addTenant(dbInstance, {
       id: tenantId,
@@ -82,47 +71,56 @@ describe("Tracing store DB service test", () => {
       version: 1,
       errors: false,
     });
-  });
+  }, 120000);
 
-  describe("savePurposeError", () => {
-    it("should create a new purpose error successfully", async () => {
+  describe("copyPurposeErrorsFromS3", () => {
+    it("should copy CSV from S3 and insert purpose errors", async () => {
+      const expectedErrors = 10_000;
+      await writePurposeErrorsCsv(
+        tracingId,
+        fileManager,
+        s3Key,
+        expectedErrors,
+      );
+
       await expect(
-        tracingStoreDbService.savePurposeError(
-          {
-            tracingId,
-            version: 1,
-            purposeId: generateId(),
-            errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-            message: "INVALID_ROW_SCHEMA",
-            rowNumber: 12,
-            updateTracingState: false,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
       ).resolves.not.toThrow();
 
       const errors = await findPurposeErrors(dbInstance, tracingId);
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.length).toBe(expectedErrors);
+    }, 30000);
+
+    it("should read object with key from errorsCsvPath", async () => {
+      await writePurposeErrorsCsv(tracingId, fileManager, s3Key);
+      const readSpy = vi.spyOn(fileManager, "readObject");
+
+      await expect(
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+      ).resolves.not.toThrow();
+
+      expect(readSpy).toHaveBeenCalledWith(s3Key);
+      readSpy.mockRestore();
     });
 
-    it("should throw an error when attempting to create a new purpose error for related tracing_id not found", async () => {
-      await expect(
-        tracingStoreDbService.savePurposeError(
-          {
-            tracingId: generateId<TracingId>(),
-            version: 1,
-            purposeId: generateId(),
-            errorCode: PurposeErrorCodes.INVALID_ROW_SCHEMA,
-            message: "INVALID_ROW_SCHEMA",
-            rowNumber: 12,
-            updateTracingState: false,
-          },
-          mockCtx,
-        ),
-      ).rejects.toMatchObject({
-        code: "errorProcessingSavePurposeError",
-        message: expect.stringContaining("purposes_errors_tracing_id_fkey"),
+    it("should throw an error when copy fails", async () => {
+      const failingStream = new Readable({
+        read() {
+          this.destroy(new Error("copy failed"));
+        },
       });
+      const readSpy = vi
+        .spyOn(fileManager, "readObject")
+        .mockResolvedValueOnce(failingStream);
+
+      await expect(
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+      ).rejects.toMatchObject({
+        code: "errorProcessingCopyPurposeErrors",
+        message: expect.stringContaining("Error copying purpose errors"),
+      });
+
+      readSpy.mockRestore();
     });
   });
 
@@ -139,14 +137,11 @@ describe("Tracing store DB service test", () => {
       });
 
       await expect(
-        tracingStoreDbService.updateTracingState(
-          {
-            tracingId: newTracingId,
-            version: 1,
-            state: tracingState.completed,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.updateTracingState({
+          tracingId: newTracingId,
+          version: 1,
+          state: tracingState.completed,
+        }),
       ).resolves.not.toThrow();
 
       const result = await findTracingById(dbInstance, newTracingId);
@@ -166,14 +161,11 @@ describe("Tracing store DB service test", () => {
       });
 
       await expect(
-        tracingStoreDbService.updateTracingState(
-          {
-            tracingId: generateId<TracingId>(),
-            version: 1,
-            state: tracingState.completed,
-          },
-          mockCtx,
-        ),
+        tracingStoreService.updateTracingState({
+          tracingId: generateId<TracingId>(),
+          version: 1,
+          state: tracingState.completed,
+        }),
       ).rejects.toMatchObject({
         code: "errorProcessingUpdateTracingState",
         message: expect.stringContaining("queryResultErrorCode.noData"),

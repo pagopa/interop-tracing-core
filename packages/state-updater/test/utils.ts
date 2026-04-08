@@ -1,6 +1,93 @@
-import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  DateUnit,
+  FileManager,
+  fileManagerBuilder,
+  initDB,
+  truncatedTo,
+} from "pagopa-interop-tracing-commons";
 import { config } from "../src/utilities/config.js";
-import { tracingState } from "pagopa-interop-tracing-models";
+import {
+  errorsCsvMapping,
+  generateId,
+  tracingState,
+} from "pagopa-interop-tracing-models";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
+import { StartedTestContainer } from "testcontainers";
+import {
+  minioContainer,
+  postgreSQLContainer,
+  TEST_MINIO_PORT,
+} from "./config.js";
+import { dbServiceBuilder, DBService } from "../src/services/db/dbService.js";
+import {
+  tracingStoreServiceBuilder,
+  TracingStoreService,
+} from "../src/services/tracingStoreService.js";
+
+export const startedMinioContainer: StartedTestContainer =
+  await minioContainer(config).start();
+export const minioPort = startedMinioContainer.getMappedPort(TEST_MINIO_PORT);
+
+export const s3ClientConfig: S3ClientConfig = {
+  endpoint: `${config.s3ServerHost}:${minioPort}`,
+  forcePathStyle: true,
+  logger: config.logLevel === "debug" ? console : undefined,
+  region: config.awsRegion,
+};
+export const s3client = new S3Client(s3ClientConfig);
+export const fileManager: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketTracingErrorsS3Name,
+);
+
+export const startedPostgreSqlContainer: StartedTestContainer =
+  await postgreSQLContainer(config).start();
+config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+
+export const dbInstance: DB = initDB({
+  username: config.dbUsername,
+  password: config.dbPassword,
+  host: config.dbHost,
+  port: config.dbPort,
+  database: config.dbName,
+  schema: config.dbSchemaName,
+  useSSL: config.dbUseSSL,
+});
+
+export const dbService: DBService = dbServiceBuilder(dbInstance);
+export const tracingStoreService: TracingStoreService =
+  tracingStoreServiceBuilder(dbInstance, dbService, fileManager);
+
+export const writePurposeErrorsCsv = async (
+  tracingId: string,
+  fileManager: {
+    writeObject: (
+      input: Buffer,
+      contentType: string,
+      bucketS3Key: string,
+      bucketEnrichedS3Name?: string,
+    ) => Promise<void>;
+  },
+  s3Key: string,
+  errorCount = 1,
+): Promise<void> => {
+  const csvHeader = Object.keys(errorsCsvMapping).join(",");
+  const rows = Array.from({ length: errorCount }, (_, i) =>
+    [
+      generateId(),
+      tracingId,
+      1,
+      generateId(),
+      "INVALID_ROW_SCHEMA",
+      "INVALID_ROW_SCHEMA",
+      12 + i,
+    ].join(","),
+  );
+  const csvBody = [csvHeader, ...rows].join("\n");
+
+  await fileManager.writeObject(Buffer.from(csvBody), "text/csv", s3Key);
+};
 
 export async function addTenant(
   db: DB,
@@ -96,4 +183,8 @@ export async function findPurposeErrors(
     `;
 
   return await db.any(selectPurposeErrorQuery, [tracingId]);
+}
+
+export async function truncatePurposeErrors(db: DB): Promise<void> {
+  await db.none(`TRUNCATE ${config.dbSchemaName}.purposes_errors;`);
 }

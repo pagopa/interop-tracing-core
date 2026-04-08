@@ -4,6 +4,7 @@ import {
   IClient,
   IConnectionParameters,
 } from "pg-promise/typescript/pg-subset.js";
+import { PoolClient } from "pg";
 
 export type DB = IDatabase<unknown>;
 
@@ -12,6 +13,10 @@ export type DBContext = {
   conn: DBConnection;
   pgp: IMain;
 };
+
+export function getCopyClient(conn: DBConnection): PoolClient {
+  return conn.client as unknown as PoolClient;
+}
 
 export function initDB({
   username,

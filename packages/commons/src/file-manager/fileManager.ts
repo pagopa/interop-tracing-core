@@ -75,7 +75,7 @@ export const fileManagerBuilder = (
       data: Readable,
       contentType: string,
       bucketS3Key: string,
-      bucketEnrichedS3Name?: string,
+      customBucketS3Name?: string,
     ): Promise<void> {
       try {
         if (!bucketS3Name) {
@@ -86,7 +86,7 @@ export const fileManagerBuilder = (
         const upload = new Upload({
           client: s3Client,
           params: {
-            Bucket: bucketEnrichedS3Name ?? bucketS3Name,
+            Bucket: customBucketS3Name ?? bucketS3Name,
             Key: bucketS3Key,
             Body: data,
             ContentType: contentType,

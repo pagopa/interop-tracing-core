@@ -1,27 +1,16 @@
 import { describe, expect, it, vi, afterAll } from "vitest";
 import { sqsMessages } from "./sqsMessages.js";
-import { processTracingStateMessage } from "../src/messagesHandler.js";
-import {
-  AppContext,
-  SQS,
-  WithSQSMessageId,
-} from "pagopa-interop-tracing-commons";
-import {
-  decodeSQSMessageCorrelationId,
-  decodeSQSUpdateTracingStateMessage,
-} from "../src/model/models.js";
-import {
-  CorrelationId,
-  InternalError,
-  unsafeBrandId,
-} from "pagopa-interop-tracing-models";
+import { processProcessingResultMessage } from "../src/messagesHandler.js";
+import { SQS } from "pagopa-interop-tracing-commons";
+import { decodeSQSProcessingResultMessage } from "../src/model/models.js";
+import { InternalError } from "pagopa-interop-tracing-models";
 import { ErrorCodes } from "../src/model/domain/errors.js";
 import { v4 as uuidv4 } from "uuid";
-import { config } from "../src/utilities/config.js";
 
 describe("Consumer state updater queue test", () => {
-  const mockOperationsService = {
-    savePurposeError: vi.fn().mockResolvedValue(undefined),
+  const mockTracingStoreService = {
+    checkTracingVersion: vi.fn().mockResolvedValue(true),
+    copyPurposeErrorsFromS3: vi.fn().mockResolvedValue(undefined),
     updateTracingState: vi.fn().mockResolvedValue(undefined),
   };
 
@@ -36,28 +25,18 @@ describe("Consumer state updater queue test", () => {
     vi.restoreAllMocks();
   });
 
-  it("given valid message, method should call updateTracingState", async () => {
+  it("given valid completed message, method should call updateTracingState", async () => {
     const validMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.updateTracingState.valid),
+      Body: JSON.stringify(sqsMessages.processingResult.validCompleted),
       MessageAttributes: correlationIdMessageAttribute,
     };
 
-    const attributes = decodeSQSMessageCorrelationId(validMessage);
-    const ctx: WithSQSMessageId<AppContext> = {
-      serviceName: config.applicationName,
-      correlationId: unsafeBrandId<CorrelationId>(attributes.correlationId),
-      messageId: validMessage.MessageId,
-    };
+    await processProcessingResultMessage(mockTracingStoreService)(validMessage);
 
-    expect(async () => {
-      await processTracingStateMessage(mockOperationsService)(validMessage);
-    }).not.toThrowError();
-
-    expect(mockOperationsService.updateTracingState).toHaveBeenCalledWith(
-      decodeSQSUpdateTracingStateMessage(validMessage),
-      ctx,
+    expect(mockTracingStoreService.updateTracingState).toHaveBeenCalledWith(
+      decodeSQSProcessingResultMessage(validMessage),
     );
   });
 
@@ -65,7 +44,9 @@ describe("Consumer state updater queue test", () => {
     const invalidMessage = {};
 
     try {
-      await processTracingStateMessage(mockOperationsService)(invalidMessage);
+      await processProcessingResultMessage(mockTracingStoreService)(
+        invalidMessage,
+      );
     } catch (error) {
       expect(error).toBeInstanceOf(InternalError);
       expect((error as InternalError<ErrorCodes>).code).toBe(
@@ -78,18 +59,20 @@ describe("Consumer state updater queue test", () => {
     const emptyMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.updateTracingState.empty),
+      Body: JSON.stringify(sqsMessages.processingResult.empty),
       MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
-      await processTracingStateMessage(mockOperationsService)(emptyMessage);
+      await processProcessingResultMessage(mockTracingStoreService)(
+        emptyMessage,
+      );
     } catch (error) {
       expect(error).toBeInstanceOf(InternalError);
       expect((error as InternalError<ErrorCodes>).code).toBe(
         "decodeSQSMessageError",
       );
-      expect(mockOperationsService.updateTracingState).not.toBeCalled();
+      expect(mockTracingStoreService.updateTracingState).not.toBeCalled();
     }
   });
 
@@ -97,12 +80,12 @@ describe("Consumer state updater queue test", () => {
     const missingEserviceRecordId: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.updateTracingState.missingTracingId),
+      Body: JSON.stringify(sqsMessages.processingResult.missingTracingId),
       MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
-      await processTracingStateMessage(mockOperationsService)(
+      await processProcessingResultMessage(mockTracingStoreService)(
         missingEserviceRecordId,
       );
     } catch (error) {
@@ -110,7 +93,7 @@ describe("Consumer state updater queue test", () => {
       expect((error as InternalError<ErrorCodes>).code).toBe(
         "decodeSQSMessageError",
       );
-      expect(mockOperationsService.updateTracingState).not.toBeCalled();
+      expect(mockTracingStoreService.updateTracingState).not.toBeCalled();
     }
   });
 
@@ -118,12 +101,12 @@ describe("Consumer state updater queue test", () => {
     const badFormattedMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
-      Body: JSON.stringify(sqsMessages.updateTracingState.badFormatted),
+      Body: JSON.stringify(sqsMessages.processingResult.badFormatted),
       MessageAttributes: correlationIdMessageAttribute,
     };
 
     try {
-      await processTracingStateMessage(mockOperationsService)(
+      await processProcessingResultMessage(mockTracingStoreService)(
         badFormattedMessage,
       );
     } catch (error) {
@@ -131,7 +114,7 @@ describe("Consumer state updater queue test", () => {
       expect((error as InternalError<ErrorCodes>).code).toBe(
         "decodeSQSMessageError",
       );
-      expect(mockOperationsService.updateTracingState).not.toBeCalled();
+      expect(mockTracingStoreService.updateTracingState).not.toBeCalled();
     }
   });
 });

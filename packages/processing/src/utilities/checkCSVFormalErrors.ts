@@ -1,7 +1,8 @@
 import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
-  SavePurposeErrorDto,
+  PurposeErrorRow,
+  generateId,
 } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
 import { ZodIssue } from "zod";
@@ -34,8 +35,8 @@ const formatDuplicateRecords = (records: number[]): string => {
 export async function checkRecords(
   records: TracingRecordSchema[],
   tracing: TracingFromS3KeyPathDto,
-): Promise<SavePurposeErrorDto[]> {
-  const errorsRecord: SavePurposeErrorDto[] = [];
+): Promise<PurposeErrorRow[]> {
+  const errorsRecord: PurposeErrorRow[] = [];
   const duplicateMap = buildDuplicateMap(records);
   for (const record of records) {
     const result = TracingRecordSchema.safeParse(record);
@@ -43,26 +44,26 @@ export async function checkRecords(
       for (const issue of result.error.issues) {
         const parsedError = parseErrorMessage(issue);
         errorsRecord.push({
+          id: generateId(),
           tracingId: tracing.tracingId,
           version: tracing.version,
           errorCode: parsedError.errorCode,
           purposeId: record.purpose_id,
           message: parsedError.message,
           rowNumber: record.rowNumber,
-          updateTracingState: false,
         });
       }
     }
 
     if (record.date !== tracing.date) {
       errorsRecord.push({
+        id: generateId(),
         tracingId: tracing.tracingId,
         version: tracing.version,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
         message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
         rowNumber: record.rowNumber,
-        updateTracingState: false,
       });
     }
 
@@ -70,6 +71,7 @@ export async function checkRecords(
     const duplicateRecords = duplicateMap[key];
     if (duplicateRecords && duplicateRecords.length > 1) {
       errorsRecord.push({
+        id: generateId(),
         tracingId: tracing.tracingId,
         version: tracing.version,
         purposeId: record.purpose_id,
@@ -82,7 +84,6 @@ export async function checkRecords(
           duplicateRecords,
         )}.`,
         rowNumber: record.rowNumber,
-        updateTracingState: false,
       });
     }
   }

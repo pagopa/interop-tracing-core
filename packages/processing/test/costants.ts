@@ -1,6 +1,6 @@
 import {
   generateId,
-  SavePurposeErrorDto,
+  PurposeErrorRow,
   TracingFromS3KeyPathDto,
 } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -70,22 +70,28 @@ export const wrongMockTracingRecords = [
 
 export const mockEnrichedPurposesWithErrors = [
   {
+    id: generateId(),
+    tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
+    version: 1,
     purposeId: generateId(),
-    status: 200,
     rowNumber: 1,
     message: PurposeErrorCodes.PURPOSE_NOT_FOUND,
     errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
   },
   {
+    id: generateId(),
+    tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
+    version: 1,
     purposeId: generateId(),
-    status: 200,
     rowNumber: 1,
     message: PurposeErrorCodes.INVALID_DATE,
     errorCode: PurposeErrorCodes.INVALID_DATE,
   },
   {
+    id: generateId(),
+    tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
+    version: 1,
     purposeId: generateId(),
-    status: 200,
     rowNumber: 1,
     message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
     errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
@@ -94,31 +100,33 @@ export const mockEnrichedPurposesWithErrors = [
 
 export const mockFormalErrors = [
   {
+    id: generateId(),
+    tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
+    version: 1,
     purposeId: generateId(),
-    status: 200,
     rowNumber: 1,
     message: PurposeErrorCodes.INVALID_REQUEST_COUNT,
     errorCode: PurposeErrorCodes.INVALID_REQUEST_COUNT,
   },
 ];
-export const mockErrorPurposes: Partial<SavePurposeErrorDto>[] = [
+export const mockErrorPurposes: Partial<PurposeErrorRow>[] = [
   {
+    id: generateId(),
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: 1,
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 12,
-    updateTracingState: false,
   },
   {
+    id: generateId(),
     tracingId: "a33e4567-e89b-12d3-a456-426614174abe",
     version: 1,
     errorCode: "INVALID_FORMAL_CHECK",
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 13,
-    updateTracingState: false,
   },
 ];
 
