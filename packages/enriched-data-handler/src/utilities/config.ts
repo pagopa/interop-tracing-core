@@ -7,9 +7,42 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
+const TracingStoreDbConfig = z
+  .object({
+    TRACING_STORE_DB_HOST: z.string(),
+    TRACING_STORE_DB_NAME: z.string(),
+    TRACING_STORE_DB_USERNAME: z.string(),
+    TRACING_STORE_DB_PASSWORD: z.string(),
+    TRACING_STORE_DB_PORT: z.coerce.number().min(1001),
+    TRACING_STORE_DB_SCHEMA_NAME: z.string(),
+    TRACING_STORE_DB_USE_SSL: z
+      .enum(["true", "false"])
+      .transform((value) => value === "true"),
+    TRACING_STORE_DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
+    TRACING_STORE_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
+    TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
+    TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
+  })
+  .transform((c) => ({
+    tracingStoreDbHost: c.TRACING_STORE_DB_HOST,
+    tracingStoreDbName: c.TRACING_STORE_DB_NAME,
+    tracingStoreDbUsername: c.TRACING_STORE_DB_USERNAME,
+    tracingStoreDbPassword: c.TRACING_STORE_DB_PASSWORD,
+    tracingStoreDbPort: c.TRACING_STORE_DB_PORT,
+    tracingStoreDbSchemaName: c.TRACING_STORE_DB_SCHEMA_NAME,
+    tracingStoreDbUseSSL: c.TRACING_STORE_DB_USE_SSL,
+    tracingStoreDbMaxConnectionPool: c.TRACING_STORE_DB_MAX_CONNECTION_POOL,
+    tracingStoreDbConnectionRetries: c.TRACING_STORE_DB_CONNECTION_RETRIES,
+    tracingStoreDbConnectionMinTimeout:
+      c.TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT,
+    tracingStoreDbConnectionMaxTimeout:
+      c.TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT,
+  }));
+
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
   .and(DbConfig)
+  .and(TracingStoreDbConfig)
   .and(FileManagerConfig)
   .and(
     z

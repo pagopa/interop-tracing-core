@@ -7,11 +7,13 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
 import { DBService } from "./db/dbService.js";
+import { TracingStoreDBService } from "./db/tracingStoreDbService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
 
 export const enrichedServiceBuilder = (
   dbService: DBService,
   fileManager: FileManager,
+  tracingStoreDbService: TracingStoreDBService,
 ) => {
   return {
     async insertEnrichedTrace(
@@ -31,6 +33,15 @@ export const enrichedServiceBuilder = (
         logger(ctx).info(
           `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
         );
+
+        const shouldProcess = await tracingStoreDbService.checkTracingVersion(
+          tracing.tracingId,
+          tracing.version,
+        );
+
+        if (!shouldProcess) {
+          return;
+        }
 
         const s3KeyPath = fileManager.buildS3Key(
           tracing.tenantId,

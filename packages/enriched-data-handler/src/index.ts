@@ -1,4 +1,5 @@
 import { dbServiceBuilder } from "./services/db/dbService.js";
+import { tracingStoreDbServiceBuilder } from "./services/db/tracingStoreDbService.js";
 import {
   EnrichedService,
   enrichedServiceBuilder,
@@ -34,6 +35,16 @@ const dbContext: DBContext = {
   pgp: dbInstance.$config.pgp,
 };
 
+const tracingStoreDbInstance = initDB({
+  username: config.tracingStoreDbUsername,
+  password: config.tracingStoreDbPassword,
+  host: config.tracingStoreDbHost,
+  port: config.tracingStoreDbPort,
+  database: config.tracingStoreDbName,
+  schema: config.tracingStoreDbSchemaName,
+  useSSL: config.tracingStoreDbUseSSL,
+});
+
 await retryConnection(
   dbInstance,
   dbContext,
@@ -68,6 +79,7 @@ const fileManager: FileManager = fileManagerBuilder(
 const enrichedService: EnrichedService = enrichedServiceBuilder(
   dbServiceBuilder(dbContext),
   fileManager,
+  tracingStoreDbServiceBuilder(tracingStoreDbInstance),
 );
 
 await SQS.runConsumer(

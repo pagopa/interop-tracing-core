@@ -268,28 +268,6 @@ export function dbServiceBuilder(db: DB) {
       }
     },
 
-    async savePurposeError(data: PurposeError): Promise<void> {
-      try {
-        const upsertTracingQuery = `
-          INSERT INTO ${config.dbSchemaName}.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          RETURNING id;
-        `;
-
-        await db.one(upsertTracingQuery, [
-          data.id,
-          data.tracing_id,
-          data.version,
-          data.purpose_id,
-          data.error_code,
-          data.message,
-          data.row_number,
-        ]);
-      } catch (error) {
-        throw dbServiceErrorMapper("savePurposeError", error);
-      }
-    },
-
     async deletePurposesErrors(): Promise<void> {
       try {
         const deletePurposesErrorsQuery = `

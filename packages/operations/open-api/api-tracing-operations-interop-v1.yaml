@@ -274,51 +274,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
 
-  /tracings/{tracingId}/versions/{version}/errors:
-    post:
-      summary: Save purpose error
-      operationId: savePurposeError
-      tags:
-        - Tracings
-      parameters:
-        - in: header
-          name: x-correlation-id
-          required: true
-          schema:
-            $ref: "#/components/schemas/CorrelationId"
-        - name: tracingId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SavePurposeErrorRequest"
-      responses:
-        "204":
-          description: No content
-        "400":
-          description: The provided input data is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "500":
-          description: A managed error has occurred during the request elaboration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-
   /tracings/errors:
     delete:
       summary: Delete purposes error
@@ -875,22 +830,6 @@ components:
       required:
         - tenantId
         - date
-    SavePurposeErrorRequest:
-      type: object
-      properties:
-        purposeId:
-          type: string
-        errorCode:
-          type: string
-        message:
-          type: string
-        rowNumber:
-          type: integer
-      required:
-        - purposeId
-        - errorCode
-        - message
-        - rowNumber
     SaveMissingTracingRequest:
       type: object
       properties:
