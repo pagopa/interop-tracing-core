@@ -343,6 +343,109 @@ describe("Processing Service", () => {
         mockAppCtx,
       );
     });
+
+    it("should upload both errors and enriched CSVs and update state to WARNING when only warning errors are present", async () => {
+      const warningError: PurposeErrorRow = {
+        id: generateId(),
+        tracingId: mockMessage.tracingId,
+        version: mockMessage.version,
+        purposeId: mockEnrichedPurposes[0].purposeId,
+        errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+        message: "purpose_id: Invalid purpose id",
+        rowNumber: 1,
+      };
+
+      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue({
+        enriched: mockEnrichedPurposes,
+        errors: [warningError],
+      });
+
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
+      );
+
+      const writeStreamSpy = vi
+        .spyOn(fileManager, "writeStream")
+        .mockResolvedValue(undefined);
+
+      const sendResultSpy = vi
+        .spyOn(producerService, "sendProcessingResultMessage")
+        .mockResolvedValue(undefined);
+
+      await processingService.processTracing(mockMessage, mockAppCtx);
+
+      // both buckets must be written: errors CSV and enriched CSV
+      expect(writeStreamSpy).toHaveBeenCalledTimes(2);
+      const buckets = writeStreamSpy.mock.calls.map((c) => c[3]);
+      expect(buckets).toContain(config.bucketTracingErrorsS3Name);
+      expect(buckets).toContain(config.bucketEnrichedS3Name);
+
+      expect(sendResultSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tracingId: mockMessage.tracingId,
+          version: mockMessage.version,
+          state: tracingState.warning,
+          errorsCsvPath: expect.any(String),
+        }),
+        mockAppCtx,
+      );
+    });
+
+    it("should upload only errors CSV and update state to ERROR when warning and blocking errors coexist", async () => {
+      const warningError: PurposeErrorRow = {
+        id: generateId(),
+        tracingId: mockMessage.tracingId,
+        version: mockMessage.version,
+        purposeId: mockEnrichedPurposes[0].purposeId,
+        errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+        message: "purpose_id: Invalid purpose id",
+        rowNumber: 1,
+      };
+      const blockingError: PurposeErrorRow = {
+        id: generateId(),
+        tracingId: mockMessage.tracingId,
+        version: mockMessage.version,
+        purposeId: mockEnrichedPurposes[1].purposeId,
+        errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
+        message: "purpose_id: Invalid purpose id",
+        rowNumber: 2,
+      };
+
+      vi.spyOn(dbService, "getEnrichedPurpose").mockResolvedValue({
+        enriched: mockEnrichedPurposes,
+        errors: [warningError, blockingError],
+      });
+
+      vi.spyOn(fileManager, "readObject").mockResolvedValue(
+        mockBodyStream(mockTracingRecords),
+      );
+
+      const writeStreamSpy = vi
+        .spyOn(fileManager, "writeStream")
+        .mockResolvedValue(undefined);
+
+      const sendResultSpy = vi
+        .spyOn(producerService, "sendProcessingResultMessage")
+        .mockResolvedValue(undefined);
+
+      await processingService.processTracing(mockMessage, mockAppCtx);
+
+      // only the errors CSV bucket is written
+      expect(writeStreamSpy).toHaveBeenCalledTimes(1);
+      expect(writeStreamSpy.mock.calls[0][3]).toBe(
+        config.bucketTracingErrorsS3Name,
+      );
+
+      expect(sendResultSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tracingId: mockMessage.tracingId,
+          version: mockMessage.version,
+          state: tracingState.error,
+          errorsCsvPath: expect.any(String),
+        }),
+        mockAppCtx,
+      );
+    });
   });
 
   describe("checkRecords", () => {
@@ -474,6 +577,16 @@ describe("Processing Service", () => {
       purposeErrors.forEach((item) => {
         expect(item.errorCode).toBe("TENANT_IS_NOT_PRODUCER_OR_CONSUMER");
       });
+
+      // Warning-severity errors must NOT skip enrichment: the row is still
+      // enriched and emitted so it can flow into the enriched CSV.
+      expect(enrichedPurposes.enriched.length).toBe(
+        validPurposeNotAssociated.length,
+      );
+      const safeEnriched = EnrichedPurposeRowArray.safeParse(
+        enrichedPurposes.enriched,
+      );
+      expect(safeEnriched.success).toBe(true);
     });
 
     it("should success if tenant is not a consumer or a producer but a delegate", async () => {

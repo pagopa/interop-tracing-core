@@ -820,6 +820,7 @@ components:
         - COMPLETED
         - MISSING
         - ERROR
+        - WARNING
 
     SubmitTracingRequest:
       type: object

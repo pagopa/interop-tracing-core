@@ -17,9 +17,15 @@ export const UpdateTracingStateWithErrorsCsvDto = UpdateTracingStateDto.extend({
   errorsCsvPath: z.string(),
 });
 
+export const UpdateTracingStateWithWarningDto = UpdateTracingStateDto.extend({
+  state: z.literal(tracingState.warning),
+  errorsCsvPath: z.string(),
+});
+
 export const ProcessingResultDto = z.union([
   UpdateTracingStateCompletedDto,
   UpdateTracingStateWithErrorsCsvDto,
+  UpdateTracingStateWithWarningDto,
 ]);
 export type ProcessingResultDto = z.infer<typeof ProcessingResultDto>;
 

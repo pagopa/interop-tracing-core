@@ -136,7 +136,9 @@ export function dbServiceBuilder(db: DB) {
               message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
               rowNumber: record.rowNumber,
             });
-            continue;
+            // WARNING severity: the row is still enriched and written to the
+            // enriched CSV. The tracing state will be set to WARNING downstream
+            // unless a blocking error is also present on this tracing.
           }
 
           const producer = producerMap.get(eService.producer_id);

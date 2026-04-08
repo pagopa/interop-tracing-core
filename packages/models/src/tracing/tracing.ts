@@ -5,6 +5,7 @@ export const tracingState = {
   missing: "MISSING",
   error: "ERROR",
   completed: "COMPLETED",
+  warning: "WARNING",
 } as const;
 export const TracingState = z.enum([
   Object.values(tracingState)[0],

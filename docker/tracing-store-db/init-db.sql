@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS tracing.tracings (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
     state VARCHAR(255) NOT NULL CHECK (
-        state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR')
+        state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR', 'WARNING')
     ),
     date TIMESTAMP NOT NULL,
     version INT NOT NULL,
