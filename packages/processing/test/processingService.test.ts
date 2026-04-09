@@ -160,7 +160,7 @@ describe("Processing Service", () => {
       };
 
       try {
-        await decodeSQSEventMessage(emptyMessage);
+        decodeSQSEventMessage(emptyMessage);
       } catch (error) {
         expect(error).toBeInstanceOf(InternalError);
         expect((error as InternalError<ErrorCodes>).code).toBe(

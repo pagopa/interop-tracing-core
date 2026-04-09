@@ -784,6 +784,29 @@ describe("database test", () => {
         ).rejects.toThrowError(tracingRecoverCannotBeUpdated(tracing.id));
       });
 
+      it("should throw an error tracingCannotBeUpdated when attempting recover a WARNING tracing", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+
+        expect(
+          operationsService.recoverTracing(
+            {
+              tracingId: tracing.id,
+            },
+            tenantId,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(tracingRecoverCannotBeUpdated(tracing.id));
+      });
+
       it("should throw an internal DB Service error when attempting recover a tracing", async () => {
         try {
           await operationsService.recoverTracing(
@@ -833,6 +856,31 @@ describe("database test", () => {
           id: generateId<TracingId>(),
           tenant_id: tenantId,
           state: tracingState.completed,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+        const result = await operationsService.replaceTracing(
+          {
+            tracingId: tracing.id,
+          },
+          tenantId,
+          genericLogger,
+        );
+
+        expect(result.tracingId).toBe(tracingData.id);
+        expect(result.tenantId).toBe(tenantId);
+        expect(result.previousState).toBe(tracingData.state);
+        expect(result.version).toBe(tracingData.version + 1);
+      });
+
+      it("should update an existing tracing from state 'WARNING' to state 'PENDING' and new version successfully", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
           date: yesterdayTruncated,
           version: 1,
           errors: false,
@@ -1415,7 +1463,7 @@ describe("database test", () => {
         const invalidPurposePayload = {
           id: "invalid_id_format",
           purposeTitle: "New Purpose Title",
-        } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        } as any;
 
         const operationsService = operationsServiceBuilder(dbService);
 
