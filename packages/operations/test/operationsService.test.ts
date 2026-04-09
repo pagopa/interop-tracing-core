@@ -286,7 +286,7 @@ describe("database test", () => {
     });
 
     describe("getTracings", () => {
-      it("searching with 'states' parameter 'ERROR' should return an empty list of tracings", async () => {
+      it("searching with 'states' parameter 'FAILED' should return an empty list of tracings", async () => {
         const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error],
           offset: 0,
@@ -314,7 +314,7 @@ describe("database test", () => {
         expect(result.totalCount).toBe(0);
       });
 
-      it("searching with 'states' parameter 'ERROR' should return only 1 record with 'ERROR' state", async () => {
+      it("searching with 'states' parameter 'FAILED' should return only 1 record with 'FAILED' state", async () => {
         const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error],
           offset: 0,
@@ -353,7 +353,7 @@ describe("database test", () => {
         expect(result.results[0].state).toBe(tracingState.error);
       });
 
-      it("searching with 'states' parameter 'ERROR' & 'MISSING' should return 2 records with both states", async () => {
+      it("searching with 'states' parameter 'FAILED' & 'MISSING' should return 2 records with both states", async () => {
         const filters: ApiGetTracingsQuery & { tenantId: string } = {
           states: [tracingState.error, tracingState.missing],
           offset: 0,
@@ -652,7 +652,7 @@ describe("database test", () => {
     });
 
     describe("updateTracingState", () => {
-      it("should update a tracing by tracingId with new state 'ERROR' successfully", async () => {
+      it("should update a tracing by tracingId with new state 'FAILED' successfully", async () => {
         const tracingData: Tracing = {
           id: generateId<TracingId>(),
           tenant_id: tenantId,
@@ -722,7 +722,7 @@ describe("database test", () => {
     });
 
     describe("recoverTracing", () => {
-      it("should update an existing tracing from state 'ERROR/MISSING' to state 'PENDING' and new version successfully", async () => {
+      it("should update an existing tracing from state 'FAILED/MISSING' to state 'PENDING' and new version successfully", async () => {
         const tracingData: Tracing = {
           id: generateId<TracingId>(),
           tenant_id: tenantId,
@@ -1149,7 +1149,7 @@ describe("database test", () => {
     });
 
     describe("deletePurposesErrors", () => {
-      it("should delete purposes errors with version below the related tracing version with state ERROR, and return 1 record with version 3", async () => {
+      it("should delete purposes errors with version below the related tracing version with state FAILED, and return 1 record with version 3", async () => {
         const tracingData: Tracing = {
           id: generateId<TracingId>(),
           tenant_id: tenantId,

@@ -3,7 +3,7 @@ import z from "zod";
 export const tracingState = {
   pending: "PENDING",
   missing: "MISSING",
-  error: "ERROR",
+  error: "FAILED",
   completed: "COMPLETED",
 } as const;
 export const TracingState = z.enum([

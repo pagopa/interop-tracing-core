@@ -145,7 +145,7 @@ export function dbServiceBuilder(db: DB) {
         const findPastTracingErrorsQuery = `
           SELECT 1 
           FROM ${config.dbSchemaName}.tracings tracing
-          WHERE (tracing.state = 'ERROR' OR tracing.state = 'MISSING')
+          WHERE (tracing.state = 'FAILED' OR tracing.state = 'MISSING')
             AND tracing.tenant_id = $1
             AND tracing.id <> $2
           LIMIT 1`;

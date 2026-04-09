@@ -25,7 +25,7 @@ describe("Consumer processing result queue test", () => {
     vi.restoreAllMocks();
   });
 
-  it("given valid ERROR message, method should call updateTracingState and copyPurposeErrorsFromS3", async () => {
+  it("given valid FAILED message, method should call updateTracingState and copyPurposeErrorsFromS3", async () => {
     const validMessage: SQS.Message = {
       MessageId: "12345",
       ReceiptHandle: "receipt_handle_id",
@@ -47,7 +47,7 @@ describe("Consumer processing result queue test", () => {
     );
   });
 
-  it("given valid ERROR message with stale version, should not copy or update", async () => {
+  it("given valid FAILED message with stale version, should not copy or update", async () => {
     mockTracingStoreService.checkTracingVersion.mockResolvedValueOnce(false);
 
     const validMessage: SQS.Message = {

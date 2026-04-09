@@ -819,7 +819,7 @@ components:
         - PENDING
         - COMPLETED
         - MISSING
-        - ERROR
+        - FAILED
 
     SubmitTracingRequest:
       type: object
