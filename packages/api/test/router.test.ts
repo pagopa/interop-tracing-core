@@ -55,6 +55,7 @@ import {
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
+import { externalTracingState } from "../src/utilities/tracingStateMapper.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -252,7 +253,7 @@ describe("Tracing Router", () => {
   describe("getTracings", () => {
     it("retrieve non-empty list of tracings", async () => {
       const searchQuery: ApiExternalGetTracingsQuery = {
-        states: [tracingState.error, tracingState.pending],
+        states: [externalTracingState.error, tracingState.pending],
         offset: 0,
         limit: 10,
       };
@@ -283,6 +284,18 @@ describe("Tracing Router", () => {
         .query(searchQuery);
 
       expect(response.status).toBe(200);
+      expect(response.body.results[0].state).toBe(externalTracingState.error);
+      expect(operationsApiClient.getTracings).toHaveBeenCalledWith({
+        queries: {
+          states: [tracingState.error, tracingState.pending],
+          offset: searchQuery.offset,
+          limit: searchQuery.limit,
+        },
+        headers: {
+          ...correlationIdToHeader(mockAppCtx.correlationId),
+          ...organizationIdToHeader(mockAppCtx.authData.organizationId),
+        },
+      });
     });
 
     it("retrieve empty list of tracings", async () => {
@@ -482,7 +495,7 @@ describe("Tracing Router", () => {
       );
     });
 
-    it("should return a 409 status error if the tracing to update does not have a state ERROR or MISSING", async () => {
+    it("should return a 409 status error if the tracing to update does not have a state FAILED or MISSING", async () => {
       const mockFile = Buffer.from("test file content");
       const mockRecoverTracingResponse: ApiRecoverTracingResponse = {
         tracingId: generateId(),
@@ -524,7 +537,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const apiErrorMock = makeApiProblem(
@@ -559,7 +572,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const bucketS3Key = buildS3Key(
@@ -632,7 +645,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const bucketS3Key = buildS3Key(
@@ -806,7 +819,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const apiErrorMock = makeApiProblem(
@@ -841,7 +854,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const bucketS3Key = buildS3Key(
@@ -912,7 +925,7 @@ describe("Tracing Router", () => {
         tenantId: generateId(),
         date: "2024-06-11",
         version: 2,
-        previousState: "ERROR",
+        previousState: "FAILED",
       };
 
       const bucketS3Key = buildS3Key(

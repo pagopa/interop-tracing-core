@@ -26,6 +26,10 @@ import {
 import storage from "../routers/config/multer.js";
 import { LocalExpressContext, LocalZodiosContext } from "../context/index.js";
 import { readExpressMulterFile } from "../utilities/fileData.js";
+import {
+  mapExternalGetTracingsQueryToInternal,
+  mapInternalTracingsToExternal,
+} from "../utilities/tracingStateMapper.js";
 
 const tracingRouter =
   (
@@ -117,12 +121,14 @@ const tracingRouter =
       })
       .get("/tracings", async (req, res) => {
         try {
+          const mappedQuery = mapExternalGetTracingsQueryToInternal(req.query);
+
           const data = await operationsService.getTracings(
             {
               ...organizationIdToHeader(req.ctx.authData.organizationId),
               ...correlationIdToHeader(req.ctx.correlationId),
             },
-            req.query,
+            mappedQuery,
           );
           const result = ApiTracingsContent.safeParse(data);
           if (!result.success) {
@@ -135,10 +141,14 @@ const tracingRouter =
             throw genericError("Unable to parse tracings items");
           }
 
+          const mappedResults = mapInternalTracingsToExternal(
+            result.data.results,
+          );
+
           return res
             .status(200)
             .json({
-              results: result.data.results,
+              results: mappedResults,
               totalCount: result.data.totalCount,
             })
             .end();
