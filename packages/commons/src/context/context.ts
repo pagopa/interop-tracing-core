@@ -36,15 +36,18 @@ export const contextMiddleware =
     serviceName: string,
     overrideCorrelationId: boolean = false,
   ): ZodiosRouterContextRequestHandler<ExpressContext> =>
-  (req, _res, next): void => {
+  (req, res, next): void => {
+    const correlationId = overrideCorrelationId
+      ? generateId<CorrelationId>()
+      : unsafeBrandId<CorrelationId>(
+          readCorrelationIdHeader(req) || uuidv4(),
+        );
+
     req.ctx = {
       serviceName,
-      correlationId: overrideCorrelationId
-        ? generateId<CorrelationId>()
-        : unsafeBrandId<CorrelationId>(
-            readCorrelationIdHeader(req) || uuidv4(),
-          ),
+      correlationId,
     } as AppContext;
 
+    res.header("X-Correlation-Id", req.ctx.correlationId);
     next();
   };
