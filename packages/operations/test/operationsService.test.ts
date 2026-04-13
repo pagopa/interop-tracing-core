@@ -61,6 +61,7 @@ import {
   ApiSaveMissingTracingPayload,
   ApiGetTenantsWithMissingTracingsQuery,
   ApiSaveDelegationPayload,
+  ApiSavePurposePayload,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
@@ -1463,7 +1464,7 @@ describe("database test", () => {
         const invalidPurposePayload = {
           id: "invalid_id_format",
           purposeTitle: "New Purpose Title",
-        } as any;
+        } as ApiSavePurposePayload;
 
         const operationsService = operationsServiceBuilder(dbService);
 
