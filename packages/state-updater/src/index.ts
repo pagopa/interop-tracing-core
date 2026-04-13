@@ -52,7 +52,7 @@ const sqsClient: SQS.SQSClient = await SQS.instantiateClient({
 await SQS.runConsumer(
   sqsClient,
   {
-    queueUrl: config.sqsEndpointProcessingResultsQueue,
+    queueUrl: config.sqsProcessingResultsEndpoint,
     maxNumberOfMessages: config.maxNumberOfMessages,
     waitTimeSeconds: config.waitTimeSeconds,
     visibilityTimeout: config.visibilityTimeout,
