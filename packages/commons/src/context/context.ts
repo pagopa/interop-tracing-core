@@ -39,9 +39,7 @@ export const contextMiddleware =
   (req, res, next): void => {
     const correlationId = overrideCorrelationId
       ? generateId<CorrelationId>()
-      : unsafeBrandId<CorrelationId>(
-          readCorrelationIdHeader(req) || uuidv4(),
-        );
+      : unsafeBrandId<CorrelationId>(readCorrelationIdHeader(req) || uuidv4());
 
     req.ctx = {
       serviceName,
