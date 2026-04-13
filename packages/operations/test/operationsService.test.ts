@@ -1280,6 +1280,52 @@ describe("database test", () => {
 
         expect(purposesErrors.length).toBe(0);
       });
+
+      it("should not delete purposes errors with related tracing in state WARNING", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: "2024-08-01",
+          version: 3,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: 1,
+          purpose_id: purposeId,
+          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+          message: "INVALID_STATUS_CODE",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 2,
+          },
+          dbInstance,
+        );
+        await addPurposeError(
+          {
+            ...purposeErrorData,
+            id: generateId<PurposeErrorId>(),
+            version: 3,
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposesErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+
+        expect(purposesErrors.length).toBe(3);
+      });
     });
 
     describe("saveEservice", () => {
