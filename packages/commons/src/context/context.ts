@@ -7,7 +7,9 @@ import { logger, Logger } from "../logging/index.js";
 import { readCorrelationIdHeader } from "./headers.js";
 import {
   CorrelationId,
+  badRequestError,
   generateId,
+  makeApiProblemBuilder,
   unsafeBrandId,
 } from "pagopa-interop-tracing-models";
 import { v4 as uuidv4 } from "uuid";
@@ -36,14 +38,32 @@ export const contextMiddleware =
     serviceName: string,
     overrideCorrelationId: boolean = false,
   ): ZodiosRouterContextRequestHandler<ExpressContext> =>
-  (req, _res, next): void => {
+  (req, res, next): void => {
+    const headerCorrelationId = readCorrelationIdHeader(req);
+    const parsedCorrelationId = headerCorrelationId
+      ? CorrelationId.safeParse(headerCorrelationId)
+      : null;
+
+    if (headerCorrelationId && !parsedCorrelationId?.success) {
+      const correlationId = generateId<CorrelationId>();
+      const makeApiProblem = makeApiProblemBuilder({});
+      const problem = makeApiProblem(
+        badRequestError("Invalid x-correlation-id header"),
+        () => 400,
+        logger({ serviceName, correlationId }),
+        correlationId,
+      );
+      res.status(problem.status).json(problem).end();
+      return;
+    }
+
     req.ctx = {
       serviceName,
       correlationId: overrideCorrelationId
         ? generateId<CorrelationId>()
-        : unsafeBrandId<CorrelationId>(
-            readCorrelationIdHeader(req) || uuidv4(),
-          ),
+        : parsedCorrelationId?.success
+        ? parsedCorrelationId.data
+        : unsafeBrandId<CorrelationId>(uuidv4()),
     } as AppContext;
 
     next();
