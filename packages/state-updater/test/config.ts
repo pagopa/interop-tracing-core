@@ -1,6 +1,6 @@
 import { GenericContainer } from "testcontainers";
 import { resolve } from "path";
-import { DbConfig } from "pagopa-interop-tracing-commons";
+import { TracingStoreDbConfig } from "pagopa-interop-tracing-commons";
 import { TracingStateUpdateConfig } from "../src/utilities/config.js";
 
 export const TEST_POSTGRES_DB_PORT = 5432;
@@ -9,7 +9,9 @@ export const TEST_POSTGRES_DB_IMAGE = "postgres:14";
 export const TEST_MINIO_IMAGE =
   "quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z";
 
-export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
+export const postgreSQLContainer = (
+  config: TracingStoreDbConfig,
+): GenericContainer =>
   new GenericContainer(TEST_POSTGRES_DB_IMAGE)
     .withEnvironment({
       POSTGRES_DB: config.dbName,

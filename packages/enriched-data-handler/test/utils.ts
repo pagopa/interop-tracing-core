@@ -19,7 +19,7 @@ export async function getTraces(
 
   const query = `
     SELECT *
-    FROM ${config.dbSchemaName}.traces
+    FROM ${config.tracesStoreDbSchemaName}.traces
     ${whereClause};
   `;
 

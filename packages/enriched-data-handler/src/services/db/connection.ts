@@ -1,10 +1,6 @@
 import pRetry from "p-retry";
-import {
-  DB,
-  DBContext,
-  DbConfig,
-  Logger,
-} from "pagopa-interop-tracing-commons";
+import { DB, DBContext, Logger } from "pagopa-interop-tracing-commons";
+import { TracingEnrichedDataHandlerConfig } from "../../utilities/config.js";
 
 /**
  * Attaches an error handler to the current database connection's client.
@@ -24,7 +20,7 @@ import {
 const attachErrorHandler = (
   dbInstance: DB,
   dbContext: DBContext,
-  dbConfig: DbConfig,
+  dbConfig: TracingEnrichedDataHandlerConfig,
   runFn: (context: DBContext) => Promise<void>,
   logger: Logger,
 ): void => {
@@ -38,9 +34,9 @@ const attachErrorHandler = (
         await runFn(dbContext);
       },
       {
-        retries: dbConfig.dbConnectionRetries,
-        minTimeout: dbConfig.dbConnectionMinTimeout,
-        maxTimeout: dbConfig.dbConnectionMaxTimeout,
+        retries: dbConfig.tracesStoreDbConnectionRetries,
+        minTimeout: dbConfig.tracesStoreDbConnectionMinTimeout,
+        maxTimeout: dbConfig.tracesStoreDbConnectionMaxTimeout,
         onFailedAttempt: (error) => {
           logger.warn(
             `Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left. Error: ${error}. Connection PID: ${dbContext.conn?.client?.processID}`,
@@ -65,7 +61,7 @@ const attachErrorHandler = (
 export const retryConnection = async (
   dbInstance: DB,
   dbContext: DBContext,
-  dbConfig: DbConfig,
+  dbConfig: TracingEnrichedDataHandlerConfig,
   runFn: (context: DBContext) => Promise<void>,
   logger: Logger,
 ): Promise<void> => {

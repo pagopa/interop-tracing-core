@@ -1,11 +1,13 @@
 import { GenericContainer } from "testcontainers";
 import { resolve } from "path";
-import { DbConfig } from "pagopa-interop-tracing-commons";
+import { TracingStoreDbConfig } from "pagopa-interop-tracing-commons";
 
 export const TEST_POSTGRES_DB_PORT = 5432;
 export const TEST_POSTGRES_DB_IMAGE = "postgres:14";
 
-export const postgreSQLContainer = (config: DbConfig): GenericContainer =>
+export const postgreSQLContainer = (
+  config: TracingStoreDbConfig,
+): GenericContainer =>
   new GenericContainer(TEST_POSTGRES_DB_IMAGE)
     .withEnvironment({
       POSTGRES_DB: config.dbName,

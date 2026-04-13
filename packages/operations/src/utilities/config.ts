@@ -1,6 +1,6 @@
 import {
   AWSConfig,
-  DbConfig,
+  TracingStoreDbConfig,
   HTTPServerConfig,
   LoggerConfig,
 } from "pagopa-interop-tracing-commons";
@@ -8,7 +8,7 @@ import { z } from "zod";
 
 const tracingOperationsConfig = AWSConfig.and(HTTPServerConfig)
   .and(LoggerConfig)
-  .and(DbConfig)
+  .and(TracingStoreDbConfig)
   .and(
     z
       .object({

@@ -52,16 +52,16 @@ describe("Enriched Service", () => {
 
   beforeAll(async () => {
     startedPostgreSqlContainer = await postgreSQLContainer(config).start();
-    config.dbPort = startedPostgreSqlContainer.getMappedPort(5432);
+    config.tracesStoreDbPort = startedPostgreSqlContainer.getMappedPort(5432);
 
     dbInstance = initDB({
-      username: config.dbUsername,
-      password: config.dbPassword,
-      host: config.dbHost,
-      port: config.dbPort,
-      database: config.dbName,
-      schema: config.dbSchemaName,
-      useSSL: config.dbUseSSL,
+      username: config.tracesStoreDbUsername,
+      password: config.tracesStoreDbPassword,
+      host: config.tracesStoreDbHost,
+      port: config.tracesStoreDbPort,
+      database: config.tracesStoreDbName,
+      schema: config.tracesStoreDbSchemaName,
+      useSSL: config.tracesStoreDbUseSSL,
     });
 
     const connection = await dbInstance.connect();

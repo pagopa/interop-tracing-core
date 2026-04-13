@@ -1,11 +1,40 @@
 import {
   AWSConfig,
   ConsumerConfig,
-  DbConfig,
   FileManagerConfig,
   LoggerConfig,
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
+
+const TracesStoreDbConfig = z
+  .object({
+    TRACES_STORE_DB_HOST: z.string(),
+    TRACES_STORE_DB_NAME: z.string(),
+    TRACES_STORE_DB_USERNAME: z.string(),
+    TRACES_STORE_DB_PASSWORD: z.string(),
+    TRACES_STORE_DB_PORT: z.coerce.number().min(1001),
+    TRACES_STORE_DB_SCHEMA_NAME: z.string(),
+    TRACES_STORE_DB_USE_SSL: z
+      .enum(["true", "false"])
+      .transform((value) => value === "true"),
+    TRACES_STORE_DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
+    TRACES_STORE_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
+    TRACES_STORE_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
+    TRACES_STORE_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
+  })
+  .transform((c) => ({
+    tracesStoreDbHost: c.TRACES_STORE_DB_HOST,
+    tracesStoreDbName: c.TRACES_STORE_DB_NAME,
+    tracesStoreDbUsername: c.TRACES_STORE_DB_USERNAME,
+    tracesStoreDbPassword: c.TRACES_STORE_DB_PASSWORD,
+    tracesStoreDbPort: c.TRACES_STORE_DB_PORT,
+    tracesStoreDbSchemaName: c.TRACES_STORE_DB_SCHEMA_NAME,
+    tracesStoreDbUseSSL: c.TRACES_STORE_DB_USE_SSL,
+    tracesStoreDbMaxConnectionPool: c.TRACES_STORE_DB_MAX_CONNECTION_POOL,
+    tracesStoreDbConnectionRetries: c.TRACES_STORE_DB_CONNECTION_RETRIES,
+    tracesStoreDbConnectionMinTimeout: c.TRACES_STORE_DB_CONNECTION_MIN_TIMEOUT,
+    tracesStoreDbConnectionMaxTimeout: c.TRACES_STORE_DB_CONNECTION_MAX_TIMEOUT,
+  }));
 
 const TracingStoreDbConfig = z
   .object({
@@ -18,10 +47,6 @@ const TracingStoreDbConfig = z
     TRACING_STORE_DB_USE_SSL: z
       .enum(["true", "false"])
       .transform((value) => value === "true"),
-    TRACING_STORE_DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
-    TRACING_STORE_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
-    TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
-    TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
   })
   .transform((c) => ({
     tracingStoreDbHost: c.TRACING_STORE_DB_HOST,
@@ -31,17 +56,11 @@ const TracingStoreDbConfig = z
     tracingStoreDbPort: c.TRACING_STORE_DB_PORT,
     tracingStoreDbSchemaName: c.TRACING_STORE_DB_SCHEMA_NAME,
     tracingStoreDbUseSSL: c.TRACING_STORE_DB_USE_SSL,
-    tracingStoreDbMaxConnectionPool: c.TRACING_STORE_DB_MAX_CONNECTION_POOL,
-    tracingStoreDbConnectionRetries: c.TRACING_STORE_DB_CONNECTION_RETRIES,
-    tracingStoreDbConnectionMinTimeout:
-      c.TRACING_STORE_DB_CONNECTION_MIN_TIMEOUT,
-    tracingStoreDbConnectionMaxTimeout:
-      c.TRACING_STORE_DB_CONNECTION_MAX_TIMEOUT,
   }));
 
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
-  .and(DbConfig)
+  .and(TracesStoreDbConfig)
   .and(TracingStoreDbConfig)
   .and(FileManagerConfig)
   .and(
