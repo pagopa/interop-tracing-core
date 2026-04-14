@@ -6,34 +6,34 @@ import {
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
-const TracesStoreDbConfig = z
+const analyticsDbConfig = z
   .object({
-    TRACES_STORE_DB_HOST: z.string(),
-    TRACES_STORE_DB_NAME: z.string(),
-    TRACES_STORE_DB_USERNAME: z.string(),
-    TRACES_STORE_DB_PASSWORD: z.string(),
-    TRACES_STORE_DB_PORT: z.coerce.number().min(1001),
-    TRACES_STORE_DB_SCHEMA_NAME: z.string(),
-    TRACES_STORE_DB_USE_SSL: z
+    ANALYTICS_DB_HOST: z.string(),
+    ANALYTICS_DB_NAME: z.string(),
+    ANALYTICS_DB_USERNAME: z.string(),
+    ANALYTICS_DB_PASSWORD: z.string(),
+    ANALYTICS_DB_PORT: z.coerce.number().min(1001),
+    ANALYTICS_DB_SCHEMA_NAME: z.string(),
+    ANALYTICS_DB_USE_SSL: z
       .enum(["true", "false"])
       .transform((value) => value === "true"),
-    TRACES_STORE_DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
-    TRACES_STORE_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
-    TRACES_STORE_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
-    TRACES_STORE_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
+    ANALYTICS_DB_MAX_CONNECTION_POOL: z.coerce.number().default(10),
+    ANALYTICS_DB_CONNECTION_RETRIES: z.coerce.number().default(10),
+    ANALYTICS_DB_CONNECTION_MIN_TIMEOUT: z.coerce.number().default(5000),
+    ANALYTICS_DB_CONNECTION_MAX_TIMEOUT: z.coerce.number().default(10000),
   })
   .transform((c) => ({
-    tracesStoreDbHost: c.TRACES_STORE_DB_HOST,
-    tracesStoreDbName: c.TRACES_STORE_DB_NAME,
-    tracesStoreDbUsername: c.TRACES_STORE_DB_USERNAME,
-    tracesStoreDbPassword: c.TRACES_STORE_DB_PASSWORD,
-    tracesStoreDbPort: c.TRACES_STORE_DB_PORT,
-    tracesStoreDbSchemaName: c.TRACES_STORE_DB_SCHEMA_NAME,
-    tracesStoreDbUseSSL: c.TRACES_STORE_DB_USE_SSL,
-    tracesStoreDbMaxConnectionPool: c.TRACES_STORE_DB_MAX_CONNECTION_POOL,
-    tracesStoreDbConnectionRetries: c.TRACES_STORE_DB_CONNECTION_RETRIES,
-    tracesStoreDbConnectionMinTimeout: c.TRACES_STORE_DB_CONNECTION_MIN_TIMEOUT,
-    tracesStoreDbConnectionMaxTimeout: c.TRACES_STORE_DB_CONNECTION_MAX_TIMEOUT,
+    analyticsDbHost: c.ANALYTICS_DB_HOST,
+    analyticsDbName: c.ANALYTICS_DB_NAME,
+    analyticsDbUsername: c.ANALYTICS_DB_USERNAME,
+    analyticsDbPassword: c.ANALYTICS_DB_PASSWORD,
+    analyticsDbPort: c.ANALYTICS_DB_PORT,
+    analyticsDbSchemaName: c.ANALYTICS_DB_SCHEMA_NAME,
+    analyticsDbUseSSL: c.ANALYTICS_DB_USE_SSL,
+    analyticsDbMaxConnectionPool: c.ANALYTICS_DB_MAX_CONNECTION_POOL,
+    analyticsDbConnectionRetries: c.ANALYTICS_DB_CONNECTION_RETRIES,
+    analyticsDbConnectionMinTimeout: c.ANALYTICS_DB_CONNECTION_MIN_TIMEOUT,
+    analyticsDbConnectionMaxTimeout: c.ANALYTICS_DB_CONNECTION_MAX_TIMEOUT,
   }));
 
 const TracingStoreDbConfig = z
@@ -60,7 +60,7 @@ const TracingStoreDbConfig = z
 
 const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
-  .and(TracesStoreDbConfig)
+  .and(analyticsDbConfig)
   .and(TracingStoreDbConfig)
   .and(FileManagerConfig)
   .and(

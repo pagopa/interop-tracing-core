@@ -74,7 +74,7 @@ export async function deleteTargetTable<
   const columnName = toSnakeCase(String(columnToMatch));
 
   const deleteQuery = `
-    DELETE FROM ${config.tracesStoreDbSchemaName}.${targetTable}
+    DELETE FROM ${config.analyticsDbSchemaName}.${targetTable}
     WHERE ${columnName} = $1
   `.trim();
   await t.none(deleteQuery, [id]);

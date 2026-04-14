@@ -34,9 +34,9 @@ const attachErrorHandler = (
         await runFn(dbContext);
       },
       {
-        retries: dbConfig.tracesStoreDbConnectionRetries,
-        minTimeout: dbConfig.tracesStoreDbConnectionMinTimeout,
-        maxTimeout: dbConfig.tracesStoreDbConnectionMaxTimeout,
+        retries: dbConfig.analyticsDbConnectionRetries,
+        minTimeout: dbConfig.analyticsDbConnectionMinTimeout,
+        maxTimeout: dbConfig.analyticsDbConnectionMaxTimeout,
         onFailedAttempt: (error) => {
           logger.warn(
             `Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left. Error: ${error}. Connection PID: ${dbContext.conn?.client?.processID}`,

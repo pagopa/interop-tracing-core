@@ -10,9 +10,9 @@ export const postgreSQLContainer = (
 ): GenericContainer => {
   return new GenericContainer(TEST_POSTGRES_DB_IMAGE)
     .withEnvironment({
-      POSTGRES_DB: config.tracesStoreDbName,
-      POSTGRES_USER: config.tracesStoreDbUsername,
-      POSTGRES_PASSWORD: config.tracesStoreDbPassword,
+      POSTGRES_DB: config.analyticsDbName,
+      POSTGRES_USER: config.analyticsDbUsername,
+      POSTGRES_PASSWORD: config.analyticsDbPassword,
     })
     .withCopyFilesToContainer([
       {
