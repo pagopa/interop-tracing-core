@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS tracing.tracings (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
     state VARCHAR(255) NOT NULL CHECK (
-        state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR')
+        state IN ('PENDING', 'COMPLETED', 'MISSING', 'ERROR', 'WARNING')
     ),
     date TIMESTAMP NOT NULL,
     version INT NOT NULL,
@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS tracing.purposes_errors (
     tracing_id UUID NOT NULL,
     version INT NOT NULL,
     purpose_id VARCHAR(255) NOT NULL,
+    severity VARCHAR(255) NOT NULL DEFAULT 'INVALID' CHECK (
+        severity IN ('INVALID', 'WARNING')
+    ),
     error_code VARCHAR(255) NOT NULL,
     message VARCHAR(2048) NOT NULL,
     row_number INT NOT NULL,

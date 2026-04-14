@@ -23,6 +23,7 @@ import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
+  purposeErrorSeverity,
   PurposeErrorId,
   PurposeId,
   TenantId,
@@ -61,6 +62,7 @@ import {
   ApiSaveMissingTracingPayload,
   ApiGetTenantsWithMissingTracingsQuery,
   ApiSaveDelegationPayload,
+  ApiSavePurposePayload,
 } from "pagopa-interop-tracing-operations-client";
 import { tracingCannotBeCancelled } from "../src/model/domain/errors.js";
 
@@ -541,6 +543,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: tracingData.version,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
@@ -569,6 +572,51 @@ describe("database test", () => {
         expect(result.results[0].errorCode).toBe(
           PurposeErrorCodes.INVALID_STATUS_CODE,
         );
+        expect(result.results[0].severity).toBe(purposeErrorSeverity.invalid);
+      });
+
+      it("searching should return WARNING severity when persisted on purpose error", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: tracingData.version,
+          purpose_id: purposeId,
+          severity: purposeErrorSeverity.warning,
+          error_code: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+          message: "TENANT_IS_NOT_PRODUCER_OR_CONSUMER",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          tenantId,
+          genericLogger,
+        );
+
+        expect(result.totalCount).toBe(1);
+        expect(result.results[0].severity).toBe(purposeErrorSeverity.warning);
       });
 
       it("searching with invalid 'tracingId' parameter value should throw an error", async () => {
@@ -784,6 +832,29 @@ describe("database test", () => {
         ).rejects.toThrowError(tracingRecoverCannotBeUpdated(tracing.id));
       });
 
+      it("should throw an error tracingCannotBeUpdated when attempting recover a WARNING tracing", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+
+        expect(
+          operationsService.recoverTracing(
+            {
+              tracingId: tracing.id,
+            },
+            tenantId,
+            genericLogger,
+          ),
+        ).rejects.toThrowError(tracingRecoverCannotBeUpdated(tracing.id));
+      });
+
       it("should throw an internal DB Service error when attempting recover a tracing", async () => {
         try {
           await operationsService.recoverTracing(
@@ -833,6 +904,31 @@ describe("database test", () => {
           id: generateId<TracingId>(),
           tenant_id: tenantId,
           state: tracingState.completed,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const tracing = await addTracing(tracingData, dbInstance);
+        const result = await operationsService.replaceTracing(
+          {
+            tracingId: tracing.id,
+          },
+          tenantId,
+          genericLogger,
+        );
+
+        expect(result.tracingId).toBe(tracingData.id);
+        expect(result.tenantId).toBe(tenantId);
+        expect(result.previousState).toBe(tracingData.state);
+        expect(result.version).toBe(tracingData.version + 1);
+      });
+
+      it("should update an existing tracing from state 'WARNING' to state 'PENDING' and new version successfully", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
           date: yesterdayTruncated,
           version: 1,
           errors: false,
@@ -1164,6 +1260,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: 1,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
@@ -1211,6 +1308,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: 1,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
@@ -1415,7 +1513,7 @@ describe("database test", () => {
         const invalidPurposePayload = {
           id: "invalid_id_format",
           purposeTitle: "New Purpose Title",
-        } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        } as ApiSavePurposePayload;
 
         const operationsService = operationsServiceBuilder(dbService);
 

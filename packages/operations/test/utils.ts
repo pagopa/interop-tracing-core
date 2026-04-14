@@ -60,15 +60,21 @@ export async function addPurposeError(
   db: DB,
 ): Promise<{ id: string }> {
   const insertPurposeErrorQuery = `
-      INSERT INTO ${config.dbSchemaName}.purposes_errors (id, tracing_id, version, purpose_id, error_code, message, row_number)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO ${config.dbSchemaName}.purposes_errors (id, tracing_id, version, purpose_id, severity, error_code, message, row_number)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id
     `;
 
-  return await db.one(
-    insertPurposeErrorQuery,
-    Object.values(purposeErrorValues),
-  );
+  return await db.one(insertPurposeErrorQuery, [
+    purposeErrorValues.id,
+    purposeErrorValues.tracing_id,
+    purposeErrorValues.version,
+    purposeErrorValues.purpose_id,
+    purposeErrorValues.severity,
+    purposeErrorValues.error_code,
+    purposeErrorValues.message,
+    purposeErrorValues.row_number,
+  ]);
 }
 
 export async function addTracing(

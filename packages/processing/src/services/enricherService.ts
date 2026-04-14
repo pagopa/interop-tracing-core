@@ -1,4 +1,8 @@
-import { DB, PurposeErrorCodes } from "pagopa-interop-tracing-commons";
+import {
+  DB,
+  PurposeErrorCodes,
+  isWarningErrorCode,
+} from "pagopa-interop-tracing-commons";
 import { getEnrichedPurposeError } from "../models/errors.js";
 import {
   TracingRecordSchema,
@@ -11,6 +15,7 @@ import {
   EnrichedPurposeRow,
   PurposeErrorRow,
   generateId,
+  purposeErrorSeverity,
 } from "pagopa-interop-tracing-models";
 import {
   delegationState,
@@ -100,6 +105,9 @@ export function dbServiceBuilder(db: DB) {
               tracingId: tracing.tracingId,
               version: tracing.version,
               purposeId: record.purpose_id,
+              severity: isWarningErrorCode(PurposeErrorCodes.PURPOSE_NOT_FOUND)
+                ? purposeErrorSeverity.warning
+                : purposeErrorSeverity.invalid,
               errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
               message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
               rowNumber: record.rowNumber,
@@ -132,11 +140,18 @@ export function dbServiceBuilder(db: DB) {
               tracingId: tracing.tracingId,
               version: tracing.version,
               purposeId: record.purpose_id,
+              severity: isWarningErrorCode(
+                PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+              )
+                ? purposeErrorSeverity.warning
+                : purposeErrorSeverity.invalid,
               errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
               message: `purpose_id: Invalid purpose id ${record.purpose_id}`,
               rowNumber: record.rowNumber,
             });
-            continue;
+            // WARNING severity: the row is still enriched and written to the
+            // enriched CSV. The tracing state will be set to WARNING downstream
+            // unless a blocking error is also present on this tracing.
           }
 
           const producer = producerMap.get(eService.producer_id);

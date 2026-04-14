@@ -2,6 +2,7 @@ import { TracingState } from "pagopa-interop-tracing-models";
 import { z } from "zod";
 import { PurposeErrorSchema, TracingSchema } from "./db.js";
 import { ISODateFormat } from "pagopa-interop-tracing-commons";
+import { PurposeErrorSeverity } from "pagopa-interop-tracing-models";
 
 export const TracingsContent = z.object({
   tracingId: z.string().uuid(),
@@ -32,6 +33,7 @@ export type TracingsContentResponse = z.infer<typeof TracingsContentResponse>;
 
 export const TracingPurposeErrorContent = z.object({
   purposeId: z.string(),
+  severity: PurposeErrorSeverity,
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.number(),
@@ -46,6 +48,7 @@ export const TracingErrorsContentResponse = z
     purposes_errors.map(
       (purpose): TracingPurposeErrorContent => ({
         purposeId: purpose.purpose_id,
+        severity: purpose.severity,
         message: purpose.message,
         errorCode: purpose.error_code,
         rowNumber: purpose.row_number,

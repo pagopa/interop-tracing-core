@@ -40,6 +40,32 @@ describe("Consumer state updater queue test", () => {
     );
   });
 
+  it("given valid warning message, method should call copyPurposeErrorsFromS3 and updateTracingState", async () => {
+    mockTracingStoreService.checkTracingVersion.mockResolvedValue(true);
+    mockTracingStoreService.copyPurposeErrorsFromS3.mockResolvedValue(
+      undefined,
+    );
+    mockTracingStoreService.updateTracingState.mockResolvedValue(undefined);
+
+    const validMessage: SQS.Message = {
+      MessageId: "12345",
+      ReceiptHandle: "receipt_handle_id",
+      Body: JSON.stringify(sqsMessages.processingResult.validWarning),
+      MessageAttributes: correlationIdMessageAttribute,
+    };
+
+    await processProcessingResultMessage(mockTracingStoreService)(validMessage);
+
+    expect(
+      mockTracingStoreService.copyPurposeErrorsFromS3,
+    ).toHaveBeenCalledWith(
+      sqsMessages.processingResult.validWarning.errorsCsvPath,
+    );
+    expect(mockTracingStoreService.updateTracingState).toHaveBeenCalledWith(
+      decodeSQSProcessingResultMessage(validMessage),
+    );
+  });
+
   it("given invalid message, method should throw an error", async () => {
     const invalidMessage = {};
 

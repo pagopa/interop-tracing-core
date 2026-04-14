@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PurposeErrorSeverity } from "./purposeError.js";
 
 export const EnrichedPurposeRow = z.object({
   tracingId: z.string(),
@@ -30,6 +31,7 @@ export const PurposeErrorRow = z.object({
   tracingId: z.string().uuid(),
   version: z.coerce.number(),
   purposeId: z.string(),
+  severity: PurposeErrorSeverity,
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.coerce.number(),
@@ -67,6 +69,7 @@ export const errorsCsvMapping: CsvMapping<PurposeErrorRow> = {
   tracing_id: (row) => row.tracingId,
   version: (row) => row.version,
   purpose_id: (row) => row.purposeId,
+  severity: (row) => row.severity,
   error_code: (row) => row.errorCode,
   message: (row) => row.message,
   row_number: (row) => row.rowNumber,
