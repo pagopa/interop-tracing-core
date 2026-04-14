@@ -19,6 +19,7 @@ import {
   tracingState,
   organizationIdToHeader,
   CorrelationId,
+  purposeErrorSeverity,
 } from "pagopa-interop-tracing-models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/utilities/config.js";
@@ -351,6 +352,7 @@ describe("Tracing Router", () => {
             errorCode: PurposeErrorCodes.INVALID_STATUS_CODE,
             message: "INVALID_STATUS_CODE",
             rowNumber: 2,
+            severity: purposeErrorSeverity.invalid,
           },
         ],
         totalCount: 2,

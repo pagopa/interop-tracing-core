@@ -19,8 +19,10 @@ import {
   startedPostgreSqlContainer,
   tracingStoreService,
   writePurposeErrorsCsv,
+  writePurposeErrorsCsvWithSeverities,
 } from "./utils.js";
 import {
+  purposeErrorSeverity,
   TenantId,
   TracingId,
   generateId,
@@ -101,6 +103,27 @@ describe("Tracing store DB service test", () => {
 
       expect(readSpy).toHaveBeenCalledWith(s3Key);
       readSpy.mockRestore();
+    });
+
+    it("should persist severity values INVALID and WARNING from CSV", async () => {
+      await writePurposeErrorsCsvWithSeverities(tracingId, fileManager, s3Key, [
+        purposeErrorSeverity.invalid,
+        purposeErrorSeverity.warning,
+      ]);
+
+      await expect(
+        tracingStoreService.copyPurposeErrorsFromS3(s3Key),
+      ).resolves.not.toThrow();
+
+      const errors = (await findPurposeErrors(dbInstance, tracingId)) as Array<{
+        severity: string;
+      }>;
+
+      const severities = errors.map((e) => e.severity).sort();
+      expect(severities).toStrictEqual([
+        purposeErrorSeverity.invalid,
+        purposeErrorSeverity.warning,
+      ]);
     });
 
     it("should throw an error when copy fails", async () => {

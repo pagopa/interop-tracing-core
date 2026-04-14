@@ -12,3 +12,10 @@ export enum PurposeErrorCodes {
   INVALID_DELIMITER = "INVALID_DELIMITER",
   PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE = "PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE",
 }
+
+export const WARNING_PURPOSE_ERROR_CODES: ReadonlySet<string> = new Set<string>(
+  [PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER],
+);
+
+export const isWarningErrorCode = (errorCode: string): boolean =>
+  WARNING_PURPOSE_ERROR_CODES.has(errorCode);

@@ -25,6 +25,12 @@ export const sqsMessages = {
       version: 1,
       errorsCsvPath: "s3://bucket/errors.csv",
     },
+    validWarning: {
+      tracingId: uuidv4(),
+      state: tracingState.warning,
+      version: 1,
+      errorsCsvPath: "s3://bucket/errors.csv",
+    },
     empty: {},
   },
 } as const;
