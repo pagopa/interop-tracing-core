@@ -275,7 +275,7 @@ export function dbServiceBuilder(db: DB) {
           USING ${config.dbSchemaName}.tracings t
           WHERE pe.tracing_id = t.id
           AND pe.version < t.version
-          AND pe.severity != 'WARNING';`;
+          AND pe.severity = 'INVALID';`;
 
         await db.none(deletePurposesErrorsQuery);
       } catch (error) {
