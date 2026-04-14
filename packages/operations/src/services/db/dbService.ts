@@ -80,20 +80,22 @@ export function dbServiceBuilder(db: DB) {
       offset: number;
       limit: number;
       tracing_id: string;
+      severity?: string;
     }): Promise<{ results: PurposeError[]; totalCount: number }> {
       try {
-        const { offset, limit, tracing_id } = filters;
+        const { offset, limit, tracing_id, severity } = filters;
 
         const getTracingErrorsTotalCountQuery = `
           SELECT COUNT(*)::integer as total_count
           FROM ${config.dbSchemaName}.purposes_errors pe 
             JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $1
+            AND ($2::text IS NULL OR pe.severity = $2)
         `;
 
         const { total_count } = await db.one<{ total_count: number }>(
           getTracingErrorsTotalCountQuery,
-          [tracing_id],
+          [tracing_id, severity ?? null],
         );
 
         const getTracingErrorsQuery = `
@@ -101,13 +103,14 @@ export function dbServiceBuilder(db: DB) {
           FROM ${config.dbSchemaName}.purposes_errors pe 
             JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $3
+            AND ($4::text IS NULL OR pe.severity = $4)
           ORDER BY pe.row_number
           OFFSET $1 LIMIT $2
         `;
 
         const tracingErrors = await db.any<PurposeError>(
           getTracingErrorsQuery,
-          [offset, limit, tracing_id],
+          [offset, limit, tracing_id, severity ?? null],
         );
 
         return {
