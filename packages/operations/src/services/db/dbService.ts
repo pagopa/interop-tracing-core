@@ -274,7 +274,8 @@ export function dbServiceBuilder(db: DB) {
           DELETE FROM ${config.dbSchemaName}.purposes_errors pe
           USING ${config.dbSchemaName}.tracings t
           WHERE pe.tracing_id = t.id
-          AND pe.version < t.version;`;
+          AND pe.version < t.version
+          AND pe.severity = 'INVALID';`;
 
         await db.none(deletePurposesErrorsQuery);
       } catch (error) {
