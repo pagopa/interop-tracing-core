@@ -74,7 +74,7 @@ app.use(helmet.frameguard({ action: "deny" }));
 app.use(healthRouter);
 app.use(queryParamsMiddleware);
 app.use(express.urlencoded({ extended: true }));
-app.use(contextMiddleware(config.applicationName));
+app.use(contextMiddleware(config.applicationName, true));
 app.use(loggerMiddleware(config.applicationName));
 app.use(authenticationMiddleware);
 
