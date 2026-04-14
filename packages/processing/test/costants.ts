@@ -1,6 +1,7 @@
 import {
   generateId,
   PurposeErrorRow,
+  purposeErrorSeverity,
   TracingFromS3KeyPathDto,
 } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -75,6 +76,7 @@ export const mockEnrichedPurposesWithErrors = [
     version: 1,
     purposeId: generateId(),
     rowNumber: 1,
+    severity: purposeErrorSeverity.invalid,
     message: PurposeErrorCodes.PURPOSE_NOT_FOUND,
     errorCode: PurposeErrorCodes.PURPOSE_NOT_FOUND,
   },
@@ -84,6 +86,7 @@ export const mockEnrichedPurposesWithErrors = [
     version: 1,
     purposeId: generateId(),
     rowNumber: 1,
+    severity: purposeErrorSeverity.invalid,
     message: PurposeErrorCodes.INVALID_DATE,
     errorCode: PurposeErrorCodes.INVALID_DATE,
   },
@@ -93,6 +96,7 @@ export const mockEnrichedPurposesWithErrors = [
     version: 1,
     purposeId: generateId(),
     rowNumber: 1,
+    severity: purposeErrorSeverity.warning,
     message: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
     errorCode: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
   },
@@ -105,6 +109,7 @@ export const mockFormalErrors = [
     version: 1,
     purposeId: generateId(),
     rowNumber: 1,
+    severity: purposeErrorSeverity.invalid,
     message: PurposeErrorCodes.INVALID_REQUEST_COUNT,
     errorCode: PurposeErrorCodes.INVALID_REQUEST_COUNT,
   },
@@ -118,6 +123,7 @@ export const mockErrorPurposes: Partial<PurposeErrorRow>[] = [
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 12,
+    severity: purposeErrorSeverity.invalid,
   },
   {
     id: generateId(),
@@ -127,6 +133,7 @@ export const mockErrorPurposes: Partial<PurposeErrorRow>[] = [
     purposeId: "223e4567-e89b-12d3-a456-426614174001",
     message: "dummy message",
     rowNumber: 13,
+    severity: purposeErrorSeverity.invalid,
   },
 ];
 

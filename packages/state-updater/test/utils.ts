@@ -10,6 +10,7 @@ import { config } from "../src/utilities/config.js";
 import {
   errorsCsvMapping,
   generateId,
+  PurposeErrorSeverity,
   tracingState,
 } from "pagopa-interop-tracing-models";
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
@@ -79,6 +80,38 @@ export const writePurposeErrorsCsv = async (
       tracingId,
       1,
       generateId(),
+      "INVALID",
+      "INVALID_ROW_SCHEMA",
+      "INVALID_ROW_SCHEMA",
+      12 + i,
+    ].join(","),
+  );
+  const csvBody = [csvHeader, ...rows].join("\n");
+
+  await fileManager.writeObject(Buffer.from(csvBody), "text/csv", s3Key);
+};
+
+export const writePurposeErrorsCsvWithSeverities = async (
+  tracingId: string,
+  fileManager: {
+    writeObject: (
+      input: Buffer,
+      contentType: string,
+      bucketS3Key: string,
+      bucketEnrichedS3Name?: string,
+    ) => Promise<void>;
+  },
+  s3Key: string,
+  severities: PurposeErrorSeverity[],
+): Promise<void> => {
+  const csvHeader = Object.keys(errorsCsvMapping).join(",");
+  const rows = severities.map((severity, i) =>
+    [
+      generateId(),
+      tracingId,
+      1,
+      generateId(),
+      severity,
       "INVALID_ROW_SCHEMA",
       "INVALID_ROW_SCHEMA",
       12 + i,

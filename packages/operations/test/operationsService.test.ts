@@ -23,6 +23,7 @@ import { DBService, dbServiceBuilder } from "../src/services/db/dbService.js";
 import {
   CommonErrorCodes,
   InternalError,
+  purposeErrorSeverity,
   PurposeErrorId,
   PurposeId,
   TenantId,
@@ -542,6 +543,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: tracingData.version,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
@@ -570,6 +572,51 @@ describe("database test", () => {
         expect(result.results[0].errorCode).toBe(
           PurposeErrorCodes.INVALID_STATUS_CODE,
         );
+        expect(result.results[0].severity).toBe(purposeErrorSeverity.invalid);
+      });
+
+      it("searching should return WARNING severity when persisted on purpose error", async () => {
+        const params: ApiGetTracingErrorsParams = {
+          tracingId: generateId<TracingId>(),
+        };
+
+        const query: ApiGetTracingErrorsQuery = {
+          offset: 0,
+          limit: 10,
+        };
+
+        const tracingData: Tracing = {
+          id: params.tracingId,
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: yesterdayTruncated,
+          version: 1,
+          errors: false,
+        };
+
+        const purposeErrorData: PurposeError = {
+          id: generateId<PurposeErrorId>(),
+          tracing_id: tracingData.id,
+          version: tracingData.version,
+          purpose_id: purposeId,
+          severity: purposeErrorSeverity.warning,
+          error_code: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+          message: "TENANT_IS_NOT_PRODUCER_OR_CONSUMER",
+          row_number: 1,
+        };
+
+        await addTracing(tracingData, dbInstance);
+        await addPurposeError(purposeErrorData, dbInstance);
+
+        const result = await operationsService.getTracingErrors(
+          query,
+          params,
+          tenantId,
+          genericLogger,
+        );
+
+        expect(result.totalCount).toBe(1);
+        expect(result.results[0].severity).toBe(purposeErrorSeverity.warning);
       });
 
       it("searching with invalid 'tracingId' parameter value should throw an error", async () => {
@@ -1213,6 +1260,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: 1,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
@@ -1260,6 +1308,7 @@ describe("database test", () => {
           tracing_id: tracingData.id,
           version: 1,
           purpose_id: purposeId,
+          severity: purposeErrorSeverity.invalid,
           error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
           message: "INVALID_STATUS_CODE",
           row_number: 1,
