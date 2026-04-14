@@ -1330,7 +1330,7 @@ describe("database test", () => {
         expect(purposesErrors.length).toBe(0);
       });
 
-      it("should not delete purposes errors with related tracing in state WARNING", async () => {
+      it("should not delete WARNING severity errors from previous versions", async () => {
         const tracingData: Tracing = {
           id: generateId<TracingId>(),
           tenant_id: tenantId,
@@ -1340,32 +1340,24 @@ describe("database test", () => {
           errors: false,
         };
 
-        const purposeErrorData: PurposeError = {
+        const warningError: PurposeError = {
           id: generateId<PurposeErrorId>(),
           tracing_id: tracingData.id,
           version: 1,
           purpose_id: purposeId,
-          severity: purposeErrorSeverity.invalid,
-          error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
-          message: "INVALID_STATUS_CODE",
+          severity: purposeErrorSeverity.warning,
+          error_code: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+          message: "TENANT_IS_NOT_PRODUCER_OR_CONSUMER",
           row_number: 1,
         };
 
         await addTracing(tracingData, dbInstance);
-        await addPurposeError(purposeErrorData, dbInstance);
+        await addPurposeError(warningError, dbInstance);
         await addPurposeError(
           {
-            ...purposeErrorData,
+            ...warningError,
             id: generateId<PurposeErrorId>(),
             version: 2,
-          },
-          dbInstance,
-        );
-        await addPurposeError(
-          {
-            ...purposeErrorData,
-            id: generateId<PurposeErrorId>(),
-            version: 3,
           },
           dbInstance,
         );
@@ -1374,7 +1366,72 @@ describe("database test", () => {
 
         const purposesErrors = await findPurposeErrors(dbInstance);
 
-        expect(purposesErrors.length).toBe(3);
+        expect(purposesErrors.length).toBe(2);
+      });
+
+      it("should delete previous INVALID errors but keep WARNING errors when tracing recovers to WARNING state", async () => {
+        const tracingData: Tracing = {
+          id: generateId<TracingId>(),
+          tenant_id: tenantId,
+          state: tracingState.warning,
+          date: "2024-08-01",
+          version: 2,
+          errors: false,
+        };
+
+        await addTracing(tracingData, dbInstance);
+
+        await addPurposeError(
+          {
+            id: generateId<PurposeErrorId>(),
+            tracing_id: tracingData.id,
+            version: 1,
+            purpose_id: purposeId,
+            severity: purposeErrorSeverity.invalid,
+            error_code: PurposeErrorCodes.INVALID_STATUS_CODE,
+            message: "INVALID_STATUS_CODE",
+            row_number: 1,
+          },
+          dbInstance,
+        );
+        await addPurposeError(
+          {
+            id: generateId<PurposeErrorId>(),
+            tracing_id: tracingData.id,
+            version: 1,
+            purpose_id: purposeId,
+            severity: purposeErrorSeverity.warning,
+            error_code: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+            message: "TENANT_IS_NOT_PRODUCER_OR_CONSUMER",
+            row_number: 2,
+          },
+          dbInstance,
+        );
+
+        await addPurposeError(
+          {
+            id: generateId<PurposeErrorId>(),
+            tracing_id: tracingData.id,
+            version: 2,
+            purpose_id: purposeId,
+            severity: purposeErrorSeverity.warning,
+            error_code: PurposeErrorCodes.TENANT_IS_NOT_PRODUCER_OR_CONSUMER,
+            message: "TENANT_IS_NOT_PRODUCER_OR_CONSUMER",
+            row_number: 1,
+          },
+          dbInstance,
+        );
+
+        await operationsService.deletePurposesErrors(genericLogger);
+
+        const purposesErrors = await findPurposeErrors(dbInstance);
+
+        expect(purposesErrors.length).toBe(2);
+        expect(
+          purposesErrors.every(
+            (e) => e.severity === purposeErrorSeverity.warning,
+          ),
+        ).toBe(true);
       });
     });
 
