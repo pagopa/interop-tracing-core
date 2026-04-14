@@ -97,7 +97,7 @@ export function dbServiceBuilder(db: DB) {
         );
 
         const getTracingErrorsQuery = `
-          SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.error_code, pe.message, pe.row_number
+          SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.severity, pe.error_code, pe.message, pe.row_number
           FROM ${config.dbSchemaName}.purposes_errors pe 
             JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
           WHERE tr.version = pe.version AND pe.tracing_id = $3

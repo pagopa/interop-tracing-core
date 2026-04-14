@@ -1,4 +1,7 @@
-import { TracingState } from "pagopa-interop-tracing-models";
+import {
+  PurposeErrorSeverity,
+  TracingState,
+} from "pagopa-interop-tracing-models";
 import { z } from "zod";
 
 export const TenantSchema = z.object({
@@ -21,6 +24,7 @@ export const PurposeErrorSchema = z.object({
   tracing_id: z.string().uuid(),
   purpose_id: z.string(),
   version: z.number(),
+  severity: PurposeErrorSeverity,
   error_code: z.string(),
   message: z.string(),
   row_number: z.number(),

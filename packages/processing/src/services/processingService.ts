@@ -1,6 +1,7 @@
 import {
   TracingFromS3KeyPathDto,
   generateId,
+  purposeErrorSeverity,
 } from "pagopa-interop-tracing-models";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
@@ -84,6 +85,7 @@ export const processingServiceBuilder = (
                   tracingId: tracing.tracingId,
                   version: tracing.version,
                   purposeId: "",
+                  severity: purposeErrorSeverity.invalid,
                   errorCode: PurposeErrorCodes.INVALID_CSV_HEADERS,
                   message: `CSV headers invalid. Expected [${expectedStr}] but got [${actualStr}]`,
                   rowNumber: 0,
@@ -105,6 +107,7 @@ export const processingServiceBuilder = (
                   tracingId: tracing.tracingId,
                   version: tracing.version,
                   purposeId: "",
+                  severity: purposeErrorSeverity.invalid,
                   errorCode: PurposeErrorCodes.INVALID_DELIMITER,
                   message: `Invalid delimiter found on csv`,
                   rowNumber: 0,
