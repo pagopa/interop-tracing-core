@@ -134,7 +134,12 @@ export function operationsServiceBuilder(dbService: DBService) {
         throw unauthorizedError("Tenant is not the owner of the tracing");
       }
 
-      if (tracing.state !== tracingState.completed) {
+      // WARNING is treated as a final/valid state (like COMPLETED) — the
+      // tracing can be replaced but not recovered.
+      if (
+        tracing.state !== tracingState.completed &&
+        tracing.state !== tracingState.warning
+      ) {
         throw tracingReplaceCannotBeUpdated(params.tracingId);
       }
 

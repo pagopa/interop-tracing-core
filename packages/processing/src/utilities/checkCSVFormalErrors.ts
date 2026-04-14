@@ -1,7 +1,11 @@
-import { PurposeErrorCodes } from "pagopa-interop-tracing-commons";
+import {
+  PurposeErrorCodes,
+  isWarningErrorCode,
+} from "pagopa-interop-tracing-commons";
 import {
   TracingFromS3KeyPathDto,
   PurposeErrorRow,
+  purposeErrorSeverity,
   generateId,
 } from "pagopa-interop-tracing-models";
 import { match } from "ts-pattern";
@@ -47,6 +51,9 @@ export async function checkRecords(
           id: generateId(),
           tracingId: tracing.tracingId,
           version: tracing.version,
+          severity: isWarningErrorCode(parsedError.errorCode)
+            ? purposeErrorSeverity.warning
+            : purposeErrorSeverity.invalid,
           errorCode: parsedError.errorCode,
           purposeId: record.purpose_id,
           message: parsedError.message,
@@ -60,6 +67,9 @@ export async function checkRecords(
         id: generateId(),
         tracingId: tracing.tracingId,
         version: tracing.version,
+        severity: isWarningErrorCode(PurposeErrorCodes.INVALID_DATE)
+          ? purposeErrorSeverity.warning
+          : purposeErrorSeverity.invalid,
         errorCode: PurposeErrorCodes.INVALID_DATE,
         purposeId: record.purpose_id,
         message: `date: Date field (${record.date}) in csv is different from tracing date (${tracing.date}).`,
@@ -75,6 +85,11 @@ export async function checkRecords(
         tracingId: tracing.tracingId,
         version: tracing.version,
         purposeId: record.purpose_id,
+        severity: isWarningErrorCode(
+          PurposeErrorCodes.PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE,
+        )
+          ? purposeErrorSeverity.warning
+          : purposeErrorSeverity.invalid,
         errorCode: PurposeErrorCodes.PURPOSE_AND_STATUS_AND_TOKEN_NOT_UNIQUE,
         message: `Duplicate status found. The current row number ${
           record.rowNumber

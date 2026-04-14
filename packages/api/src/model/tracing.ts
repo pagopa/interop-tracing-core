@@ -3,6 +3,7 @@ import z from "zod";
 
 const PurposeError = z.object({
   purposeId: z.string(),
+  severity: z.enum(["INVALID", "WARNING"]),
   errorCode: z.string(),
   message: z.string(),
   rowNumber: z.number(),

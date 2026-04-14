@@ -42,7 +42,10 @@ export function processProcessingResultMessage(
         return;
       }
 
-      if (result.state === tracingState.error) {
+      if (
+        result.state === tracingState.error ||
+        result.state === tracingState.warning
+      ) {
         await service.copyPurposeErrorsFromS3(result.errorsCsvPath);
       }
 

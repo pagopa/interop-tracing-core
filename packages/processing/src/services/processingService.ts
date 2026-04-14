@@ -1,6 +1,7 @@
 import {
   TracingFromS3KeyPathDto,
   generateId,
+  purposeErrorSeverity,
 } from "pagopa-interop-tracing-models";
 import { DBService } from "./enricherService.js";
 import { ProducerService } from "./producerService.js";
@@ -9,6 +10,7 @@ import {
   FileManager,
   PurposeErrorCodes,
   WithSQSMessageId,
+  isWarningErrorCode,
   logger,
   parseCSV,
 } from "pagopa-interop-tracing-commons";
@@ -56,7 +58,8 @@ export const processingServiceBuilder = (
 
         const enrichedDataObject = await fileManager.readObject(bucketS3Key);
 
-        let tracingHasErrors = false;
+        let tracingHasBlockingErrors = false;
+        let tracingHasWarnings = false;
         let headersChecked = false;
         let tracingRowNumber = 0;
 
@@ -74,7 +77,7 @@ export const processingServiceBuilder = (
                 actualHeaders.every((h, i) => h === sortedExpectedHeaders[i]);
 
               if (!headersMatch) {
-                tracingHasErrors = true;
+                tracingHasBlockingErrors = true;
                 const expectedStr = sortedExpectedHeaders.join(",");
                 const actualStr = actualHeaders.join(",");
                 const headerError: PurposeErrorRow = {
@@ -82,6 +85,7 @@ export const processingServiceBuilder = (
                   tracingId: tracing.tracingId,
                   version: tracing.version,
                   purposeId: "",
+                  severity: purposeErrorSeverity.invalid,
                   errorCode: PurposeErrorCodes.INVALID_CSV_HEADERS,
                   message: `CSV headers invalid. Expected [${expectedStr}] but got [${actualStr}]`,
                   rowNumber: 0,
@@ -97,12 +101,13 @@ export const processingServiceBuilder = (
               );
 
               if (hasSemiColonSeparator) {
-                tracingHasErrors = true;
+                tracingHasBlockingErrors = true;
                 const delimiterError: PurposeErrorRow = {
                   id: generateId(),
                   tracingId: tracing.tracingId,
                   version: tracing.version,
                   purposeId: "",
+                  severity: purposeErrorSeverity.invalid,
                   errorCode: PurposeErrorCodes.INVALID_DELIMITER,
                   message: `Invalid delimiter found on csv`,
                   rowNumber: 0,
@@ -135,15 +140,32 @@ export const processingServiceBuilder = (
             );
 
             if (errors.length > 0) {
-              tracingHasErrors = true;
+              const hasBlocking = errors.some(
+                (e) => !isWarningErrorCode(e.errorCode),
+              );
+              const hasWarning = errors.some((e) =>
+                isWarningErrorCode(e.errorCode),
+              );
+              if (hasBlocking) {
+                tracingHasBlockingErrors = true;
+              }
+              if (hasWarning) {
+                tracingHasWarnings = true;
+              }
               tracingErrorsCsv.writeBatch(errors);
-            } else {
+            }
+
+            // Enriched rows include warning rows (rows whose only error was a
+            // warning-severity one) as well as fully valid rows. Rows with any
+            // blocking formal error are already excluded upstream in
+            // processEnrichmentChunk.
+            if (enrichedRows.length > 0) {
               tracingCsv.writeBatch(enrichedRows);
             }
           },
         );
 
-        if (tracingHasErrors) {
+        if (tracingHasBlockingErrors) {
           const uploadTracingErrorsCsv = fileManager.writeStream(
             tracingErrorsCsv.getStream(),
             "text/csv",
@@ -164,6 +186,43 @@ export const processingServiceBuilder = (
               tracingId: tracing.tracingId,
               version: tracing.version,
               state: tracingState.error,
+              errorsCsvPath: bucketS3Key,
+            },
+            ctx,
+          );
+        } else if (tracingHasWarnings) {
+          const uploadTracingErrorsCsv = fileManager.writeStream(
+            tracingErrorsCsv.getStream(),
+            "text/csv",
+            bucketS3Key,
+            config.bucketTracingErrorsS3Name,
+          );
+
+          tracingErrorsCsv.close();
+
+          const uploadTracingCsv = fileManager.writeStream(
+            tracingCsv.getStream(),
+            "text/csv",
+            bucketS3Key,
+            config.bucketEnrichedS3Name,
+          );
+
+          tracingCsv.close();
+
+          await Promise.all([uploadTracingErrorsCsv, uploadTracingCsv]);
+
+          logger(ctx).info(
+            `Tracing Errors CSV uploaded successfully for tracingId: ${tracing.tracingId} to bucket ${config.bucketTracingErrorsS3Name}`,
+          );
+          logger(ctx).info(
+            `Tracing CSV uploaded successfully for tracingId: ${tracing.tracingId} to bucket ${config.bucketEnrichedS3Name}`,
+          );
+
+          await producerService.sendProcessingResultMessage(
+            {
+              tracingId: tracing.tracingId,
+              version: tracing.version,
+              state: tracingState.warning,
               errorsCsvPath: bucketS3Key,
             },
             ctx,
@@ -216,14 +275,18 @@ export async function processEnrichmentChunk(
   enrichedRows: EnrichedPurposeRow[];
   errors: PurposeErrorRow[];
 }> {
-  const invalidRows = new Set(
+  // Rows affected by any blocking formal error must be excluded from
+  // enrichment: they will only be written to the errors CSV and will drive
+  // the tracing state to ERROR. Warning-severity errors do not filter the
+  // row out, so it still reaches the enriched CSV.
+  const blockingRowNumbers = new Set(
     formalErrors
-      .filter((error) => error.errorCode === PurposeErrorCodes.INVALID_PURPOSE)
+      .filter((error) => !isWarningErrorCode(error.errorCode))
       .map((error) => error.rowNumber),
   );
 
   const validRecords = tracingRecords.filter(
-    (record) => !invalidRows.has(record.rowNumber),
+    (record) => !blockingRowNumbers.has(record.rowNumber),
   );
 
   logger(ctx).info(

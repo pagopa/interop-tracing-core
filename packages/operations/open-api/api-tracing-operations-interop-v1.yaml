@@ -820,6 +820,7 @@ components:
         - COMPLETED
         - MISSING
         - ERROR
+        - WARNING
 
     SubmitTracingRequest:
       type: object
@@ -864,6 +865,11 @@ components:
             properties:
               purposeId:
                 type: string
+              severity:
+                type: string
+                enum:
+                  - INVALID
+                  - WARNING
               errorCode:
                 type: string
               message:
@@ -874,6 +880,7 @@ components:
                 minimum: 0
             required:
               - purposeId
+              - severity
               - errorCode
               - message
               - rowNumber
@@ -988,7 +995,7 @@ components:
         - eserviceId
         - producerId
         - name
-        
+
     SaveDelegationRequest:
       type: object
       properties:
@@ -1004,10 +1011,10 @@ components:
         state:
           type: string
           enum:
-          - WAITING_FOR_APPROVAL
-          - ACTIVE
-          - REJECTED
-          - REVOKED
+            - WAITING_FOR_APPROVAL
+            - ACTIVE
+            - REJECTED
+            - REVOKED
       required:
         - id
         - delegateId
