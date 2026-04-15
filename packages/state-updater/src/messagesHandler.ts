@@ -52,7 +52,7 @@ export function processProcessingResultMessage(
       await service.updateTracingState(result);
 
       logger(ctx).info(
-        `Updating tracing state to "${result.state}" for tracingId: ${result.tracingId}, version: ${result.version}`,
+        `Updating tracing {"state":"${result.state}"} for tracingId: ${result.tracingId}, version: ${result.version}`,
       );
     } catch (error: unknown) {
       throw errorMapper(
