@@ -59,7 +59,17 @@ const logFormat = (
     .filter((e) => e !== undefined)
     .join(" ");
 
-  return `${firstPart} - ${secondPart} ${msg}`.replace(/\s+/g, " ");
+  // Sanitize the resource state "ERROR" → "FAILED" in log messages to avoid false CloudWatch alarms.
+  // Tracing state is always uppercase (e.g. states=ERROR, "state":"ERROR"), so we match uppercase only.
+  // A broader alternative would be /\bERROR\b/g, but that risks replacing unrelated occurrences
+  // (e.g. error messages, exception strings). This targeted regex is safer.
+  // Since we only replace inside `msg` (not `level`), Winston's own "error" log level label
+  // (which becomes "ERROR" in firstPart) is intentionally left untouched.
+  const sanitizedMsg = msg
+    .replace(/\bstates?=ERROR\b/g, (m) => m.replace("ERROR", "FAILED"))
+    .replace(/"state"\s*:\s*"ERROR"/g, (m) => m.replace("ERROR", "FAILED"));
+
+  return `${firstPart} - ${secondPart} ${sanitizedMsg}`.replace(/\s+/g, " ");
 };
 
 export const customFormat = () =>
