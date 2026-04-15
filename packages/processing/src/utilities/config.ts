@@ -1,7 +1,7 @@
 import {
   AWSConfig,
   ConsumerConfig,
-  DbConfig,
+  TracingStoreDbConfig,
   FileManagerConfig,
   LoggerConfig,
   S3Config,
@@ -10,7 +10,7 @@ import { z } from "zod";
 
 const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
-  .and(DbConfig)
+  .and(TracingStoreDbConfig)
   .and(S3Config)
   .and(FileManagerConfig)
   .and(

@@ -1,7 +1,7 @@
 import {
   AWSConfig,
   ConsumerConfig,
-  DbConfig,
+  TracingStoreDbConfig,
   FileManagerConfig,
   LoggerConfig,
 } from "pagopa-interop-tracing-commons";
@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const tracingStateUpdateronfig = AWSConfig.and(ConsumerConfig)
   .and(LoggerConfig)
-  .and(DbConfig)
+  .and(TracingStoreDbConfig)
   .and(FileManagerConfig)
   .and(
     z

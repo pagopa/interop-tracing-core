@@ -19,13 +19,13 @@ import { setupDbServiceBuilder } from "./utilities/setupDbService.js";
 import { retryConnection } from "./services/db/connection.js";
 import { TracingTable } from "./models/traces.js";
 const dbInstance = initDB({
-  username: config.dbUsername,
-  password: config.dbPassword,
-  host: config.dbHost,
-  port: config.dbPort,
-  database: config.dbName,
-  schema: config.dbSchemaName,
-  useSSL: config.dbUseSSL,
+  username: config.analyticsDbUsername,
+  password: config.analyticsDbPassword,
+  host: config.analyticsDbHost,
+  port: config.analyticsDbPort,
+  database: config.analyticsDbName,
+  schema: config.analyticsDbSchemaName,
+  useSSL: config.analyticsDbUseSSL,
 });
 
 const connection = await dbInstance.connect();

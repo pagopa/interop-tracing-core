@@ -44,7 +44,7 @@ export function tracesRepository(db: DBContext) {
     async mergeTracesToTarget(tx: ITask<unknown>) {
       const mergeQuery = generateMergeQuery(
         TracingEnrichedSchema,
-        config.dbSchemaName,
+        config.analyticsDbSchemaName,
         targetTableName,
       );
       await tx.none(mergeQuery);
