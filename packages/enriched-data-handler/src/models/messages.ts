@@ -15,13 +15,31 @@ export const TracingEnriched = z.object({
   status: z.coerce.number(),
   token_id: z.string(),
   requestsCount: z.string(),
+  consumerId: z.string().optional(),
+  producerId: z.string().optional(),
+  eserviceId: z.string().optional(),
 });
 
-export const TracingEnrichedSchema = TracingEnriched.extend({
+export const TracingEnrichedSchema = z.object({
+  submitterId: z.string(),
+  date: z.string(),
+  purposeId: z.string(),
+  status: z.coerce.number(),
+  token_id: z.string(),
+  requestsCount: z.string(),
   id: z.string(),
   tracingId: z.string(),
+});
+
+export const TracingEnrichedSchemaWithDomainIds = TracingEnrichedSchema.extend({
+  consumerId: z.string(),
+  producerId: z.string(),
+  eserviceId: z.string(),
 });
 
 export type TracingFromCsv = z.infer<typeof TracingFromCsv>;
 export type TracingEnriched = z.infer<typeof TracingEnriched>;
 export type TracingEnrichedSchema = z.infer<typeof TracingEnrichedSchema>;
+export type TracingEnrichedSchemaWithDomainIds = z.infer<
+  typeof TracingEnrichedSchemaWithDomainIds
+>;

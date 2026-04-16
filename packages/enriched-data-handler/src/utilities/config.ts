@@ -73,6 +73,10 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
         MERGE_TABLE_SUFFIX: z
           .string()
           .transform((val) => val.replace(/-/g, "")),
+        ENRICH_TRACES_WITH_CONSUMER_PRODUCER_ESERVICE: z
+          .enum(["true", "false"])
+          .default("false")
+          .transform((value) => value === "true"),
       })
       .transform((c) => ({
         applicationName: c.APPLICATION_NAME,
@@ -80,6 +84,8 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
         sqsEndpoint: c.SQS_ENDPOINT,
         bucketEnrichedS3Name: c.S3_ENRICHED_BUCKET_NAME,
         mergeTableSuffix: c.MERGE_TABLE_SUFFIX,
+        enrichTracesWithConsumerProducerEservice:
+          c.ENRICH_TRACES_WITH_CONSUMER_PRODUCER_ESERVICE,
       })),
   );
 

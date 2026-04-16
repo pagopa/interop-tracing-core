@@ -9,5 +9,8 @@ CREATE TABLE traces.traces (
     token_id VARCHAR(36),
     status INTEGER,
     requests_count INTEGER,
+    consumer_id VARCHAR(36),
+    producer_id VARCHAR(36),
+    eservice_id VARCHAR(36),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

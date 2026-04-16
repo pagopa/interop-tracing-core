@@ -116,6 +116,12 @@ describe("Enriched Service", () => {
       });
 
       expect(insertedRecords).toHaveLength(mockEnrichedTracing.length);
+
+      for (const record of insertedRecords) {
+        expect(record.consumerId).toBeDefined();
+        expect(record.producerId).toBeDefined();
+        expect(record.eserviceId).toBeDefined();
+      }
     });
 
     it("should skip insert when message version is older than current version", async () => {

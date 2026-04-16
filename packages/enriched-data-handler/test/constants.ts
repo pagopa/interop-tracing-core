@@ -21,6 +21,9 @@ export const mockEnrichedTracing = [
     status: 200,
     token_id: generateId(),
     requestsCount: "50",
+    consumerId: generateId(),
+    producerId: generateId(),
+    eserviceId: generateId(),
   },
   {
     submitterId: generateId(),
@@ -29,5 +32,8 @@ export const mockEnrichedTracing = [
     status: 500,
     token_id: generateId(),
     requestsCount: "3",
+    consumerId: generateId(),
+    producerId: generateId(),
+    eserviceId: generateId(),
   },
 ];
