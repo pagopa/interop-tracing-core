@@ -56,6 +56,7 @@ import {
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
+import { uriErrorHandlerMiddleware } from "../src/middlewares/uriErrorHandlerMiddleware.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -89,6 +90,7 @@ const mockAuthenticationMiddleware = (
 
 app.use(mockAuthenticationMiddleware);
 app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
+app.use(uriErrorHandlerMiddleware);
 
 const tracingApiClient = supertest(app);
 
@@ -987,6 +989,15 @@ describe("Tracing Router", () => {
 
       expect(response.text).contains("Unexpected error");
       expect(response.status).toBe(500);
+    });
+  });
+
+  describe("uriErrorHandlerMiddleware", () => {
+    it("should return 400 Bad Request when a URIError is thrown due to invalid percent-encoding in route params", async () => {
+      const response = await tracingApiClient.get("/tracings/%c0/errors");
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe("Bad Request");
     });
   });
 });

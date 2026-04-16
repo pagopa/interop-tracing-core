@@ -17,6 +17,7 @@ import {
 } from "./services/operationsService.js";
 import { configureMulterEndpoints } from "./routers/config/multer.js";
 import { queryParamsMiddleware } from "./middlewares/query.js";
+import { uriErrorHandlerMiddleware } from "./middlewares/uriErrorHandlerMiddleware.js";
 import { ZodiosApp } from "@zodios/express";
 import { ApiExternal } from "./model/types.js";
 import { LocalExpressContext, localZodiosCtx } from "./context/index.js";
@@ -80,5 +81,7 @@ app.use(authenticationMiddleware);
 
 configureMulterEndpoints(app);
 app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
+
+app.use(uriErrorHandlerMiddleware);
 
 export default app;
