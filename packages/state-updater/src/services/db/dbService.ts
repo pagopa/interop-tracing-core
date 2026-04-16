@@ -29,7 +29,8 @@ export function dbServiceBuilder(db: DB) {
       const purposeErrorCsvColumns = Object.keys(errorsCsvMapping);
       const table = `${config.dbSchemaName}.purposes_errors`;
       const columns = purposeErrorCsvColumns.join(",");
-      const copyQuery = `COPY ${table} (${columns}) FROM STDIN WITH (FORMAT csv, HEADER true)`;
+      // Keep empty CSV fields as empty strings (not NULL) to satisfy NOT NULL columns.
+      const copyQuery = `COPY ${table} (${columns}) FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\\\N')`;
 
       const deleteQuery = `
         DELETE FROM ${config.dbSchemaName}.purposes_errors
