@@ -993,11 +993,58 @@ describe("Tracing Router", () => {
   });
 
   describe("uriErrorHandlerMiddleware", () => {
-    it("should return 400 Bad Request when a URIError is thrown due to invalid percent-encoding in route params", async () => {
-      const response = await tracingApiClient.get("/tracings/%c0/errors");
+    const malformedEncodings = ["%c0", "%a", "%zz"];
 
-      expect(response.status).toBe(400);
-      expect(response.text).toBe("Bad Request");
+    describe("GET requests", () => {
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for GET /tracings/%s/errors",
+        async (encoded) => {
+          const response = await tracingApiClient.get(
+            `/tracings/${encoded}/errors`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
+    });
+
+    describe("POST requests", () => {
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for POST /tracings/%s/recover",
+        async (encoded) => {
+          const response = await tracingApiClient.post(
+            `/tracings/${encoded}/recover`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
+
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for POST /tracings/%s/replace",
+        async (encoded) => {
+          const response = await tracingApiClient.post(
+            `/tracings/${encoded}/replace`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
     });
   });
 });
