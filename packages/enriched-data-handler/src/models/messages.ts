@@ -18,6 +18,13 @@ export const TracingEnriched = z.object({
   consumerId: z.string().optional(),
   producerId: z.string().optional(),
   eserviceId: z.string().optional(),
+  purposeName: z.string().optional(),
+  consumerOrigin: z.string().optional(),
+  consumerName: z.string().optional(),
+  consumerExternalId: z.string().optional(),
+  producerOrigin: z.string().optional(),
+  producerName: z.string().optional(),
+  producerExternalId: z.string().optional(),
 });
 
 export const TracingEnrichedSchema = z.object({
@@ -35,6 +42,13 @@ export const TracingEnrichedSchemaWithDomainIds = TracingEnrichedSchema.extend({
   consumerId: z.string(),
   producerId: z.string(),
   eserviceId: z.string(),
+  purposeName: z.string(),
+  consumerOrigin: z.string(),
+  consumerName: z.string(),
+  consumerExternalId: z.string(),
+  producerOrigin: z.string(),
+  producerName: z.string(),
+  producerExternalId: z.string(),
 });
 
 export type TracingFromCsv = z.infer<typeof TracingFromCsv>;

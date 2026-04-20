@@ -121,6 +121,13 @@ describe("Enriched Service", () => {
         expect(record.consumerId).toBeDefined();
         expect(record.producerId).toBeDefined();
         expect(record.eserviceId).toBeDefined();
+        expect(record.purposeName).toBeDefined();
+        expect(record.consumerOrigin).toBeDefined();
+        expect(record.consumerName).toBeDefined();
+        expect(record.consumerExternalId).toBeDefined();
+        expect(record.producerOrigin).toBeDefined();
+        expect(record.producerName).toBeDefined();
+        expect(record.producerExternalId).toBeDefined();
       }
     });
 

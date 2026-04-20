@@ -12,5 +12,12 @@ CREATE TABLE traces.traces (
     consumer_id VARCHAR(36),
     producer_id VARCHAR(36),
     eservice_id VARCHAR(36),
+    purpose_name VARCHAR(255),
+    consumer_origin VARCHAR(255),
+    consumer_name VARCHAR(255),
+    consumer_external_id VARCHAR(255),
+    producer_origin VARCHAR(255),
+    producer_name VARCHAR(255),
+    producer_external_id VARCHAR(255),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

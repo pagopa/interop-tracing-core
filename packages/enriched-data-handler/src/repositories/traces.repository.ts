@@ -46,6 +46,13 @@ export function tracesRepository(db: DBContext) {
               consumerId: record.consumerId,
               producerId: record.producerId,
               eserviceId: record.eserviceId,
+              purposeName: record.purposeName,
+              consumerOrigin: record.consumerOrigin,
+              consumerName: record.consumerName,
+              consumerExternalId: record.consumerExternalId,
+              producerOrigin: record.producerOrigin,
+              producerName: record.producerName,
+              producerExternalId: record.producerExternalId,
             }
           : base;
       });
