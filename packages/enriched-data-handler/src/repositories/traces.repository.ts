@@ -2,7 +2,11 @@ import { DBConnection, DBContext } from "pagopa-interop-tracing-commons";
 import { generateId } from "pagopa-interop-tracing-models";
 
 import { ITask } from "pg-promise";
-import { TracingEnriched, TracingEnrichedSchema } from "../models/messages.js";
+import {
+  TracingEnriched,
+  TracingEnrichedSchema,
+  TracingEnrichedSchemaWithDomainIds,
+} from "../models/messages.js";
 import { TracingTable } from "../models/traces.js";
 import {
   deleteTargetTable,
@@ -14,6 +18,9 @@ import { config } from "../utilities/config.js";
 export function tracesRepository(db: DBContext) {
   const targetTableName = TracingTable.Traces;
   const stagingTableName = `${targetTableName}_${config.mergeTableSuffix}`;
+  const activeSchema = config.enrichTracesWithConsumerProducerEservice
+    ? TracingEnrichedSchemaWithDomainIds
+    : TracingEnrichedSchema;
 
   return {
     async insertTracesToStaging(
@@ -21,13 +28,36 @@ export function tracesRepository(db: DBContext) {
       tracingId: string,
       records: TracingEnriched[],
     ) {
-      const traces: TracingEnrichedSchema[] = records.map((record) => ({
-        ...record,
-        tracingId,
-        id: generateId(),
-      }));
+      const traces = records.map((record) => {
+        const base = {
+          submitterId: record.submitterId,
+          date: record.date,
+          purposeId: record.purposeId,
+          status: record.status,
+          token_id: record.token_id,
+          requestsCount: record.requestsCount,
+          tracingId,
+          id: generateId(),
+        };
 
-      const cs = buildColumnSet(db.pgp, targetTableName, TracingEnrichedSchema);
+        return config.enrichTracesWithConsumerProducerEservice
+          ? {
+              ...base,
+              consumerId: record.consumerId,
+              producerId: record.producerId,
+              eserviceId: record.eserviceId,
+              purposeName: record.purposeName,
+              consumerOrigin: record.consumerOrigin,
+              consumerName: record.consumerName,
+              consumerExternalId: record.consumerExternalId,
+              producerOrigin: record.producerOrigin,
+              producerName: record.producerName,
+              producerExternalId: record.producerExternalId,
+            }
+          : base;
+      });
+
+      const cs = buildColumnSet(db.pgp, targetTableName, activeSchema);
       await conn.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
     },
 
@@ -37,13 +67,13 @@ export function tracesRepository(db: DBContext) {
         targetTableName,
         tracingId,
         "tracingId",
-        TracingEnrichedSchema,
+        activeSchema,
       );
     },
 
     async mergeTracesToTarget(tx: ITask<unknown>) {
       const mergeQuery = generateMergeQuery(
-        TracingEnrichedSchema,
+        activeSchema,
         config.analyticsDbSchemaName,
         targetTableName,
       );
