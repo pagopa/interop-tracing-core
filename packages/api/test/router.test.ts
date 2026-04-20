@@ -56,6 +56,7 @@ import {
 } from "../src/model/types.js";
 import { configureMulterEndpoints } from "../src/routers/config/multer.js";
 import { LocalExpressContext, localZodiosCtx } from "../src/context/index.js";
+import { uriErrorHandlerMiddleware } from "../src/middlewares/uriErrorHandlerMiddleware.js";
 
 const operationsApiClient = createApiClient(config.operationsBaseUrl);
 const operationsService: OperationsService =
@@ -89,6 +90,7 @@ const mockAuthenticationMiddleware = (
 
 app.use(mockAuthenticationMiddleware);
 app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
+app.use(uriErrorHandlerMiddleware);
 
 const tracingApiClient = supertest(app);
 
@@ -987,6 +989,62 @@ describe("Tracing Router", () => {
 
       expect(response.text).contains("Unexpected error");
       expect(response.status).toBe(500);
+    });
+  });
+
+  describe("uriErrorHandlerMiddleware", () => {
+    const malformedEncodings = ["%c0", "%a", "%zz"];
+
+    describe("GET requests", () => {
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for GET /tracings/%s/errors",
+        async (encoded) => {
+          const response = await tracingApiClient.get(
+            `/tracings/${encoded}/errors`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
+    });
+
+    describe("POST requests", () => {
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for POST /tracings/%s/recover",
+        async (encoded) => {
+          const response = await tracingApiClient.post(
+            `/tracings/${encoded}/recover`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
+
+      it.each(malformedEncodings)(
+        "should return 400 JSON problem for POST /tracings/%s/replace",
+        async (encoded) => {
+          const response = await tracingApiClient.post(
+            `/tracings/${encoded}/replace`,
+          );
+
+          expect(response.status).toBe(400);
+          expect(response.body).toMatchObject({
+            type: "about:blank",
+            status: 400,
+            title: "Bad request",
+          });
+        },
+      );
     });
   });
 });
