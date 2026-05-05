@@ -1,0 +1,126 @@
+import winston from "winston";
+import { LoggerConfig } from "../config/loggerConfig.js";
+
+export type LoggerMetadata = {
+  serviceName?: string;
+  correlationId?: string;
+  messageId?: string | null | undefined;
+  authData?: { tenantId?: string; organizationId?: string };
+  eventType?: string;
+  eventVersion?: number;
+  streamId?: string;
+  version?: number;
+  eserviceId?: string;
+  purposeId?: string;
+};
+
+const parsedLoggerConfig = LoggerConfig.safeParse(process.env);
+const config: LoggerConfig = parsedLoggerConfig.success
+  ? parsedLoggerConfig.data
+  : {
+      logLevel: "info",
+    };
+
+if (!parsedLoggerConfig.success) {
+  // eslint-disable-next-line no-console
+  console.log(
+    `No LOG_LEVEL env var: defaulting log level to "${config.logLevel}"`,
+  );
+}
+
+const logFormat = (
+  msg: string,
+  timestamp: unknown,
+  level: string,
+  { correlationId, messageId, serviceName, authData }: LoggerMetadata,
+) => {
+  const serviceLogPart = serviceName ? `[${serviceName}]` : undefined;
+  const tenantLogPart = authData?.tenantId
+    ? `[TID=${authData.tenantId}]`
+    : undefined;
+  const organizationLogPart = authData?.organizationId
+    ? `[OID=${authData.organizationId}]`
+    : undefined;
+  const messageLogPart = messageId ? `[MID=${messageId}]` : undefined;
+  const correlationLogPart = correlationId
+    ? `[CID=${correlationId}]`
+    : undefined;
+
+  const firstPart = [timestamp, level.toUpperCase(), serviceLogPart]
+    .filter((e) => e !== undefined)
+    .join(" ");
+
+  const secondPart = [
+    organizationLogPart,
+    tenantLogPart,
+    correlationLogPart,
+    messageLogPart,
+  ]
+    .filter((e) => e !== undefined)
+    .join(" ");
+
+  // Sanitize the resource state "ERROR" → "FAILED" in log messages to avoid false CloudWatch alarms.
+  // Tracing state is always uppercase (e.g. states=ERROR, "state":"ERROR"), so we match uppercase only.
+  // A broader alternative would be /\bERROR\b/g, but that risks replacing unrelated occurrences
+  // (e.g. error messages, exception strings). This targeted regex is safer.
+  // Since we only replace inside `msg` (not `level`), Winston's own "error" log level label
+  // (which becomes "ERROR" in firstPart) is intentionally left untouched.
+  const sanitizedMsg = msg
+    .replace(/\bstates?\s*=\s*ERROR\b/g, (m) => m.replace("ERROR", "FAILED"))
+    .replace(/"state"\s*:\s*"ERROR"/g, (m) => m.replace("ERROR", "FAILED"))
+    .replace(/"previousState"\s*:\s*"ERROR"/g, (m) =>
+      m.replace("ERROR", "FAILED"),
+    );
+
+  return `${firstPart} - ${secondPart} ${sanitizedMsg}`.replace(/\s+/g, " ");
+};
+
+export const customFormat = () =>
+  winston.format.printf(({ level, message, timestamp, ...meta }) => {
+    if (!meta.loggerMetadata) {
+      // eslint-disable-next-line no-console
+      console.warn(`[WARN] loggerMetadata not found for message: ${message}`);
+    }
+    const lines = `${message}`
+      .toString()
+      .split("\n")
+      .map((line: string) =>
+        logFormat(line, timestamp, level, meta.loggerMetadata || {}),
+      );
+    return lines.join("\n");
+  });
+
+const getLogger = () =>
+  winston.createLogger({
+    level: config.logLevel,
+    transports: [
+      new winston.transports.Console({
+        stderrLevels: ["error"],
+      }),
+    ],
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json(),
+      winston.format.errors({ stack: true }),
+      customFormat(),
+    ),
+    silent: process.env.NODE_ENV === "test",
+  });
+
+const internalLoggerInstance = getLogger();
+
+export const logger = (loggerMetadata: LoggerMetadata) => ({
+  isDebugEnabled: () => internalLoggerInstance.isDebugEnabled(),
+  debug: (msg: (typeof internalLoggerInstance.debug.arguments)[0]) =>
+    internalLoggerInstance.debug(msg, { loggerMetadata }),
+  info: (msg: (typeof internalLoggerInstance.info.arguments)[0]) =>
+    internalLoggerInstance.info(msg, { loggerMetadata }),
+  warn: (msg: (typeof internalLoggerInstance.warn.arguments)[0]) =>
+    internalLoggerInstance.warn(msg, { loggerMetadata }),
+  error: (msg: (typeof internalLoggerInstance.error.arguments)[0]) =>
+    internalLoggerInstance.error(msg, { loggerMetadata }),
+});
+
+export type Logger = ReturnType<typeof logger>;
+
+export const genericLogger = logger({});

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "start": {
+      "persistent": true,
+      "cache": false,
+      "dependsOn": [
+        "generate-client",
+        "generate-model",
+        "^build"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "generate-client",
+        "generate-model",
+        "^build"
+      ],
+      "outputs": [
+        "dist"
+      ]
+    },
+    "check": {
+      "dependsOn": [
+        "generate-client",
+        "generate-model",
+        "^build"
+      ],
+      "outputs": [
+        "dist"
+      ]
+    },
+    "generate-model": {
+      "dependsOn": [
+        "^generate-model"
+      ]
+    },
+    "generate-client": {
+      "dependsOn": [
+        "^generate-client"
+      ]
+    },
+    "clean-generated": {
+      "dependsOn": [
+        "^clean-generated"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "build",
+        "^test"
+      ]
+    },
+    "test:it": {
+      "dependsOn": [
+        "build",
+        "^test:it"
+      ]
+    },
+    "lint": {},
+    "lint:autofix": {},
+    "format:check": {},
+    "format:write": {}
+  },
+  "globalDependencies": [
+    "tsconfig.json"
+  ]
+}

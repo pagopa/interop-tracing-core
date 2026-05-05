@@ -1,0 +1,515 @@
+import {
+  TenantId,
+  TracingState,
+  tracingAlreadyExists,
+  tracingState,
+} from "pagopa-interop-tracing-models";
+import { DB, DateUnit, truncatedTo } from "pagopa-interop-tracing-commons";
+import {
+  Delegation,
+  Eservice,
+  Purpose,
+  PurposeError,
+  Tenant,
+  Tracing,
+  UpdateTracingState,
+  UpdateTracingStateAndVersionSchema,
+} from "../../model/domain/db.js";
+import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import { config } from "../../utilities/config.js";
+
+export function dbServiceBuilder(db: DB) {
+  return {
+    async getTenantById(tenantId: TenantId): Promise<TenantId> {
+      try {
+        const { id } = await db.one<{ id: TenantId }>(
+          `SELECT id FROM ${config.dbSchemaName}.tenants WHERE id = $1`,
+          [tenantId],
+        );
+        return id;
+      } catch (error) {
+        throw dbServiceErrorMapper("getTenantById", error);
+      }
+    },
+
+    async getTracings(filters: {
+      offset: number;
+      limit: number;
+      states?: TracingState[];
+      tenantId: string;
+    }): Promise<{ results: Tracing[]; totalCount: number }> {
+      try {
+        const { offset, limit, states = [], tenantId } = filters;
+
+        const getTracingsTotalCountQuery = `
+          SELECT COUNT(*)::integer as total_count
+          FROM ${config.dbSchemaName}.tracings
+          WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
+        `;
+
+        const { total_count } = await db.one<{ total_count: number }>(
+          getTracingsTotalCountQuery,
+          [states, tenantId],
+        );
+
+        const getTracingsQuery = `
+          SELECT *
+          FROM ${config.dbSchemaName}.tracings
+          WHERE tenant_id = $2 AND ((COALESCE(array_length($1::text[], 1), 0) = 0) OR state = ANY($1::text[]))
+          ORDER BY date
+          OFFSET $3 LIMIT $4
+        `;
+
+        const tracings = await db.any<Tracing>(getTracingsQuery, [
+          states,
+          tenantId,
+          offset,
+          limit,
+        ]);
+
+        return {
+          results: tracings,
+          totalCount: total_count,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper("getTracings", error);
+      }
+    },
+
+    async getTracingErrors(filters: {
+      offset: number;
+      limit: number;
+      tracing_id: string;
+      severity?: string;
+    }): Promise<{ results: PurposeError[]; totalCount: number }> {
+      try {
+        const { offset, limit, tracing_id, severity } = filters;
+
+        const getTracingErrorsTotalCountQuery = `
+          SELECT COUNT(*)::integer as total_count
+          FROM ${config.dbSchemaName}.purposes_errors pe 
+            JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $1
+            AND ($2::text IS NULL OR pe.severity = $2)
+        `;
+
+        const { total_count } = await db.one<{ total_count: number }>(
+          getTracingErrorsTotalCountQuery,
+          [tracing_id, severity ?? null],
+        );
+
+        const getTracingErrorsQuery = `
+          SELECT pe.id, pe.version, pe.tracing_id, pe.purpose_id, pe.severity, pe.error_code, pe.message, pe.row_number
+          FROM ${config.dbSchemaName}.purposes_errors pe 
+            JOIN ${config.dbSchemaName}.tracings tr ON tr.id = pe.tracing_id
+          WHERE tr.version = pe.version AND pe.tracing_id = $3
+            AND ($4::text IS NULL OR pe.severity = $4)
+          ORDER BY pe.row_number
+          OFFSET $1 LIMIT $2
+        `;
+
+        const tracingErrors = await db.any<PurposeError>(
+          getTracingErrorsQuery,
+          [offset, limit, tracing_id, severity ?? null],
+        );
+
+        return {
+          results: tracingErrors,
+          totalCount: total_count,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper("getTracingErrors", error);
+      }
+    },
+
+    async submitTracing(data: Tracing): Promise<Tracing> {
+      try {
+        const truncatedDate: Date = truncatedTo(
+          new Date(data.date),
+          DateUnit.DAYS,
+        );
+
+        const findOneTracingQuery = `
+          SELECT id, state FROM ${config.dbSchemaName}.tracings
+          WHERE tenant_id = $1 AND date >= $2 AND date < $2::date + interval '1 day'
+          LIMIT 1;`;
+
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [data.tenant_id, truncatedDate],
+        );
+
+        if (tracing && tracing.state !== tracingState.missing) {
+          throw tracingAlreadyExists(
+            `A tracing for the current tenant already exists on this date: ${data.date}`,
+          );
+        }
+
+        const findPastTracingErrorsQuery = `
+          SELECT 1 
+          FROM ${config.dbSchemaName}.tracings tracing
+          WHERE (tracing.state = 'ERROR' OR tracing.state = 'MISSING')
+            AND tracing.tenant_id = $1
+            AND tracing.id <> $2
+          LIMIT 1`;
+
+        if (tracing && tracing.state === tracingState.missing) {
+          const updateTracingQuery = `
+            UPDATE ${config.dbSchemaName}.tracings 
+            SET state = 'PENDING', 
+                errors = false,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1 
+            RETURNING id, tenant_id, date, state, version`;
+
+          const updatedTracing = await db.one<Tracing>(updateTracingQuery, [
+            tracing.id,
+          ]);
+
+          const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
+            findPastTracingErrorsQuery,
+            [data.tenant_id, data.id],
+          );
+
+          return {
+            id: updatedTracing.id,
+            tenant_id: updatedTracing.tenant_id,
+            date: updatedTracing.date,
+            state: updatedTracing.state,
+            version: updatedTracing.version,
+            errors: !!pastTracingsHasErrors,
+          };
+        }
+
+        const insertTracingQuery = `
+          INSERT INTO ${config.dbSchemaName}.tracings (id, tenant_id, state, date, version)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id, tenant_id, date, state, version`;
+
+        const newTracing = await db.one<Tracing>(insertTracingQuery, [
+          data.id,
+          data.tenant_id,
+          data.state,
+          truncatedDate,
+          data.version,
+        ]);
+
+        const pastTracingsHasErrors = await db.oneOrNone<boolean | null>(
+          findPastTracingErrorsQuery,
+          [data.tenant_id, newTracing.id],
+        );
+
+        return {
+          id: newTracing.id,
+          tenant_id: newTracing.tenant_id,
+          version: newTracing.version,
+          date: newTracing.date,
+          state: newTracing.state,
+          errors: !!pastTracingsHasErrors,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper("submitTracing", error);
+      }
+    },
+
+    async findTracingById(tracingId: string): Promise<Tracing | null> {
+      try {
+        const findOneTracingQuery = `
+          SELECT id, tenant_id, state, date, version, errors 
+          FROM ${config.dbSchemaName}.tracings
+          WHERE id = $1
+          LIMIT 1;`;
+
+        const tracing = await db.oneOrNone<Tracing | null>(
+          findOneTracingQuery,
+          [tracingId],
+        );
+
+        return tracing
+          ? {
+              ...tracing,
+              date: new Date(tracing.date).toISOString(),
+            }
+          : null;
+      } catch (error) {
+        throw dbServiceErrorMapper("findTracingById", error);
+      }
+    },
+
+    async updateTracingState(data: UpdateTracingState): Promise<void> {
+      try {
+        const updateTracingStateQuery = `
+          UPDATE ${config.dbSchemaName}.tracings
+            SET state = $1,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2`;
+
+        await db.none(updateTracingStateQuery, [data.state, data.tracing_id]);
+      } catch (error) {
+        throw dbServiceErrorMapper("updateTracingState", error);
+      }
+    },
+
+    async updateTracingStateAndVersion(
+      data: UpdateTracingStateAndVersionSchema,
+    ): Promise<void> {
+      try {
+        const updateTracingStateQuery = `
+          UPDATE ${config.dbSchemaName}.tracings
+            SET version = $2,
+              state = $3,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1`;
+
+        await db.none(updateTracingStateQuery, [
+          data.tracing_id,
+          data.version,
+          data.state,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("updateTracingStateAndVersion", error);
+      }
+    },
+
+    async deletePurposesErrors(): Promise<void> {
+      try {
+        const deletePurposesErrorsQuery = `
+          DELETE FROM ${config.dbSchemaName}.purposes_errors pe
+          USING ${config.dbSchemaName}.tracings t
+          WHERE pe.tracing_id = t.id
+          AND pe.version < t.version
+          AND pe.severity = 'INVALID';`;
+
+        await db.none(deletePurposesErrorsQuery);
+      } catch (error) {
+        throw dbServiceErrorMapper("deletePurposesErrors", error);
+      }
+    },
+
+    async saveMissingTracing(data: Tracing): Promise<void> {
+      try {
+        const insertTracingQuery = `
+          INSERT INTO ${config.dbSchemaName}.tracings (id, tenant_id, state, date, version)
+          SELECT $1, $2, $3, $4, $5
+          WHERE NOT EXISTS (
+            SELECT 1 FROM ${config.dbSchemaName}.tracings
+            WHERE tenant_id = $2 AND date >= $4 AND date < $4::date + interval '1 day'
+            )
+          RETURNING id;`;
+
+        await db.oneOrNone<Tracing>(insertTracingQuery, [
+          data.id,
+          data.tenant_id,
+          data.state,
+          truncatedTo(new Date(data.date), DateUnit.DAYS),
+          data.version,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveMissingTracing", error);
+      }
+    },
+
+    async getTenantsWithMissingTracings(filters: {
+      offset: number;
+      limit: number;
+      date: string;
+    }): Promise<{ results: string[]; totalCount: number }> {
+      try {
+        const { offset, limit = [], date } = filters;
+
+        const getTenantsTotalCountQuery = `
+          SELECT COUNT(DISTINCT t1.tenant_id)::integer AS total_count
+          FROM ${config.dbSchemaName}.tracings t1
+          LEFT JOIN ${config.dbSchemaName}.tracings t2 
+          ON t1.tenant_id = t2.tenant_id 
+          AND t2.date >= $1 AND t2.date < $1::date + interval '1 day'
+          WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM ${config.dbSchemaName}.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 0;
+        `;
+
+        const { total_count } = await db.one<{ total_count: number }>(
+          getTenantsTotalCountQuery,
+          [date],
+        );
+
+        const getTenantsQuery = `
+          SELECT DISTINCT t1.tenant_id
+          FROM ${config.dbSchemaName}.tracings t1
+          LEFT JOIN ${config.dbSchemaName}.tracings t2 
+          ON t1.tenant_id = t2.tenant_id 
+          AND t2.date >= $3 AND t2.date < $3::date + interval '1 day'
+          WHERE t2.tenant_id IS NULL
+          AND (
+            SELECT COUNT(*)
+            FROM ${config.dbSchemaName}.tracings t3
+            WHERE t3.tenant_id = t1.tenant_id
+          ) > 0
+          OFFSET $1 LIMIT $2;
+        `;
+
+        const tracings = await db.any<{ tenant_id: string }>(getTenantsQuery, [
+          offset,
+          limit,
+          date,
+        ]);
+
+        return {
+          results: tracings.map((el) => el.tenant_id),
+          totalCount: total_count,
+        };
+      } catch (error) {
+        throw dbServiceErrorMapper("getTenantsWithMissingTracings", error);
+      }
+    },
+
+    async saveEservice(data: Eservice): Promise<void> {
+      try {
+        const upsertEserviceQuery = `
+          INSERT INTO ${config.dbSchemaName}.eservices (
+            eservice_id, 
+            producer_id, 
+            name
+          ) VALUES ($1, $2, $3)
+          ON CONFLICT (eservice_id) 
+          DO UPDATE SET 
+            producer_id = EXCLUDED.producer_id,
+            name = EXCLUDED.name
+        `;
+
+        await db.none(upsertEserviceQuery, [
+          data.eservice_id,
+          data.producer_id,
+          data.name,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveEservice", error);
+      }
+    },
+
+    async deleteEservice(data: { eservice_id: string }): Promise<void> {
+      try {
+        await db.tx(async (t) => {
+          const deletePurposesQuery = `
+            DELETE FROM ${config.dbSchemaName}.purposes WHERE eservice_id = $1;
+          `;
+          await t.none(deletePurposesQuery, [data.eservice_id]);
+
+          const deleteEserviceQuery = `
+            DELETE FROM ${config.dbSchemaName}.eservices WHERE eservice_id = $1;
+          `;
+          await t.none(deleteEserviceQuery, [data.eservice_id]);
+        });
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteEservice", error);
+      }
+    },
+
+    async savePurpose(purpose: Purpose) {
+      try {
+        const upsertPurposeQuery = `
+          INSERT INTO ${config.dbSchemaName}.purposes (id, consumer_id, eservice_id, purpose_title)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (id) 
+          DO UPDATE SET consumer_id = $2, eservice_id = $3, purpose_title = $4
+          RETURNING id;
+        `;
+
+        return await db.one(upsertPurposeQuery, [
+          purpose.id,
+          purpose.consumer_id,
+          purpose.eservice_id,
+          purpose.purpose_title,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("savePurpose", error);
+      }
+    },
+
+    async deletePurpose(purposeId: string) {
+      try {
+        const deletePurposeQuery = `
+          DELETE FROM ${config.dbSchemaName}.purposes WHERE id = $1;
+        `;
+
+        await db.none(deletePurposeQuery, [purposeId]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deletePurpose", error);
+      }
+    },
+
+    async saveTenant(data: Tenant): Promise<void> {
+      try {
+        const upsertTenantQuery = `
+          INSERT INTO ${config.dbSchemaName}.tenants (
+            id, 
+            name, 
+            origin,
+            external_id,
+            deleted
+          ) VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (id) 
+          DO UPDATE SET 
+            name = EXCLUDED.name,
+            origin = EXCLUDED.origin,
+            external_id = EXCLUDED.external_id
+        `;
+
+        await db.none(upsertTenantQuery, [
+          data.id,
+          data.name,
+          data.origin,
+          data.external_id,
+          data.deleted,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveTenant", error);
+      }
+    },
+
+    async deleteTenant(data: { id: string }): Promise<void> {
+      try {
+        const deleteTenantQuery = `
+          UPDATE ${config.dbSchemaName}.tenants 
+          SET deleted = true 
+          WHERE id = $1;
+        `;
+
+        await db.none(deleteTenantQuery, [data.id]);
+      } catch (error) {
+        throw dbServiceErrorMapper("deleteTenant", error);
+      }
+    },
+
+    async saveDelegation(data: Delegation): Promise<void> {
+      try {
+        const upsertDelegationQuery = `
+          INSERT INTO ${config.dbSchemaName}.delegations (
+            id, 
+            delegate_id,
+            eservice_id, 
+            state
+          ) VALUES ($1, $2, $3, $4)
+            ON CONFLICT (id) 
+            DO UPDATE SET 
+            eservice_id = EXCLUDED.eservice_id,
+            state = EXCLUDED.state
+        `;
+
+        await db.none(upsertDelegationQuery, [
+          data.id,
+          data.delegate_id,
+          data.eservice_id,
+          data.state,
+        ]);
+      } catch (error) {
+        throw dbServiceErrorMapper("saveDelegation", error);
+      }
+    },
+  };
+}
+
+export type DBService = ReturnType<typeof dbServiceBuilder>;

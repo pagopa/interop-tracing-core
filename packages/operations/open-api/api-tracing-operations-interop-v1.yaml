@@ -1,0 +1,1124 @@
+openapi: 3.0.0
+info:
+  title: Tracing Operations API
+  description: API for tracing operations
+  version: 1.0.0
+tags:
+  - name: Tracings
+    description: Operations related to tracings
+  - name: Tenants
+    description: Operations related to tenants
+  - name: Purposes
+    description: Operations related to purposes
+  - name: Eservices
+    description: Operations related to eservices
+paths:
+  /status:
+    get:
+      security: []
+      tags:
+        - Health
+      summary: Health status endpoint
+      description: Return ok
+      operationId: getStatus
+      responses:
+        "200":
+          description: successful operation
+  /tracings/submit:
+    post:
+      summary: Submit tracing request
+      operationId: submitTracing
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitTracingRequest"
+
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitTracingResponse"
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/recover:
+    post:
+      summary: Update data of existing tracing with state error by tracingId
+      operationId: recoverTracing
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoverTracingResponse"
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/replace:
+    post:
+      summary: Replace tracing with complete state by tracingId
+      operationId: replaceTracing
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplaceTracingResponse"
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/versions/{version}/state:
+    post:
+      summary: Update tracing state by tracingId
+      operationId: updateTracingState
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TracingStateUpdateRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/cancel:
+    post:
+      summary: Cancel previous tracing state and version   by tracingId
+      operationId: cancelTracingStateAndVersion
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TracingVersionAndStateCancelRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/errors:
+    delete:
+      summary: Delete purposes error
+      operationId: deletePurposesErrors
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      responses:
+        "204":
+          description: No content
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings:
+    get:
+      summary: Get all tracings of a tenant
+      operationId: getTracings
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
+        - in: query
+          name: states
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/TracingState"
+          style: form
+          explode: false
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTracingsByTenantId"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tracings/{tracingId}/errors:
+    get:
+      summary: Get errors details by tracingId
+      operationId: getTracingErrors
+      tags:
+        - Tracings
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: header
+          name: x-organization-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequesterPurposeId"
+        - name: tracingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the tracing item to retrieve error details
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
+        - in: query
+          name: severity
+          required: false
+          schema:
+            type: string
+            enum:
+              - INVALID
+              - WARNING
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTracingErrorsResponse"
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tenants:
+    post:
+      summary: Save tenant
+      operationId: saveTenant
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveTenantRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /tenants/{tenantId}:
+    delete:
+      summary: Delete tenant
+      operationId: deleteTenant
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the tenant
+      tags:
+        - Tenants
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tenants/tracings/missing:
+    get:
+      summary: Get all tenants with missing tracings by date
+      operationId: getTenantsWithMissingTracings
+      tags:
+        - Tenants
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 10000
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTenantsWithMissingTracings"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /tenants/{tenantId}/tracings/missing:
+    post:
+      summary: Save missing tracing
+      operationId: saveMissingTracing
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveMissingTracingRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /purposes:
+    post:
+      summary: Save purpose
+      operationId: savePurpose
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Purposes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavePurposesRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /purposes/{purposeId}:
+    delete:
+      summary: Delete purpose
+      operationId: deletePurpose
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: purposeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the purpose
+      tags:
+        - Purposes
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /eservices:
+    post:
+      summary: Save eservice
+      operationId: saveEservice
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Eservices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveEserviceRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /eservices/{eserviceId}:
+    delete:
+      summary: Delete eservice
+      operationId: deleteEservice
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+        - name: eserviceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the eservice
+      tags:
+        - Eservices
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /delegations:
+    post:
+      summary: Save delegation
+      operationId: saveDelegation
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            $ref: "#/components/schemas/CorrelationId"
+      tags:
+        - Delegations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveDelegationRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: The provided input data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The requested resource could not be found on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: A managed error has occurred during the request elaboration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+components:
+  schemas:
+    CorrelationId:
+      type: string
+      format: uuid
+      description: Correlation ID for tracking requests
+    RequesterPurposeId:
+      type: string
+      format: uuid
+      description: Purpose ID for specifying the requester's purpose
+    TracingStateUpdateRequest:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/TracingState"
+      required:
+        - state
+    TracingVersionAndStateCancelRequest:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/TracingState"
+        version:
+          type: number
+      required:
+        - state
+        - version
+    TracingState:
+      type: string
+      enum:
+        - PENDING
+        - COMPLETED
+        - MISSING
+        - ERROR
+        - WARNING
+
+    SubmitTracingRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required:
+        - tenantId
+        - date
+    SaveMissingTracingRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required:
+        - date
+    GetTenantsWithMissingTracings:
+      type: object
+      required:
+        - results
+        - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            type: string
+        totalCount:
+          type: integer
+          format: int64
+    GetTracingErrorsResponse:
+      type: object
+      required:
+        - results
+        - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              purposeId:
+                type: string
+              severity:
+                type: string
+                enum:
+                  - INVALID
+                  - WARNING
+              errorCode:
+                type: string
+              message:
+                type: string
+              rowNumber:
+                type: integer
+                format: int32
+                minimum: 0
+            required:
+              - purposeId
+              - severity
+              - errorCode
+              - message
+              - rowNumber
+        totalCount:
+          type: integer
+          format: int64
+    GetTracingsByTenantId:
+      type: object
+      required:
+        - results
+        - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - tracingId
+              - date
+              - state
+            properties:
+              tracingId:
+                type: string
+              date:
+                type: string
+                format: date
+              state:
+                type: string
+        totalCount:
+          type: integer
+          format: int64
+    SubmitTracingResponse:
+      type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - errors
+        - date
+      properties:
+        tracingId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        version:
+          type: number
+        state:
+          $ref: "#/components/schemas/TracingState"
+        errors:
+          type: boolean
+    RecoverTracingResponse:
+      type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
+        - previousState
+      properties:
+        tracingId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        version:
+          type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
+    ReplaceTracingResponse:
+      type: object
+      required:
+        - tracingId
+        - tenantId
+        - version
+        - date
+        - previousState
+      properties:
+        tracingId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        version:
+          type: number
+        previousState:
+          $ref: "#/components/schemas/TracingState"
+    SaveEserviceRequest:
+      type: object
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        producerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - eserviceId
+        - producerId
+        - name
+
+    SaveDelegationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        delegateId:
+          type: string
+          format: uuid
+        eserviceId:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum:
+            - WAITING_FOR_APPROVAL
+            - ACTIVE
+            - REJECTED
+            - REVOKED
+      required:
+        - id
+        - delegateId
+        - eserviceId
+        - state
+
+    SaveTenantRequest:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        origin:
+          type: string
+        externalId:
+          type: string
+      required:
+        - tenantId
+    SavePurposesRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
+        eserviceId:
+          type: string
+          format: uuid
+        purposeTitle:
+          type: string
+          format: string
+      required:
+        - id
+        - consumerId
+        - eserviceId
+        - purposeTitle
+    Problem:
+      properties:
+        type:
+          description: URI reference of type definition
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this occurrence of the problem.
+          example: 500
+          exclusiveMaximum: true
+          format: int32
+          maximum: 600
+          minimum: 100
+          type: integer
+        title:
+          description: A short, summary of the problem type. Written in english and readable
+          example: Service Unavailable
+          maxLength: 64
+          pattern: "^[ -~]{0,64}$"
+          type: string
+        correlationId:
+          description: Unique identifier of the request
+          example: "53af4f2d-0c87-41ef-a645-b726a821852b"
+          maxLength: 64
+          type: string
+        detail:
+          description: A human readable explanation of the problem.
+          example: Request took too long to complete.
+          maxLength: 4096
+          pattern: "^.{0,1024}$"
+          type: string
+        errors:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ProblemError"
+      additionalProperties: false
+      required:
+        - type
+        - status
+        - title
+        - errors
+    ProblemError:
+      properties:
+        code:
+          description: Internal code of the error
+          example: 123-4567
+          minLength: 8
+          maxLength: 8
+          pattern: "^[0-9]{3}-[0-9]{4}$"
+          type: string
+        detail:
+          description: A human readable explanation specific to this occurrence of the problem.
+          example: Parameter not valid
+          maxLength: 4096
+          pattern: "^.{0,1024}$"
+          type: string
+      required:
+        - code
+        - detail

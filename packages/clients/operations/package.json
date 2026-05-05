@@ -1,0 +1,44 @@
+{
+  "name": "pagopa-interop-tracing-operations-client",
+  "private": true,
+  "version": "1.0.0",
+  "description": "PagoPA tracing operations client",
+  "main": "dist",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "lint": "eslint .  ",
+    "lint:autofix": "eslint . --fix",
+    "format:check": "prettier --check src",
+    "format:write": "prettier --write src",
+    "start": "node --watch --no-warnings --loader ts-node/esm ./src/index.ts",
+    "build": "tsc",
+    "check": "tsc --project tsconfig.check.json",
+    "generate-client": "mkdir -p ./src/model/generated && pnpm openapi-zod-client '../../operations/open-api/api-tracing-operations-interop-v1.yaml' -o './src/model/generated/client.ts'",
+    "clean-generated": "pnpm exec rm ./src/model/generated/client.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "20.10.0",
+    "@typescript-eslint/eslint-plugin": "8.22.0",
+    "@typescript-eslint/parser": "8.22.0",
+    "eslint": "9.18.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "globals": "15.14.0",
+    "prettier": "3.0.3",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.2"
+  },
+  "dependencies": {
+    "@zodios/core": "10.9.6",
+    "@zodios/express": "10.6.1",
+    "openapi-zod-client": "1.18.1",
+    "ts-pattern": "5.4.0",
+    "zod": "3.23.8"
+  }
+}

@@ -1,0 +1,87 @@
+import helmet from "helmet";
+import express from "express";
+import {
+  FileManager,
+  contextMiddleware,
+  fileManagerBuilder,
+  loggerMiddleware,
+} from "pagopa-interop-tracing-commons";
+import { createApiClient } from "pagopa-interop-tracing-operations-client";
+import tracingRouter from "./routers/tracingRouter.js";
+import healthRouter from "./routers/healthRouter.js";
+import { config } from "./utilities/config.js";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
+import {
+  OperationsService,
+  operationsServiceBuilder,
+} from "./services/operationsService.js";
+import { configureMulterEndpoints } from "./routers/config/multer.js";
+import { queryParamsMiddleware } from "./middlewares/query.js";
+import { uriErrorHandlerMiddleware } from "./middlewares/uriErrorHandlerMiddleware.js";
+import { ZodiosApp } from "@zodios/express";
+import { ApiExternal } from "./model/types.js";
+import { LocalExpressContext, localZodiosCtx } from "./context/index.js";
+import { authenticationMiddleware } from "./auth/index.js";
+
+const operationsApiClient = createApiClient(config.operationsBaseUrl);
+const operationsService: OperationsService =
+  operationsServiceBuilder(operationsApiClient);
+
+const s3ClientConfig: S3ClientConfig = {
+  endpoint: config.s3CustomServer
+    ? `${config.s3ServerHost}:${config.s3ServerPort}`
+    : undefined,
+  forcePathStyle: config.s3CustomServer,
+  logger: config.logLevel === "debug" ? console : undefined,
+  region: config.awsRegion,
+};
+const s3client: S3Client = new S3Client(s3ClientConfig);
+const fileManager: FileManager = fileManagerBuilder(
+  s3client,
+  config.bucketS3Name,
+);
+
+const app: ZodiosApp<ApiExternal, LocalExpressContext> = localZodiosCtx.app();
+
+// Disable the "X-Powered-By: Express" HTTP header for security reasons.
+// See https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#recommendation_16
+app.disable("x-powered-by");
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'none'"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      imgSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+      formAction: ["'self'"],
+    },
+  }),
+);
+
+app.use(
+  helmet.hsts({
+    includeSubDomains: true,
+    maxAge: 10886400,
+  }),
+);
+
+app.use(helmet.noSniff());
+app.use(helmet.xssFilter());
+app.use(helmet.frameguard({ action: "deny" }));
+
+app.use(healthRouter);
+app.use(queryParamsMiddleware);
+app.use(express.urlencoded({ extended: true }));
+app.use(contextMiddleware(config.applicationName, true));
+app.use(loggerMiddleware(config.applicationName));
+app.use(authenticationMiddleware);
+
+configureMulterEndpoints(app);
+app.use(tracingRouter(localZodiosCtx)(operationsService, fileManager));
+
+app.use(uriErrorHandlerMiddleware);
+
+export default app;
