@@ -719,10 +719,10 @@ importers:
         version: 9.0.8
       '@zodios/core':
         specifier: 10.9.6
-        version: 10.9.6(axios@1.6.7)(zod@3.23.8)
+        version: 10.9.6(axios@1.15.2)(zod@3.23.8)
       axios:
-        specifier: 1.6.7
-        version: 1.6.7
+        specifier: 1.15.2
+        version: 1.15.2
       dotenv-flow:
         specifier: 3.3.0
         version: 3.3.0
@@ -1002,10 +1002,10 @@ importers:
         version: 20.1.0
       '@zodios/core':
         specifier: 10.9.6
-        version: 10.9.6(axios@1.6.7)(zod@3.23.8)
+        version: 10.9.6(axios@1.15.2)(zod@3.23.8)
       axios:
-        specifier: 1.6.7
-        version: 1.6.7
+        specifier: 1.15.2
+        version: 1.15.2
       dotenv-flow:
         specifier: 3.3.0
         version: 3.3.0
@@ -1163,10 +1163,10 @@ importers:
         version: 20.1.0
       '@zodios/core':
         specifier: 10.9.6
-        version: 10.9.6(axios@1.6.7)(zod@3.23.8)
+        version: 10.9.6(axios@1.15.2)(zod@3.23.8)
       axios:
-        specifier: 1.6.7
-        version: 1.6.7
+        specifier: 1.15.2
+        version: 1.15.2
       dotenv-flow:
         specifier: 3.3.0
         version: 3.3.0
@@ -2570,9 +2570,6 @@ packages:
   axios@1.15.2:
     resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
 
-  axios@1.6.7:
-    resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
-
   b4a@1.6.7:
     resolution: {integrity: sha512-OnAYlL5b7LEkALw87fUVafQw5rVR9RjwGd4KUwNQ6DrrNmaVaUCgLipfVlzrPQ4tWOR9P0IXGNOx50jYCCdSJg==}
 
@@ -3113,15 +3110,6 @@ packages:
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
-
-  follow-redirects@1.15.9:
-    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
 
   follow-redirects@1.16.0:
     resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
@@ -3823,9 +3811,6 @@ packages:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
 
-  proxy-from-env@1.1.0:
-    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-
   proxy-from-env@2.1.0:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
@@ -4285,7 +4270,7 @@ packages:
 
   uuid@3.3.2:
     resolution: {integrity: sha512-yXJmeNaw3DnnKAOKJE51sL/ZaYfWJRl1pK9dr19YFCu0ObS231AB1/LbqTKRAQ5kw8A90rA6fr4riOUpTZvQZA==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
     hasBin: true
 
   uuid@9.0.1:
@@ -6652,11 +6637,6 @@ snapshots:
       axios: 1.15.2
       zod: 3.23.8
 
-  '@zodios/core@10.9.6(axios@1.6.7)(zod@3.23.8)':
-    dependencies:
-      axios: 1.6.7
-      zod: 3.23.8
-
   '@zodios/express@10.6.1(@zodios/core@10.9.6(axios@1.15.2)(zod@3.23.8))(express@4.18.2)(zod@3.23.8)':
     dependencies:
       '@zodios/core': 10.9.6(axios@1.15.2)(zod@3.23.8)
@@ -6800,14 +6780,6 @@ snapshots:
       follow-redirects: 1.16.0
       form-data: 4.0.5
       proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
-
-  axios@1.6.7:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.2
-      proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
 
@@ -7447,8 +7419,6 @@ snapshots:
   flatted@3.3.3: {}
 
   fn.name@1.1.0: {}
-
-  follow-redirects@1.15.9: {}
 
   follow-redirects@1.16.0: {}
 
@@ -8112,8 +8082,6 @@ snapshots:
     dependencies:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
-
-  proxy-from-env@1.1.0: {}
 
   proxy-from-env@2.1.0: {}
 
