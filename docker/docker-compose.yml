@@ -6,7 +6,7 @@ services:
       - ./tracing-store-db/init-db.sql:/docker-entrypoint-initdb.d/01-init-schema.sql
       - ./tracing-store-db/init-db-seed.sql:/docker-entrypoint-initdb.d/02-init-seed.sql
       - ./traces-db/init-db.sql:/docker-entrypoint-initdb.d/03-init-traces.sql
-    image: postgres:14
+    image: postgres:14@sha256:bbb8851608e3ff4901156bf6a4bf90735a9d44ae014c03811bfdb2f9c354b18b
     ports:
       - 55000:5432
     environment:
@@ -16,10 +16,10 @@ services:
     command: -c 'max_connections=512' -c 'wal_level=logical'
 
   zookeeper:
-    image: quay.io/debezium/zookeeper:2.3
+    image: quay.io/debezium/zookeeper:2.3@sha256:5b1354c4fa3bae600128eaa3ba9487ebd98b0aef40e3a39b32efe7533c8d2604
 
   kafka:
-    image: quay.io/debezium/kafka:2.3
+    image: quay.io/debezium/kafka:2.3@sha256:4009c39c2cc42686d1b5f0d2c46b3ff166e6ea98fb9a61d925b90f7fc56358e0
     ports:
       - 9092:9092
       - 29092:29092
@@ -36,7 +36,7 @@ services:
 
   kafka-ui:
     container_name: kafka-ui
-    image: provectuslabs/kafka-ui:53a6553765a806eda9905c43bfcfe09da6812035
+    image: provectuslabs/kafka-ui:53a6553765a806eda9905c43bfcfe09da6812035@sha256:7317d08c1d58f1c7e67adb936e3b181151bd5534a30b761f75fe8bddbf079ffd
     ports:
       - 8084:8080
     depends_on:
@@ -47,7 +47,7 @@ services:
 
   # MinIO is a local S3-compatible storage, to replace AWS S3 in local development
   minio:
-    image: quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z
+    image: quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z@sha256:1f5e263a492659da3b5c165eeabe70fac1c186081d3fca6863fdc48c3e04856c
     entrypoint: sh -c "chmod +x /etc/minio/init.sh && /etc/minio/init.sh"
     ports:
       - 9000:9000
@@ -63,7 +63,7 @@ services:
     restart: always
 
   elasticmq: # ElasticMQ is a local SQS-compatible queue system, to replace AWS SQS in local development
-    image: softwaremill/elasticmq-native:1.5.7
+    image: softwaremill/elasticmq-native:1.5.7@sha256:0cb5bcc04638c80af1631e8cf5da9b96b9fb6f46a4164462231065dc516c102f
     container_name: tracing-sqs
     ports:
       - 9324:9324
@@ -74,7 +74,7 @@ services:
 
   # PGAdmin is a web-based PostgreSQL admin interface, included for convenience
   pg-admin:
-    image: dpage/pgadmin4:2024-04-01-1
+    image: dpage/pgadmin4:2024-04-01-1@sha256:00998d19a230b66e30de4bc00a2c453b07c63016dc15e58d6f6b4fa3c688d4e5
     ports:
       - 8082:80
     environment:
