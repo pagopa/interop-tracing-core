@@ -45,7 +45,7 @@
     "@zodios/core": "10.9.6",
     "@zodios/express": "10.6.1",
     "@zodios/plugins": "10.6.0",
-    "aws-sdk": "2.657.0",
+    "aws-sdk": "2.814.0",
     "axios": "1.6.7",
     "busboy": "1.6.0",
     "dotenv-flow": "3.3.0",
