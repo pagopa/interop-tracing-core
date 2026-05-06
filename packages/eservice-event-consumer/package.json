@@ -19,10 +19,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pagopa/interop-outbound-models": "1.8.10",
+    "@pagopa/interop-outbound-models": "1.8.16",
     "@tsconfig/node-lts": "20.1.0",
     "@zodios/core": "10.9.6",
-    "axios": "1.6.7",
+    "axios": "1.15.2",
     "dotenv-flow": "3.3.0",
     "kafka-connector": "workspace:*",
     "kafkajs": "2.2.4",

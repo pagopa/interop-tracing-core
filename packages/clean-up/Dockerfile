@@ -1,4 +1,4 @@
-FROM node:20.11.1-slim as build
+FROM node:20.11.1-slim@sha256:357deca6eb61149534d32faaf5e4b2e4fa3549c2be610ee1019bf340ea8c51ec as build
 
 RUN corepack enable
 
