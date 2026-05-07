@@ -3,9 +3,20 @@ import { ServiceContext } from "../context/context.js";
 import { LoggerMetadata, logger } from "./index.js";
 import { AuthData } from "../auth/index.js";
 
+const safeDecodeUrl = (url: string): string => {
+  try {
+    return decodeURI(url);
+  } catch {
+    return url;
+  }
+};
+
 export function loggerMiddleware(serviceName: string): express.RequestHandler {
   return (req, res, next): void => {
-    logger({ serviceName }).info(`Incoming Request: ${req.method} ${req.url}`);
+    const decodedUrl = safeDecodeUrl(req.url);
+    logger({ serviceName }).info(
+      `Incoming Request: ${req.method} ${decodedUrl}`,
+    );
     const context = (
       req as express.Request & {
         ctx?: ServiceContext<{
@@ -27,7 +38,7 @@ export function loggerMiddleware(serviceName: string): express.RequestHandler {
 
     res.on("finish", () => {
       loggerInstance.info(
-        `Request ${req.method} ${req.url} - Response ${res.statusCode} ${res.statusMessage}`,
+        `Request ${req.method} ${decodedUrl} - Response ${res.statusCode} ${res.statusMessage}`,
       );
     });
 
