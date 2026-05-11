@@ -66,7 +66,10 @@ const logFormat = (
   // Since we only replace inside `msg` (not `level`), Winston's own "error" log level label
   // (which becomes "ERROR" in firstPart) is intentionally left untouched.
   const sanitizedMsg = msg
-    .replace(/\bstates?\s*=\s*ERROR\b/g, (m) => m.replace("ERROR", "FAILED"))
+    .replace(
+      /(?<![A-Za-z])states?(?:\[\])?\s*=\s*[A-Z_,]*\bERROR\b[A-Z_,]*/g,
+      (m) => m.replace(/\bERROR\b/g, "FAILED"),
+    )
     .replace(/"state"\s*:\s*"ERROR"/g, (m) => m.replace("ERROR", "FAILED"))
     .replace(/"previousState"\s*:\s*"ERROR"/g, (m) =>
       m.replace("ERROR", "FAILED"),
