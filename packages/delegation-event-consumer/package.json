@@ -28,7 +28,7 @@
     "pagopa-interop-tracing-models": "workspace:*",
     "pagopa-interop-tracing-operations-client": "workspace:*",
     "ts-pattern": "5.2.0",
-    "uuid": "10.0.0",
+    "uuid": "11.1.1",
     "zod": "3.23.8",
     "axios": "1.15.2",
     "@tsconfig/node-lts": "20.1.0"
