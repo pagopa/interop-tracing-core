@@ -73,7 +73,8 @@ const logFormat = (
     .replace(/"state"\s*:\s*"ERROR"/g, (m) => m.replace("ERROR", "FAILED"))
     .replace(/"previousState"\s*:\s*"ERROR"/g, (m) =>
       m.replace("ERROR", "FAILED"),
-    );
+    )
+    .replace(/\bERROR or MISSING\b/g, "FAILED or MISSING");
 
   return `${firstPart} - ${secondPart} ${sanitizedMsg}`.replace(/\s+/g, " ");
 };
@@ -82,7 +83,7 @@ export const customFormat = () =>
   winston.format.printf(({ level, message, timestamp, ...meta }) => {
     if (!meta.loggerMetadata) {
       // eslint-disable-next-line no-console
-      console.warn(`[WARN] loggerMetadata not found for message: ${message}`);
+      console.log(`[WARN] loggerMetadata not found for message: ${message}`);
     }
     const lines = `${message}`
       .toString()
