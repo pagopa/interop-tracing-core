@@ -5,8 +5,8 @@
   "main": "dist",
   "type": "module",
   "scripts": {
-    "test": "vitest --config ./test/vitest.config.ts",
-    "test:it": "vitest db --config ./test/vitest.config.ts",
+    "test": "vitest run --config ./test/vitest.config.ts",
+    "test:it": "vitest run db --config ./test/vitest.config.ts",
     "lint": "eslint .  ",
     "lint:autofix": "eslint . --fix",
     "format:check": "prettier --check src",
@@ -22,7 +22,7 @@
     "@pagopa/interop-outbound-models": "1.8.16",
     "@tsconfig/node-lts": "20.1.0",
     "@zodios/core": "10.9.6",
-    "axios": "1.15.2",
+    "axios": "1.16.0",
     "dotenv-flow": "3.3.0",
     "kafka-connector": "workspace:*",
     "kafkajs": "2.2.4",
@@ -30,7 +30,7 @@
     "pagopa-interop-tracing-models": "workspace:*",
     "pagopa-interop-tracing-operations-client": "workspace:*",
     "ts-pattern": "5.4.0",
-    "uuid": "10.0.0",
+    "uuid": "11.1.1",
     "zod": "3.23.8"
   },
   "devDependencies": {
@@ -46,6 +46,7 @@
     "prettier": "3.0.3",
     "ts-node": "10.9.2",
     "typescript": "5.5.2",
-    "vitest": "0.33.0"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
