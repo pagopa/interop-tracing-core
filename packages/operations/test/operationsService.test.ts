@@ -1238,8 +1238,8 @@ describe("database test", () => {
 
         const tracing = await findTracingById(tracingData.id, dbInstance);
 
-        expect(new Date(tracing.date)).toContain(
-          new Date(saveMissingTracingData.date),
+        expect(new Date(tracing.date).getTime()).toBe(
+          new Date(saveMissingTracingData.date).getTime(),
         );
       });
     });

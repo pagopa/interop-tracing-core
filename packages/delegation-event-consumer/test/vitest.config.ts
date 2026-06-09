@@ -6,7 +6,8 @@ export default defineConfig({
   test: {
     clearMocks: true,
     globals: true,
-    setupFiles: ["dotenv/config"],
+    include: ["test/**/*.test.ts"],
+    setupFiles: ["dotenv-flow/config"],
   },
   resolve: {
     alias: [{ find: "~", replacement: resolve(__dirname, "src") }],

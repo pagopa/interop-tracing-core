@@ -6,7 +6,8 @@ export default defineConfig({
   test: {
     clearMocks: true,
     globals: true,
-    setupFiles: ["dotenv/config"],
+    include: ["test/**/*.test.ts"],
+    setupFiles: ["dotenv-flow/config"],
     hookTimeout: 40000,
   },
   resolve: {
