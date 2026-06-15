@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@pagopa/interop-outbound-models':
+      specifier: 1.8.20
+      version: 1.8.20
     vite:
       specifier: 6.4.3
       version: 6.4.3
@@ -367,8 +370,8 @@ importers:
   packages/delegation-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.8.16
-        version: 1.8.16
+        specifier: 'catalog:'
+        version: 1.8.20
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -534,8 +537,8 @@ importers:
   packages/eservice-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.8.16
-        version: 1.8.16
+        specifier: 'catalog:'
+        version: 1.8.20
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -666,8 +669,8 @@ importers:
         version: 3.23.8
     devDependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.8.16
-        version: 1.8.16
+        specifier: 'catalog:'
+        version: 1.8.20
       '@types/express':
         specifier: 4.17.17
         version: 4.17.17
@@ -1031,8 +1034,8 @@ importers:
   packages/purpose-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.8.16
-        version: 1.8.16
+        specifier: 'catalog:'
+        version: 1.8.20
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -1198,8 +1201,8 @@ importers:
   packages/tenant-event-consumer:
     dependencies:
       '@pagopa/interop-outbound-models':
-        specifier: 1.8.16
-        version: 1.8.16
+        specifier: 'catalog:'
+        version: 1.8.20
       '@tsconfig/node-lts':
         specifier: 20.1.0
         version: 20.1.0
@@ -1925,8 +1928,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@pagopa/interop-outbound-models@1.8.16':
-    resolution: {integrity: sha512-8CGChz2HuYK6U3fd2/wIC2M8xECGjbRH9EdeuBxBmaNE8bVcj9rLQQRCtPBW8r5hbvKtjjIjQ4qDQdMVn+whdg==}
+  '@pagopa/interop-outbound-models@1.8.20':
+    resolution: {integrity: sha512-cx8YNSl7FxD4za/+xgWu/ltDgc5dx8hayURi617AbBMTnas5zCfCsmyg0J0SbhwI2Xx+xs2w+PfkUnSfpSpLsg==}
 
   '@pkgr/core@0.1.2':
     resolution: {integrity: sha512-fdDH1LSGfZdTH2sxdpVMw31BanV28K/Gry0cVFxaNP77neJSkd82mM8ErPNYs9e+0O7SdHBLTDzDgwUuy18RnQ==}
@@ -5903,7 +5906,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@pagopa/interop-outbound-models@1.8.16':
+  '@pagopa/interop-outbound-models@1.8.20':
     dependencies:
       '@protobuf-ts/runtime': 2.9.4
       ts-pattern: 5.2.0

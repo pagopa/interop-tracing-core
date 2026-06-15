@@ -104,6 +104,11 @@ export async function handleMessageV2(
           "EServiceDescriptorArchivingCanceled",
           "EServiceDescriptorArchivingCompleted",
           "MaintenanceEServicePersonalDataFlagReset",
+          "EServiceDescriptorAsyncExchangeCallbackInterfaceAdded",
+          "EServiceDescriptorAsyncExchangeCallbackInterfaceUpdated",
+          "EServiceDescriptorAsyncExchangeCallbackInterfaceDeleted",
+          "EServiceDescriptorAttributeDailyCallsPerConsumerUpdated",
+          "MaintenanceEServiceDescriptorUnarchived",
         ),
       },
       async (evt) => {
