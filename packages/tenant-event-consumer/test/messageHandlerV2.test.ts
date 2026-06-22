@@ -47,6 +47,7 @@ describe("Message handler V2 test", () => {
         },
         features: [],
         attributes: [],
+        remoteIds: [],
         createdAt: 1n,
         onboardedAt: 1n,
       };
@@ -89,6 +90,7 @@ describe("Message handler V2 test", () => {
         },
         features: [],
         attributes: [],
+        remoteIds: [],
         createdAt: 1n,
         onboardedAt: 1n,
       };
@@ -119,6 +121,7 @@ describe("Message handler V2 test", () => {
         },
         features: undefined as unknown as [],
         attributes: [],
+        remoteIds: [],
         createdAt: 1n,
         onboardedAt: 1n,
       };
