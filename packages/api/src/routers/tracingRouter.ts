@@ -235,6 +235,10 @@ const tracingRouter =
         } catch (error) {
           const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
+        } finally {
+          if (req.body?.file) {
+            await storage.unlink(req.body.file.path);
+          }
         }
       })
       .post("/tracings/:tracingId/replace", async (req, res) => {
@@ -291,6 +295,10 @@ const tracingRouter =
         } catch (error) {
           const errorRes = resolveApiProblem(error, req.ctx);
           return res.status(errorRes.status).json(errorRes).end();
+        } finally {
+          if (req.body?.file) {
+            await storage.unlink(req.body.file.path);
+          }
         }
       });
 

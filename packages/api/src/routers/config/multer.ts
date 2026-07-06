@@ -1,13 +1,21 @@
-import multer, { StorageEngine } from "multer";
+import multer, { FileFilterCallback, MulterError, StorageEngine } from "multer";
 import path from "path";
 import { config } from "../../utilities/config.js";
 import { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import util from "util";
-import { ZodiosApp } from "@zodios/express";
+import { ZodiosApp, ZodiosRouterContextRequestHandler } from "@zodios/express";
 import { api } from "../../model/generated/api.js";
 import { ApiExternal } from "../../model/types.js";
 import { LocalExpressContext } from "../../context/index.js";
+import {
+  badRequestError,
+  makeApiProblemBuilder,
+} from "pagopa-interop-tracing-models";
+import { constants } from "http2";
+import { logger } from "pagopa-interop-tracing-commons";
+
+const makeApiProblem = makeApiProblemBuilder({});
 
 /**
  * Middleware function to handle file uploads.
@@ -57,7 +65,7 @@ export const configureMulterEndpoints = (
   for (const endpoint of apiWithFormData) {
     app[endpoint.method as keyof ZodiosApp<ApiExternal, LocalExpressContext>](
       endpoint.path,
-      upload.single("file"),
+      uploadSingleFile,
       attachFileInstance,
     );
   }
@@ -86,7 +94,51 @@ const storage: StorageEngine = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+): void => {
+  const allowedFileName = /^[A-Za-z0-9-]+\.csv$/;
+
+  if (!allowedFileName.test(file.originalname)) {
+    return cb(new Error("Invalid uploaded file name."));
+  }
+  return cb(null, true);
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: config.maxUploadFileSizeBytes,
+  },
+});
+
+const uploadSingleFile: ZodiosRouterContextRequestHandler<
+  LocalExpressContext
+> = (req, res, next): void =>
+  upload.single("file")(req, res, (error: unknown) => {
+    if (!error) {
+      return next();
+    }
+
+    const detail =
+      error instanceof MulterError && error.code === "LIMIT_FILE_SIZE"
+        ? "Uploaded file exceeds the maximum allowed size."
+        : error instanceof Error
+        ? error.message
+        : "Invalid uploaded file.";
+
+    const problem = makeApiProblem(
+      badRequestError(detail),
+      () => constants.HTTP_STATUS_BAD_REQUEST,
+      logger(req.ctx),
+      req.ctx.correlationId,
+    );
+
+    return res.status(problem.status).json(problem).end();
+  });
 
 const unlink = util.promisify(fs.unlink);
 
