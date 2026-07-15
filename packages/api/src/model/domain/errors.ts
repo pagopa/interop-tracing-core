@@ -18,6 +18,7 @@ export const errorCodes = {
   writeObjectS3BucketError: "WRITE_OBJECT_S3_BUCKET_ERROR",
   updateTracingStateError: "UPDATE_TRACING_STATE_ERROR",
   invalidTracingDate: "INVALID_TRACING_DATE",
+  tracingFileTooLarge: "TRACING_FILE_TOO_LARGE",
   cancelTracingStateAndVersionError: "CANCEL_TRACING_STATE_AND_VERSION_ERROR",
 };
 
@@ -74,6 +75,14 @@ export function invalidTracingDate(details: string): ApiError<ErrorCodes> {
   return new ApiError({
     detail: details,
     code: "invalidTracingDate",
+    title: "Bad Request",
+  });
+}
+
+export function tracingFileTooLarge(): ApiError<ErrorCodes> {
+  return new ApiError({
+    detail: "Uploaded file exceeds the maximum allowed size.",
+    code: "tracingFileTooLarge",
     title: "Bad Request",
   });
 }

@@ -1,5 +1,4 @@
-import multer, { FileFilterCallback, MulterError, StorageEngine } from "multer";
-import path from "path";
+import multer, { MulterError, StorageEngine } from "multer";
 import { config } from "../../utilities/config.js";
 import { Request, Response, NextFunction } from "express";
 import fs from "fs";
@@ -8,14 +7,14 @@ import { ZodiosApp, ZodiosRouterContextRequestHandler } from "@zodios/express";
 import { api } from "../../model/generated/api.js";
 import { ApiExternal } from "../../model/types.js";
 import { LocalExpressContext } from "../../context/index.js";
-import {
-  badRequestError,
-  makeApiProblemBuilder,
-} from "pagopa-interop-tracing-models";
-import { constants } from "http2";
+import { ApiError, badRequestError } from "pagopa-interop-tracing-models";
 import { logger } from "pagopa-interop-tracing-commons";
-
-const makeApiProblem = makeApiProblemBuilder({});
+import {
+  makeApiProblem,
+  tracingFileTooLarge,
+} from "../../model/domain/errors.js";
+import { errorMapper } from "../../utilities/errorMapper.js";
+import { P, match } from "ts-pattern";
 
 /**
  * Middleware function to handle file uploads.
@@ -87,33 +86,31 @@ const storage: StorageEngine = multer.diskStorage({
     file: Express.Multer.File,
     cb: (error: Error | null, filename: string) => void,
   ) => {
-    const uniqueFilename = `${file.fieldname}-${Date.now()}${path.extname(
-      file.originalname,
-    )}`;
+    const uniqueFilename = `${file.fieldname}-${Date.now()}.csv`;
     cb(null, uniqueFilename);
   },
 });
 
-const fileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: FileFilterCallback,
-): void => {
-  const allowedFileName = /^[A-Za-z0-9-]+\.csv$/;
-
-  if (!allowedFileName.test(file.originalname)) {
-    return cb(new Error("Invalid uploaded file name."));
-  }
-  return cb(null, true);
-};
-
 const upload = multer({
   storage,
-  fileFilter,
   limits: {
     fileSize: config.maxUploadFileSizeBytes,
   },
 });
+
+const toUploadApiError = (error: unknown): ApiError<unknown> =>
+  match(error)
+    .with(
+      P.when(
+        (error): error is MulterError =>
+          error instanceof MulterError && error.code === "LIMIT_FILE_SIZE",
+      ),
+      () => tracingFileTooLarge(),
+    )
+    .with(P.instanceOf(MulterError), (error) => badRequestError(error.message))
+    .with(P.instanceOf(ApiError), (error) => error)
+    .with(P.instanceOf(Error), (error) => badRequestError(error.message))
+    .otherwise(() => badRequestError("Invalid uploaded file."));
 
 const uploadSingleFile: ZodiosRouterContextRequestHandler<
   LocalExpressContext
@@ -123,16 +120,9 @@ const uploadSingleFile: ZodiosRouterContextRequestHandler<
       return next();
     }
 
-    const detail =
-      error instanceof MulterError && error.code === "LIMIT_FILE_SIZE"
-        ? "Uploaded file exceeds the maximum allowed size."
-        : error instanceof Error
-        ? error.message
-        : "Invalid uploaded file.";
-
     const problem = makeApiProblem(
-      badRequestError(detail),
-      () => constants.HTTP_STATUS_BAD_REQUEST,
+      toUploadApiError(error),
+      errorMapper,
       logger(req.ctx),
       req.ctx.correlationId,
     );

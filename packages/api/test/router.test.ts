@@ -260,21 +260,39 @@ describe("Tracing Router", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should reject uploaded files with a non-whitelisted filename", async () => {
-      const submitTracingSpy = vi.spyOn(operationsApiClient, "submitTracing");
+    it("should ignore the uploaded file original name", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 1,
+        errors: false,
+      };
+
+      vi.spyOn(operationsApiClient, "submitTracing").mockResolvedValue(
+        mockSubmitTracingResponse,
+      );
+
+      vi.spyOn(fileManager, "writeObject").mockResolvedValue();
+
       const response = await tracingApiClient
         .post("/tracings/submit")
-        .attach("file", Buffer.from("test file content"), {
-          filename: "invalid_file.csv",
+        .attach("file", mockFile, {
+          filename: "tracing_file-è.v1-2024.06.11 (#%&).txt",
           contentType: "text/csv",
         })
-        .field("date", "2024-06-11")
+        .field("date", mockSubmitTracingResponse.date)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
-      expect(response.status).toBe(400);
-      expect(response.text).contains("Invalid uploaded file name");
-      expect(submitTracingSpy).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(response.body.tracingId).toBe(mockSubmitTracingResponse.tracingId);
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
+        "text/csv",
+        expect.stringContaining(`${mockSubmitTracingResponse.tracingId}.csv`),
+      );
     });
 
     it("should reject uploaded files exceeding the maximum allowed size", async () => {
@@ -291,6 +309,7 @@ describe("Tracing Router", () => {
 
       expect(response.status).toBe(400);
       expect(response.text).contains("maximum allowed size");
+      expect(response.body.errors[0].code).toBe("TRACING_FILE_TOO_LARGE");
       expect(submitTracingSpy).not.toHaveBeenCalled();
     });
   });
