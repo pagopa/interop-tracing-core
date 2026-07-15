@@ -107,11 +107,7 @@ const toUploadApiError = (error: unknown): ApiError<unknown> =>
       ),
       () => tracingFileTooLarge(),
     )
-    .with(P.instanceOf(MulterError), () =>
-      badRequestError("Invalid uploaded file."),
-    )
     .with(P.instanceOf(ApiError), (error) => error)
-    .with(P.instanceOf(Error), () => badRequestError("Invalid uploaded file."))
     .otherwise(() => badRequestError("Invalid uploaded file."));
 
 const unlink = util.promisify(fs.unlink);
