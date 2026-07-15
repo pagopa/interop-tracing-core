@@ -107,18 +107,32 @@ const toUploadApiError = (error: unknown): ApiError<unknown> =>
       ),
       () => tracingFileTooLarge(),
     )
-    .with(P.instanceOf(MulterError), (error) => badRequestError(error.message))
+    .with(P.instanceOf(MulterError), () =>
+      badRequestError("Invalid uploaded file."),
+    )
     .with(P.instanceOf(ApiError), (error) => error)
-    .with(P.instanceOf(Error), (error) => badRequestError(error.message))
+    .with(P.instanceOf(Error), () => badRequestError("Invalid uploaded file."))
     .otherwise(() => badRequestError("Invalid uploaded file."));
+
+const unlink = util.promisify(fs.unlink);
+
+const unlinkUploadedFile = async (filePath?: string): Promise<void> => {
+  if (!filePath) {
+    return;
+  }
+
+  await unlink(filePath).catch(() => undefined);
+};
 
 const uploadSingleFile: ZodiosRouterContextRequestHandler<
   LocalExpressContext
 > = (req, res, next): void =>
-  upload.single("file")(req, res, (error: unknown) => {
+  upload.single("file")(req, res, async (error: unknown) => {
     if (!error) {
       return next();
     }
+
+    await unlinkUploadedFile(req.file?.path);
 
     const problem = makeApiProblem(
       toUploadApiError(error),
@@ -130,6 +144,4 @@ const uploadSingleFile: ZodiosRouterContextRequestHandler<
     return res.status(problem.status).json(problem).end();
   });
 
-const unlink = util.promisify(fs.unlink);
-
-export default { unlink };
+export default { unlink: unlinkUploadedFile };

@@ -19,6 +19,8 @@ const apiConfig = HTTPServerConfig.and(LoggerConfig)
         STORAGE_PATH_NAME: z.string(),
         MAX_UPLOAD_FILE_SIZE_BYTES: z.coerce
           .number()
+          .int()
+          .positive()
           .default(200 * 1024 * 1024),
       })
       .transform((c) => ({
