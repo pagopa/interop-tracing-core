@@ -138,10 +138,13 @@ describe("Tracing Router", () => {
 
       vi.spyOn(operationsService, "updateTracingState").mockResolvedValue();
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post("/tracings/submit")
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .field("date", mockSubmitTracingResponse.date)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -160,7 +163,7 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -202,10 +205,13 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post("/tracings/submit")
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .field("date", mockSubmitTracingResponse.date)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
@@ -239,16 +245,72 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post("/tracings/submit")
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .field("date", mockSubmitTracingResponse.date)
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
       expect(response.text).contains(errorMessage);
       expect(response.status).toBe(400);
+    });
+
+    it("should ignore the uploaded file original name", async () => {
+      const mockFile = Buffer.from("test file content");
+      const mockSubmitTracingResponse: ApiSubmitTracingResponse = {
+        tracingId: generateId(),
+        tenantId: generateId(),
+        date: "2024-06-11",
+        version: 1,
+        errors: false,
+      };
+
+      vi.spyOn(operationsApiClient, "submitTracing").mockResolvedValue(
+        mockSubmitTracingResponse,
+      );
+
+      vi.spyOn(fileManager, "writeObject").mockResolvedValue();
+
+      const response = await tracingApiClient
+        .post("/tracings/submit")
+        .attach("file", mockFile, {
+          filename: "tracing_file-è.v1-2024.06.11 (#%&).txt",
+          contentType: "text/csv",
+        })
+        .field("date", mockSubmitTracingResponse.date)
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracingId).toBe(mockSubmitTracingResponse.tracingId);
+      expect(fileManager.writeObject).toHaveBeenCalledWith(
+        mockFile,
+        "text/csv",
+        expect.stringContaining(`${mockSubmitTracingResponse.tracingId}.csv`),
+      );
+    });
+
+    it("should reject uploaded files exceeding the maximum allowed size", async () => {
+      const submitTracingSpy = vi.spyOn(operationsApiClient, "submitTracing");
+      const response = await tracingApiClient
+        .post("/tracings/submit")
+        .attach("file", Buffer.alloc(config.maxUploadFileSizeBytes + 1), {
+          filename: "largefile.csv",
+          contentType: "text/csv",
+        })
+        .field("date", "2024-06-11")
+        .set("Authorization", `Bearer test-token`)
+        .set("Content-Type", "multipart/form-data");
+
+      expect(response.status).toBe(400);
+      expect(response.text).contains("maximum allowed size");
+      expect(response.body.errors[0].code).toBe("TRACING_FILE_TOO_LARGE");
+      expect(submitTracingSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -456,10 +518,13 @@ describe("Tracing Router", () => {
 
       vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -470,7 +535,7 @@ describe("Tracing Router", () => {
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -510,10 +575,13 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -545,10 +613,13 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -594,16 +665,19 @@ describe("Tracing Router", () => {
         "cancelTracingStateAndVersion",
       ).mockResolvedValueOnce();
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -678,16 +752,19 @@ describe("Tracing Router", () => {
         "cancelTracingStateAndVersion",
       ).mockRejectedValueOnce(operationsApiClientError);
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockRecoverTracingResponse.tracingId}/recover`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -739,10 +816,13 @@ describe("Tracing Router", () => {
 
       vi.spyOn(fileManager, "writeObject").mockResolvedValueOnce();
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -752,7 +832,7 @@ describe("Tracing Router", () => {
       );
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -792,10 +872,13 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -827,10 +910,13 @@ describe("Tracing Router", () => {
         operationsApiClientError,
       );
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
@@ -876,16 +962,19 @@ describe("Tracing Router", () => {
         "cancelTracingStateAndVersion",
       ).mockResolvedValueOnce();
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 
@@ -958,16 +1047,19 @@ describe("Tracing Router", () => {
         "cancelTracingStateAndVersion",
       ).mockRejectedValueOnce(operationsApiClientError);
 
-      const originalFilename: string = "testfile.txt";
+      const originalFilename: string = "testfile.csv";
       const response = await tracingApiClient
         .post(`/tracings/${mockReplaceTracingResponse.tracingId}/replace`)
-        .attach("file", mockFile, originalFilename)
+        .attach("file", mockFile, {
+          filename: originalFilename,
+          contentType: "text/csv",
+        })
         .set("Authorization", `Bearer test-token`)
         .set("Content-Type", "multipart/form-data");
 
       expect(fileManager.writeObject).toHaveBeenCalledWith(
         mockFile,
-        "text/plain",
+        "text/csv",
         bucketS3Key,
       );
 

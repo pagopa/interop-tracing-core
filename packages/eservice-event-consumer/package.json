@@ -5,8 +5,8 @@
   "main": "dist",
   "type": "module",
   "scripts": {
-    "test": "vitest --config ./test/vitest.config.ts",
-    "test:it": "vitest db --config ./test/vitest.config.ts",
+    "test": "vitest run --config ./test/vitest.config.ts",
+    "test:it": "vitest run db --config ./test/vitest.config.ts",
     "lint": "eslint .  ",
     "lint:autofix": "eslint . --fix",
     "format:check": "prettier --check src",
@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pagopa/interop-outbound-models": "1.8.16",
+    "@pagopa/interop-outbound-models": "catalog:",
     "@tsconfig/node-lts": "20.1.0",
     "@zodios/core": "10.9.6",
     "axios": "1.16.0",
@@ -46,6 +46,7 @@
     "prettier": "3.0.3",
     "ts-node": "10.9.2",
     "typescript": "5.5.2",
-    "vitest": "0.33.0"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
