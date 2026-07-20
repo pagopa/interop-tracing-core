@@ -77,6 +77,8 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
           .enum(["true", "false"])
           .default("false")
           .transform((value) => value === "true"),
+        DB_INGEST_MODE: z.enum(["INSERT", "COPY"]).default("INSERT"),
+        REDSHIFT_COPY_IAM_ROLE_ARN: z.string().optional(),
       })
       .transform((c) => ({
         applicationName: c.APPLICATION_NAME,
@@ -86,6 +88,8 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
         mergeTableSuffix: c.MERGE_TABLE_SUFFIX,
         enrichTracesWithConsumerProducerEservice:
           c.ENRICH_TRACES_WITH_CONSUMER_PRODUCER_ESERVICE,
+        dbIngestMode: c.DB_INGEST_MODE,
+        redshiftCopyIamRoleArn: c.REDSHIFT_COPY_IAM_ROLE_ARN,
       })),
   );
 

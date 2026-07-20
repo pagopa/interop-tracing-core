@@ -371,6 +371,7 @@ export const mockEnrichedPurposes = [
 
 export const validEnrichedPurpose = [
   {
+    id: generateId(),
     submitterId: "123e4567-e89b-12d3-a456-426614174001",
     date: "2024-12-12",
     purpose_id: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",
@@ -393,6 +394,7 @@ export const validEnrichedPurpose = [
     producerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
   },
   {
+    id: generateId(),
     submitterId: "123e4567-e89b-12d3-a456-426614174001",
     date: "2024-12-12",
     purpose_id: "9f693956-b8ca-4240-9d03-fa5d1c1b2f44",

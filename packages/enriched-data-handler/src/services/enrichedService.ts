@@ -1,94 +1,121 @@
 import {
-  AppContext,
-  FileManager,
-  WithSQSMessageId,
-  logger,
-  parseCSV,
+	type AppContext,
+	type FileManager,
+	logger,
+	parseCSV,
+	type WithSQSMessageId,
 } from "pagopa-interop-tracing-commons";
-import { TracingEnriched, TracingFromCsv } from "../models/messages.js";
-import { DBService } from "./db/dbService.js";
-import { TracingStoreDBService } from "./db/tracingStoreDbService.js";
 import { insertEnrichedTraceError } from "../models/errors.js";
+import { type TracingEnriched, TracingFromCsv } from "../models/messages.js";
+import { config } from "../utilities/config.js";
+import type { DBService } from "./db/dbService.js";
+import type { TracingStoreDBService } from "./db/tracingStoreDbService.js";
 
 export const enrichedServiceBuilder = (
-  dbService: DBService,
-  fileManager: FileManager,
-  tracingStoreDbService: TracingStoreDBService,
+	dbService: DBService,
+	fileManager: FileManager,
+	tracingStoreDbService: TracingStoreDBService,
 ) => {
-  return {
-    async insertEnrichedTrace(
-      message: TracingFromCsv,
-      ctx: WithSQSMessageId<AppContext>,
-    ) {
-      try {
-        const { data: tracing, error: tracingError } =
-          TracingFromCsv.safeParse(message);
+	const ingestViaInsert = async (
+		svc: DBService,
+		s3KeyPath: string,
+		tracing: TracingFromCsv,
+		ctx: WithSQSMessageId<AppContext>,
+	): Promise<void> => {
+		const enrichedDataObject = await fileManager.readObject(s3KeyPath);
 
-        if (tracingError) {
-          throw new Error(
-            `Tracing message is not valid: ${JSON.stringify(tracingError)}`,
-          );
-        }
+		let tracingHasData = false;
 
-        logger(ctx).info(
-          `Reading and processing tracing enriched with id: ${tracing.tracingId}`,
-        );
+		await parseCSV<TracingEnriched>(
+			enrichedDataObject,
+			async (enrichedTracingRecords) => {
+				if (enrichedTracingRecords.length === 0) return;
 
-        const shouldProcess = await tracingStoreDbService.checkTracingVersion(
-          tracing.tracingId,
-          tracing.version,
-        );
+				tracingHasData = true;
 
-        if (!shouldProcess) {
-          return;
-        }
+				await svc.insertToStaging(tracing.tracingId, enrichedTracingRecords);
+			},
+		);
 
-        const s3KeyPath = fileManager.buildS3Key(
-          tracing.tenantId,
-          tracing.date,
-          tracing.tracingId,
-          tracing.version,
-          tracing.correlationId,
-        );
+		if (!tracingHasData) {
+			logger(ctx).info(
+				`No data in CSV for tracingId: ${tracing.tracingId}. Skipping trace insertion.`,
+			);
+		}
 
-        const enrichedDataObject = await fileManager.readObject(s3KeyPath);
+		await svc.finalizeMergeToTarget(tracing.tracingId);
+	};
 
-        let tracingHasData = false;
+	const ingestViaCopy = async (
+		svc: DBService,
+		s3KeyPath: string,
+		tracing: TracingFromCsv,
+	): Promise<void> => {
+		const s3Uri = `s3://${config.bucketEnrichedS3Name}/${s3KeyPath}`;
 
-        await parseCSV<TracingEnriched>(
-          enrichedDataObject,
-          async (enrichedTracingRecords) => {
-            if (enrichedTracingRecords.length === 0) return;
+		await svc.copyToStaging(s3Uri);
+		await svc.finalizeMergeToTarget(tracing.tracingId);
+	};
 
-            tracingHasData = true;
+	return {
+		async insertEnrichedTrace(
+			message: TracingFromCsv,
+			ctx: WithSQSMessageId<AppContext>,
+		) {
+			try {
+				const { data: tracing, error: tracingError } =
+					TracingFromCsv.safeParse(message);
 
-            await dbService.insertToStaging(
-              tracing.tracingId,
-              enrichedTracingRecords,
-            );
-          },
-        );
+				if (tracingError) {
+					throw new Error(
+						`Tracing message is not valid: ${JSON.stringify(tracingError)}`,
+					);
+				}
 
-        if (!tracingHasData) {
-          logger(ctx).info(
-            `No data in CSV for tracingId: ${tracing.tracingId}. Skipping trace insertion.`,
-          );
-        }
+				logger(ctx).info(
+					`Reading and processing tracing enriched with id: ${tracing.tracingId}`,
+				);
 
-        await dbService.finalizeMergeToTarget(tracing.tracingId);
-      } catch (error: unknown) {
-        throw insertEnrichedTraceError(
-          `Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,
-        );
-      } finally {
-        try {
-          await dbService.cleanStaging();
-        } catch (cleanupError) {
-          logger(ctx).error(`Error during staging cleanup: ${cleanupError}`);
-        }
-      }
-    },
-  };
+				const shouldProcess = await tracingStoreDbService.checkTracingVersion(
+					tracing.tracingId,
+					tracing.version,
+				);
+
+				if (!shouldProcess) {
+					return;
+				}
+
+				const s3KeyPath = fileManager.buildS3Key(
+					tracing.tenantId,
+					tracing.date,
+					tracing.tracingId,
+					tracing.version,
+					tracing.correlationId,
+				);
+
+				switch (config.dbIngestMode) {
+					case "INSERT":
+						await ingestViaInsert(dbService, s3KeyPath, tracing, ctx);
+						break;
+
+					case "COPY":
+						// Here the primary dbService connection is expected to point at Redshift.
+						await ingestViaCopy(dbService, s3KeyPath, tracing);
+						break;
+				}
+			} catch (error: unknown) {
+				throw insertEnrichedTraceError(
+					`Error inserting traces with tracingId: ${message.tracingId}. Details: ${error}`,
+				);
+			} finally {
+				try {
+					await dbService.cleanStaging();
+				} catch (cleanupError) {
+					logger(ctx).error(`Error during staging cleanup: ${cleanupError}`);
+				}
+			}
+		},
+	};
 };
 
 export type EnrichedService = ReturnType<typeof enrichedServiceBuilder>;

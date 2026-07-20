@@ -2,6 +2,7 @@ import { z } from "zod";
 import { PurposeErrorSeverity } from "./purposeError.js";
 
 export const EnrichedPurposeRow = z.object({
+  id: z.string(),
   tracingId: z.string(),
   producerOrigin: z.string().optional(),
   producerExternalId: z.string().optional(),
@@ -45,24 +46,29 @@ type CsvMapping<Row> = Record<string, (row: Row) => CsvMappingValue>;
 export const createEnrichedCsvMapping = (
   submitterId: string,
 ): CsvMapping<EnrichedPurposeRow> => ({
+  id: (row) => row.id,
   tracingId: (row) => row.tracingId,
   submitterId: () => submitterId,
   date: (row) => row.date,
   purposeId: (row) => row.purposeId,
-  purposeName: (row) => row.purposeName,
-  status: (row) => row.status,
   token_id: (row) => row.token_id,
+  status: (row) => row.status,
   requestsCount: (row) => row.requestsCount,
-  eserviceId: (row) => row.eserviceId,
   consumerId: (row) => row.consumerId,
+  producerId: (row) => row.producerId,
+  eserviceId: (row) => row.eserviceId,
+  purposeName: (row) => row.purposeName,
   consumerOrigin: (row) => row.consumerOrigin,
   consumerName: (row) => row.consumerName,
   consumerExternalId: (row) => row.consumerExternalId,
-  producerId: (row) => row.producerId,
-  producerName: (row) => row.producerName,
   producerOrigin: (row) => row.producerOrigin,
+  producerName: (row) => row.producerName,
   producerExternalId: (row) => row.producerExternalId,
 });
+
+export const enrichedCsvColumnOrder: string[] = Object.keys(
+  createEnrichedCsvMapping(""),
+);
 
 export const errorsCsvMapping: CsvMapping<PurposeErrorRow> = {
   id: (row) => row.id,
