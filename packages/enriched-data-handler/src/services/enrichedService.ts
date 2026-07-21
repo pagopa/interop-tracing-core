@@ -17,7 +17,6 @@ export const enrichedServiceBuilder = (
   tracingStoreDbService: TracingStoreDBService,
 ) => {
   const ingestViaInsert = async (
-    svc: DBService,
     s3KeyPath: string,
     tracing: TracingFromCsv,
     ctx: WithSQSMessageId<AppContext>,
@@ -33,7 +32,10 @@ export const enrichedServiceBuilder = (
 
         tracingHasData = true;
 
-        await svc.insertToStaging(tracing.tracingId, enrichedTracingRecords);
+        await dbService.insertToStaging(
+          tracing.tracingId,
+          enrichedTracingRecords,
+        );
       },
     );
 
@@ -43,18 +45,17 @@ export const enrichedServiceBuilder = (
       );
     }
 
-    await svc.finalizeMergeToTarget(tracing.tracingId);
+    await dbService.finalizeMergeToTarget(tracing.tracingId);
   };
 
   const ingestViaCopy = async (
-    svc: DBService,
     s3KeyPath: string,
     tracing: TracingFromCsv,
   ): Promise<void> => {
     const s3Uri = `s3://${config.bucketEnrichedS3Name}/${s3KeyPath}`;
 
-    await svc.copyToStaging(s3Uri);
-    await svc.finalizeMergeToTarget(tracing.tracingId);
+    await dbService.copyToStaging(s3Uri);
+    await dbService.finalizeMergeToTarget(tracing.tracingId);
   };
 
   return {
@@ -95,12 +96,12 @@ export const enrichedServiceBuilder = (
 
         switch (config.dbIngestMode) {
           case "INSERT":
-            await ingestViaInsert(dbService, s3KeyPath, tracing, ctx);
+            await ingestViaInsert(s3KeyPath, tracing, ctx);
             break;
 
           case "COPY":
-            // Here the primary dbService connection is expected to point at Redshift.
-            await ingestViaCopy(dbService, s3KeyPath, tracing);
+            // In COPY mode the primary dbService connection is expected to point at Redshift.
+            await ingestViaCopy(s3KeyPath, tracing);
             break;
         }
       } catch (error: unknown) {

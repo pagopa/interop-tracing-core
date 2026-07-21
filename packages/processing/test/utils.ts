@@ -6,25 +6,25 @@ import { config } from "../src/utilities/config.js";
 import { tenant_id2 } from "./costants.js";
 
 export async function addPurpose(
-	purposeValues: {
-		id: string;
-		consumerId: string;
-		eserviceId: string;
-		purposeTitle: string;
-	},
-	db: DB,
+  purposeValues: {
+    id: string;
+    consumerId: string;
+    eserviceId: string;
+    purposeTitle: string;
+  },
+  db: DB,
 ) {
-	const insertPurposeQuery = `
+  const insertPurposeQuery = `
       INSERT INTO ${config.dbSchemaName}.purposes (id, consumer_id, eservice_id, purpose_title)
       VALUES ($1, $2, $3, $4)
       RETURNING id
     `;
 
-	return await db.one(insertPurposeQuery, Object.values(purposeValues));
+  return await db.one(insertPurposeQuery, Object.values(purposeValues));
 }
 
 export async function insertDelegation(delegation: DelegationSchema, db: DB) {
-	const insertDelegationQuery = `
+  const insertDelegationQuery = `
       INSERT INTO ${config.dbSchemaName}.delegations (id, delegate_id, eservice_id, state)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (id) 
@@ -34,113 +34,113 @@ export async function insertDelegation(delegation: DelegationSchema, db: DB) {
       RETURNING id
     `;
 
-	return await db.one(insertDelegationQuery, Object.values(delegation));
+  return await db.one(insertDelegationQuery, Object.values(delegation));
 }
 
 export async function removePurpose(id: string, db: DB) {
-	const insertPurposeQuery = `
+  const insertPurposeQuery = `
       DELETE FROM ${config.dbSchemaName}.purposes WHERE id = $1
       RETURNING id
     `;
-	return await db.one(insertPurposeQuery, id);
+  return await db.one(insertPurposeQuery, id);
 }
 
 export async function addTenant(
-	tenantValues: {
-		id: string;
-		name: string;
-		origin: string;
-		externalId: string;
-		deleted: boolean;
-	},
-	db: DB,
+  tenantValues: {
+    id: string;
+    name: string;
+    origin: string;
+    externalId: string;
+    deleted: boolean;
+  },
+  db: DB,
 ) {
-	const insertTenantQuery = `
+  const insertTenantQuery = `
       INSERT INTO ${config.dbSchemaName}.tenants (id, name, origin, external_id, deleted)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
 
-	return await db.one(insertTenantQuery, Object.values(tenantValues));
+  return await db.one(insertTenantQuery, Object.values(tenantValues));
 }
 
 export async function addEservice(
-	eServiceValues: {
-		eserviceId: string;
-		producerId: string;
-		name: string;
-	},
-	db: DB,
+  eServiceValues: {
+    eserviceId: string;
+    producerId: string;
+    name: string;
+  },
+  db: DB,
 ) {
-	const insertEserviceQuery = `
+  const insertEserviceQuery = `
   INSERT INTO ${config.dbSchemaName}.eservices (eservice_id, producer_id, name)
   VALUES ($1, $2, $3)
   RETURNING eservice_id`;
-	await db.one(insertEserviceQuery, Object.values(eServiceValues));
+  await db.one(insertEserviceQuery, Object.values(eServiceValues));
 }
 export async function addNotAssociatedPurposeAndTenant(
-	purpose: { eserviceId: string; purpose_id: string },
-	db: DB,
+  purpose: { eserviceId: string; purpose_id: string },
+  db: DB,
 ) {
-	await addPurpose(
-		{
-			id: purpose.purpose_id,
-			consumerId: generateId(),
-			eserviceId: purpose.eserviceId,
-			purposeTitle: "purpose new",
-		},
-		db,
-	);
-	await addTenant(
-		{
-			id: tenant_id2,
-			name: "tenant",
-			origin: "pagoPa",
-			externalId: generateId(),
-			deleted: false,
-		},
-		db,
-	);
+  await addPurpose(
+    {
+      id: purpose.purpose_id,
+      consumerId: generateId(),
+      eserviceId: purpose.eserviceId,
+      purposeTitle: "purpose new",
+    },
+    db,
+  );
+  await addTenant(
+    {
+      id: tenant_id2,
+      name: "tenant",
+      origin: "pagoPa",
+      externalId: generateId(),
+      deleted: false,
+    },
+    db,
+  );
 }
 
 export async function parseCSVFromString(
-	csvString: string,
+  csvString: string,
 ): Promise<unknown[]> {
-	const parsedRecords: unknown[] = [];
-	await new Promise<void>((resolve, reject) => {
-		const stream = csvParser({ headers: false });
-		stream
-			.on("data", (row) => {
-				// Positional mapping: must stay aligned with the enriched CSV column order
-				// defined by createEnrichedCsvMapping / enrichedCsvColumnOrder (models).
-				const record = {
-					id: row[0],
-					tracingId: row[1],
-					submitterId: row[2],
-					date: row[3],
-					purposeId: row[4],
-					token_id: row[5],
-					status: row[6],
-					requestsCount: row[7],
-					consumerId: row[8],
-					producerId: row[9],
-					eserviceId: row[10],
-					purposeName: row[11],
-					consumerOrigin: row[12],
-					consumerName: row[13],
-					consumerExternalId: row[14],
-					producerOrigin: row[15],
-					producerName: row[16],
-					producerExternalId: row[17],
-				};
-				parsedRecords.push(record);
-			})
-			.on("end", () => resolve())
-			.on("error", (error) => reject(error));
+  const parsedRecords: unknown[] = [];
+  await new Promise<void>((resolve, reject) => {
+    const stream = csvParser({ headers: false });
+    stream
+      .on("data", (row) => {
+        // Positional mapping: must stay aligned with the enriched CSV column order
+        // defined by createEnrichedCsvMapping / enrichedCsvColumnOrder (models).
+        const record = {
+          id: row[0],
+          tracingId: row[1],
+          submitterId: row[2],
+          date: row[3],
+          purposeId: row[4],
+          token_id: row[5],
+          status: row[6],
+          requestsCount: row[7],
+          consumerId: row[8],
+          producerId: row[9],
+          eserviceId: row[10],
+          purposeName: row[11],
+          consumerOrigin: row[12],
+          consumerName: row[13],
+          consumerExternalId: row[14],
+          producerOrigin: row[15],
+          producerName: row[16],
+          producerExternalId: row[17],
+        };
+        parsedRecords.push(record);
+      })
+      .on("end", () => resolve())
+      .on("error", (error) => reject(error));
 
-		stream.write(csvString);
-		stream.end();
-	});
+    stream.write(csvString);
+    stream.end();
+  });
 
-	return parsedRecords;
+  return parsedRecords;
 }

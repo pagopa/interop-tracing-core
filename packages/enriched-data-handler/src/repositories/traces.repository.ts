@@ -66,9 +66,12 @@ export function tracesRepository(db: DBContext) {
     },
 
     async copyTracesToStaging(conn: DBConnection, s3Uri: string) {
+      // Enforced at startup by the config schema (superRefine) when DB_INGEST_MODE=COPY.
+      // This guard only narrows the optional type for TS (non-null assertions are
+      // disallowed by eslint); in practice it can never trigger at runtime.
       if (!config.redshiftCopyIamRoleArn) {
         throw new Error(
-          "REDSHIFT_COPY_IAM_ROLE_ARN is required for COPY ingestion mode (see config).",
+          "REDSHIFT_COPY_IAM_ROLE_ARN is required for COPY ingestion mode.",
         );
       }
 

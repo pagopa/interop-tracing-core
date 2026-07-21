@@ -80,6 +80,19 @@ const tracingEnrichedDataHandlerConfig = AWSConfig.and(ConsumerConfig)
         DB_INGEST_MODE: z.enum(["INSERT", "COPY"]).default("INSERT"),
         REDSHIFT_COPY_IAM_ROLE_ARN: z.string().optional(),
       })
+      .superRefine((c, ctx) => {
+        // Fail fast at startup: COPY ingestion needs the IAM role referenced inside the
+        // Redshift COPY statement. Enforcing it here (instead of at first message) makes
+        // the service crash on boot when misconfigured.
+        if (c.DB_INGEST_MODE === "COPY" && !c.REDSHIFT_COPY_IAM_ROLE_ARN) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["REDSHIFT_COPY_IAM_ROLE_ARN"],
+            message:
+              "REDSHIFT_COPY_IAM_ROLE_ARN is required when DB_INGEST_MODE=COPY",
+          });
+        }
+      })
       .transform((c) => ({
         applicationName: c.APPLICATION_NAME,
         sqsEnrichedUploadEndpoint: c.SQS_ENRICHED_UPLOAD_ENDPOINT,
