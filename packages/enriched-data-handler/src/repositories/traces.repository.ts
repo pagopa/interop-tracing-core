@@ -1,110 +1,110 @@
 import type { DBConnection, DBContext } from "pagopa-interop-tracing-commons";
 import {
-	enrichedCsvColumnOrder,
-	generateId,
+  enrichedCsvColumnOrder,
+  generateId,
 } from "pagopa-interop-tracing-models";
 
 import type { ITask } from "pg-promise";
 import {
-	type TracingEnriched,
-	TracingEnrichedSchema,
-	TracingEnrichedSchemaWithDomainIds,
+  type TracingEnriched,
+  TracingEnrichedSchema,
+  TracingEnrichedSchemaWithDomainIds,
 } from "../models/messages.js";
 import { TracingTable } from "../models/traces.js";
 import { config } from "../utilities/config.js";
 import {
-	buildColumnSet,
-	deleteTargetTable,
-	generateCopyFromS3Query,
-	generateMergeQuery,
+  buildColumnSet,
+  deleteTargetTable,
+  generateCopyFromS3Query,
+  generateMergeQuery,
 } from "../utilities/sqlQueryHelper.js";
 
 export function tracesRepository(db: DBContext) {
-	const targetTableName = TracingTable.Traces;
-	const stagingTableName = `${targetTableName}_${config.mergeTableSuffix}`;
-	const activeSchema = config.enrichTracesWithConsumerProducerEservice
-		? TracingEnrichedSchemaWithDomainIds
-		: TracingEnrichedSchema;
+  const targetTableName = TracingTable.Traces;
+  const stagingTableName = `${targetTableName}_${config.mergeTableSuffix}`;
+  const activeSchema = config.enrichTracesWithConsumerProducerEservice
+    ? TracingEnrichedSchemaWithDomainIds
+    : TracingEnrichedSchema;
 
-	return {
-		async insertTracesToStaging(
-			conn: DBConnection,
-			tracingId: string,
-			records: TracingEnriched[],
-		) {
-			const traces = records.map((record) => {
-				const base = {
-					submitterId: record.submitterId,
-					date: record.date,
-					purposeId: record.purposeId,
-					status: record.status,
-					token_id: record.token_id,
-					requestsCount: record.requestsCount,
-					tracingId,
-					id: record.id ?? generateId(),
-				};
+  return {
+    async insertTracesToStaging(
+      conn: DBConnection,
+      tracingId: string,
+      records: TracingEnriched[],
+    ) {
+      const traces = records.map((record) => {
+        const base = {
+          submitterId: record.submitterId,
+          date: record.date,
+          purposeId: record.purposeId,
+          status: record.status,
+          token_id: record.token_id,
+          requestsCount: record.requestsCount,
+          tracingId,
+          id: record.id ?? generateId(),
+        };
 
-				return config.enrichTracesWithConsumerProducerEservice
-					? {
-							...base,
-							consumerId: record.consumerId,
-							producerId: record.producerId,
-							eserviceId: record.eserviceId,
-							purposeName: record.purposeName,
-							consumerOrigin: record.consumerOrigin,
-							consumerName: record.consumerName,
-							consumerExternalId: record.consumerExternalId,
-							producerOrigin: record.producerOrigin,
-							producerName: record.producerName,
-							producerExternalId: record.producerExternalId,
-						}
-					: base;
-			});
+        return config.enrichTracesWithConsumerProducerEservice
+          ? {
+              ...base,
+              consumerId: record.consumerId,
+              producerId: record.producerId,
+              eserviceId: record.eserviceId,
+              purposeName: record.purposeName,
+              consumerOrigin: record.consumerOrigin,
+              consumerName: record.consumerName,
+              consumerExternalId: record.consumerExternalId,
+              producerOrigin: record.producerOrigin,
+              producerName: record.producerName,
+              producerExternalId: record.producerExternalId,
+            }
+          : base;
+      });
 
-			const cs = buildColumnSet(db.pgp, targetTableName, activeSchema);
-			await conn.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
-		},
+      const cs = buildColumnSet(db.pgp, targetTableName, activeSchema);
+      await conn.none(db.pgp.helpers.insert(traces, cs, stagingTableName));
+    },
 
-		async copyTracesToStaging(conn: DBConnection, s3Uri: string) {
-			if (!config.redshiftCopyIamRoleArn) {
-				throw new Error(
-					"REDSHIFT_COPY_IAM_ROLE_ARN is required for COPY ingestion mode (see config).",
-				);
-			}
+    async copyTracesToStaging(conn: DBConnection, s3Uri: string) {
+      if (!config.redshiftCopyIamRoleArn) {
+        throw new Error(
+          "REDSHIFT_COPY_IAM_ROLE_ARN is required for COPY ingestion mode (see config).",
+        );
+      }
 
-			const copyQuery = generateCopyFromS3Query(
-				enrichedCsvColumnOrder,
-				targetTableName,
-				s3Uri,
-				config.redshiftCopyIamRoleArn,
-			);
+      const copyQuery = generateCopyFromS3Query(
+        enrichedCsvColumnOrder,
+        targetTableName,
+        s3Uri,
+        config.redshiftCopyIamRoleArn,
+      );
 
-			await conn.none(copyQuery);
-		},
+      await conn.none(copyQuery);
+    },
 
-		async deleteOldTracesFromTarget(tx: ITask<unknown>, tracingId: string) {
-			await deleteTargetTable(
-				tx,
-				targetTableName,
-				tracingId,
-				"tracingId",
-				activeSchema,
-			);
-		},
+    async deleteOldTracesFromTarget(tx: ITask<unknown>, tracingId: string) {
+      await deleteTargetTable(
+        tx,
+        targetTableName,
+        tracingId,
+        "tracingId",
+        activeSchema,
+      );
+    },
 
-		async mergeTracesToTarget(tx: ITask<unknown>) {
-			const mergeQuery = generateMergeQuery(
-				activeSchema,
-				config.analyticsDbSchemaName,
-				targetTableName,
-			);
-			await tx.none(mergeQuery);
-		},
+    async mergeTracesToTarget(tx: ITask<unknown>) {
+      const mergeQuery = generateMergeQuery(
+        activeSchema,
+        config.analyticsDbSchemaName,
+        targetTableName,
+      );
+      await tx.none(mergeQuery);
+    },
 
-		async cleanStaging(conn: DBConnection) {
-			await conn.none(`TRUNCATE TABLE ${stagingTableName};`);
-		},
-	};
+    async cleanStaging(conn: DBConnection) {
+      await conn.none(`TRUNCATE TABLE ${stagingTableName};`);
+    },
+  };
 }
 
 export type TracesRepository = ReturnType<typeof tracesRepository>;
