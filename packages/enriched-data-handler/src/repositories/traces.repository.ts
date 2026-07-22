@@ -1,5 +1,6 @@
 import type { DBConnection, DBContext } from "pagopa-interop-tracing-commons";
 import {
+  enrichedCsvBaseColumnOrder,
   enrichedCsvColumnOrder,
   generateId,
 } from "pagopa-interop-tracing-models";
@@ -75,8 +76,12 @@ export function tracesRepository(db: DBContext) {
         );
       }
 
+      const copyColumnOrder = config.enrichTracesWithConsumerProducerEservice
+        ? enrichedCsvColumnOrder
+        : enrichedCsvBaseColumnOrder;
+
       const copyQuery = generateCopyFromS3Query(
-        enrichedCsvColumnOrder,
+        copyColumnOrder,
         targetTableName,
         s3Uri,
         config.redshiftCopyIamRoleArn,

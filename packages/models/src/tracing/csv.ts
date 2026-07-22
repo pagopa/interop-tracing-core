@@ -45,29 +45,41 @@ type CsvMapping<Row> = Record<string, (row: Row) => CsvMappingValue>;
 
 export const createEnrichedCsvMapping = (
   submitterId: string,
-): CsvMapping<EnrichedPurposeRow> => ({
-  id: (row) => row.id,
-  tracingId: (row) => row.tracingId,
-  submitterId: () => submitterId,
-  date: (row) => row.date,
-  purposeId: (row) => row.purposeId,
-  token_id: (row) => row.token_id,
-  status: (row) => row.status,
-  requestsCount: (row) => row.requestsCount,
-  consumerId: (row) => row.consumerId,
-  producerId: (row) => row.producerId,
-  eserviceId: (row) => row.eserviceId,
-  purposeName: (row) => row.purposeName,
-  consumerOrigin: (row) => row.consumerOrigin,
-  consumerName: (row) => row.consumerName,
-  consumerExternalId: (row) => row.consumerExternalId,
-  producerOrigin: (row) => row.producerOrigin,
-  producerName: (row) => row.producerName,
-  producerExternalId: (row) => row.producerExternalId,
-});
+  includeDomainIds = true,
+): CsvMapping<EnrichedPurposeRow> => {
+  const base: CsvMapping<EnrichedPurposeRow> = {
+    id: (row) => row.id,
+    tracingId: (row) => row.tracingId,
+    submitterId: () => submitterId,
+    date: (row) => row.date,
+    purposeId: (row) => row.purposeId,
+    token_id: (row) => row.token_id,
+    status: (row) => row.status,
+    requestsCount: (row) => row.requestsCount,
+  };
 
+  if (!includeDomainIds) return base;
+
+  return {
+    ...base,
+    consumerId: (row) => row.consumerId,
+    producerId: (row) => row.producerId,
+    eserviceId: (row) => row.eserviceId,
+    purposeName: (row) => row.purposeName,
+    consumerOrigin: (row) => row.consumerOrigin,
+    consumerName: (row) => row.consumerName,
+    consumerExternalId: (row) => row.consumerExternalId,
+    producerOrigin: (row) => row.producerOrigin,
+    producerName: (row) => row.producerName,
+    producerExternalId: (row) => row.producerExternalId,
+  };
+};
+
+export const enrichedCsvBaseColumnOrder: string[] = Object.keys(
+  createEnrichedCsvMapping("", false),
+);
 export const enrichedCsvColumnOrder: string[] = Object.keys(
-  createEnrichedCsvMapping(""),
+  createEnrichedCsvMapping("", true),
 );
 
 export const errorsCsvMapping: CsvMapping<PurposeErrorRow> = {

@@ -39,7 +39,10 @@ export const processingServiceBuilder = (
       ctx: WithSQSMessageId<AppContext>,
     ) {
       const tracingCsv = new CsvWriter(
-        createEnrichedCsvMapping(tracing.tenantId),
+        createEnrichedCsvMapping(
+          tracing.tenantId,
+          config.enrichTracesWithConsumerProducerEservice,
+        ),
       );
       const tracingErrorsCsv = new CsvWriter<PurposeErrorRow>(errorsCsvMapping);
 
