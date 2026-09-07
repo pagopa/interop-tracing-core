@@ -25,6 +25,7 @@ const eServiceAddedEventV2: EServiceEvent = {
       name: "eService test name",
       technology: EServiceTechnologyV2.REST,
       descriptors: [],
+      delegatedArchivingRequest: [],
     },
   },
   stream_id: "1",
@@ -49,6 +50,7 @@ const eServiceCloned: EServiceEvent = {
       name: "eService test name",
       technology: EServiceTechnologyV2.REST,
       descriptors: [],
+      delegatedArchivingRequest: [],
     },
   },
 };
@@ -69,6 +71,7 @@ const EServiceDescriptionUpdated: EServiceEventV2 = {
       descriptors: [],
       createdAt: "1" as any,
       mode: EServiceModeV2.RECEIVE,
+      delegatedArchivingRequest: [],
     },
   },
 };
