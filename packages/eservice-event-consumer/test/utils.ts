@@ -122,6 +122,7 @@ export const getDescriptorV2 = (
   dailyCallsPerConsumer: 100,
   dailyCallsTotal: 100,
   rejectionReasons: [],
+  delegatedArchivingRequest: [],
   docs: [],
   serverUrls: ["http://test.com"],
   state: EServiceDescriptorStateV2.DRAFT,
@@ -144,6 +145,7 @@ export const createV2Event = (
   mode: EServiceModeV2.RECEIVE,
   name: "eService test name",
   technology: EServiceTechnologyV2.REST,
+  delegatedArchivingRequest: [],
 
   descriptors: descriptors
     ? descriptors
