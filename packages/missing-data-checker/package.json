@@ -37,7 +37,7 @@
     "@tsconfig/node-lts": "20.1.0",
     "@types/uuid": "9.0.8",
     "@zodios/core": "10.9.6",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "dotenv-flow": "3.3.0",
     "pagopa-interop-tracing-commons": "workspace:*",
     "pagopa-interop-tracing-models": "workspace:*",
