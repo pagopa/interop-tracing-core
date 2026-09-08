@@ -1,26 +1,24 @@
 import {
-  DB,
-  PurposeErrorCodes,
+  type DB,
   isWarningErrorCode,
+  PurposeErrorCodes,
 } from "pagopa-interop-tracing-commons";
-import { getEnrichedPurposeError } from "../models/errors.js";
-import {
-  TracingRecordSchema,
-  EserviceSchema,
-  DelegationSchema,
-  TenantSchema,
-  PurposeSchema,
-} from "../models/db.js";
-import {
-  EnrichedPurposeRow,
-  PurposeErrorRow,
-  generateId,
-  purposeErrorSeverity,
-} from "pagopa-interop-tracing-models";
 import {
   delegationState,
-  TracingFromS3KeyPathDto,
+  type EnrichedPurposeRow,
+  generateId,
+  type PurposeErrorRow,
+  purposeErrorSeverity,
+  type TracingFromS3KeyPathDto,
 } from "pagopa-interop-tracing-models";
+import type {
+  DelegationSchema,
+  EserviceSchema,
+  PurposeSchema,
+  TenantSchema,
+  TracingRecordSchema,
+} from "../models/db.js";
+import { getEnrichedPurposeError } from "../models/errors.js";
 import { config } from "../utilities/config.js";
 
 type EnrichedPurposeResult = {
@@ -194,6 +192,7 @@ function enrichSuccessfulPurpose(
 ): EnrichedPurposeRow {
   return {
     ...record,
+    id: generateId(),
     purposeId: record.purpose_id,
     consumerId: fullPurpose.consumer_id,
     requestsCount: record.requests_count,
