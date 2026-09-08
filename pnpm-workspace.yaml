@@ -1,7 +1,7 @@
 packages:
-  - 'packages/**'
+  - "packages/**"
 
 catalog:
-  '@pagopa/interop-outbound-models': 1.8.23
+  "@pagopa/interop-outbound-models": 1.8.23
   vite: 6.4.3
   vitest: 4.1.0
