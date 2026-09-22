@@ -1,10 +1,10 @@
 import {
   AWSConfig,
   ConsumerConfig,
-  TracingStoreDbConfig,
   FileManagerConfig,
   LoggerConfig,
   S3Config,
+  TracingStoreDbConfig,
 } from "pagopa-interop-tracing-commons";
 import { z } from "zod";
 
@@ -23,6 +23,10 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
         S3_ENRICHED_BUCKET_NAME: z.string(),
         S3_TRACING_ERRORS_BUCKET_NAME: z.string(),
         BATCH_SIZE: z.coerce.number().default(500),
+        ENRICH_TRACES_WITH_CONSUMER_PRODUCER_ESERVICE: z
+          .enum(["true", "false"])
+          .default("false")
+          .transform((value) => value === "true"),
       })
       .transform((c) => ({
         sqsTracingUploadEndpoint: c.SQS_TRACING_UPLOAD_ENDPOINT,
@@ -32,6 +36,8 @@ const tracingProcessingConfig = AWSConfig.and(ConsumerConfig)
         bucketEnrichedS3Name: c.S3_ENRICHED_BUCKET_NAME,
         bucketTracingErrorsS3Name: c.S3_TRACING_ERRORS_BUCKET_NAME,
         batchSize: c.BATCH_SIZE,
+        enrichTracesWithConsumerProducerEservice:
+          c.ENRICH_TRACES_WITH_CONSUMER_PRODUCER_ESERVICE,
       })),
   );
 
