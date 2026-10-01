@@ -47,6 +47,3 @@ packages/clients/*/src/model/generated
 
 # RustFS container data
 docker/rustfs-data
-
-# Legacy MinIO container data
-docker/minio-data
