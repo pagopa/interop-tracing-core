@@ -58,7 +58,7 @@ describe("Operations service test", () => {
         generateID(),
       );
 
-      expect(
+      await expect(
         async () =>
           await handleMessageV1(
             purposeV1Event,
@@ -148,14 +148,8 @@ describe("Operations service test", () => {
         generateID(),
       );
 
-      expect(
-        async () =>
-          await handleMessageV1(
-            purposeV1Event,
-            operationsService,
-            ctx,
-            genericLogger,
-          ),
+      await expect(
+        handleMessageV1(purposeV1Event, operationsService, ctx, genericLogger),
       ).rejects.toThrow(
         errorInvalidVersion(
           `Missing valid version within versions Array for purposeId ${purpose.id}`,
