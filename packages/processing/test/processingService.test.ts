@@ -73,6 +73,8 @@ import {
   validEnrichedPurpose,
   eServiceDataNotAssociated,
   tenant_id,
+  otherConsumerTenantData,
+  purposeWithDifferentConsumer,
 } from "./costants.js";
 import { PurposeErrorRow } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -613,6 +615,45 @@ describe("Processing Service", () => {
         enrichedPurposes.enriched,
       );
       expect(safeEnriched.success).toBe(true);
+    });
+
+    it("should set consumerName/consumerOrigin/consumerExternalId from the purpose's real consumer, not from the submitter tenant", async () => {
+      await addTenant(otherConsumerTenantData, dbInstance);
+      await addPurpose(purposeWithDifferentConsumer, dbInstance);
+
+      const record = [
+        {
+          date: "2024-12-12",
+          purpose_id: purposeWithDifferentConsumer.id,
+          status: 200,
+          requests_count: 10,
+          purposeName: "",
+          token_id: generateId(),
+          eserviceId: eServiceData.eserviceId,
+          producerId: eServiceData.producerId,
+          rowNumber: 1,
+        },
+      ];
+
+      // Il submitter (mockMessage.tenantId === tenant_id) è il producer
+      // dell'eservice, non il consumer del purpose.
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        record,
+        mockMessage,
+      );
+
+      expect(enrichedPurposes.enriched).toHaveLength(1);
+      const [enrichedRow] = enrichedPurposes.enriched;
+
+      expect(enrichedRow.consumerId).toBe(otherConsumerTenantData.id);
+      expect(enrichedRow.consumerName).toBe(otherConsumerTenantData.name);
+      expect(enrichedRow.consumerOrigin).toBe(otherConsumerTenantData.origin);
+      expect(enrichedRow.consumerExternalId).toBe(
+        otherConsumerTenantData.externalId,
+      );
+
+      // Non deve coincidere con i dati del producer/submitter
+      expect(enrichedRow.consumerName).not.toBe(tenantData.name);
     });
   });
 
