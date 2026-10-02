@@ -102,7 +102,8 @@ const server = http.createServer(async (request, response) => {
     response.writeHead(404);
     response.end("Not found");
   } catch (error) {
-    console.error(`Error processing S3 event: ${error.stack ?? error}`);
+    const errorDetails = String(error.stack ?? error).replace(/[\r\n]/g, " ");
+    console.error(`Error processing S3 event: ${errorDetails}`);
     response.writeHead(500);
     response.end("Internal server error");
   }
