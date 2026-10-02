@@ -641,8 +641,8 @@ describe("Processing Service", () => {
         },
       ];
 
-      // Il submitter (mockMessage.tenantId === tenant_id) è il producer
-      // dell'eservice, non il consumer del purpose.
+      // The submitter (mockMessage.tenantId === tenant_id) is the producer
+      // of the eService, not the consumer of the purpose.
       const enrichedPurposes = await dbService.getEnrichedPurpose(
         record,
         mockMessage,
