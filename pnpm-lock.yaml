@@ -696,43 +696,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.0(@types/node@20.10.0)(vite@6.4.3(@types/node@20.10.0)(yaml@2.7.0))
 
-  packages/minio-webhook:
-    dependencies:
-      '@types/express':
-        specifier: 4.17.17
-        version: 4.17.17
-      axios:
-        specifier: 1.18.0
-        version: 1.18.0
-      dotenv-flow:
-        specifier: 3.3.0
-        version: 3.3.0
-      express:
-        specifier: 4.20.0
-        version: 4.20.0
-      pagopa-interop-tracing-commons:
-        specifier: workspace:*
-        version: link:../commons
-      ts-pattern:
-        specifier: 5.4.0
-        version: 5.4.0
-      zod:
-        specifier: 3.23.8
-        version: 3.23.8
-    devDependencies:
-      '@types/node':
-        specifier: 20.10.0
-        version: 20.10.0
-      globals:
-        specifier: 15.14.0
-        version: 15.14.0
-      ts-node:
-        specifier: 10.9.2
-        version: 10.9.2(@types/node@20.10.0)(typescript@5.5.2)
-      typescript:
-        specifier: 5.5.2
-        version: 5.5.2
-
   packages/missing-data-checker:
     dependencies:
       '@tsconfig/node-lts':
