@@ -82,15 +82,6 @@ export async function addNotAssociatedPurposeAndTenant(
   purpose: { eserviceId: string; purpose_id: string },
   db: DB,
 ) {
-  await addPurpose(
-    {
-      id: purpose.purpose_id,
-      consumerId: generateId(),
-      eserviceId: purpose.eserviceId,
-      purposeTitle: "purpose new",
-    },
-    db,
-  );
   await addTenant(
     {
       id: tenant_id2,
@@ -98,6 +89,15 @@ export async function addNotAssociatedPurposeAndTenant(
       origin: "pagoPa",
       externalId: generateId(),
       deleted: false,
+    },
+    db,
+  );
+  await addPurpose(
+    {
+      id: purpose.purpose_id,
+      consumerId: tenant_id2,
+      eserviceId: purpose.eserviceId,
+      purposeTitle: "purpose new",
     },
     db,
   );

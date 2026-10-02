@@ -16,9 +16,10 @@ import {
 import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import { StartedTestContainer } from "testcontainers";
 import {
-  minioContainer,
+  createS3Buckets,
   postgreSQLContainer,
-  TEST_MINIO_PORT,
+  rustfsContainer,
+  TEST_RUSTFS_PORT,
 } from "./config.js";
 import { dbServiceBuilder, DBService } from "../src/services/db/dbService.js";
 import {
@@ -26,12 +27,16 @@ import {
   TracingStoreService,
 } from "../src/services/tracingStoreService.js";
 
-export const startedMinioContainer: StartedTestContainer =
-  await minioContainer(config).start();
-export const minioPort = startedMinioContainer.getMappedPort(TEST_MINIO_PORT);
+export const startedRustfsContainer: StartedTestContainer =
+  await rustfsContainer().start();
+export const rustfsPort =
+  startedRustfsContainer.getMappedPort(TEST_RUSTFS_PORT);
+config.s3ServerPort = rustfsPort;
+
+await createS3Buckets(config, [config.bucketTracingErrorsS3Name]);
 
 export const s3ClientConfig: S3ClientConfig = {
-  endpoint: `${config.s3ServerHost}:${minioPort}`,
+  endpoint: `${config.s3ServerHost}:${rustfsPort}`,
   forcePathStyle: true,
   logger: config.logLevel === "debug" ? console : undefined,
   region: config.awsRegion,

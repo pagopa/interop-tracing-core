@@ -15,8 +15,8 @@ import {
   findPurposeErrors,
   findTracingById,
   truncatePurposeErrors,
-  startedMinioContainer,
   startedPostgreSqlContainer,
+  startedRustfsContainer,
   tracingStoreService,
   writePurposeErrorsCsv,
   writePurposeErrorsCsvWithSeverities,
@@ -41,7 +41,7 @@ describe("Tracing store DB service test", () => {
   const yesterdayTruncated = truncatedTo(yesterday, DateUnit.DAYS);
   afterAll(async () => {
     await startedPostgreSqlContainer.stop();
-    await startedMinioContainer.stop();
+    await startedRustfsContainer.stop();
   });
 
   afterEach(async () => {
