@@ -658,7 +658,7 @@ describe("Processing Service", () => {
         otherConsumerTenantData.externalId,
       );
 
-      // Non deve coincidere con i dati del producer/submitter
+      // It must not match the producer/submitter's data.
       expect(enrichedRow.consumerName).not.toBe(tenantData.name);
     });
   });
