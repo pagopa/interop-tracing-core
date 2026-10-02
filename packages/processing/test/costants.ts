@@ -415,3 +415,18 @@ export const validEnrichedPurpose = [
     producerExternalId: "d4702412-fe3d-4763-99ba-87c0a1e7f48d",
   },
 ];
+
+export const otherConsumerTenantData = {
+  id: generateId(),
+  name: "actual consumer tenant",
+  origin: "pagoPa",
+  externalId: generateId() as string,
+  deleted: false,
+};
+
+export const purposeWithDifferentConsumer = {
+  id: generateId(),
+  consumerId: otherConsumerTenantData.id,
+  eserviceId: eServiceData.eserviceId, // owned by tenant_id (il producer/submitter)
+  purposeTitle: "purpose with different consumer",
+};

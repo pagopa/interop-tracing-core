@@ -73,6 +73,8 @@ import {
   validEnrichedPurpose,
   eServiceDataNotAssociated,
   tenant_id,
+  otherConsumerTenantData,
+  purposeWithDifferentConsumer,
 } from "./costants.js";
 import { PurposeErrorRow } from "pagopa-interop-tracing-models";
 import { TracingRecordSchema } from "../src/models/db.js";
@@ -540,18 +542,24 @@ describe("Processing Service", () => {
     });
 
     it("should return getEnrichedPurposeError if consumer is not found", async () => {
-      try {
-        const invalidConsumer = generateId();
-        await dbService.getEnrichedPurpose(validPurpose, {
-          ...mockMessage,
-          ...{ tenantId: invalidConsumer },
-        });
-      } catch (error) {
-        expect(error).toBeInstanceOf(InternalError);
-        expect((error as InternalError<ErrorCodes>).code).toBe(
-          "getEnrichedPurposeError",
-        );
-      }
+      const purposeWithMissingConsumer = {
+        id: generateId(),
+        consumerId: generateId(), // tenant inesistente
+        eserviceId: eServiceData.eserviceId,
+        purposeTitle: "purpose missing consumer",
+      };
+      await addPurpose(purposeWithMissingConsumer, dbInstance);
+
+      const record = [
+        {
+          ...validPurpose[0],
+          purpose_id: purposeWithMissingConsumer.id,
+        },
+      ];
+
+      await expect(
+        dbService.getEnrichedPurpose(record, mockMessage),
+      ).rejects.toMatchObject({ code: "getEnrichedPurposeError" });
     });
 
     it("should return TENANT_IS_NOT_PRODUCER_OR_CONSUMER  if tenant is not a consumer or a producer or a delegation", async () => {
@@ -613,6 +621,45 @@ describe("Processing Service", () => {
         enrichedPurposes.enriched,
       );
       expect(safeEnriched.success).toBe(true);
+    });
+
+    it("should set consumerName/consumerOrigin/consumerExternalId from the purpose's real consumer, not from the submitter tenant", async () => {
+      await addTenant(otherConsumerTenantData, dbInstance);
+      await addPurpose(purposeWithDifferentConsumer, dbInstance);
+
+      const record = [
+        {
+          date: "2024-12-12",
+          purpose_id: purposeWithDifferentConsumer.id,
+          status: 200,
+          requests_count: 10,
+          purposeName: "",
+          token_id: generateId(),
+          eserviceId: eServiceData.eserviceId,
+          producerId: eServiceData.producerId,
+          rowNumber: 1,
+        },
+      ];
+
+      // The submitter (mockMessage.tenantId === tenant_id) is the producer
+      // of the eService, not the consumer of the purpose.
+      const enrichedPurposes = await dbService.getEnrichedPurpose(
+        record,
+        mockMessage,
+      );
+
+      expect(enrichedPurposes.enriched).toHaveLength(1);
+      const [enrichedRow] = enrichedPurposes.enriched;
+
+      expect(enrichedRow.consumerId).toBe(otherConsumerTenantData.id);
+      expect(enrichedRow.consumerName).toBe(otherConsumerTenantData.name);
+      expect(enrichedRow.consumerOrigin).toBe(otherConsumerTenantData.origin);
+      expect(enrichedRow.consumerExternalId).toBe(
+        otherConsumerTenantData.externalId,
+      );
+
+      // It must not match the producer/submitter's data.
+      expect(enrichedRow.consumerName).not.toBe(tenantData.name);
     });
   });
 
