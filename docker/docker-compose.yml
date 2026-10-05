@@ -45,7 +45,7 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
 
   s3-event-bridge:
-    image: node:20-alpine
+    image: node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
     command: ["node", "/app/index.js"]
     ports:
       - 5001:5001
@@ -61,7 +61,7 @@ services:
 
   # RustFS is a local S3-compatible storage, to replace AWS S3 in local development
   rustfs:
-    image: rustfs/rustfs:1.0.0
+    image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
     ports:
       - 9000:9000
       - 9001:9001
@@ -86,7 +86,7 @@ services:
 
   # Seed buckets and event notifications for RustFS
   rustfs-seed:
-    image: amazon/aws-cli:2.17.44
+    image: amazon/aws-cli:2.17.44@sha256:f2094b8092475b7dae06fbec228bcd25ad24206f5b4fdce5b81bfe2a4b381892
     depends_on:
       - rustfs
     environment:
