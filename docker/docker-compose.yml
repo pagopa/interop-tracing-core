@@ -1,4 +1,3 @@
-version: "3"
 name: pagopa-interop-tracing
 services:
   postgres:
@@ -45,22 +44,72 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
 
-  # MinIO is a local S3-compatible storage, to replace AWS S3 in local development
-  minio:
-    image: quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z@sha256:1f5e263a492659da3b5c165eeabe70fac1c186081d3fca6863fdc48c3e04856c
-    entrypoint: sh -c "chmod +x /etc/minio/init.sh && /etc/minio/init.sh"
+  s3-event-bridge:
+    image: node:20-alpine
+    command: ["node", "/app/index.js"]
+    ports:
+      - 5001:5001
+    environment:
+      PORT: 5001
+      ELASTICMQ_URL: http://elasticmq:9324/000000000000
+      BUCKET_QUEUE_MAP: '{"interop-tracing-bucket":"tracings-upload","interop-tracing-enriched-bucket":"enriched-upload","interop-tracing-errors-bucket":"errors-upload"}'
+    volumes:
+      - ./s3-event-bridge/index.js:/app/index.js:ro
+    depends_on:
+      - elasticmq
+    restart: always
+
+  # RustFS is a local S3-compatible storage, to replace AWS S3 in local development
+  rustfs:
+    image: rustfs/rustfs:1.0.0
     ports:
       - 9000:9000
       - 9001:9001
     environment:
-      MINIO_ROOT_USER: test-aws-key
-      MINIO_ROOT_PASSWORD: test-aws-secret
-      MINIO_SITE_REGION: eu-central-1
+      RUSTFS_ACCESS_KEY: test-aws-key
+      RUSTFS_SECRET_KEY: test-aws-secret
+      RUSTFS_REGION: eu-central-1
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_NOTIFY_ENABLE: "true"
+      RUSTFS_NOTIFY_WEBHOOK_ENABLE_PRIMARY: "on"
+      RUSTFS_NOTIFY_WEBHOOK_ENDPOINT_PRIMARY: http://s3-event-bridge:5001/webhook/s3-event
+      RUSTFS_NOTIFY_WEBHOOK_QUEUE_DIR_PRIMARY: /data/events
+      RUSTFS_OUTBOUND_ALLOW_ORIGINS: http://s3-event-bridge:5001
     volumes:
-      - ./minio-data:/data
-      - ./minio-config/init.sh:/etc/minio/init.sh
-      - ./minio-config/minio.local.conf:/etc/minio/minio.conf
+      - ./rustfs-data:/data
+    depends_on:
+      - s3-event-bridge
     restart: always
+
+  # Seed buckets and event notifications for RustFS
+  rustfs-seed:
+    image: amazon/aws-cli:2.17.44
+    depends_on:
+      - rustfs
+    environment:
+      AWS_ACCESS_KEY_ID: test-aws-key
+      AWS_SECRET_ACCESS_KEY: test-aws-secret
+      AWS_REGION: eu-central-1
+      AWS_DEFAULT_REGION: eu-central-1
+    entrypoint: >
+      /bin/sh -c "
+        until aws --endpoint-url http://rustfs:9000 s3 ls; do
+          echo 'Waiting for RustFS to be ready...';
+          sleep 1;
+        done;
+        echo 'RustFS is ready. Seeding buckets and notifications...';
+        aws --endpoint-url http://rustfs:9000 s3 mb s3://interop-tracing-bucket || true;
+        aws --endpoint-url http://rustfs:9000 s3 mb s3://interop-tracing-enriched-bucket || true;
+        aws --endpoint-url http://rustfs:9000 s3 mb s3://interop-tracing-errors-bucket || true;
+        aws --endpoint-url http://rustfs:9000 s3api put-bucket-notification-configuration --bucket interop-tracing-bucket --notification-configuration file:///config/tracing-upload-notification.json;
+        aws --endpoint-url http://rustfs:9000 s3api put-bucket-notification-configuration --bucket interop-tracing-enriched-bucket --notification-configuration file:///config/enriched-upload-notification.json;
+        aws --endpoint-url http://rustfs:9000 s3api put-bucket-notification-configuration --bucket interop-tracing-errors-bucket --notification-configuration file:///config/errors-upload-notification.json;
+      "
+    volumes:
+      - ./rustfs-config:/config:ro
 
   elasticmq: # ElasticMQ is a local SQS-compatible queue system, to replace AWS SQS in local development
     image: softwaremill/elasticmq-native:1.5.7@sha256:0cb5bcc04638c80af1631e8cf5da9b96b9fb6f46a4164462231065dc516c102f

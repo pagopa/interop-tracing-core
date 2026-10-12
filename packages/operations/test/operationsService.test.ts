@@ -655,7 +655,7 @@ describe("database test", () => {
           limit: 10,
         };
 
-        expect(
+        await expect(
           operationsService.getTracingErrors(
             query,
             params,
@@ -716,17 +716,16 @@ describe("database test", () => {
 
         const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
-          async () =>
-            await operationsService.updateTracingState(
-              {
-                tracingId: tracing.id,
-                version: tracing.version,
-              },
-              updateStateData,
-              genericLogger,
-            ),
-        ).not.toThrowError();
+        await expect(
+          operationsService.updateTracingState(
+            {
+              tracingId: tracing.id,
+              version: tracing.version,
+            },
+            updateStateData,
+            genericLogger,
+          ),
+        ).resolves.not.toThrowError();
 
         const result = await findTracingById(tracing.id, dbInstance);
 
@@ -798,7 +797,7 @@ describe("database test", () => {
       it("should throw an error tracingNotFound when attempting recover a tracing", async () => {
         const tracindId = generateId<TracingId>();
 
-        expect(
+        await expect(
           operationsService.recoverTracing(
             {
               tracingId: tracindId,
@@ -821,7 +820,7 @@ describe("database test", () => {
 
         const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
+        await expect(
           operationsService.recoverTracing(
             {
               tracingId: tracing.id,
@@ -844,7 +843,7 @@ describe("database test", () => {
 
         const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
+        await expect(
           operationsService.recoverTracing(
             {
               tracingId: tracing.id,
@@ -952,7 +951,7 @@ describe("database test", () => {
       it("should throw an error tracingNotFound when attempting replace a tracing", async () => {
         const tracindId = generateId<TracingId>();
 
-        expect(
+        await expect(
           operationsService.replaceTracing(
             {
               tracingId: tracindId,
@@ -975,7 +974,7 @@ describe("database test", () => {
 
         const tracing = await addTracing(tracingData, dbInstance);
 
-        expect(
+        await expect(
           operationsService.replaceTracing(
             {
               tracingId: tracing.id,

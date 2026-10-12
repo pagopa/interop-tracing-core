@@ -38,20 +38,6 @@ export function dbServiceBuilder(db: DB) {
         const enriched: EnrichedPurposeRow[] = [];
         const errors: PurposeErrorRow[] = [];
 
-        const consumer = await db.oneOrNone<
-          Pick<TenantSchema, "name" | "origin" | "external_id">
-        >(
-          `SELECT name, origin, external_id FROM ${config.dbSchemaName}.tenants 
-            WHERE id = $1`,
-          [tracing.tenantId],
-        );
-
-        if (!consumer) {
-          throw new Error(
-            `Consumer ${tracing.tenantId} not found for tracingId: ${tracing.tracingId}.`,
-          );
-        }
-
         const purposeIds = [...new Set(records.map((r) => r.purpose_id))];
 
         const purposes = await db.any<
@@ -96,6 +82,17 @@ export function dbServiceBuilder(db: DB) {
         );
 
         const producerMap = new Map(producers.map((p) => [p.id, p]));
+
+        const consumerIds = [...new Set(purposes.map((p) => p.consumer_id))];
+
+        const consumers = await db.any<
+          Pick<TenantSchema, "id" | "name" | "origin" | "external_id">
+        >(
+          `SELECT id, name, origin, external_id FROM ${config.dbSchemaName}.tenants 
+            WHERE id = ANY($1::uuid[])`,
+          [consumerIds],
+        );
+        const consumerMap = new Map(consumers.map((c) => [c.id, c]));
 
         for (const record of records) {
           const fullPurpose = purposesMap.get(record.purpose_id);
@@ -161,13 +158,19 @@ export function dbServiceBuilder(db: DB) {
             );
           }
 
+          const consumerTenant = consumerMap.get(fullPurpose.consumer_id);
+          if (!consumerTenant) {
+            throw new Error(
+              `Consumer ${fullPurpose.consumer_id} not found for tracingId: ${tracing.tracingId}, purpose_id: ${record.purpose_id}`,
+            );
+          }
           enriched.push(
             enrichSuccessfulPurpose(
               record,
               tracing,
               eService,
               fullPurpose,
-              consumer,
+              consumerTenant,
               producer,
             ),
           );

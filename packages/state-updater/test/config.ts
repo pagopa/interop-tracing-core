@@ -1,13 +1,23 @@
+import {
+  CreateBucketCommand,
+  S3Client,
+  S3ServiceException,
+} from "@aws-sdk/client-s3";
 import { GenericContainer } from "testcontainers";
 import { resolve } from "path";
 import { TracingStoreDbConfig } from "pagopa-interop-tracing-commons";
 import { TracingStateUpdateConfig } from "../src/utilities/config.js";
 
 export const TEST_POSTGRES_DB_PORT = 5432;
-export const TEST_MINIO_PORT = 9000;
+export const TEST_RUSTFS_PORT = 9000;
 export const TEST_POSTGRES_DB_IMAGE = "postgres:14";
-export const TEST_MINIO_IMAGE =
-  "quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z";
+export const TEST_RUSTFS_IMAGE = "rustfs/rustfs:1.0.0";
+
+const TEST_RUSTFS_ACCESS_KEY = "test-aws-key";
+const TEST_RUSTFS_SECRET_KEY = "test-aws-secret";
+const TEST_RUSTFS_REGION = "eu-central-1";
+const TEST_RUSTFS_BUCKET_CREATION_RETRIES = 15;
+const TEST_RUSTFS_BUCKET_CREATION_RETRY_DELAY_MS = 1000;
 
 export const postgreSQLContainer = (
   config: TracingStoreDbConfig,
@@ -36,18 +46,59 @@ export const postgreSQLContainer = (
     ])
     .withExposedPorts(TEST_POSTGRES_DB_PORT);
 
-export const minioContainer = (
-  config: TracingStateUpdateConfig,
-): GenericContainer =>
-  new GenericContainer(TEST_MINIO_IMAGE)
+export const rustfsContainer = (): GenericContainer =>
+  new GenericContainer(TEST_RUSTFS_IMAGE)
     .withEnvironment({
-      MINIO_ROOT_USER: "test-aws-key",
-      MINIO_ROOT_PASSWORD: "test-aws-secret",
-      MINIO_SITE_REGION: "eu-central-1",
+      RUSTFS_ACCESS_KEY: TEST_RUSTFS_ACCESS_KEY,
+      RUSTFS_SECRET_KEY: TEST_RUSTFS_SECRET_KEY,
+      RUSTFS_REGION: TEST_RUSTFS_REGION,
+      RUSTFS_VOLUMES: "/data",
     })
-    .withEntrypoint(["sh", "-c"])
-    .withCommand([
-      `mkdir -p /data/${config.bucketTracingErrorsS3Name} &&
-       /usr/bin/minio server /data`,
-    ])
-    .withExposedPorts(TEST_MINIO_PORT);
+    .withExposedPorts(TEST_RUSTFS_PORT);
+
+const isBucketAlreadyExistsError = (error: unknown): boolean =>
+  error instanceof S3ServiceException &&
+  (error.name === "BucketAlreadyOwnedByYou" ||
+    error.name === "BucketAlreadyExists");
+
+const createBucketWithRetry = async (
+  client: S3Client,
+  bucket: string,
+  retriesLeft: number,
+): Promise<void> => {
+  try {
+    await client.send(new CreateBucketCommand({ Bucket: bucket }));
+  } catch (error) {
+    if (isBucketAlreadyExistsError(error)) {
+      return;
+    }
+    if (retriesLeft <= 0) {
+      throw error;
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_RUSTFS_BUCKET_CREATION_RETRY_DELAY_MS),
+    );
+    await createBucketWithRetry(client, bucket, retriesLeft - 1);
+  }
+};
+
+export const createS3Buckets = async (
+  config: TracingStateUpdateConfig,
+  bucketNames: string[],
+): Promise<void> => {
+  const client = new S3Client({
+    endpoint: config.s3CustomServer
+      ? `${config.s3ServerHost}:${config.s3ServerPort}`
+      : undefined,
+    forcePathStyle: config.s3CustomServer,
+    region: TEST_RUSTFS_REGION,
+  });
+
+  for (const bucket of bucketNames) {
+    await createBucketWithRetry(
+      client,
+      bucket,
+      TEST_RUSTFS_BUCKET_CREATION_RETRIES,
+    );
+  }
+};
