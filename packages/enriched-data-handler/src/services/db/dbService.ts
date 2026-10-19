@@ -1,7 +1,7 @@
-import { DBContext } from "pagopa-interop-tracing-commons";
-import { TracingEnriched } from "../../models/messages.js";
-import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
+import type { DBContext } from "pagopa-interop-tracing-commons";
+import type { TracingEnriched } from "../../models/messages.js";
 import { tracesRepository } from "../../repositories/traces.repository.js";
+import { dbServiceErrorMapper } from "../../utilities/dbServiceErrorMapper.js";
 
 export function dbServiceBuilder(db: DBContext) {
   const repository = tracesRepository(db);
@@ -12,6 +12,14 @@ export function dbServiceBuilder(db: DBContext) {
         await repository.insertTracesToStaging(db.conn, tracingId, records);
       } catch (error: unknown) {
         throw dbServiceErrorMapper("insertToStaging", error);
+      }
+    },
+
+    async copyToStaging(s3Uri: string) {
+      try {
+        await repository.copyTracesToStaging(db.conn, s3Uri);
+      } catch (error: unknown) {
+        throw dbServiceErrorMapper("copyToStaging", error);
       }
     },
 
