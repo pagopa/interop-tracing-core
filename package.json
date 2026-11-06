@@ -2,7 +2,7 @@
   "private": true,
   "name": "root",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "start:tracing-api": "turbo start --filter pagopa-interop-tracing-api",
