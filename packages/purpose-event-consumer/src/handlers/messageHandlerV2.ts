@@ -35,10 +35,7 @@ export async function handleMessageV2(
         }
         const { purpose } = evt.data;
 
-        if (
-          evt.type !== "PurposeTitleUpdated" &&
-          hasPurposeVersionInAValidState(purpose.versions)
-        ) {
+        if (hasPurposeVersionInAValidState(purpose.versions)) {
           throw errorInvalidVersion(
             `Missing valid version within versions Array for purposeId ${purpose.id}`,
           );
