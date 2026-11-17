@@ -1,32 +1,30 @@
 import {
-  TracingFromS3KeyPathDto,
-  generateId,
-  purposeErrorSeverity,
-} from "pagopa-interop-tracing-models";
-import { DBService } from "./enricherService.js";
-import { ProducerService } from "./producerService.js";
-import {
-  AppContext,
-  FileManager,
-  PurposeErrorCodes,
-  WithSQSMessageId,
+  type AppContext,
+  type FileManager,
   isWarningErrorCode,
   logger,
+  PurposeErrorCodes,
   parseCSV,
+  type WithSQSMessageId,
 } from "pagopa-interop-tracing-commons";
-import { TracingRecordSchema } from "../models/db.js";
-import { expectedInputCSVHeaders } from "../models/csv.js";
 import {
-  EnrichedPurposeRow,
-  PurposeErrorRow,
   createEnrichedCsvMapping,
+  type EnrichedPurposeRow,
   errorsCsvMapping,
+  generateId,
+  type PurposeErrorRow,
+  purposeErrorSeverity,
+  type TracingFromS3KeyPathDto,
+  tracingState,
 } from "pagopa-interop-tracing-models";
+import { expectedInputCSVHeaders } from "../models/csv.js";
+import type { TracingRecordSchema } from "../models/db.js";
 import { processTracingError } from "../models/errors.js";
-import { config } from "../utilities/config.js";
 import { checkRecords } from "../utilities/checkCSVFormalErrors.js";
+import { config } from "../utilities/config.js";
 import { CsvWriter } from "../utilities/csvWriter.js";
-import { tracingState } from "pagopa-interop-tracing-models";
+import type { DBService } from "./enricherService.js";
+import type { ProducerService } from "./producerService.js";
 
 export const processingServiceBuilder = (
   dbService: DBService,
@@ -39,7 +37,10 @@ export const processingServiceBuilder = (
       ctx: WithSQSMessageId<AppContext>,
     ) {
       const tracingCsv = new CsvWriter(
-        createEnrichedCsvMapping(tracing.tenantId),
+        createEnrichedCsvMapping(
+          tracing.tenantId,
+          config.enrichTracesWithConsumerProducerEservice,
+        ),
       );
       const tracingErrorsCsv = new CsvWriter<PurposeErrorRow>(errorsCsvMapping);
 

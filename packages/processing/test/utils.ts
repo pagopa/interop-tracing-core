@@ -1,8 +1,8 @@
-import { DB } from "pagopa-interop-tracing-commons";
 import csvParser from "csv-parser";
-import { config } from "../src/utilities/config.js";
-import { DelegationSchema } from "../src/models/db.js";
+import type { DB } from "pagopa-interop-tracing-commons";
 import { generateId } from "pagopa-interop-tracing-models";
+import type { DelegationSchema } from "../src/models/db.js";
+import { config } from "../src/utilities/config.js";
 import { tenant_id2 } from "./costants.js";
 
 export async function addPurpose(
@@ -111,23 +111,27 @@ export async function parseCSVFromString(
     const stream = csvParser({ headers: false });
     stream
       .on("data", (row) => {
+        // Positional mapping: must stay aligned with the enriched CSV column order
+        // defined by createEnrichedCsvMapping / enrichedCsvColumnOrder (models).
         const record = {
-          tracingId: row[0],
-          submitterId: row[1],
-          date: row[2],
-          purposeId: row[3],
-          purposeName: row[4],
-          status: row[5],
-          requestsCount: row[6],
-          eserviceId: row[7],
+          id: row[0],
+          tracingId: row[1],
+          submitterId: row[2],
+          date: row[3],
+          purposeId: row[4],
+          token_id: row[5],
+          status: row[6],
+          requestsCount: row[7],
           consumerId: row[8],
-          consumerOrigin: row[9],
-          consumerName: row[10],
-          consumerExternalId: row[11],
-          producerId: row[12],
-          producerName: row[13],
-          producerOrigin: row[14],
-          producerExternalId: row[15],
+          producerId: row[9],
+          eserviceId: row[10],
+          purposeName: row[11],
+          consumerOrigin: row[12],
+          consumerName: row[13],
+          consumerExternalId: row[14],
+          producerOrigin: row[15],
+          producerName: row[16],
+          producerExternalId: row[17],
         };
         parsedRecords.push(record);
       })
