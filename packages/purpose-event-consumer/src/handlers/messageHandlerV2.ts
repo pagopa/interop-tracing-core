@@ -26,6 +26,7 @@ export async function handleMessageV2(
           "PurposeActivated",
           "PurposeVersionActivated",
           "NewPurposeVersionActivated",
+          "PurposeTitleUpdated",
         ),
       },
       async (evt) => {
@@ -34,7 +35,10 @@ export async function handleMessageV2(
         }
         const { purpose } = evt.data;
 
-        if (hasPurposeVersionInAValidState(purpose.versions)) {
+        if (
+          evt.type !== "PurposeTitleUpdated" &&
+          hasPurposeVersionInAValidState(purpose.versions)
+        ) {
           throw errorInvalidVersion(
             `Missing valid version within versions Array for purposeId ${purpose.id}`,
           );
@@ -75,6 +79,7 @@ export async function handleMessageV2(
           "PurposeDeletedByRevokedDelegation",
           "RiskAnalysisDocumentGenerated",
           "RiskAnalysisSignedDocumentGenerated",
+          "PurposeDescriptionUpdated",
         ),
       },
       async () => {

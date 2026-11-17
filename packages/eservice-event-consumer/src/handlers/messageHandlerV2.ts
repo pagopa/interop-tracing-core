@@ -119,6 +119,7 @@ export async function handleMessageV2(
           "EServiceDescriptorAsyncExchangeCallbackInterfaceDeleted",
           "EServiceDescriptorAttributeDailyCallsPerConsumerUpdated",
           "MaintenanceEServiceDescriptorUnarchived",
+          "EServiceDescriptorRestoredToDraftByRevokedDelegation",
         ),
       },
       async (evt) => {

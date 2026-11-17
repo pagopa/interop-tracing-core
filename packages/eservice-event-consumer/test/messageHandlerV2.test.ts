@@ -233,6 +233,7 @@ describe("Message handler V2 test", () => {
         { type: "EServicePersonalDataFlagUpdatedAfterPublication" },
         { type: "EServicePersonalDataFlagUpdatedByTemplateUpdate" },
         { type: "EServiceInstanceLabelUpdated" },
+        { type: "EServiceDescriptorRestoredToDraftByRevokedDelegation" },
       ];
 
       for (const event of events) {
