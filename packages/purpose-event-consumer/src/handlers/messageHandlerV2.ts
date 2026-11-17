@@ -26,6 +26,7 @@ export async function handleMessageV2(
           "PurposeActivated",
           "PurposeVersionActivated",
           "NewPurposeVersionActivated",
+          "PurposeTitleUpdated",
         ),
       },
       async (evt) => {
@@ -75,6 +76,7 @@ export async function handleMessageV2(
           "PurposeDeletedByRevokedDelegation",
           "RiskAnalysisDocumentGenerated",
           "RiskAnalysisSignedDocumentGenerated",
+          "PurposeDescriptionUpdated",
         ),
       },
       async () => {

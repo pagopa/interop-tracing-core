@@ -129,6 +129,7 @@ describe("Operations service test", () => {
         { type: "PurposeDeletedByRevokedDelegation" },
         { type: "RiskAnalysisDocumentGenerated" },
         { type: "RiskAnalysisSignedDocumentGenerated" },
+        { type: "PurposeDescriptionUpdated" },
       ];
 
       for (const event of events) {
